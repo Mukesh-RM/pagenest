@@ -10,7 +10,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 - Installed packages audited: 684 (18 production, 666 development)
 - Source of data: package-lock.json + node_modules
-- QA toolchain (`tests/`, dev only, never shipped): 183 packages from package-lock.json; OK: 180, OK with note: 3, NOT OK: 0
+- QA toolchain (`tests/`, dev only, never shipped): 210 packages from package-lock.json; OK: 207, OK with note: 3, NOT OK: 0
 - OK: 656, OK with note: 28, NOT OK: 0
 - Planned assets with open risks: 6 (see the Models table)
 
@@ -741,13 +741,38 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | Name | Version | License | Source | Status |
 |---|---|---|---|---|
 | @axe-core/playwright | 4.13.0 | MPL-2.0 | https://www.npmjs.com/package/@axe-core/playwright/v/4.13.0 | OK (note) |
+| @esbuild/aix-ppc64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/aix-ppc64/v/0.28.2 | OK |
+| @esbuild/android-arm | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/android-arm/v/0.28.2 | OK |
+| @esbuild/android-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/android-arm64/v/0.28.2 | OK |
+| @esbuild/android-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/android-x64/v/0.28.2 | OK |
+| @esbuild/darwin-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/darwin-arm64/v/0.28.2 | OK |
+| @esbuild/darwin-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/darwin-x64/v/0.28.2 | OK |
+| @esbuild/freebsd-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/freebsd-arm64/v/0.28.2 | OK |
+| @esbuild/freebsd-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/freebsd-x64/v/0.28.2 | OK |
+| @esbuild/linux-arm | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-arm/v/0.28.2 | OK |
+| @esbuild/linux-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-arm64/v/0.28.2 | OK |
+| @esbuild/linux-ia32 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-ia32/v/0.28.2 | OK |
+| @esbuild/linux-loong64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-loong64/v/0.28.2 | OK |
+| @esbuild/linux-mips64el | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-mips64el/v/0.28.2 | OK |
+| @esbuild/linux-ppc64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-ppc64/v/0.28.2 | OK |
+| @esbuild/linux-riscv64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-riscv64/v/0.28.2 | OK |
+| @esbuild/linux-s390x | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-s390x/v/0.28.2 | OK |
+| @esbuild/linux-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/linux-x64/v/0.28.2 | OK |
+| @esbuild/netbsd-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/netbsd-arm64/v/0.28.2 | OK |
+| @esbuild/netbsd-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/netbsd-x64/v/0.28.2 | OK |
+| @esbuild/openbsd-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/openbsd-arm64/v/0.28.2 | OK |
+| @esbuild/openbsd-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/openbsd-x64/v/0.28.2 | OK |
+| @esbuild/openharmony-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/openharmony-arm64/v/0.28.2 | OK |
+| @esbuild/sunos-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/sunos-x64/v/0.28.2 | OK |
+| @esbuild/win32-arm64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/win32-arm64/v/0.28.2 | OK |
+| @esbuild/win32-ia32 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/win32-ia32/v/0.28.2 | OK |
+| @esbuild/win32-x64 | 0.28.2 | MIT | https://www.npmjs.com/package/@esbuild/win32-x64/v/0.28.2 | OK |
 | @formatjs/ecma402-abstract | 2.3.6 | MIT | https://www.npmjs.com/package/@formatjs/ecma402-abstract/v/2.3.6 | OK |
 | @formatjs/fast-memoize | 2.2.7 | MIT | https://www.npmjs.com/package/@formatjs/fast-memoize/v/2.2.7 | OK |
 | @formatjs/icu-messageformat-parser | 2.11.4 | MIT | https://www.npmjs.com/package/@formatjs/icu-messageformat-parser/v/2.11.4 | OK |
 | @formatjs/icu-skeleton-parser | 1.8.16 | MIT | https://www.npmjs.com/package/@formatjs/icu-skeleton-parser/v/1.8.16 | OK |
 | @formatjs/intl-localematcher | 0.6.2 | MIT | https://www.npmjs.com/package/@formatjs/intl-localematcher/v/0.6.2 | OK |
 | @paulirish/trace_engine | 0.0.19 | BSD-3-Clause | https://www.npmjs.com/package/@paulirish/trace_engine/v/0.0.19 | OK |
-| @playwright/test | 1.64.1 | Apache-2.0 | https://www.npmjs.com/package/@playwright/test/v/1.64.1 | OK |
 | @puppeteer/browsers | 2.3.0 | Apache-2.0 | https://www.npmjs.com/package/@puppeteer/browsers/v/2.3.0 | OK |
 | @sentry/core | 6.19.7 | BSD-3-Clause | https://www.npmjs.com/package/@sentry/core/v/6.19.7 | OK |
 | @sentry/hub | 6.19.7 | BSD-3-Clause | https://www.npmjs.com/package/@sentry/hub/v/6.19.7 | OK |
@@ -818,6 +843,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | emoji-regex | 8.0.0 | MIT | https://www.npmjs.com/package/emoji-regex/v/8.0.0 | OK |
 | end-of-stream | 1.4.5 | MIT | https://www.npmjs.com/package/end-of-stream/v/1.4.5 | OK |
 | enquirer | 2.4.1 | MIT | https://www.npmjs.com/package/enquirer/v/2.4.1 | OK |
+| esbuild | 0.28.2 | MIT | https://www.npmjs.com/package/esbuild/v/0.28.2 | OK |
 | escalade | 3.2.0 | MIT | https://www.npmjs.com/package/escalade/v/3.2.0 | OK |
 | escape-string-regexp | 4.0.0 | MIT | https://www.npmjs.com/package/escape-string-regexp/v/4.0.0 | OK |
 | escodegen | 2.1.0 | BSD-2-Clause | https://www.npmjs.com/package/escodegen/v/2.1.0 | OK |
@@ -828,6 +854,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | extract-zip | 2.0.1 | BSD-2-Clause | https://www.npmjs.com/package/extract-zip/v/2.0.1 | OK |
 | fast-fifo | 1.3.2 | MIT | https://www.npmjs.com/package/fast-fifo/v/1.3.2 | OK |
 | fd-slicer | 1.1.0 | MIT | https://www.npmjs.com/package/fd-slicer/v/1.1.0 | OK |
+| fsevents | 2.3.3 | MIT | https://www.npmjs.com/package/fsevents/v/2.3.3 | OK |
 | get-caller-file | 2.0.5 | ISC | https://www.npmjs.com/package/get-caller-file/v/2.0.5 | OK |
 | get-stream | 5.2.0 | MIT | https://www.npmjs.com/package/get-stream/v/5.2.0 | OK |
 | get-uri | 6.0.5 | MIT | https://www.npmjs.com/package/get-uri/v/6.0.5 | OK |
@@ -868,7 +895,6 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | pac-resolver | 7.0.1 | MIT | https://www.npmjs.com/package/pac-resolver/v/7.0.1 | OK |
 | parse-cache-control | 1.0.1 | BSD-3-Clause | https://www.npmjs.com/package/parse-cache-control/v/1.0.1 | OK (note) |
 | pend | 1.2.0 | MIT | https://www.npmjs.com/package/pend/v/1.2.0 | OK |
-| playwright | 1.64.1 | Apache-2.0 | https://www.npmjs.com/package/playwright/v/1.64.1 | OK |
 | playwright-core | 1.64.1 | Apache-2.0 | https://www.npmjs.com/package/playwright-core/v/1.64.1 | OK |
 | progress | 2.0.3 | MIT | https://www.npmjs.com/package/progress/v/2.0.3 | OK |
 | proxy-agent | 6.5.0 | MIT | https://www.npmjs.com/package/proxy-agent/v/6.5.0 | OK |
@@ -906,6 +932,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | tslib | 2.8.1 | 0BSD | https://www.npmjs.com/package/tslib/v/2.8.1 | OK |
 | tslib | 2.8.1 | 0BSD | https://www.npmjs.com/package/tslib/v/2.8.1 | OK |
 | tslib | 2.8.1 | 0BSD | https://www.npmjs.com/package/tslib/v/2.8.1 | OK |
+| tsx | 4.23.15 | MIT | https://www.npmjs.com/package/tsx/v/4.23.15 | OK |
 | typedarray-to-buffer | 3.1.5 | MIT | https://www.npmjs.com/package/typedarray-to-buffer/v/3.1.5 | OK |
 | typescript | 7.0.2 | Apache-2.0 | https://www.npmjs.com/package/typescript/v/7.0.2 | OK |
 | unbzip2-stream | 1.4.3 | MIT | https://www.npmjs.com/package/unbzip2-stream/v/1.4.3 | OK |
