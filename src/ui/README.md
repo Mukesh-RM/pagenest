@@ -157,6 +157,14 @@ SVG sources: `icon.svg`, `icon-full-bleed.svg`, `icon-maskable.svg`, `splash-lig
 `node src/ui/assets/render-assets.mjs` renders `assets/generated/`: `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`,
 `apple-touch-icon-180.png`, `splash-{light,dark}-{1170x2532,1290x2796}.png`. The app owner places them (see the report).
 
+## PWA install and update UI (`pwa/`)
+
+Presentational pieces (props only): `InstallHelpSheet`, `IosInstallSheet`, `IosInstallSteps`, `InstallBanner`, `UpdateAvailableSnackbar`.
+Connected wrappers that import `@/sw` (the only place `src/ui` does):
+
+- `<InstallHelp />` renders the "Install help" button and its dialog (role=dialog, aria-modal, Close and Done buttons, focus trap, focus returns to the button). It reads `useInstall()` and `usePersistence()`. Put it in Settings in place of the old `Button` + `IosInstallSheet`.
+- `<PwaPrompts isPlaying installOfferReady />` mounts once inside the theme provider, beside the app frame. It shows the update notice (`useUpdatePrompt(isPlaying)`: Refresh when idle, "next launch" with no Refresh while audio plays), the install banner (once, after `installOfferReady`) and the iPhone 3-step sheet (iOS only, once). Pass `isPlaying` from the player state and set `installOfferReady` after the first book is opened or finished.
+
 ## Performance notes
 
 Animated properties are transform and opacity only. Skeleton shimmer is a translated pseudo-element (static under reduced
