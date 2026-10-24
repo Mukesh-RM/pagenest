@@ -81,6 +81,12 @@ describe('pickResume', () => {
     expect(info).toMatchObject({ bookId: 'b', title: 'Title b', author: 'Ann Lee', percent: 42, mode: 'read' });
   });
 
+  it('skips a position at 0 %: a book that was only opened has nothing to come back to', () => {
+    const info = pickResume([row('a', 100, { percent: 20 }), row('b', 300, { percent: 0 })], books, none);
+    expect(info).toMatchObject({ bookId: 'a', percent: 20 });
+    expect(pickResume([row('b', 300, { percent: 0 })], books, none)).toBeUndefined();
+  });
+
   it('keeps the exact locator so a reader can land on the same spot', () => {
     const where = reflow(6, 1234);
     expect(pickResume([row('a', 1, { locator: where })], books, none)?.locator).toEqual(where);
