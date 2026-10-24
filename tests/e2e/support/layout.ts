@@ -78,6 +78,18 @@ export async function expectTargetsBigEnough(page: Page, minPx: number, label: s
 
 /** Every visible control can be scrolled into view and is not covered by something else at its centre. */
 export async function unreachableControls(page: Page): Promise<Problem[]> {
+  // A sheet that is still sliding in has its footer below the fold for a moment: wait until the dialog stops moving.
+  await page.evaluate(async () => {
+    const dlg = () => document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]');
+    let last = '';
+    for (let i = 0; i < 120; i++) {
+      const r = dlg()?.getBoundingClientRect();
+      const now = r ? `${Math.round(r.top)},${Math.round(r.height)}` : '';
+      if (now === last) return;
+      last = now;
+      await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
+    }
+  });
   return page.evaluate(() => {
     const out: { what: string; where: string }[] = [];
     const sel = 'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="radio"], [role="tab"], [role="switch"], [role="checkbox"]';
@@ -89,7 +101,20 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
       const label = (el as HTMLInputElement).labels?.[0];
       if (!label && (el.getBoundingClientRect().width === 0 || el.getBoundingClientRect().height === 0)) continue; // not rendered (for example the tablet rail on a phone)
       const probe: Element = label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type) ? label : el;
-      probe.scrollIntoView({ block: 'center', inline: 'center' });
+      // A control already on screen and not covered stays where it is: centering it would also scroll overflow:hidden ancestors
+      // (a sheet with a fixed footer button would be pushed off screen by the check itself).
+      const hit = (q: Element) => { const b = q.getBoundingClientRect(); const px = b.left + b.width / 2; const py = b.top + b.height / 2; const t = px >= 0 && py >= 0 && px <= innerWidth && py <= innerHeight ? document.elementFromPoint(px, py) : null; return !!t && (q === t || q.contains(t) || t.contains(q)); };
+      if (!hit(probe)) {
+        // Scroll the way a user can: the scrollable (auto/scroll) ancestors, then the page. scrollIntoView would also move
+        // overflow:hidden ancestors (the dialog itself), which no user can do, and push other controls off screen.
+        for (let p: Element | null = probe.parentElement; p; p = p.parentElement) {
+          const oy = getComputedStyle(p).overflowY;
+          if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight && p !== document.documentElement && p !== document.body) {
+            p.scrollTop += (probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2) - (p.getBoundingClientRect().top + p.getBoundingClientRect().height / 2);
+          }
+        }
+        window.scrollBy(0, probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2 - innerHeight / 2);
+      }
       const r = probe.getBoundingClientRect();
       const x = r.left + r.width / 2; const y = r.top + r.height / 2;
       const name = `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}"`;
