@@ -438,15 +438,42 @@
   min-width: 0;
 }
 
-/* Tab labels grow with the text size setting only up to 14 px (as the platform tab bars do), so four tabs always
-   fit a 360 px screen at 200% text; a label that still cannot fit is cut with an ellipsis, never pushed off screen. */
+/* Tab labels follow the text size setting in full (12 px at 100%, 24 px at 200%): never capped, never cut. Four tabs sit
+   in one row while each can hold its longest word ("Collections", about 5.3 rem with padding); below that, which is
+   a narrow screen or a large text size (a rem is the root font size inside container queries, so this tracks the setting),
+   the tabs form two rows of two. The bar grows taller, the shell measures it (--pn-bottom-chrome), so content and the
+   mini-player always sit above it, and the bottom safe-area inset stays under the labels. */
+.pn-tabbar {
+  container-type: inline-size;
+}
+
 .pn-tabbar .pn-nav__item {
   flex: 1 1 auto;
   flex-direction: column;
   min-width: 0;
+  padding-block: var(--pn-space-2);
   padding-inline: var(--pn-space-1);
   border-radius: 0;
-  font-size: min(var(--pn-text-xs), 14px);
+  font-size: var(--pn-text-xs);
+}
+
+.pn-tabbar .pn-nav__label {
+  overflow: visible;
+  text-align: center;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@container (max-width: 21rem) {
+  .pn-tabbar .pn-nav__list {
+    flex-wrap: wrap;
+    min-height: 0;
+  }
+
+  .pn-tabbar .pn-nav__list > li {
+    flex: 1 1 50%;
+  }
 }
 
 .pn-rail {
