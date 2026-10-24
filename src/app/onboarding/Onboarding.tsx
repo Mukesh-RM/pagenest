@@ -25,7 +25,7 @@ const HEADING = 'mb-3 font-serif text-[length:var(--pn-text-xl)] font-bold leadi
  * users start at the top of the new card.
  */
 export function Onboarding() {
-  const { db, sampleBook } = useServices();
+  const { db, sampleBook, importer } = useServices();
   const navigate = useNavigate();
   const complete = useSettings((s) => s.completeOnboarding);
   const [step, setStep] = useState(0);
@@ -81,7 +81,11 @@ export function Onboarding() {
               <li>After the first load, PageNest works without internet.</li>
               <li>Nothing you add is ever uploaded.</li>
             </ul>
-            <p className="rounded-card bg-surface p-4">Adding your own books arrives in the next release. For now, choose how PageNest looks.</p>
+            <p className="rounded-card bg-surface p-4">
+              {importer?.available()
+                ? 'Add your own books with Add books on the Library tab. Next, choose how PageNest looks.'
+                : 'Adding your own books arrives in the next release. For now, choose how PageNest looks.'}
+            </p>
           </>
         ) : (
           <>
