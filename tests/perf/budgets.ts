@@ -48,4 +48,32 @@ export const BUDGETS = {
     searchMs: 100,
     filterMs: 100,
   },
+
+  /**
+   * Product excellence gates (Mukeshh's bar, /workspace/pagenest-excellence-bar.txt), run on every screen.
+   * Taps under 100 ms and 60 fps scrolling are the `tap` and `jank` budgets above.
+   */
+  excellence: {
+    /** Every screen the app has, with its route. Lighthouse audits each one. */
+    screens: [
+      { name: 'Library', path: '/' },
+      { name: 'Collections', path: '/collections' },
+      { name: 'Stats', path: '/stats' },
+      { name: 'Settings', path: '/settings' },
+    ],
+    /** "AA contrast in all five themes": blueprint 5.2 lists Light, Sepia, Dark, Black and Custom. WCAG AA text contrast. */
+    themes: ['Light', 'Sepia', 'Dark', 'Black', 'Custom'],
+    minContrast: 4.5,
+    /** "Works at 200% text size": the root font size is set to this percentage (what the browser font-size setting does). */
+    textScalePercent: 200,
+    /** Phone widths: small Android and large iPhone. */
+    viewportWidths: [360, 430],
+    viewportHeight: 800,
+    /** Smallest touch target, in CSS px (blueprint 5.8; the bar says 44). */
+    minTargetPx: 44,
+    /** Cumulative Layout Shift ("no layout shift"), Google's "good" limit. */
+    maxCls: 0.1,
+    /** With prefers-reduced-motion: reduce, no transition or animation may run longer than this. */
+    reducedMotionMaxMs: 50,
+  },
 } as const;
