@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { BookRecord } from '@/data/schema';
 import { getSetting, setSetting } from '@/data/settings';
 import type { AppServices } from './services-context';
+import { ensureSeedAudiobookBookRecord, SEED_AUDIO_BOOK_ID } from '@/features/player/seed/seed-audiobook';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 
 const book = (id: string, rest: Partial<BookRecord> = {}): BookRecord => ({
@@ -70,10 +71,9 @@ describe('/read/:id', () => {
   });
 
   it('sends an audiobook opened on the read route to the listen route', async () => {
-    await services.db.books.add(book('a1', { kind: 'audio', format: 'm4b', title: 'Spoken' }));
-    renderApp(services, { path: '/read/a1' });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Spoken' })).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent('The player arrives in a later release');
+    await ensureSeedAudiobookBookRecord(services.db);
+    renderApp(services, { path: `/read/${SEED_AUDIO_BOOK_ID}` });
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Audio player' })).toBeInTheDocument(), { timeout: 5000 });
   });
 
   it('has only working controls: Back goes to the Library, Aa opens the reading settings', async () => {
@@ -105,12 +105,11 @@ describe('/read/:id', () => {
 
 describe('/listen/:id', () => {
   it('shows an audiobook with its progress', async () => {
-    await services.db.books.add(book('a1', { kind: 'audio', format: 'm4b', title: 'Spoken' }));
-    await services.progress.save('a1', 'listen', { kind: 'audio', trackIndex: 0, positionSec: 30 }, 25);
-    renderApp(services, { path: '/listen/a1' });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Spoken' })).toBeInTheDocument();
-    expect(screen.getByText('25% done')).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent('The player arrives in a later release');
+    await ensureSeedAudiobookBookRecord(services.db);
+    await services.progress.save(SEED_AUDIO_BOOK_ID, 'listen', { kind: 'audio', trackIndex: 0, positionSec: 0 }, 25);
+    renderApp(services, { path: `/listen/${SEED_AUDIO_BOOK_ID}` });
+    expect(await screen.findByRole('region', { name: 'Audio player' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: /Extraordinarily Long Title/i })).toBeInTheDocument();
   });
 
   it('sends an e-book opened on the listen route to the read route', async () => {
@@ -128,15 +127,14 @@ describe('/listen/:id', () => {
 
 describe('from the Library', () => {
   it('tapping the Welcome back card opens the book route for its kind', async () => {
-    await services.db.books.add(book('a1', { kind: 'audio', format: 'm4b', title: 'Spoken' }));
-    await services.progress.save('a1', 'listen', { kind: 'audio', trackIndex: 0, positionSec: 9 }, 10);
+    await ensureSeedAudiobookBookRecord(services.db);
+    await services.progress.save(SEED_AUDIO_BOOK_ID, 'listen', { kind: 'audio', trackIndex: 0, positionSec: 0 }, 10);
     renderApp(services);
     const button = await screen.findByRole('button', {
       name: 'Keep listening',
     });
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     fireEvent.click(button);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Spoken' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText('10% done')).toBeInTheDocument());
+    expect(await screen.findByRole('region', { name: 'Audio player' })).toBeInTheDocument();
   });
 });

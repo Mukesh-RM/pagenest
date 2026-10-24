@@ -12,7 +12,10 @@ export default defineConfig({
   envDir: workspaceRoot,
   plugins: [react()],
   resolve: {
-    alias: { '@': resolve(workspaceRoot, 'src') },
+    alias: {
+      '@': resolve(workspaceRoot, 'src'),
+      'virtual:pwa-register': resolve(here, 'pwa-register-stub.ts'),
+    },
   },
   build: {
     outDir: resolve(workspaceRoot, 'src/features/player/e2e/dist-e2e'),

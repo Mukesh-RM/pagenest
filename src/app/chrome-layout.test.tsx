@@ -62,9 +62,10 @@ describe('app frame per route', () => {
 
   it('/listen/:id is immersive', async () => {
     await launch();
-    await services.db.books.add(book('a1', { kind: 'audio', format: 'm4b' }));
-    const { container } = renderApp(services, { path: '/listen/a1' });
-    await screen.findByRole('heading', { level: 1, name: 'Title a1' });
+    const { ensureSeedAudiobookBookRecord, SEED_AUDIO_BOOK_ID } = await import('@/features/player/seed/seed-audiobook');
+    await ensureSeedAudiobookBookRecord(services.db);
+    const { container } = renderApp(services, { path: `/listen/${SEED_AUDIO_BOOK_ID}` });
+    await screen.findByRole('region', { name: 'Audio player' }, { timeout: 5000 });
     expect(scope(container)).toHaveAttribute('data-chrome', 'immersive');
   });
 

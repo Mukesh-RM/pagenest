@@ -4,38 +4,40 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import '@/ui';
 import { AppShell } from '@/app/AppShell';
 import { RouteChrome } from '@/app/RouteChrome';
+import { CoverUrlCache } from '@/data/cover-url';
 import { createDataClient } from '@/data/data-client';
 import { getDb } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
 import { ServicesProvider } from '@/app/services';
 import {
   AudiobookPlayerScreen,
-  DEV_FIXTURE_BOOK_ID,
   miniPlayerSlot,
   PlayerProvider,
 } from '@/features/player';
+import { ensureSeedAudiobookBookRecord, SEED_AUDIO_BOOK_ID } from '@/features/player/seed/seed-audiobook';
 import type { BookRecord } from '@/data/schema';
 
 const db = getDb();
+const data = createDataClient({ db, workerFactory: () => undefined });
 const services = {
   db,
   progress: new DexieProgressService(db),
-  data: createDataClient({ db, workerFactory: () => undefined }),
+  data,
+  covers: new CoverUrlCache({ load: (id) => data.books.getCover(id) }),
   miniPlayerSlot,
 };
 
+void ensureSeedAudiobookBookRecord(db);
 const fixtureBook: BookRecord = {
-  id: DEV_FIXTURE_BOOK_ID,
-  fingerprint: 'dev-fixture',
+  id: SEED_AUDIO_BOOK_ID,
+  fingerprint: 'pn-seed-audiobook-cc0',
   kind: 'audio',
   format: 'wav',
-  title: 'PageNest test tone',
+  title: 'The Extraordinarily Long Title Of A Synthetic Audiobook Used For Layout And Screenshot Review',
   addedAt: Date.now(),
   favorite: false,
   finished: false,
 };
-
-void db.books.put(fixtureBook);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

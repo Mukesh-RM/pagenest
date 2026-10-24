@@ -7,15 +7,17 @@ import { audioItemFromSingleFile } from '@/engines/audio/build-item';
 vi.mock('@/engines/audio', async (importOriginal) => {
   const actual = await importOriginal();
   return {
-    ...actual,
+    ...(actual as Record<string, unknown>),
     createAudioElement: () => createMockAudioElement(),
   };
 });
 import { DexieProgressService } from '@/data/progress-service';
 import { getDb } from '@/data/db';
 import { ServicesProvider } from '@/app/services';
+import { CoverUrlCache } from '@/data/cover-url';
 import { createDataClient } from '@/data/data-client';
-import { FullPlayerView } from './FullPlayerView';
+import type { BookRecord } from '@/data/schema';
+import { IntegratedPlayerView } from './integrated-player-view';
 import { AudioMiniPlayer } from './AudioMiniPlayer';
 import { PlayerProvider, getAudioController, resetAudioForTests } from './PlayerProvider';
 import { snapshotFromState, snapshotsEqual } from './playback-snapshot';
@@ -28,10 +30,12 @@ afterEach(() => {
 
 function makeServices() {
   const db = getDb();
+  const data = createDataClient({ db, workerFactory: () => undefined });
   return {
     db,
     progress: new DexieProgressService(db, { intervalMs: 60_000 }),
-    data: createDataClient({ db, workerFactory: () => undefined }),
+    data,
+    covers: new CoverUrlCache({ load: (id) => data.books.getCover(id) }),
   };
 }
 
@@ -51,10 +55,23 @@ describe('playback survives chrome unmount', () => {
     const services = makeServices();
     let showMini = true;
 
+    const book: BookRecord = {
+      id: 'b1',
+      fingerprint: 'fp',
+      kind: 'audio',
+      format: 'mp3',
+      title: 'Persist',
+      addedAt: Date.now(),
+      favorite: false,
+      finished: false,
+    };
+
     const ui = (mini: boolean) => (
       <MemoryRouter>
         <ServicesProvider services={services}>
-          <PlayerProvider>{mini ? <AudioMiniPlayer /> : <FullPlayerView />}</PlayerProvider>
+          <PlayerProvider>
+            {mini ? <AudioMiniPlayer /> : <IntegratedPlayerView book={book} />}
+          </PlayerProvider>
         </ServicesProvider>
       </MemoryRouter>
     );
@@ -83,7 +100,7 @@ describe('playback survives chrome unmount', () => {
 
     showMini = false;
     rerender(ui(showMini));
-    await waitFor(() => expect(screen.getByRole('heading', { name: /now playing/i })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Audio player' })).toBeInTheDocument());
     const immersive = snapshotFromState(controller.getState(), controller.getState().status === 'playing');
     expect(snapshotsEqual(before, immersive)).toBe(true);
 

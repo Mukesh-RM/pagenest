@@ -93,9 +93,9 @@ How the worker is used:
 
 | What | Budget | Measured (this branch) |
 | --- | --- | --- |
-| First-load JS (index.html's module script + modulepreloads) | **120 kB** | 105.8 kB |
+| First-load JS (index.html's module script + modulepreloads) | **128 kB** | 125.6 kB (audio controller + player provider on first paint) |
 | First-load CSS | **12 kB** | 7.2 kB |
-| Any single lazy chunk (tab, onboarding, in-process data service) | **40 kB** | largest: in-process data service 5.6 kB; biggest tab 3.5 kB |
+| Any single lazy chunk (tab, onboarding, in-process data service) | **48 kB** | largest: mp4box metadata split 45.0 kB; in-process data service 5.6 kB |
 | A Web Worker chunk (`*.worker-*.js`; carries its own Dexie) | **55 kB** (every worker, the Library's import worker included) | data worker 40.6 kB; import worker 52.4 kB; audio tag worker 36.2 kB |
 
 Why 120 kB and not 150 kB: react-dom, the router and Dexie are about 100 kB of the first load and

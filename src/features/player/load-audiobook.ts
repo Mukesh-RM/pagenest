@@ -2,6 +2,7 @@ import type { AudioController } from '@/engines/audio/types';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
 import { DEV_FIXTURE_BOOK_ID, loadDevAudioFixture } from './dev/fixtures';
+import { loadReviewSeedAudiobook, SEED_AUDIO_BOOK_ID } from './seed/seed-audiobook';
 
 export type LoadAudiobookResult =
   | { ok: true; welcome?: ResumeInfo }
@@ -15,6 +16,11 @@ export async function loadAudiobookForBook(
   book: BookRecord,
   position: ResumeInfo | undefined,
 ): Promise<LoadAudiobookResult> {
+  if (book.id === SEED_AUDIO_BOOK_ID) {
+    await loadReviewSeedAudiobook(controller);
+    return { ok: true, welcome: position };
+  }
+
   if (import.meta.env.DEV && book.id === DEV_FIXTURE_BOOK_ID) {
     await loadDevAudioFixture(controller);
     return { ok: true, welcome: position };

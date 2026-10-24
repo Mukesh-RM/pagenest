@@ -5,7 +5,7 @@ import type { ResumeInfo } from '@/data/resume';
 import { getAudioController } from './PlayerProvider';
 import { loadAudiobookForBook } from './load-audiobook';
 import { loadDevAudioFixture } from './dev/fixtures';
-import { FullPlayerView } from './FullPlayerView';
+import { IntegratedPlayerView } from './integrated-player-view';
 
 export interface AudiobookPlayerScreenProps {
   readonly book: BookRecord;
@@ -74,5 +74,5 @@ export default function AudiobookPlayerScreen({ book, position }: AudiobookPlaye
     );
   }
 
-  return <FullPlayerView welcome={welcome} />;
+  return <IntegratedPlayerView book={book} welcome={welcome} />;
 }

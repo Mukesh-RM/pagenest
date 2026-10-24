@@ -1,10 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { PwaPrompts } from '@/ui';
+import { useIsPlaying } from '@/features/player';
 import { localHintStore } from '../hint-store';
 import { useServices } from '../services-context';
-
-const never = (): boolean => false;
 
 /**
  * The three PWA prompts (update notice, Android install banner, iPhone steps), wired to the app:
@@ -14,10 +13,9 @@ const never = (): boolean => false;
  * notice has no Refresh button, so an update can never cut playback.
  */
 export function PwaPromptsHost() {
-  const { db, miniPlayerSlot } = useServices();
+  const { db } = useServices();
   const [store] = useState(() => localHintStore());
   const hasBook = useLiveQuery(async () => (await db.books.count()) > 0, [db]);
-  const useActive = miniPlayerSlot?.useActive ?? never;
-  const playing = useActive();
+  const playing = useIsPlaying();
   return <PwaPrompts isPlaying={playing} installOfferReady={hasBook === true} store={store} />;
 }

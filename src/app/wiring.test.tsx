@@ -128,21 +128,14 @@ describe('page titles use the design system (serif) type', () => {
       favorite: false,
       finished: false,
     });
-    await services.db.books.add({
-      id: 'a1',
-      fingerprint: 'g',
-      kind: 'audio',
-      format: 'm4b',
-      title: 'A',
-      addedAt: 1,
-      favorite: false,
-      finished: false,
-    });
+    const { ensureSeedAudiobookBookRecord, SEED_AUDIO_BOOK_ID } = await import('@/features/player/seed/seed-audiobook');
+    await ensureSeedAudiobookBookRecord(services.db);
     const reader = renderApp(services, { path: '/read/b1' });
     expect((await screen.findByRole('heading', { level: 1, name: 'T' })).className).toContain('pn-reader__title');
     reader.unmount();
-    renderApp(services, { path: '/listen/a1' });
-    expect((await screen.findByRole('heading', { level: 1, name: 'A' })).className).toContain('pn-screen__title');
+    renderApp(services, { path: `/listen/${SEED_AUDIO_BOOK_ID}` });
+    await screen.findByRole('region', { name: 'Audio player' }, { timeout: 5000 });
+    expect(screen.getByRole('heading', { level: 1, name: /Extraordinarily Long Title/i }).className).toContain('pn-player__title');
   });
 });
 

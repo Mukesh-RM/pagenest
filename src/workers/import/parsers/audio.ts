@@ -1,6 +1,12 @@
 import { parseBlob } from 'music-metadata';
 import { cleanLanguage, cleanText, type ParsedMeta } from '../types';
 
+function chapterStartSec(raw: number): number {
+  if (!Number.isFinite(raw) || raw <= 0) return 0;
+  if (raw >= 1_000_000) return raw / 10_000_000;
+  return raw / 1000;
+}
+
 /**
  * Tags, duration, chapters and cover of an audio file, using music-metadata (MIT). Lives in its own
  * worker (`audio-metadata.worker.ts`) because the library is large. Reads through `Blob.slice`.
@@ -24,7 +30,8 @@ export async function parseAudio(file: Blob): Promise<ParsedMeta> {
     // Only QuickTime chapter tracks arrive here; `chpl` chapters are read by parseMp4Chapters.
     out.chapters = format.chapters.map((c, i) => ({
       title: cleanText(c.title) ?? `Chapter ${i + 1}`,
-      startSec: Math.max(0, (c.start ?? 0) / 1000),
+      // music-metadata v12+ uses 100 ns units for MP4 chapter tracks; older builds used ms.
+      startSec: Math.max(0, chapterStartSec(c.start ?? 0)),
     }));
   }
   const picture = common.picture?.[0];
