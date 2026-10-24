@@ -1,7 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setSetting } from '@/data/settings';
-import { SAMPLE_INFO } from '@/features/library';
+import { createLibraryProvider, SAMPLE_INFO } from '@/features/library';
+import { resetImportController, setImportBackend } from '@/features/library/registry';
+import { polyfillBlob } from '@/features/library/testing/blob-polyfill';
+import { inProcessBackend } from '@/features/library/testing/in-process-backend';
 import { ServicesProvider } from './services';
 import { useServices, type AppServices } from './services-context';
 import { makeServices, renderApp, resetSettings } from './test-utils';
@@ -88,4 +93,43 @@ describe('route / is the Library screen from @/features/library', () => {
     await screen.findByText('Your shelf is waiting');
     expect(screen.queryByRole('region', { name: 'Try a sample book' })).toBeNull();
   });
+});
+
+describe('first launch to the sample book on the real Library provider (in-process import backend)', () => {
+  const epub = readFileSync(resolve(process.cwd(), 'src/features/library/sample/peter-rabbit.epub'));
+  let services: AppServices;
+  beforeAll(polyfillBlob);
+  beforeEach(() => {
+    resetSettings();
+    localStorage.clear();
+    services = makeServices('integration-first-launch');
+    resetImportController();
+    setImportBackend(() => inProcessBackend(services.db));
+  });
+  afterEach(async () => {
+    resetImportController();
+    services.db.close();
+  });
+
+  it('one tap on the welcome card imports the real EPUB and opens it in the reader', async () => {
+    const fetchFn = vi.fn(async () => new Response(new Blob([new Uint8Array(epub)])));
+    const library = createLibraryProvider({ fetchFn, canRun: () => true });
+    renderApp({ ...services, importer: library, sampleBook: library });
+    await screen.findByRole('heading', { level: 1, name: /Your books, your voice/ });
+    expect(fetchFn).not.toHaveBeenCalled(); // nothing is downloaded until the tap
+    fireEvent.click(await screen.findByRole('button', { name: 'Add the sample book' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'The Tale of Peter Rabbit' }, { timeout: 15000 })).toBeInTheDocument();
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    const rows = await services.db.books.toArray();
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ title: 'The Tale of Peter Rabbit', author: 'Beatrix Potter', format: 'epub', kind: 'ebook' });
+  }, 30000);
+
+  it('after Skip, the Library offers the sample card and a second tap path works (two taps in all)', async () => {
+    const library = createLibraryProvider({ fetchFn: vi.fn(async () => new Response(new Blob([new Uint8Array(epub)]))), canRun: () => true });
+    renderApp({ ...services, importer: library, sampleBook: library });
+    fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add the sample book' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'The Tale of Peter Rabbit' }, { timeout: 15000 })).toBeInTheDocument();
+  }, 30000);
 });
