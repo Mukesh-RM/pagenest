@@ -36,3 +36,10 @@ export {
   type ModelDownloadState,
   type VoiceModelManifest,
 } from './model-download';
+export { ModelDownloadRunner, type ModelDownloadRunnerOptions } from './download/model-download-runner';
+export { fetchRange, fetchContentLength } from './download/range-fetch';
+export { englishTextToPhonemeIds, type EnglishG2pResult } from './g2p/english-g2p';
+export { parseCmudict, parseCompactCmudict } from './g2p/cmu-dict';
+export { runPiperInference } from './piper/piper-inference';
+export { encodePhonemeString } from './piper/phoneme-ids';
+export { parsePiperVoiceConfig } from './piper/piper-voice-config';

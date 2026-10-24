@@ -1,6 +1,7 @@
 /**
- * Typed model-download flow for Piper/Kokoro voices (design only — no network I/O).
- * Implementation will live in a worker + OPFS layer in Phase 4.
+ * Typed model-download flow for Piper/Kokoro voices.
+ * Runtime I/O: `download/model-download-runner.ts` and `download/model-download.worker.ts`
+ * (injected `baseUrl` only — no CDN in the repo).
  *
  * @see docs/NARRATION_SPIKE.md — “Model download flow”
  */
