@@ -43,5 +43,6 @@ describe('englishTextToPhonemeIds', () => {
     const result = englishTextToPhonemeIds('xyzzy', { dict, voiceConfig: config });
     expect(result.oovWords).toContain('xyzzy');
     expect(result.dictMisses).toBe(1);
+    expect(result.ltsFallbacks).toBe(1);
   });
 });

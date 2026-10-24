@@ -2,7 +2,8 @@ import { arpabetWordToIpa } from './arpabet-to-ipa';
 import type { CmuDict } from './cmu-dict';
 import { lookupPronunciation } from './cmu-dict';
 import { normalizeEnglishForG2p, tokenizeWords } from './normalize';
-import { spellWordPhones } from './rules-fallback';
+import { ltsEnglishWord } from './english-lts';
+import { resolveHeteronymPhones } from './heteronyms';
 import { PIPER_WORD_SPACE } from '../piper/phoneme-ids';
 import type { PiperVoiceConfig } from '../piper/piper-voice-config';
 import { encodePhonemeString, phonemeMapCoverage } from '../piper/phoneme-ids';
@@ -14,6 +15,8 @@ export interface EnglishG2pResult {
   readonly unknownSymbols: readonly string[];
   readonly dictHits: number;
   readonly dictMisses: number;
+  readonly heteronymHits: number;
+  readonly ltsFallbacks: number;
 }
 
 export interface EnglishG2pOptions {
@@ -30,9 +33,18 @@ export function englishTextToPhonemeIds(text: string, options: EnglishG2pOptions
   const oov: string[] = [];
   let hits = 0;
   let misses = 0;
+  let heteronymHits = 0;
+  let ltsFallbacks = 0;
   const ipaParts: string[] = [];
 
-  for (const word of words) {
+  for (let wi = 0; wi < words.length; wi += 1) {
+    const word = words[wi] ?? '';
+    const heteronym = resolveHeteronymPhones(word, normalized, wi);
+    if (heteronym) {
+      heteronymHits += 1;
+      ipaParts.push(arpabetWordToIpa(heteronym));
+      continue;
+    }
     const phones = lookupPronunciation(options.dict, word);
     if (phones) {
       hits += 1;
@@ -40,7 +52,8 @@ export function englishTextToPhonemeIds(text: string, options: EnglishG2pOptions
     } else {
       misses += 1;
       oov.push(word);
-      ipaParts.push(arpabetWordToIpa(spellWordPhones(word)));
+      ltsFallbacks += 1;
+      ipaParts.push(arpabetWordToIpa(ltsEnglishWord(word)));
     }
   }
 
@@ -53,6 +66,8 @@ export function englishTextToPhonemeIds(text: string, options: EnglishG2pOptions
     unknownSymbols: encoded.unknownSymbols,
     dictHits: hits,
     dictMisses: misses,
+    heteronymHits,
+    ltsFallbacks,
   };
 }
 

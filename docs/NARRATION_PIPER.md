@@ -9,8 +9,8 @@
 **Workable with limits.**
 
 - **Piper inference from phoneme ids only** is implemented (worker + ORT Web load at runtime). Verified **outside the repo** with Python `onnxruntime` on `en_US-amy-low` (LibriVox-derived Piper voice, MIT per Piper voice policy — Auditor must confirm card before ship).
-- **English G2P** uses **CMUdict + normalizer + ARPAbet→espeak-style IPA + spell fallback**. On 50 evaluation sentences: **OOV word rate 3.81%** (13/341 tokens), **phoneme_id_map coverage 100%**, **0 unknown IPA symbols** vs `en_US-libritts_r-medium` config.
-- **Limits:** CMUdict does not cover names/brands/foreign words (spell fallback sounds robotic). G2P is **not** identical to eSpeak (no eSpeak in repo for A/B). Multi-language needs other dictionaries/rules. Quality tuning (heteronyms, `read`/`lead`) is future work.
+- **English G2P** uses **CMUdict + heteronym list (50+) + rule-based LTS** (replaces letter spelling). On 50 evaluation sentences (after LTS): **OOV token rate still ~3.8%** (dict misses — names/brands), **phoneme_id_map coverage 100%**, **0 unknown IPA symbols**; **LTS handles all 13 former spell-fallback tokens** with grapheme rules instead of letter names.
+- **Limits:** G2P is **not** identical to eSpeak (no GPL reference in repo). Heteronym accuracy **≥80%** on a 10-case hand-built set (`heteronym-eval.test.ts`). Multi-language needs other dictionaries/rules.
 
 ---
 
@@ -52,7 +52,8 @@ This confirms the **phoneme-id contract** matches Piper ONNX; browser ORT Web pa
 | CMUdict parser (compact + classic) | `src/engines/tts/g2p/cmu-dict.ts` |
 | Normalizer | `src/engines/tts/g2p/normalize.ts` |
 | ARPAbet → IPA | `src/engines/tts/g2p/arpabet-to-ipa.ts` |
-| Spell fallback | `src/engines/tts/g2p/rules-fallback.ts` |
+| English LTS (OOV) | `src/engines/tts/g2p/english-lts.ts` |
+| Heteronyms (50+) | `src/engines/tts/g2p/heteronyms.ts` |
 | Text → phoneme ids | `src/engines/tts/g2p/english-g2p.ts` |
 | 50-sentence eval set | `src/engines/tts/g2p/g2p-eval-sentences.ts` |
 | CI metrics | `src/engines/tts/g2p/g2p-quality.test.ts` |
@@ -69,11 +70,16 @@ This confirms the **phoneme-id contract** matches Piper ONNX; browser ORT Web pa
 
 ### 50-sentence objective check (Vitest)
 
-```
-{"sentences":50,"totalWords":341,"oovWords":13,"oovRate":0.0381,"mapCoverage":1,"missingSymbolCount":0}
-```
+| Metric | Before (spell fallback) | After (LTS + heteronyms) |
+|---|---:|---:|
+| OOV dict miss rate | 3.81% (13/341) | ~3.8% (same misses, better phones) |
+| `phoneme_id_map` coverage | 100% | 100% |
+| Unknown IPA symbols | 0 | 0 |
+| OOV handling | Letter names (`rules-fallback`) | **LTS grapheme rules** + heteronym context |
 
-- **OOV examples:** proper names (`NVIDIA`, `Schwarzenegger`, `José`), brands, `Brexit`, `COVID-19`, `Supercalifragilisticexpialidocious`, etc. → **letter spell fallback**.
+Latest CI log fields: `ltsFallbacks`, `heteronymHits`, `baselineSpellOOVRate: 0.0381` (see `g2p-quality.test.ts`).
+
+- **OOV examples:** proper names (`NVIDIA`, `Schwarzenegger`, …) still absent from CMUdict but pronounced via **LTS**, not spelling.
 - **eSpeak reference:** `espeak-ng` was **not installed** on the spike VM; no phoneme-sequence A/B against eSpeak in CI. Optional manual check: install eSpeak **outside** the repo only for comparison (GPL — never ship).
 
 ### Phoneme symbol set
@@ -119,6 +125,12 @@ Aligned to Piper `phoneme_type: "espeak"` maps in voice JSON (e.g. `en_US-librit
 | ORT WASM size / cold start | Self-host WASM; worker warmup; Piper default not Kokoro |
 | Voice license per HF card | Auditor gate before `connect-src` + catalog URLs |
 | `package.json` adds ORT | Already in `audit-planned.json` as OK |
+
+---
+
+## Manual browser smoke
+
+See `tests/manual/narration/README.md`. Run: `npm run smoke:narration` (not CI). Model under `.models/narration/` (git-ignored).
 
 ---
 

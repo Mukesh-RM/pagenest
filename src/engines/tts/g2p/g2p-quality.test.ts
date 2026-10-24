@@ -23,6 +23,8 @@ describe('G2P quality (50 sentences)', () => {
   it('reports OOV rate and phoneme map coverage', () => {
     let totalWords = 0;
     let oovWords = 0;
+    let ltsFallbacks = 0;
+    let heteronymHits = 0;
     let coveredSymbols = 0;
     let totalSymbols = 0;
     const missingSymbols = new Set<string>();
@@ -31,6 +33,8 @@ describe('G2P quality (50 sentences)', () => {
       const result = englishTextToPhonemeIds(sentence, { dict, voiceConfig });
       totalWords += result.dictHits + result.dictMisses;
       oovWords += result.oovWords.length;
+      ltsFallbacks += result.ltsFallbacks;
+      heteronymHits += result.heteronymHits;
       for (const sym of result.unknownSymbols) {
         missingSymbols.add(sym);
       }
@@ -51,6 +55,9 @@ describe('G2P quality (50 sentences)', () => {
         oovRate: Number(oovRate.toFixed(4)),
         mapCoverage: Number(mapCoverage.toFixed(4)),
         missingSymbolCount: missingSymbols.size,
+        ltsFallbacks,
+        heteronymHits,
+        baselineSpellOOVRate: 0.0381,
       }),
     );
 

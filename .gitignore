@@ -16,6 +16,7 @@ test-results/
 
 # Models (never commit; downloaded on demand into OPFS)
 models/
+.models/
 *.onnx
 *.onnx.json
 *.gguf
