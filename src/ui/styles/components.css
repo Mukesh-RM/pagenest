@@ -175,6 +175,11 @@
   display: none;
 }
 
+/* Chips never squeeze each other: the row scrolls instead */
+.pn-chip-group--scroll > * {
+  flex: none;
+}
+
 /* ---------- Card ---------- */
 .pn-card {
   display: block;
@@ -499,6 +504,24 @@
   .pn-shell__bottom {
     inset-inline-start: var(--pn-rail-width);
   }
+}
+
+/*
+ * Immersive chrome (reader, full player): no rail, no tab bar. The rail width is 0 here so the docked mini-player,
+ * if shown, spans the screen; the content takes the safe-area insets itself.
+ */
+.pn-shell[data-chrome="immersive"] {
+  --pn-rail-width: 0px;
+}
+
+.pn-shell[data-chrome="immersive"] .pn-shell__main {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-inline: env(safe-area-inset-left, 0px) env(safe-area-inset-right, 0px);
+  padding-bottom: max(var(--pn-bottom-chrome, 0px), env(safe-area-inset-bottom, 0px));
+}
+
+.pn-shell[data-chrome="immersive"] .pn-shell__bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* ---------- Mini-player (visual shell, no audio) ---------- */
@@ -1006,8 +1029,9 @@
 }
 
 .pn-bookcard__badge--done {
-  right: auto;
-  left: var(--pn-space-2);
+  /* Bottom corner: the top of a cover is where its title usually is */
+  top: auto;
+  bottom: var(--pn-space-2);
   background: rgb(var(--pn-accent));
   color: rgb(var(--pn-on-accent));
 }

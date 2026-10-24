@@ -23,7 +23,7 @@ export function tintForTheme(cover: Rgb, theme: ThemeName): { color: string; amo
     page: hexToRgb(p['surface-raised']),
     // Everything that is drawn as text on the tinted surface must stay AA.
     foregrounds: [hexToRgb(p.text), hexToRgb(p.muted), hexToRgb(p.link), hexToRgb(p['accent-ink']), hexToRgb(p.danger)],
-    maxAmount: dark ? 0.4 : 0.3,
+    maxAmount: dark ? 0.4 : 0.2,
   });
   return { color: rgbToHex(color), amount };
 }

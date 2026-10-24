@@ -1,0 +1,359 @@
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import '../styles/index.css';
+import './gallery.css';
+import { AppShell } from '../components/AppShell';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { EmptyState } from '../components/EmptyState';
+import { ErrorNotice, PLAIN_ERRORS, type PlainErrorKind } from '../components/ErrorNotice';
+import { FinishedMoment } from '../components/FinishedMoment';
+import { GestureHint, memoryHintStore } from '../components/GestureHint';
+import { Illustration, type IllustrationName } from '../components/Illustration';
+import { MiniPlayer } from '../components/MiniPlayer';
+import { DEFAULT_NAV_ITEMS } from '../components/navigation';
+import { ResumeCard } from '../components/ResumeCard';
+import { AudioPlayerScreen } from '../screens/AudioPlayerScreen';
+import { BookDetailSheet } from '../screens/BookDetailSheet';
+import { DEFAULT_LIBRARY_FILTERS, LibraryScreen } from '../screens/LibraryScreen';
+import { ReaderScreen } from '../screens/ReaderScreen';
+import { VoiceStudioScreen } from '../screens/VoiceStudioScreen';
+import { ShortcutsProvider } from '../shortcuts';
+import { ThemeProvider } from '../theme/ThemeProvider';
+import type { ThemeName } from '../theme/themes';
+import type { BookSummary, ReaderSettings } from '../types';
+import { timeLeftLabel } from '../utils/time';
+import {
+  SAMPLE_BOOKS,
+  SAMPLE_CHAPTER,
+  SAMPLE_DETAIL,
+  SAMPLE_DETAIL_LONG,
+  SAMPLE_FONTS,
+  SAMPLE_PARAGRAPHS,
+  SAMPLE_READER_SETTINGS,
+  SAMPLE_VOICES,
+} from './sample-data';
+
+/** Every screen the gallery can show, in the order of the index page. */
+export const GALLERY_SCREENS = [
+  'library',
+  'library-resume',
+  'library-loading',
+  'library-empty',
+  'library-error',
+  'detail',
+  'detail-long',
+  'reader',
+  'reader-aa',
+  'player',
+  'voice',
+  'confirm',
+  'finished',
+  'errors',
+  'empty-states',
+  'shortcuts',
+] as const;
+export type GalleryScreenName = (typeof GALLERY_SCREENS)[number];
+
+export function isGalleryScreen(value: string | null | undefined): value is GalleryScreenName {
+  return !!value && (GALLERY_SCREENS as readonly string[]).includes(value);
+}
+
+const noop = () => undefined;
+
+const NOW_PLAYING = SAMPLE_BOOKS[0]!;
+
+function Frame({ children }: { children: ReactNode }) {
+  return <div className="pn-gallery-page">{children}</div>;
+}
+
+function LibraryDemo({
+  loading,
+  empty,
+  error,
+  detail,
+  detailBook,
+  helpOpen,
+  welcome,
+}: {
+  /** The first-run view: Welcome back card and one gesture hint, no mini-player. */
+  welcome?: boolean;
+  loading?: boolean;
+  empty?: boolean;
+  error?: boolean;
+  detail?: boolean;
+  detailBook?: 'short' | 'long';
+  helpOpen?: boolean;
+}) {
+  const [filter, setFilter] = useState('all');
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(!!detail);
+  const [tab, setTab] = useState('library');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const hints = useMemo(() => memoryHintStore(), []);
+  const books = useMemo<readonly BookSummary[]>(() => {
+    if (empty) return [];
+    return SAMPLE_BOOKS.filter((b) => {
+      if (filter === 'reading' && (b.audio || b.progress >= 1 || b.progress === 0)) return false;
+      if (filter === 'listening' && !b.audio) return false;
+      if (filter === 'finished' && b.progress < 1) return false;
+      return query.trim() === '' || b.title.toLowerCase().includes(query.trim().toLowerCase());
+    });
+  }, [empty, filter, query]);
+
+  const handlers = useMemo(() => ({ search: () => searchRef.current?.focus() }), []);
+  return (
+    <ShortcutsProvider handlers={handlers}>
+      <AppShell
+        items={DEFAULT_NAV_ITEMS}
+        value={tab}
+        onSelect={setTab}
+        miniPlayer={
+          loading || empty || welcome ? undefined : (
+            <MiniPlayer
+              title={NOW_PLAYING.title}
+              subtitle="Chapter 7: The orchard in March"
+              coverUrl={NOW_PLAYING.coverUrl}
+              playing={false}
+              progress={0.42}
+              onTogglePlay={noop}
+              onSkipBack={noop}
+              onExpand={noop}
+            />
+          )
+        }
+      >
+        <LibraryScreen
+          books={books}
+          loading={loading}
+          filters={DEFAULT_LIBRARY_FILTERS}
+          filter={filter}
+          onFilterChange={setFilter}
+          query={query}
+          onQueryChange={setQuery}
+          searchRef={searchRef}
+          onOpenBook={() => setOpen(true)}
+          onAdd={noop}
+          notice={error ? <ErrorNotice kind="offline" actionLabel="Try again" onAction={noop} /> : undefined}
+          resume={
+            !welcome ? undefined : (
+              <ResumeCard book={NOW_PLAYING} where="chapter 7" mode="listen" onResume={noop} onDismiss={noop} />
+            )
+          }
+          hint={
+            !welcome ? undefined : (
+              <GestureHint id="long-press" message="Press and hold a book to select several." store={hints} />
+            )
+          }
+        />
+      </AppShell>
+      <BookDetailSheet
+        open={open}
+        book={detailBook === 'long' ? SAMPLE_DETAIL_LONG : SAMPLE_DETAIL}
+        onClose={() => setOpen(false)}
+        onRead={noop}
+        onListen={noop}
+        onRemove={noop}
+      />
+      {helpOpen ? <HelpOpener /> : null}
+    </ShortcutsProvider>
+  );
+}
+
+function HelpOpener() {
+  useEffect(() => {
+    const id = window.setTimeout(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', shiftKey: true })), 50);
+    return () => window.clearTimeout(id);
+  }, []);
+  return null;
+}
+
+function ReaderDemo({ aa, theme }: { aa?: boolean; theme: ThemeName }) {
+  const [settings, setSettings] = useState<ReaderSettings>({ ...SAMPLE_READER_SETTINGS, theme });
+  const [open, setOpen] = useState(!!aa);
+  return (
+    <ReaderScreen
+      title="The Orchard at the End of Winter"
+      chapter={SAMPLE_CHAPTER}
+      progress={0.42}
+      settings={settings}
+      fonts={SAMPLE_FONTS}
+      onSettingsChange={setSettings}
+      settingsOpen={open}
+      onSettingsOpenChange={(next) => setOpen(next)}
+      onBack={noop}
+      onOpenContents={noop}
+    >
+      <h2>{SAMPLE_CHAPTER.replace('Chapter 7: ', 'Seven. ')}</h2>
+      {SAMPLE_PARAGRAPHS.map((p) => (
+        <p key={p.slice(0, 24)}>{p}</p>
+      ))}
+    </ReaderScreen>
+  );
+}
+
+const SPEEDS = [1, 1.25, 1.5, 2, 0.75];
+
+function PlayerDemo() {
+  const [playing, setPlaying] = useState(false);
+  const [position, setPosition] = useState(4 * 3600 + 5 * 60 + 12);
+  const [speedIndex, setSpeedIndex] = useState(1);
+  const duration = SAMPLE_DETAIL.durationSeconds ?? 9 * 3600;
+  const speed = SPEEDS[speedIndex]!;
+  return (
+    <AudioPlayerScreen
+      book={SAMPLE_DETAIL}
+      chapter="Chapter 7: The orchard in March"
+      playing={playing}
+      position={position}
+      duration={duration}
+      speed={speed}
+      sleepLabel="Off"
+      onTogglePlay={() => setPlaying((p) => !p)}
+      onSeek={setPosition}
+      onSkip={(delta) => setPosition((p) => Math.min(duration, Math.max(0, p + delta)))}
+      onSpeedClick={() => setSpeedIndex((i) => (i + 1) % SPEEDS.length)}
+      onSleepClick={noop}
+      onChaptersClick={noop}
+      onCollapse={noop}
+    />
+  );
+}
+
+function VoiceDemo() {
+  const [selected, setSelected] = useState('v-amelia');
+  const [previewing, setPreviewing] = useState<string | undefined>();
+  return (
+    <VoiceStudioScreen
+      voices={SAMPLE_VOICES}
+      selectedId={selected}
+      onSelect={setSelected}
+      onPreview={(voice) => setPreviewing((p) => (p === voice.id ? undefined : voice.id))}
+      previewingId={previewing}
+      onNext={noop}
+      onBack={noop}
+    />
+  );
+}
+
+function ConfirmDemo() {
+  const [open, setOpen] = useState(true);
+  return (
+    <>
+      <LibraryDemo />
+      <ConfirmDialog
+        open={open}
+        title="Remove this book?"
+        description="It leaves this device. Your place and notes stay in your backup."
+        confirmLabel="Remove"
+        destructive
+        onConfirm={() => setOpen(false)}
+        onCancel={() => setOpen(false)}
+      />
+    </>
+  );
+}
+
+const ERROR_KINDS = Object.keys(PLAIN_ERRORS) as PlainErrorKind[];
+const ART: readonly IllustrationName[] = ['books', 'shelf', 'chart', 'headphones', 'offline', 'search', 'page', 'done'];
+
+/** Render one named screen. Used by the dev gallery page; never imported by the app. */
+export function ScreenGallery({ screen, theme = 'light' }: { screen: GalleryScreenName; theme?: ThemeName }) {
+  switch (screen) {
+    case 'library':
+      return <LibraryDemo />;
+    case 'library-resume':
+      return <LibraryDemo welcome />;
+    case 'library-loading':
+      return <LibraryDemo loading />;
+    case 'library-empty':
+      return <LibraryDemo empty />;
+    case 'library-error':
+      return <LibraryDemo error />;
+    case 'detail':
+      return <LibraryDemo detail />;
+    case 'detail-long':
+      return <LibraryDemo detail detailBook="long" />;
+    case 'reader':
+      return <ReaderDemo theme={theme} />;
+    case 'reader-aa':
+      return <ReaderDemo aa theme={theme} />;
+    case 'player':
+      return <PlayerDemo />;
+    case 'voice':
+      return <VoiceDemo />;
+    case 'confirm':
+      return <ConfirmDemo />;
+    case 'shortcuts':
+      return <LibraryDemo helpOpen />;
+    case 'finished':
+      return (
+        <Frame>
+          <FinishedMoment
+            book={SAMPLE_BOOKS[3]!}
+            summary="You spent 6 h 20 min with it over two weeks."
+            onNext={noop}
+            nextLabel="Pick your next book"
+            onSecondary={noop}
+            secondaryLabel="Add to a shelf"
+          />
+        </Frame>
+      );
+    case 'errors':
+      return (
+        <Frame>
+          <div className="pn-gallery-stack">
+            {ERROR_KINDS.map((kind) => (
+              <ErrorNotice key={kind} kind={kind} actionLabel="Try again" onAction={noop} onDismiss={noop} />
+            ))}
+          </div>
+        </Frame>
+      );
+    case 'empty-states':
+      return (
+        <Frame>
+          <div className="pn-gallery-stack">
+            {ART.map((name) => (
+              <EmptyState
+                key={name}
+                title={`Illustration: ${name}`}
+                description="One calm sentence about what to do next."
+                art={<Illustration name={name} />}
+                action={{ label: 'Do the next thing', onClick: noop }}
+                headingLevel={3}
+              />
+            ))}
+          </div>
+        </Frame>
+      );
+    default:
+      return null;
+  }
+}
+
+export interface GalleryOptions {
+  theme: ThemeName;
+  /** Text size, 1 = 100 %, 2 = 200 %. */
+  scale: number;
+  reduceMotion: boolean;
+}
+
+/** Applies the theme and the text scale the way the app does, then renders the screen. */
+export function GalleryRoot({ screen, theme, scale, reduceMotion }: GalleryOptions & { screen: GalleryScreenName }) {
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--pn-font-size', `${16 * scale}px`);
+    root.style.fontSize = `${16 * scale}px`;
+    root.setAttribute('data-reduce-motion', reduceMotion ? 'true' : 'false');
+    return () => {
+      root.style.removeProperty('--pn-font-size');
+      root.style.removeProperty('font-size');
+      root.removeAttribute('data-reduce-motion');
+    };
+  }, [scale, reduceMotion]);
+  return (
+    <ThemeProvider mode={theme}>
+      <ScreenGallery screen={screen} theme={theme} />
+    </ThemeProvider>
+  );
+}
+
+export { timeLeftLabel };

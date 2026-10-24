@@ -18,7 +18,7 @@ export {
   type NavigationProps,
   type RailProps,
 } from './components/navigation';
-export { AppShell, type AppShellProps } from './components/AppShell';
+export { AppShell, type AppShellChrome, type AppShellProps } from './components/AppShell';
 export { MiniPlayer, type MiniPlayerProps } from './components/MiniPlayer';
 export {
   SNACKBAR_DURATION_MS,
@@ -61,3 +61,64 @@ export {
 } from './theme';
 export { prefersReducedMotion, useReducedMotion } from './utils/motion';
 export { cx } from './utils/cx';
+
+/* Redesign: building blocks */
+export { BookCover, TITLE_CARD_COLORS, titleCardIndex, type BookCoverProps } from './components/BookCover';
+export { BookCard, progressWords, type BookCardProps } from './components/BookCard';
+export { ChoiceGroup, type ChoiceGroupProps, type ChoiceOption } from './components/ChoiceGroup';
+export { Range, type RangeProps } from './components/Range';
+export { ConfirmDialog, type ConfirmDialogProps } from './components/ConfirmDialog';
+export { ErrorNotice, PLAIN_ERRORS, type ErrorNoticeProps, type PlainErrorKind } from './components/ErrorNotice';
+export { ResumeCard, type ResumeCardProps } from './components/ResumeCard';
+export { FinishedMoment, type FinishedMomentProps } from './components/FinishedMoment';
+export { GestureHint, memoryHintStore, type GestureHintProps } from './components/GestureHint';
+export { Illustration, type IllustrationName, type IllustrationProps } from './components/Illustration';
+
+/* Redesign: presentational screens (props and callbacks only, no data layer) */
+export { LibraryScreen, DEFAULT_LIBRARY_FILTERS, type LibraryFilterOption, type LibraryScreenProps } from './screens/LibraryScreen';
+export { BookDetailSheet, type BookDetailSheetProps } from './screens/BookDetailSheet';
+export { ReaderScreen, type ReaderScreenProps } from './screens/ReaderScreen';
+export {
+  ReaderSettingsSheet,
+  LINE_HEIGHT,
+  MARGIN_PX,
+  READER_MAX_FONT,
+  READER_MIN_FONT,
+  type ReaderSettingsSheetProps,
+} from './screens/ReaderSettingsSheet';
+export { AudioPlayerScreen, type AudioPlayerScreenProps } from './screens/AudioPlayerScreen';
+export { VoiceStudioScreen, type VoiceStudioScreenProps } from './screens/VoiceStudioScreen';
+export type {
+  BookDetail,
+  BookSummary,
+  HintStore,
+  LineSpacing,
+  MarginSize,
+  ReaderFontOption,
+  ReaderSettings,
+  VoiceOption,
+} from './types';
+
+/* Redesign: laptop support, hooks and helpers */
+export {
+  DEFAULT_SHORTCUTS,
+  SHORTCUT_DESCRIPTIONS,
+  ShortcutHelpDialog,
+  ShortcutsProvider,
+  formatKey,
+  resolveBindings,
+  useShortcutBindings,
+  useShortcutHelp,
+  useShortcuts,
+  type ShortcutAction,
+  type ShortcutBindings,
+  type ShortcutHandlers,
+  type ShortcutsProviderProps,
+  type UseShortcutsOptions,
+} from './shortcuts';
+export { BREAKPOINTS, minWidthQuery, useMediaQuery, useMinWidth, type Breakpoint } from './utils/media';
+export { tintForTheme, useCoverTint, type CoverTint } from './hooks';
+export { extractCoverColor } from './utils/coverColor';
+export { formatClock, formatDuration, formatSpeed, timeLeftLabel } from './utils/time';
+export { flipTransform, measure, playFlip, type RectLike } from './utils/flip';
+export { preloadCriticalFonts, CRITICAL_FONT_URLS } from './fonts/preload';

@@ -1,4 +1,6 @@
 import '../test/setup';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '../test/user';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -182,5 +184,130 @@ describe('AppShell breakpoint switching', () => {
     } finally {
       window.ResizeObserver = original;
     }
+  });
+});
+
+describe('AppShell chrome="immersive"', () => {
+  let viewport: ReturnType<typeof installViewport> | undefined;
+  afterEach(() => viewport?.restore());
+
+  const items = DEFAULT_NAV_ITEMS;
+  const mini = <p>player slot</p>;
+
+  it.each([430, 1280])('renders neither the rail nor the tab bar at %i px, only the content', (width) => {
+    viewport = installViewport(width);
+    render(
+      <AppShell items={items} value="library" onSelect={() => undefined} chrome="immersive" miniPlayer={mini}>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(screen.queryByRole('navigation')).toBeNull();
+    expect(screen.queryByTestId('pn-tabbar')).toBeNull();
+    expect(screen.queryByTestId('pn-rail')).toBeNull();
+    expect(screen.getByRole('main')).toHaveTextContent('page');
+  });
+
+  it('marks the frame with data-chrome and defaults to full', () => {
+    const { container, rerender } = render(
+      <AppShell items={items} value="library" onSelect={() => undefined}>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(container.querySelector('.pn-shell')).toHaveAttribute('data-chrome', 'full');
+    rerender(
+      <AppShell items={items} value="library" onSelect={() => undefined} chrome="immersive">
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(container.querySelector('.pn-shell')).toHaveAttribute('data-chrome', 'immersive');
+  });
+
+  it('hides the mini-player slot by default when immersive, and shows it when asked', () => {
+    const { rerender } = render(
+      <AppShell items={items} value="library" onSelect={() => undefined} chrome="immersive" miniPlayer={mini}>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(screen.queryByText('player slot')).toBeNull();
+    rerender(
+      <AppShell items={items} value="library" onSelect={() => undefined} chrome="immersive" miniPlayer={mini} showMiniPlayer>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(screen.getByText('player slot')).toBeInTheDocument();
+    rerender(
+      <AppShell items={items} value="library" onSelect={() => undefined} chrome="full" miniPlayer={mini} showMiniPlayer={false}>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(screen.queryByText('player slot')).toBeNull();
+    expect(screen.getByTestId('pn-tabbar')).toBeInTheDocument();
+  });
+
+  it('`hidden` is an alias for immersive, and `chrome` wins when both are given', () => {
+    const { container, rerender } = render(
+      <AppShell items={items} value="library" onSelect={() => undefined} hidden>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(container.querySelector('.pn-shell')).toHaveAttribute('data-chrome', 'immersive');
+    expect(screen.queryByRole('navigation')).toBeNull();
+    rerender(
+      <AppShell items={items} value="library" onSelect={() => undefined} hidden chrome="full">
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(container.querySelector('.pn-shell')).toHaveAttribute('data-chrome', 'full');
+    expect(screen.getByRole('navigation')).toBeInTheDocument();
+  });
+
+  it('toggling chrome keeps the content mounted (no remount, state and scroll survive) and publishes 0 chrome height', () => {
+    viewport = installViewport(430);
+    function Page() {
+      return <input aria-label="draft" defaultValue="" />;
+    }
+    const { rerender } = render(
+      <AppShell items={items} value="library" onSelect={() => undefined}>
+        <Page />
+      </AppShell>,
+    );
+    const input = screen.getByLabelText('draft') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'kept' } });
+    rerender(
+      <AppShell items={items} value="library" onSelect={() => undefined} chrome="immersive">
+        <Page />
+      </AppShell>,
+    );
+    expect(screen.getByLabelText('draft')).toBe(input);
+    expect(input.value).toBe('kept');
+    expect(document.documentElement.style.getPropertyValue('--pn-bottom-chrome')).toBe('0px');
+    rerender(
+      <AppShell items={items} value="library" onSelect={() => undefined}>
+        <Page />
+      </AppShell>,
+    );
+    expect(screen.getByLabelText('draft')).toBe(input);
+    expect(screen.getByTestId('pn-tabbar')).toBeInTheDocument();
+  });
+
+  it('keeps the first paint right: the immersive layout is decided in the first render, with no effect or state', () => {
+    viewport = installViewport(1280);
+    const { container } = render(
+      <AppShell items={items} value="library" onSelect={() => undefined} chrome="immersive">
+        <p>page</p>
+      </AppShell>,
+    );
+    // Synchronous after the first render: nothing mounts later and nothing is swapped in.
+    expect(container.querySelectorAll('nav')).toHaveLength(0);
+    expect(container.querySelector('.pn-shell__main')).not.toBeNull();
+  });
+
+  it('CSS: immersive zeroes the rail width, applies the safe-area insets, and adds no transition', () => {
+    const css = readFileSync(resolve(__dirname, '../styles/components.css'), 'utf8');
+    const block = css.slice(css.indexOf('.pn-shell[data-chrome="immersive"] {'));
+    const immersiveRules = block.slice(0, block.indexOf('/* ---------- Mini-player'));
+    expect(immersiveRules).toContain('--pn-rail-width: 0px');
+    for (const side of ['top', 'left', 'right', 'bottom']) expect(immersiveRules).toContain(`safe-area-inset-${side}`);
+    expect(immersiveRules).not.toMatch(/transition|animation/);
   });
 });

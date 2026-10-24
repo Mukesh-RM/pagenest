@@ -1,0 +1,23 @@
+/* Gallery-only layout helpers. Not part of the design system. */
+body {
+  margin: 0;
+  background: rgb(var(--pn-page));
+  color: rgb(var(--pn-text));
+  font-family: var(--pn-font-sans);
+  font-size: 1rem;
+}
+
+.pn-gallery-page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--pn-space-6) var(--pn-margin);
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.pn-gallery-stack {
+  display: grid;
+  gap: var(--pn-space-8);
+}

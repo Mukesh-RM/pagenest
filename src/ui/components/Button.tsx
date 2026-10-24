@@ -34,6 +34,8 @@ export type ButtonProps = LabelButtonProps | IconButtonProps;
 
 /** Pill button. Minimum 44 x 44 px, visible focus ring, three emphasis levels plus danger. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
+  // `size` is accepted for old call sites and ignored: every button has one height.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { variant = 'primary', size: _size, block, icon, iconOnly, className, type = 'button', children, ...rest } = props;
   return (
     <button
