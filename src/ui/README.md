@@ -147,7 +147,10 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
   About). The Install help intro says "offline" once ("…open full screen and work offline." or "…open full screen. Ready to
   use offline.").
 * Gallery: `?screen=covers` (monograms with every badge, and square/wide/tall pictures shown whole); `detail*` screens now show the ⋯ menu with both rows.
-* Library can delete (checked read-only on integrate-2): `src/features/library/virtual.ts` (`useGridWindow`) and `virtual.test.ts` once `BookList` uses `<VirtualList>` with `useLibraryGrid` (steps in the progress notes); `icons.tsx` (`LibIcon`, only `SelectionBar` uses it: `<Icon name="heart" filled />` from `@/ui`). `library.css` has no cover or `object-fit` rules, so nothing to remove there; Library's cards already use `BookCard`, so monograms and whole-cover fit arrive with no app change.
+* Library wiring after this branch (read-only check on integrate-2; `virtual.ts` and `icons.tsx` are already gone there):
+  1. `src/features/library/components/BookList.tsx`: `import { VirtualList, useLibraryGrid, type RectLike } from '@/ui'` (drop the `@/ui/screens/libraryGrid` deep import).
+  2. `src/features/library/library.css`: delete the two last blocks, "Real covers are shown whole" (`.pn-bookcard .pn-cover__img`) and "Generated covers in library cards" (every `.pn-bookcard .pn-cover--generated …` rule). `BookCard` now draws the monogram and the whole cover itself, so nothing else changes in `BookItem`.
+  3. `src/features/library/components/LibraryScreen.tsx` (the lazy `BookDetailSheet`): pass `onEdit={(book) => …}` to get "Edit details" before "Remove from library"; leave it out until the edit sheet exists.
 
 ### Collections and Stats (wire-ready, presentational)
 
