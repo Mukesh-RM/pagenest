@@ -13,6 +13,7 @@ import { useSettings } from './settings-store';
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { db } = useServices();
   const preference = useSettings((s) => s.themePreference);
+  const customTheme = useSettings((s) => s.customTheme);
   const fontSizePx = useSettings((s) => s.fontSizePx);
   const load = useSettings((s) => s.load);
   const setPreference = useSettings((s) => s.setThemePreference);
@@ -28,7 +29,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const onModeChange = useCallback((mode: typeof preference) => void setPreference(db, mode), [db, setPreference]);
 
   return (
-    <DesignThemeProvider mode={preference} onModeChange={onModeChange}>
+    <DesignThemeProvider mode={preference} customTheme={customTheme} onModeChange={onModeChange}>
       {children}
     </DesignThemeProvider>
   );

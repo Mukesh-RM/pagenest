@@ -5,6 +5,7 @@ import { CoverUrlCache } from '@/data/cover-url';
 import { createDataClient } from '@/data/data-client';
 import { PageNestDB } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
+import { DEFAULT_CUSTOM_THEME } from '@/ui/theme/custom';
 import { AppRoutes } from './routes';
 import { ServicesProvider } from './services';
 import type { AppServices } from './services-context';
@@ -23,7 +24,7 @@ export function makeServices(prefix = 'pagenest-test'): AppServices {
 
 /** Put the settings store back to its first-run defaults. */
 export function resetSettings(): void {
-  useSettings.setState({ loaded: false, themePreference: 'system', fontSizePx: 16, onboardingDone: false });
+  useSettings.setState({ loaded: false, themePreference: 'system', customTheme: { ...DEFAULT_CUSTOM_THEME }, fontSizePx: 16, onboardingDone: false });
 }
 
 /**

@@ -51,7 +51,7 @@ describe('app shell', () => {
   it('settings shows appearance, storage and privacy', async () => {
     renderAt('/settings');
     expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
     expect(await screen.findByText(/does not say how much space|PageNest uses/)).toBeInTheDocument();
     expect(screen.getByText(/collects nothing/)).toBeInTheDocument();
   });

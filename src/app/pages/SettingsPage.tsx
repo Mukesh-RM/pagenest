@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { formatBytes, getStorageStatus, requestPersistentStorage, type StorageStatus } from '@/data/storage';
-import { Button, IosInstallSheet } from '@/ui';
+import { Button, InstallHelp } from '@/ui';
 import { FontSizeControl } from '../components/FontSizeControl';
 import { PageHeader, Screen, SectionHeading } from '../components/PageHeader';
 import { ThemeSwatches } from '../components/ThemeSwatches';
@@ -8,7 +8,6 @@ import { ThemeSwatches } from '../components/ThemeSwatches';
 /** Settings: Appearance, Install help and Storage today; the other groups from blueprint 5.6 arrive with their features. */
 export function SettingsPage() {
   const [storage, setStorage] = useState<StorageStatus | undefined>();
-  const [installHelpOpen, setInstallHelpOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -40,12 +39,10 @@ export function SettingsPage() {
       <section aria-labelledby="install" className="flex flex-col gap-3">
         <SectionHeading id="install">Install help</SectionHeading>
         <p className="text-muted">
-          Put PageNest on your home screen so it opens like an app. On Android, open the browser menu and choose Install app, or Add to Home screen.
+          Put PageNest on your home screen so it opens like an app. On Android, open the browser menu and choose Install
+          app, or Add to Home screen.
         </p>
-        <Button variant="secondary" onClick={() => setInstallHelpOpen(true)}>
-          Install help
-        </Button>
-        <IosInstallSheet open={installHelpOpen} onClose={() => setInstallHelpOpen(false)} />
+        <InstallHelp />
       </section>
 
       <section aria-labelledby="storage" className="flex flex-col gap-3">

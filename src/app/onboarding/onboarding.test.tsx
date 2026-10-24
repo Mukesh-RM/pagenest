@@ -37,7 +37,7 @@ describe('first run', () => {
   it('shows the welcome card instead of the app, with focus on its heading', async () => {
     renderApp(services);
     const h = await heading('Your books, your voice, no account.');
-    expect(h).toHaveFocus();
+    await waitFor(() => expect(h).toHaveFocus());
     expect(screen.getByText(/no sign-in, no ads and no tracking/i)).toBeInTheDocument();
     expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
     expect(screen.queryByTestId('pn-tabbar')).not.toBeInTheDocument();
@@ -80,11 +80,11 @@ describe('first run', () => {
   it('offers the four themes plus match-my-phone as named radios', async () => {
     renderApp(services);
     await goToLook();
-    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    const group = screen.getByRole('group', { name: 'Theme' });
     const names = within(group)
       .getAllByRole('radio')
-      .map((r) => r.querySelector('.pn-choice__label')?.textContent);
-    expect(names).toEqual(['Light', 'Sepia', 'Dark', 'Black', 'Match my phone']);
+      .map((r) => r.closest('label')?.textContent);
+    expect(names).toEqual(['Light', 'Sepia', 'Dark', 'Black', 'Custom', 'Match my phone']);
     expect(within(group).getByRole('radio', { name: 'Match my phone' })).toBeChecked();
   });
 });
@@ -203,9 +203,9 @@ describe('keyboard and small screens', () => {
     renderApp(services);
     await goToLook();
     // Only the chosen theme is in the tab order (arrow keys move inside the group), then the slider and the buttons.
-    const tabbable = Array.from(document.querySelectorAll<HTMLElement>('button, input, [tabindex]')).filter((el) => el.tabIndex >= 0);
-    const labels = tabbable.map((el) => el.getAttribute('aria-label') ?? el.textContent);
-    expect(labels).toEqual(['Match my phone', 'Text size', 'Back', 'Done']);
+    const tabbable = Array.from(document.querySelectorAll<HTMLElement>('button, input, [tabindex]')).filter((el) => el.tabIndex >= 0 && !(el instanceof HTMLInputElement && el.type === 'radio' && !el.checked)); // browsers tab into a radio group once, at the chosen radio
+    const labels = tabbable.map((el) => el.getAttribute('aria-label') ?? (el as HTMLInputElement).labels?.[0]?.textContent ?? el.textContent);
+    expect(labels).toEqual(['Match my phone', 'Smaller text', 'Text size', 'Larger text', 'Back', 'Done']);
   });
 
   it('uses the design system buttons, which are 44 px tall at least', async () => {

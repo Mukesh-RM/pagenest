@@ -48,8 +48,8 @@ describe('themes (adapter over the design system palette)', () => {
     expect(() => contrastRatio('red', '#fff')).toThrow();
   });
 
-  it('offers system plus the four themes, each with a label', () => {
-    expect(THEME_PREFERENCES).toEqual(['system', 'light', 'sepia', 'dark', 'black']);
+  it('offers system, the four themes and custom, each with a label', () => {
+    expect(THEME_PREFERENCES).toEqual(['system', 'light', 'sepia', 'dark', 'black', 'custom']);
     for (const p of THEME_PREFERENCES) expect(THEME_LABELS[p].length).toBeGreaterThan(0);
   });
 

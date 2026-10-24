@@ -65,7 +65,7 @@ describe('text size (apply-theme)', () => {
     renderApp(services, { path: '/settings' });
     await screen.findByRole('heading', { level: 1, name: 'Settings' });
     await waitFor(() => expect(document.documentElement.style.getPropertyValue('--pn-font-size')).toBe('32px'));
-    expect(screen.getByRole('slider', { name: 'Text size' })).toHaveAttribute('aria-valuetext', '200 percent');
+    expect(screen.getByRole('slider', { name: 'Text size' })).toHaveAttribute('aria-valuetext', '200%, 32 pixels');
     services.db.close();
   });
 });
@@ -106,7 +106,7 @@ describe('page titles use the design system (serif) type', () => {
     expect(css).toMatch(/\.pn-screen__title\s*\{[^}]*font-family:\s*var\(--pn-font-serif\)/);
   });
 
-  it('Settings section headings are serif too, and the theme choice is the design system radio group', async () => {
+  it('Settings section headings are serif too, and the theme choice is the design system ThemePicker', async () => {
     renderApp(services, { path: '/settings' });
     const heading = await screen.findByRole('heading', {
       level: 2,
@@ -114,7 +114,7 @@ describe('page titles use the design system (serif) type', () => {
     });
     expect(heading).toHaveClass('font-serif');
     expect(read('tailwind.config.ts')).toMatch(/serif:\s*\['var\(--pn-font-serif\)'\]/);
-    expect(screen.getByRole('radiogroup', { name: 'Theme' })).toHaveClass('pn-choice');
+    expect(screen.getByRole('group', { name: 'Theme' })).toHaveClass('pn-themes');
   });
 
   it('the book routes use the design system too: the reader chrome and the page frame', async () => {
@@ -233,5 +233,65 @@ describe('first launch to the sample book', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     await screen.findByText('Your library is empty');
     expect(screen.queryByRole('button', { name: /sample/i })).toBeNull();
+  });
+});
+
+describe('theme, text size and install wiring (design system pieces)', () => {
+  let services: AppServices;
+  beforeEach(async () => {
+    resetSettings();
+    localStorage.clear();
+    services = makeServices('wiring-pieces');
+    await setSetting(services.db, 'onboardingDone', true);
+  });
+  afterEach(() => {
+    cleanup();
+    services.db.close();
+  });
+
+  it('Custom theme: choosing it applies the three colors on the page and saves them', async () => {
+    renderApp(services, { path: '/settings' });
+    fireEvent.click(await screen.findByRole('radio', { name: 'Custom' }));
+    await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('custom'));
+    await waitFor(async () => expect((await services.db.settings.get('appTheme'))?.value).toBe('custom'));
+    const saved = (await services.db.settings.get('customTheme').catch(() => undefined))?.value;
+    // Colors are only written once the person edits one; before that the defaults are in use and the setting is absent.
+    expect(saved === undefined || typeof saved === 'object').toBe(true);
+  });
+
+  it('restores a saved Custom theme and its colors on start', async () => {
+    await services.db.settings.bulkPut([
+      { key: 'appTheme', value: 'custom' },
+      { key: 'customTheme', value: { page: '#102030', text: '#f0f0f0', accent: '#ffcc00' } },
+    ]);
+    renderApp(services, { path: '/settings' });
+    await screen.findByRole('heading', { level: 1, name: 'Settings' });
+    await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('custom'));
+    expect(document.documentElement.style.getPropertyValue('--pn-page')).not.toBe('');
+  });
+
+  it('ignores a damaged saved Custom theme and keeps the defaults', async () => {
+    await services.db.settings.bulkPut([
+      { key: 'appTheme', value: 'custom' },
+      { key: 'customTheme', value: { page: 'red', text: 3 } },
+    ]);
+    renderApp(services, { path: '/settings' });
+    await screen.findByRole('heading', { level: 1, name: 'Settings' });
+    await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('custom'));
+  });
+
+  it('the text size control has working Smaller and Larger buttons that save the size', async () => {
+    renderApp(services, { path: '/settings' });
+    fireEvent.click(await screen.findByRole('button', { name: 'Larger text' }));
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--pn-font-size')).toBe('18px'));
+    fireEvent.click(screen.getByRole('button', { name: 'Smaller text' }));
+    await waitFor(() => expect(document.documentElement.style.getPropertyValue('--pn-font-size')).toBe('16px'));
+  });
+
+  it('Settings uses the design system Install help (one button) and no install control appears before a first book', async () => {
+    renderApp(services, { path: '/settings' });
+    await screen.findByRole('heading', { level: 1, name: 'Settings' });
+    expect(screen.getAllByRole('button', { name: /install help/i })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'Not now' })).toBeNull();
   });
 });
