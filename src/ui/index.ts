@@ -36,28 +36,6 @@ export { UpdateAvailableSnackbar, type UpdateAvailableSnackbarProps } from './co
 export { Skeleton, SkeletonCard, SkeletonGroup, type SkeletonGroupProps, type SkeletonProps } from './components/Skeleton';
 export { EmptyState, type EmptyStateAction, type EmptyStateProps } from './components/EmptyState';
 export { Icon, type IconName, type IconProps } from './icons';
-export {
-  COLOR_TOKENS,
-  THEME_PALETTE,
-  THEME_SCHEME,
-  type ColorToken,
-  THEME_LABELS,
-  THEME_MODES,
-  THEME_NAMES,
-  THEME_PAGE_COLOR,
-  ThemeProvider,
-  ThemeScope,
-  ThemedPortal,
-  isThemeMode,
-  isThemeName,
-  resolveTheme,
-  useSystemPrefersDark,
-  useTheme,
-  type ThemeContextValue,
-  type ThemeMode,
-  type ThemeName,
-  type ThemeProviderProps,
-  type ThemeScopeProps,
-} from './theme';
+export * from './theme';
 export { prefersReducedMotion, useReducedMotion } from './utils/motion';
 export { cx } from './utils/cx';

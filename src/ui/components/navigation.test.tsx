@@ -1,6 +1,6 @@
 import '../test/setup';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { AppShell } from './AppShell';
 import { DEFAULT_NAV_ITEMS, Rail, TabBar, type NavItem } from './navigation';

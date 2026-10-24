@@ -109,7 +109,8 @@ describe('touch targets (44 px)', () => {
     for (const selector of ['.pn-btn', '.pn-chip', '.pn-card--interactive', '.pn-nav__item', '.pn-snackbar__action']) {
       expect(css, selector).toContain(`${selector}:focus-visible`);
     }
-    expect(css).toContain('outline: 2px solid rgb(var(--pn-focus-ring))');
+    expect(css).toContain('outline: var(--pn-focus-width) solid rgb(var(--pn-focus-ring))');
+    expect(root['--pn-focus-width']).toBe('2px');
   });
 });
 

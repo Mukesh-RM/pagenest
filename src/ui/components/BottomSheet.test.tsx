@@ -1,7 +1,7 @@
 import '../test/setup';
 import { useState } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetSheetHistoryForTests } from '../utils/sheetHistory';
 import { BottomSheet } from './BottomSheet';

@@ -11,9 +11,20 @@ import { DEFAULT_NAV_ITEMS, Rail, TabBar } from '../components/navigation';
 import { ProgressBar } from '../components/ProgressBar';
 import { Skeleton, SkeletonCard, SkeletonGroup } from '../components/Skeleton';
 import { SnackbarProvider, SnackbarView, useSnackbar } from '../components/Snackbar';
-import { THEME_LABELS, THEME_MODES, THEME_NAMES, type ThemeMode, type ThemeName } from '../theme/themes';
-import { ThemeScope, useSystemPrefersDark } from '../theme/ThemeProvider';
-import { resolveTheme } from '../theme/themes';
+import {
+  CONTRAST_LABELS,
+  CONTRAST_MODES,
+  THEME_LABELS,
+  THEME_MODES,
+  THEME_NAMES,
+  resolveContrast,
+  resolveTheme,
+  type ContrastLevel,
+  type ContrastMode,
+  type ThemeMode,
+  type ThemeName,
+} from '../theme/themes';
+import { ThemeScope, useSystemPrefersDark, useSystemPrefersMoreContrast } from '../theme/ThemeProvider';
 import { InstallBanner } from '../components/InstallBanner';
 import { IosInstallSheet } from '../components/IosInstallSheet';
 import { UpdateAvailableSnackbar } from '../components/UpdateAvailableSnackbar';
@@ -28,10 +39,10 @@ const DEMO_CSS = `
 .pn-demo__row { display: flex; flex-wrap: wrap; gap: var(--pn-space-3); align-items: center; }
 .pn-demo__grid { display: grid; gap: var(--pn-space-4); grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
 .pn-demo__themes { display: grid; gap: var(--pn-space-4); grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
-.pn-demo__theme-panel { padding: var(--pn-space-4); border: 1px solid rgb(var(--pn-line)); border-radius: var(--pn-radius-card); display: flex; flex-direction: column; gap: var(--pn-space-3); }
+.pn-demo__theme-panel { padding: var(--pn-space-4); border: var(--pn-border-width) solid rgb(var(--pn-line)); border-radius: var(--pn-radius-card); display: flex; flex-direction: column; gap: var(--pn-space-3); }
 .pn-demo__cover { display: block; aspect-ratio: 2 / 3; background: rgb(var(--pn-accent)); }
 .pn-demo__switcher { position: sticky; top: 0; z-index: var(--pn-z-nav); padding: var(--pn-space-2) 0; background: rgb(var(--pn-page)); }
-.pn-demo__frame { border: 1px solid rgb(var(--pn-line)); border-radius: var(--pn-radius-card); overflow: hidden; }
+.pn-demo__frame { border: var(--pn-border-width) solid rgb(var(--pn-line)); border-radius: var(--pn-radius-card); overflow: hidden; }
 .pn-demo__frame .pn-tabbar { display: block; }
 .pn-demo__frame .pn-rail { display: flex; position: static; }
 .pn-demo__rail-frame { display: flex; min-height: 320px; }
@@ -87,7 +98,16 @@ function ThemePanel({ theme }: { theme: ThemeName }) {
   );
 }
 
-function ThemeSwitcher({ mode, theme, onChange }: { mode: ThemeMode; theme: ThemeName; onChange: (mode: ThemeMode) => void }) {
+interface ThemeSwitcherProps {
+  mode: ThemeMode;
+  theme: ThemeName;
+  onChange: (mode: ThemeMode) => void;
+  contrastMode: ContrastMode;
+  contrast: ContrastLevel;
+  onContrastChange: (mode: ContrastMode) => void;
+}
+
+function ThemeSwitcher({ mode, theme, onChange, contrastMode, contrast, onContrastChange }: ThemeSwitcherProps) {
   return (
     <div className="pn-demo__switcher">
       <ChipGroup label="App theme" scroll>
@@ -97,8 +117,15 @@ function ThemeSwitcher({ mode, theme, onChange }: { mode: ThemeMode; theme: Them
           </Chip>
         ))}
       </ChipGroup>
+      <ChipGroup label="Contrast" scroll>
+        {CONTRAST_MODES.map((m: ContrastMode) => (
+          <Chip key={m} selected={contrastMode === m} onClick={() => onContrastChange(m)}>
+            {CONTRAST_LABELS[m]}
+          </Chip>
+        ))}
+      </ChipGroup>
       <p className="pn-card__meta" style={{ margin: '4px 0 0' }}>
-        Showing: {THEME_LABELS[theme]}
+        Showing: {THEME_LABELS[theme]}, {contrast === 'high' ? 'high contrast' : 'standard contrast'}
       </p>
     </div>
   );
@@ -113,7 +140,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-function DemoBody({ mode, theme, onModeChange }: { mode: ThemeMode; theme: ThemeName; onModeChange: (mode: ThemeMode) => void }) {
+function DemoBody({ mode, theme, onChange: onModeChange, contrastMode, contrast, onContrastChange }: ThemeSwitcherProps) {
   const [sheet, setSheet] = useState(false);
   const [nested, setNested] = useState(false);
   const [tab, setTab] = useState('library');
@@ -136,7 +163,7 @@ function DemoBody({ mode, theme, onModeChange }: { mode: ThemeMode; theme: Theme
       <p style={{ color: 'rgb(var(--pn-muted))', margin: 0 }}>
         Every component in every theme. Dev only: mount this route in development builds.
       </p>
-      <ThemeSwitcher mode={mode} theme={theme} onChange={onModeChange} />
+      <ThemeSwitcher mode={mode} theme={theme} onChange={onModeChange} contrastMode={contrastMode} contrast={contrast} onContrastChange={onContrastChange} />
 
       <Section title="Motion">
         <Chip
@@ -360,6 +387,8 @@ function DemoBody({ mode, theme, onModeChange }: { mode: ThemeMode; theme: Theme
 export interface UiKitDemoProps {
   /** Initial app theme setting. Defaults to "system". */
   defaultMode?: ThemeMode;
+  /** Initial contrast setting. Defaults to "system" (follows `prefers-contrast: more`). */
+  defaultContrastMode?: ContrastMode;
 }
 
 /**
@@ -370,15 +399,25 @@ export interface UiKitDemoProps {
  *
  * It brings its own scoped theme and SnackbarProvider, so it works inside or outside the app shell.
  */
-export function UiKitDemo({ defaultMode = 'system' }: UiKitDemoProps) {
+export function UiKitDemo({ defaultMode = 'system', defaultContrastMode = 'system' }: UiKitDemoProps) {
   const [mode, setMode] = useState<ThemeMode>(defaultMode);
   const systemDark = useSystemPrefersDark();
   const theme = resolveTheme(mode, systemDark);
+  const [contrastMode, setContrastMode] = useState<ContrastMode>(defaultContrastMode);
+  const systemMoreContrast = useSystemPrefersMoreContrast();
+  const contrast = resolveContrast(contrastMode, systemMoreContrast);
   // A scoped theme (not the document root), so the demo never fights the app's own theme setting.
   return (
-    <ThemeScope theme={theme} className="pn-demo-scope">
+    <ThemeScope theme={theme} contrast={contrast} className="pn-demo-scope">
       <SnackbarProvider>
-        <DemoBody mode={mode} theme={theme} onModeChange={setMode} />
+        <DemoBody
+          mode={mode}
+          theme={theme}
+          onChange={setMode}
+          contrastMode={contrastMode}
+          contrast={contrast}
+          onContrastChange={setContrastMode}
+        />
       </SnackbarProvider>
     </ThemeScope>
   );
