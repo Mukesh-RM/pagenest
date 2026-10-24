@@ -7,11 +7,17 @@ import { loadResume } from '@/data/resume';
 import { PageHeader } from '../components/PageHeader';
 import { ResumeCard, ResumeCardSkeleton } from '../components/ResumeCard';
 import { SampleBookCard } from '../components/SampleBookCard';
+import { useCoverUrl, useLibraryPage } from '../library-hooks';
 import { pathForBook } from '../route-paths';
 import { hadResumeCard, rememberResumeCard } from '../resume-hint';
 import { useServices } from '../services-context';
 
+/** The most books this placeholder grid shows at once. The Library feature replaces it with a windowed list. */
+const GRID_LIMIT = 500;
+
 interface BookCardProps {
+  bookId: string;
+  hasCover: boolean;
   title: string;
   author: string | undefined;
   format: string;
@@ -22,14 +28,16 @@ interface BookCardProps {
  * One book tile. Memoized, and takes plain values (not the database row, which is a new object
  * on every live-query run), so a progress write for one book re-renders only that book's tile.
  */
-const BookCard = memo(function BookCard({ title, author, format, percent }: BookCardProps) {
+export const BookCard = memo(function BookCard({ bookId, hasCover, title, author, format, percent }: BookCardProps) {
+  const cover = useCoverUrl(bookId, hasCover);
   return (
-    <li className="flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-card bg-surface p-3">
-      <div>
+    <li className="relative flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-card bg-surface p-3">
+      {cover ? <img src={cover} alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-30" /> : null}
+      <div className="relative">
         <p className="line-clamp-3 font-semibold">{title}</p>
         {author ? <p className="line-clamp-1 text-sm text-muted">{author}</p> : null}
       </div>
-      <div>
+      <div className="relative">
         <p className="mb-1 text-xs uppercase text-muted">{format}</p>
         <ProgressBar value={percent / 100} label={`Progress for ${title}`} />
       </div>
@@ -55,13 +63,8 @@ export function LibraryPage() {
     },
     [navigate],
   );
-  const books = useLiveQuery(() => db.books.orderBy('addedAt').reverse().toArray(), [db]);
-  const percents = useLiveQuery(async () => {
-    const rows = await db.progress.toArray();
-    const best = new Map<string, number>();
-    for (const r of rows) best.set(r.bookId, Math.max(best.get(r.bookId) ?? 0, r.percent));
-    return best;
-  }, [db, progress]);
+  // One page from the data worker (never the whole table, never every progress row).
+  const { page } = useLibraryPage({ limit: GRID_LIMIT });
 
   // The last saved position (newest progress row of an unfinished book), with its chapter.
   const resume = useLiveQuery(async () => ({ value: await loadResume(db) }), [db, progress]);
@@ -72,6 +75,7 @@ export function LibraryPage() {
     if (resume) rememberResumeCard(shownCard);
   }, [resume, shownCard]);
 
+  const books = page?.items;
   const ready = books !== undefined && resume !== undefined;
   const resumeInfo = resume?.value;
 
@@ -100,11 +104,24 @@ export function LibraryPage() {
           {sampleBook?.available() ? <SampleBookCard provider={sampleBook} onImported={openImported} /> : null}
         </>
       ) : (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {books.map((book) => (
-            <BookCard key={book.id} title={book.title} author={book.author} format={book.format} percent={Math.round(percents?.get(book.id) ?? 0)} />
-          ))}
-        </ul>
+        <>
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {books.map((book) => (
+              <BookCard
+                key={book.id}
+                bookId={book.id}
+                hasCover={book.coverRef !== undefined}
+                title={book.title}
+                author={book.author}
+                format={book.format}
+                percent={Math.round(book.percent)}
+              />
+            ))}
+          </ul>
+          {page && page.total > books.length ? (
+            <p className="mt-4 text-center text-sm text-muted">{`Showing ${books.length} of ${page.total} books.`}</p>
+          ) : null}
+        </>
       )}
     </>
   );

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createDataClient, createWorkerFileStore } from './data-client';
 import { createDataService } from './data-service';
 import { PageNestDB } from './db';
@@ -137,5 +137,88 @@ describe('DataClient without Worker support', () => {
     });
     expect((await client.stats(Date.now())).finishedBooks).toBe(0);
     expect(client.usesWorker).toBe(false);
+  });
+});
+
+describe('library APIs through the client', () => {
+  const book = (n: number, rest: Record<string, unknown> = {}) => ({
+    fingerprint: `fp-${n}`,
+    kind: 'ebook' as const,
+    format: 'epub' as const,
+    title: `Book ${n}`,
+    file: new Blob([`bytes ${n}`]),
+    fileName: `b${n}.epub`,
+    ...rest,
+  });
+
+  async function exercise(client: ReturnType<typeof createDataClient>): Promise<void> {
+    // add: Blobs cross the boundary, results are plain data.
+    const added = await client.books.add(book(1, { author: 'Jane Austen', cover: new Blob(['png']) }));
+    if (added.status !== 'added') throw new Error('expected added');
+    const id = added.book.id;
+    expect(await (await client.openFile(added.book.fileRef as string)).text()).toBe('bytes 1');
+
+    // duplicate is a normal result, not an error
+    const dup = await client.books.add(book(2, { fingerprint: 'fp-1' }));
+    expect(dup).toMatchObject({ status: 'duplicate', existing: { id } });
+
+    // cover comes back as a Blob
+    expect(await (await client.books.getCover(id))?.text()).toBe('png');
+
+    // domain errors keep their name and code
+    await expect(client.books.update(id, { title: ' ' })).rejects.toMatchObject({ name: 'BookRepositoryError', code: 'invalid-input' });
+    await expect(client.books.update('nope', { favorite: true })).rejects.toMatchObject({ code: 'not-found' });
+    await expect(client.collections.create(' ')).rejects.toMatchObject({ name: 'CollectionError', code: 'invalid-name' });
+
+    // shelves and search
+    const shelf = await client.collections.create('Classics');
+    expect(await client.collections.addBooks(shelf.id, [id, 'zzz'])).toEqual({ added: [id], alreadyThere: [], unknown: ['zzz'] });
+    expect((await client.collections.list())[0]).toMatchObject({ name: 'Classics', bookCount: 1 });
+    const page = await client.library.query({ text: 'austen', collectionId: shelf.id });
+    expect(page.total).toBe(1);
+    expect(page.items[0]).toMatchObject({ id, percent: 0 });
+    expect(await client.library.count()).toBe(1);
+
+    // the library notices changes made through the same service
+    await client.books.update(id, { title: 'Emma' });
+    expect((await client.library.query({ text: 'emma' })).total).toBe(1);
+
+    // delete with undo, as the Library screen does it
+    const receipt = await client.books.trash([id]);
+    expect((await client.library.query({})).total).toBe(0);
+    expect(await client.books.restore(receipt.token)).toEqual({ restored: [id], skipped: [] });
+    expect((await client.library.query({})).total).toBe(1);
+    const removed = await client.books.remove([id]);
+    expect(removed.freedBytes).toBeGreaterThan(0);
+    expect(await client.fileUsage()).toBe(0);
+    expect((await client.library.query({})).total).toBe(0);
+  }
+
+  it('works through a worker', async () => {
+    const db = freshDb();
+    const client = createDataClient({ workerFactory: () => fakeWorker(db).port });
+    await exercise(client);
+    expect(client.usesWorker).toBe(true);
+    client.close();
+  });
+
+  it('works in-process with the same results', async () => {
+    const client = createDataClient({ workerFactory: () => undefined, db: freshDb(), files: new MemoryFileStore() });
+    await exercise(client);
+    expect(client.usesWorker).toBe(false);
+    client.close();
+  });
+
+  it('an import worker and the data worker share one database, and search sees both', async () => {
+    const db = freshDb();
+    const client = createDataClient({ workerFactory: () => fakeWorker(db).port });
+    expect((await client.library.query({})).total).toBe(0);
+    // Another connection (the import worker) writes straight through the repository.
+    const other = new PageNestDB(db.name);
+    const { BookRepository } = await import('./books');
+    await new BookRepository(other, new MemoryFileStore()).add(book(7, { title: 'Imported elsewhere' }));
+    other.close();
+    await vi.waitFor(async () => expect((await client.library.query({ text: 'elsewhere' })).total).toBe(1));
+    client.close();
   });
 });

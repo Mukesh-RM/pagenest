@@ -17,6 +17,8 @@ export const BUDGETS_KB = {
   initialJs: 120,
   initialCss: 12,
   lazyChunk: 40,
+  // Web Workers carry their own copy of Dexie (about 30 kB), so they get more room than a screen does.
+  workerChunk: 55,
 };
 
 const kb = (bytes) => bytes / 1000;
@@ -71,7 +73,8 @@ export function checkBundle(distDir, budgets = BUDGETS_KB) {
   const initial = new Set(assets.js.map((h) => h.split('/').pop()));
   if (existsSync(assetsDir)) {
     for (const name of readdirSync(assetsDir).filter((n) => n.endsWith('.js') && !initial.has(n)).sort()) {
-      report(`lazy chunk ${name}`, kb(gzipSize(join(assetsDir, name))), budgets.lazyChunk);
+      const isWorker = /\.worker-/.test(name);
+      report(`${isWorker ? 'worker chunk' : 'lazy chunk'} ${name}`, kb(gzipSize(join(assetsDir, name))), isWorker ? (budgets.workerChunk ?? budgets.lazyChunk) : budgets.lazyChunk);
     }
   }
   return { ok, lines };

@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
+import { CoverUrlCache } from '@/data/cover-url';
 import { createDataClient } from '@/data/data-client';
 import { getDb } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
@@ -9,7 +10,8 @@ export function ServicesProvider({ services, children }: { services?: AppService
   const value = useMemo<AppServices>(() => {
     if (services) return services;
     const db = getDb();
-    return { db, progress: new DexieProgressService(db), data: createDataClient({ db }) };
+    const data = createDataClient({ db });
+    return { db, progress: new DexieProgressService(db), data, covers: new CoverUrlCache({ load: (id) => data.books.getCover(id) }) };
   }, [services]);
   return <ServicesContext.Provider value={value}>{children}</ServicesContext.Provider>;
 }
