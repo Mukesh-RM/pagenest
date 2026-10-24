@@ -467,7 +467,11 @@ export class BookRepository {
       async () => {
         const shelves = new Set(await this.db.collections.toCollection().primaryKeys());
         for (const book of snap.books) {
-          const clash = await this.db.books.where('fingerprint').equals(book.fingerprint).first();
+          // A row without a fingerprint (an older or hand-made row) is not in the unique index, so it cannot
+          // clash; asking Dexie to look up `undefined` throws "Invalid key". Only an id clash can happen then.
+          const key: unknown = book.fingerprint;
+          const clash =
+            typeof key === 'string' ? await this.db.books.where('fingerprint').equals(key).first() : await this.db.books.get(book.id);
           if (clash) {
             skipped.push(book.id);
             continue;

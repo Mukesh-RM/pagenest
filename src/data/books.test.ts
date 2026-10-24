@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { BookRepository, BookRepositoryError, safeFileName, type WriteLocks } from './books';
+import type { BookRecord } from './schema';
 import { FileStoreError, MemoryFileStore, type FileData, type FileStore } from './opfs';
 import { bookRecord, newBook, setupFreshStorage } from './test-fixtures';
 
@@ -309,6 +310,34 @@ describe('BookRepository remove, undo and purge', () => {
     expect(result).toEqual({ restored: [book?.id], skipped: [] });
     expect(await rowCounts()).toEqual(before);
     expect(await ctx.db.books.get(book?.id as string)).toEqual(book);
+  });
+
+  it('restore works for books that have no fingerprint (no "Invalid key"), several at once', async () => {
+    // Rows made by older code or by hand have no fingerprint; they are not in the unique index.
+    const bare = (id: string) => {
+      const { fingerprint: _drop, ...row } = bookRecord(id);
+      void _drop;
+      return row as unknown as BookRecord;
+    };
+    await ctx.db.books.bulkAdd([bare('nf1'), bare('nf2')]);
+    expect(await ctx.db.books.get('nf1')).not.toHaveProperty('fingerprint');
+    const r = repo();
+    const receipt = await r.trash(['nf1', 'nf2']);
+    expect(await ctx.db.books.count()).toBe(0);
+    await expect(r.restore(receipt.token)).resolves.toEqual({ restored: ['nf1', 'nf2'], skipped: [] });
+    expect(await ctx.db.books.count()).toBe(2);
+    expect(await ctx.db.books.get('nf1')).toEqual(bare('nf1'));
+  });
+
+  it('restore skips a fingerprint-less book whose id is already back, instead of failing', async () => {
+    const { fingerprint: _drop, ...row } = bookRecord('nf3');
+    void _drop;
+    await ctx.db.books.add(row as unknown as BookRecord);
+    const r = repo();
+    const receipt = await r.trash(['nf3']);
+    await ctx.db.books.add(row as unknown as BookRecord);
+    await expect(r.restore(receipt.token)).resolves.toEqual({ restored: [], skipped: ['nf3'] });
+    expect(await ctx.db.books.count()).toBe(1);
   });
 
   it('purge finishes the removal and a second restore does nothing', async () => {
