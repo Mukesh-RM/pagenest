@@ -8,6 +8,10 @@ export const BUDGETS = {
   lighthouse: {
     /** Blueprint 19 asks for PWA and accessibility; the "no lag, ever" rule adds performance. Minimum score, 0 to 100. */
     minScore: { pwa: 90, accessibility: 90, performance: 90 },
+    /** Cumulative layout shift must stay under this on every audited page (Lighthouse CLS audit). */
+    maxCls: 0.1,
+    /** Extra scenarios audited besides the screens: a mid-size library (books seeded into IndexedDB) and a true first launch (onboarding visible). */
+    scenarios: { libraryBooks: 250 },
   },
 
   /** QA choice. Blueprint 16 allows 3 MB for the whole shell; the first-load JavaScript must stay far below that. */
