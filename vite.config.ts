@@ -44,7 +44,11 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           // Lazy engines get names the bundle check and the precache rules can recognise (Decision 15).
+          // Vite's dynamic-import helper must not land inside a lazy engine chunk, or the entry would have to load it.
+          if (id.includes('vite/preload-helper') || id.includes('vite/modulepreload-polyfill')) return 'vite-helpers';
           if (id.includes('node_modules/pdfjs-dist')) return 'engine-pdf';
+          // MOBI, FB2 and comic books are separate lazy downloads: a plain reflowable book never loads them.
+          if (/node_modules\/foliate-js\/(?:mobi|fb2|comic-book)\.js|node_modules\/foliate-js\/vendor\/fflate\.js/.test(id)) return 'engine-foliate-formats';
           if (id.includes('node_modules/foliate-js')) return 'engine-foliate';
           if (id.includes('node_modules/react-dom')) return 'react-dom';
           if (id.includes('node_modules/dexie')) return 'dexie';

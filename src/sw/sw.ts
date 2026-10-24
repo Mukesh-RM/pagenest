@@ -18,6 +18,17 @@ registerRoute(
   ({ request }) => cacheFirst(request, self.caches),
 );
 
+// Decision 15 (docs/DEPLOY.md): lazy engines, the pdf.js worker and the sample book are not precached. They are stored the first
+// time they load, then served from the cache, so a format works offline after it has opened once. The precache route above
+// answers precached files first, so this only sees the rest.
+registerRoute(
+  ({ request, sameOrigin, url }) =>
+    sameOrigin &&
+    url.pathname.startsWith('/assets/') &&
+    (request.destination === 'script' || request.destination === 'worker' || /\.(mjs|epub)$/.test(url.pathname)),
+  ({ request }) => cacheFirst(request, self.caches, undefined, 'pn-engines-v1'),
+);
+
 // 3. Updates wait. There is no skipWaiting() on install and no clients.claim(), so a new version applies on the
 //    next launch, or when the page asks for it after the user taps Refresh (never while audio plays).
 self.addEventListener('message', (event) => {
