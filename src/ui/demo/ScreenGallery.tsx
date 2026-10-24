@@ -18,6 +18,12 @@ import { BookDetailSheet } from '../screens/BookDetailSheet';
 import { DEFAULT_LIBRARY_FILTERS, LibraryScreen } from '../screens/LibraryScreen';
 import { ReaderScreen } from '../screens/ReaderScreen';
 import { VoiceStudioScreen } from '../screens/VoiceStudioScreen';
+import { OnboardingScreen } from '../screens/OnboardingScreen';
+import { SettingsScreen } from '../screens/SettingsScreen';
+import { InstallHelpSheet } from '../components/InstallHelpSheet';
+import { ThemePicker } from '../components/ThemePicker';
+import type { StarterBookOffer } from '../components/StarterBookCard';
+import type { ThemeChoice } from '../theme/themes';
 import { ShortcutsProvider } from '../shortcuts';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import type { ThemeName } from '../theme/themes';
@@ -52,6 +58,12 @@ export const GALLERY_SCREENS = [
   'errors',
   'empty-states',
   'shortcuts',
+  'onboarding-1',
+  'onboarding-2',
+  'onboarding-3',
+  'settings',
+  'install-sheet',
+  'library-starter',
 ] as const;
 export type GalleryScreenName = (typeof GALLERY_SCREENS)[number];
 
@@ -75,7 +87,9 @@ function LibraryDemo({
   detailBook,
   helpOpen,
   welcome,
+  starter,
 }: {
+  starter?: StarterBookOffer;
   /** The first-run view: Welcome back card and one gesture hint, no mini-player. */
   welcome?: boolean;
   loading?: boolean;
@@ -134,6 +148,7 @@ function LibraryDemo({
           searchRef={searchRef}
           onOpenBook={() => setOpen(true)}
           onAdd={noop}
+          starter={starter}
           notice={error ? <ErrorNotice kind="offline" actionLabel="Try again" onAction={noop} /> : undefined}
           resume={
             !welcome ? undefined : (
@@ -176,6 +191,7 @@ function ReaderDemo({ aa, theme }: { aa?: boolean; theme: ThemeName }) {
       title="The Orchard at the End of Winter"
       chapter={SAMPLE_CHAPTER}
       progress={0.42}
+      minutesLeftInChapter={8}
       settings={settings}
       fonts={SAMPLE_FONTS}
       onSettingsChange={setSettings}
@@ -236,6 +252,61 @@ function VoiceDemo() {
   );
 }
 
+/** A real public-domain book (Project Gutenberg #1342). The app supplies the real bundled file; the gallery only shows the card. */
+const STARTER: StarterBookOffer = {
+  title: 'Pride and Prejudice',
+  author: 'Jane Austen',
+  license: 'Public domain',
+  provenance: 'Project Gutenberg, ebook 1342',
+  onOpen: noop,
+};
+
+function OnboardingDemo({ start, theme }: { start: number; theme: ThemeName }) {
+  const [step, setStep] = useState(start);
+  const [choice, setChoice] = useState<ThemeChoice>(theme);
+  return (
+    <OnboardingScreen
+      step={step}
+      onNext={() => setStep((n) => Math.min(2, n + 1))}
+      onBack={() => setStep((n) => Math.max(0, n - 1))}
+      onSkip={noop}
+      onDone={noop}
+      starter={STARTER}
+      onAddBooks={noop}
+      look={<ThemePicker value={choice} onChange={setChoice} onCustomChange={noop} />}
+    />
+  );
+}
+
+function SettingsDemo({ sheet, theme }: { sheet?: boolean; theme: ThemeName }) {
+  const [choice, setChoice] = useState<ThemeChoice>(theme);
+  const [size, setSize] = useState(16);
+  const [open, setOpen] = useState(!!sheet);
+  return (
+    <AppShell items={DEFAULT_NAV_ITEMS} value="settings" onSelect={noop}>
+      <SettingsScreen
+        theme={choice}
+        onThemeChange={setChoice}
+        onCustomThemeChange={noop}
+        textSize={size}
+        onTextSizeChange={setSize}
+        install={
+          <button type="button" className="pn-btn pn-btn--secondary" onClick={() => setOpen(true)}>
+            Install help
+          </button>
+        }
+        storage={{ usageText: 'PageNest uses 38 MB of about 41 GB available.', persisted: false, onKeepData: noop }}
+      />
+      <InstallHelpSheet
+        open={open}
+        onClose={() => setOpen(false)}
+        showIosSteps
+        persistence={{ supported: true, persisted: false, usageText: '38 MB of about 41 GB', onRequest: noop }}
+      />
+    </AppShell>
+  );
+}
+
 function ConfirmDemo() {
   const [open, setOpen] = useState(true);
   return (
@@ -284,6 +355,18 @@ export function ScreenGallery({ screen, theme = 'light' }: { screen: GalleryScre
       return <VoiceDemo />;
     case 'confirm':
       return <ConfirmDemo />;
+    case 'onboarding-1':
+      return <OnboardingDemo start={0} theme={theme} />;
+    case 'onboarding-2':
+      return <OnboardingDemo start={1} theme={theme} />;
+    case 'onboarding-3':
+      return <OnboardingDemo start={2} theme={theme} />;
+    case 'settings':
+      return <SettingsDemo theme={theme} />;
+    case 'install-sheet':
+      return <SettingsDemo sheet theme={theme} />;
+    case 'library-starter':
+      return <LibraryDemo empty starter={STARTER} />;
     case 'shortcuts':
       return <LibraryDemo helpOpen />;
     case 'finished':

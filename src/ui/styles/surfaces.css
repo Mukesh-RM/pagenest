@@ -19,7 +19,8 @@
 
 .pn-themes__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* Two columns normally; one when the text is so large that a card name would break ("Custo m" at 200%) */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8rem), 1fr));
   gap: var(--pn-space-3);
 }
 
@@ -371,11 +372,17 @@
 
 .pn-onb__top {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--pn-space-3);
   min-height: var(--pn-touch);
+  container-type: inline-size;
 }
+
+.pn-onb__dots {
+  justify-self: center;
+}
+
 
 .pn-onb__top > :last-child {
   justify-self: end;
@@ -383,6 +390,7 @@
 
 .pn-onb__step {
   margin: 0;
+  white-space: nowrap;
   color: rgb(var(--pn-muted));
   font-size: var(--pn-text-sm);
 }
@@ -390,6 +398,13 @@
 .pn-onb__dots {
   display: flex;
   gap: var(--pn-space-2);
+}
+
+/* The dots are decoration: when large text leaves them no room, they go ("Step 1 of 3" says the same) */
+@container (max-width: 18rem) {
+  .pn-onb__dots {
+    display: none;
+  }
 }
 
 .pn-onb__dot {

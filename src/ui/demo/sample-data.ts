@@ -27,12 +27,8 @@ function wrap(text: string, max: number, maxLines: number): string[] {
     }
   }
   if (line) lines.push(line);
-  if (lines.length > maxLines) {
-    const kept = lines.slice(0, maxLines);
-    kept[maxLines - 1] = kept[maxLines - 1]!.replace(/\s*\S*$/, '') + '…';
-    return kept;
-  }
-  return lines;
+  // A cover never shows an ellipsis: extra lines are simply left off (the app shows the full title beside the cover).
+  return lines.slice(0, maxLines);
 }
 
 function art(kind: CoverSpec['kind'], accent: string, fg: string): string {
@@ -61,8 +57,9 @@ function art(kind: CoverSpec['kind'], accent: string, fg: string): string {
 
 /** A 2:3 cover as an SVG data URL: title, author and one simple graphic. */
 export function coverDataUrl(title: string, author: string, spec: CoverSpec): string {
-  const titleLines = wrap(title, 13, 4);
-  const authorLines = wrap(author, 24, 2);
+  // Like a printed cover: the main title (before a subtitle) and the lead authors (before "with a foreword by")
+  const titleLines = wrap(title.split(':')[0]!, 13, 4);
+  const authorLines = wrap(author.split(/, | with /)[0]!, 24, 2);
   const titleSvg = titleLines
     .map((l, i) => `<text x="36" y="${96 + i * 46}" font-family="Georgia, 'Times New Roman', serif" font-size="40" font-weight="700" fill="${spec.fg}">${esc(l)}</text>`)
     .join('');

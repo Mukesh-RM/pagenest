@@ -62,10 +62,10 @@ export function VoiceStudioScreen({
               />
               <span className="pn-voice__info">
                 <span className="pn-voice__name">{v.name}</span>
+                <span className="pn-voice__meta">{v.language}</span>
                 <span className="pn-voice__meta">
-                  <span>{v.language}</span>
-                  <span>{v.quality}</span>
-                  {v.installed ? <span>Ready offline</span> : v.size ? <span>{v.size} download</span> : null}
+                  {v.quality}
+                  {v.installed ? ' · Ready offline' : v.size ? ` · ${v.size} download` : ''}
                 </span>
               </span>
             </label>

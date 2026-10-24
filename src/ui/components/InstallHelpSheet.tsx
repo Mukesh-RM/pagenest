@@ -99,7 +99,7 @@ export function InstallHelpSheet({
           (initialFocus as { current: HTMLElement | null }).current = node;
         }}
         tabIndex={-1}
-        className="pn-install-help__status pn-focus-target"
+        className="pn-install-help__status"
       >
         {installed
           ? 'PageNest is installed on this device. Open it from your home screen.'
