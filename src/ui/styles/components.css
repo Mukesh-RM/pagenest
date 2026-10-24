@@ -413,6 +413,10 @@
 
 .pn-nav__label {
   display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pn-tabbar {
@@ -431,12 +435,18 @@
 .pn-tabbar .pn-nav__list > li {
   flex: 1 1 0;
   display: flex;
+  min-width: 0;
 }
 
+/* Tab labels grow with the text size setting only up to 14 px (as the platform tab bars do), so four tabs always
+   fit a 360 px screen at 200% text; a label that still cannot fit is cut with an ellipsis, never pushed off screen. */
 .pn-tabbar .pn-nav__item {
   flex: 1 1 auto;
   flex-direction: column;
+  min-width: 0;
+  padding-inline: var(--pn-space-1);
   border-radius: 0;
+  font-size: min(var(--pn-text-xs), 14px);
 }
 
 .pn-rail {
@@ -449,6 +459,15 @@
   background: rgb(var(--pn-surface-raised));
   border-inline-end: 1px solid rgb(var(--pn-line));
   z-index: var(--pn-z-nav);
+  /* Stays put while the page scrolls: pinned to the top, full viewport height, scrolls on its own if it must. */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  flex: none;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .pn-rail .pn-nav__list {

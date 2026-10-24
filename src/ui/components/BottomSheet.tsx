@@ -65,13 +65,16 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(open);
-  const [shown, setShown] = useState(false);
+  // The sheet is in the DOM while open, and for one slide-out after it closes. Deriving `mounted` (instead of
+  // flipping state in an effect) means opening costs ONE render, and `data-state` and the moving class are
+  // written straight to the DOM, so no further re-render happens before the first paint.
+  const [leaving, setLeaving] = useState(false);
+  const mounted = open || leaving;
+  const rootRef = useRef<HTMLDivElement>(null);
   // Drag position lives in refs and is written to the DOM from requestAnimationFrame; React state only
   // changes when a drag starts or ends (never per pointermove).
   const [dragging, setDragging] = useState(false);
   const [springing, setSpringing] = useState(false);
-  const [animating, setAnimating] = useState(false);
   const dragYRef = useRef(0);
   const frameRef = useRef(0);
   const springTimerRef = useRef(0);
@@ -89,28 +92,36 @@ export function BottomSheet({
     sheetRef.current?.style.setProperty('--pn-sheet-drag', `${y}px`);
   }, []);
 
-  // Mount, then slide in on the next frame; slide out, then unmount.
+  // Slide in on the next frame; slide out, then unmount. All writes are attributes and classes on refs.
+  const wasOpen = useRef(false);
   useEffect(() => {
-    slowMsRef.current = readDurationMs('--pn-duration-slow', 250);
+    const root = rootRef.current;
+    const sheet = sheetRef.current;
     // will-change: transform only while the sheet is actually moving.
-    setAnimating(true);
-    const settled = window.setTimeout(() => setAnimating(false), slowMsRef.current + 60);
+    const markMoving = (on: boolean) => sheet?.classList.toggle('pn-sheet--moving', on);
     if (open) {
-      setMounted(true);
+      wasOpen.current = true;
       writeDrag(0);
-      const frame = window.requestAnimationFrame(() => setShown(true));
+      markMoving(true);
+      const frame = window.requestAnimationFrame(() => {
+        // One style read per open: it also resolves the closed state, so the slide-in transition starts from it.
+        slowMsRef.current = readDurationMs('--pn-duration-slow', 250);
+        root?.setAttribute('data-state', 'open');
+      });
+      const settled = window.setTimeout(() => markMoving(false), slowMsRef.current + 60);
       return () => {
         window.cancelAnimationFrame(frame);
         window.clearTimeout(settled);
       };
     }
-    setShown(false);
+    if (!wasOpen.current) return undefined;
+    wasOpen.current = false;
+    root?.setAttribute('data-state', 'closed');
+    markMoving(true);
     setDragging(false);
-    const timer = window.setTimeout(() => setMounted(false), slowMsRef.current);
-    return () => {
-      window.clearTimeout(timer);
-      window.clearTimeout(settled);
-    };
+    setLeaving(true);
+    const timer = window.setTimeout(() => setLeaving(false), slowMsRef.current);
+    return () => window.clearTimeout(timer);
   }, [open, writeDrag]);
 
   useEffect(
@@ -123,7 +134,7 @@ export function BottomSheet({
 
   // History entry (system back), Esc, scroll lock, focus trap and restore: only while open.
   useEffect(() => {
-    if (!open || !mounted) return undefined;
+    if (!open) return undefined;
     const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const unlock = lockScroll();
     const { entry, release } = registerSheet(() => onCloseRef.current('back'));
@@ -163,7 +174,7 @@ export function BottomSheet({
     };
     // initialFocusRef is read once on open on purpose.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, mounted]);
+  }, [open]);
 
   // Swipe down on the handle or header closes the sheet (blueprint 5.7).
   const drag = useRef<{ startY: number; startT: number } | null>(null);
@@ -221,7 +232,7 @@ export function BottomSheet({
 
   return (
     <ThemedPortal>
-      <div className="pn-sheet-root" data-state={open && shown ? 'open' : 'closed'}>
+      <div ref={rootRef} className="pn-sheet-root" data-state="closed">
         <div
           className="pn-scrim"
           data-testid="pn-scrim"
@@ -238,8 +249,8 @@ export function BottomSheet({
           style={extraStyle}
           className={cx(
             'pn-sheet',
-            (dragging || springing || animating) && 'pn-sheet--moving',
-            dragging && 'pn-sheet--dragging',
+            springing && 'pn-sheet--moving',
+            dragging && 'pn-sheet--moving pn-sheet--dragging',
             springing && 'pn-sheet--springing',
             className,
           )}

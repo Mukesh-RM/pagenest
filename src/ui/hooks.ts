@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { clampTint, hexToRgb, rgbToHex, type Rgb } from './utils/color';
 import { extractCoverColor } from './utils/coverColor';
-import { THEME_PALETTE } from './theme/palette';
-import { useThemeName } from './theme/ThemeProvider';
+import { THEME_PALETTE, type ColorToken } from './theme/palette';
+import { useThemePalette } from './theme/ThemeProvider';
 import type { ThemeName } from './theme/themes';
+import { relativeLuminance } from './utils/wcag';
+
+type Palette = Readonly<Record<ColorToken, string>>;
 
 export interface CoverTint {
   /** Style to put on the tinted element: sets `--pn-cover-tint` and `--pn-tint-opacity`. */
@@ -15,9 +18,12 @@ export interface CoverTint {
 }
 
 /** Pure form of the tint rule, for tests and server-side use: a theme, and a cover color. */
-export function tintForTheme(cover: Rgb, theme: ThemeName): { color: string; amount: number } {
-  const p = THEME_PALETTE[theme];
-  const dark = theme === 'dark' || theme === 'black';
+export function tintForTheme(cover: Rgb, theme: ThemeName | Palette): { color: string; amount: number } {
+  const p = typeof theme === 'string' ? THEME_PALETTE[theme] : theme;
+  const luminance = relativeLuminance(p.page);
+  // Black is first-class: on a true black page the surface stays black, no tint at all (review 1, check "Black").
+  if (luminance < 0.004) return { color: p['surface-raised'], amount: 0 };
+  const dark = luminance < 0.18;
   const { color, amount } = clampTint({
     cover,
     page: hexToRgb(p['surface-raised']),
@@ -37,8 +43,8 @@ const NONE: CoverTint = { style: { '--pn-tint-opacity': 0 } as CSSProperties, ti
  * opacity layer (`.pn-tinted`), so nothing but opacity animates.
  */
 export function useCoverTint(coverUrl: string | undefined, theme?: ThemeName): CoverTint {
-  const scoped = useThemeName();
-  const name = theme ?? scoped;
+  const scoped = useThemePalette();
+  const palette: Palette = theme ? THEME_PALETTE[theme] : scoped;
   const [cover, setCover] = useState<{ src: string; rgb: Rgb } | undefined>();
 
   useEffect(() => {
@@ -54,8 +60,8 @@ export function useCoverTint(coverUrl: string | undefined, theme?: ThemeName): C
 
   return useMemo(() => {
     if (!coverUrl || !cover || cover.src !== coverUrl) return NONE;
-    const { color, amount } = tintForTheme(cover.rgb, name);
+    const { color, amount } = tintForTheme(cover.rgb, palette);
     if (amount === 0) return NONE;
     return { style: { '--pn-cover-tint': color, '--pn-tint-opacity': 1 } as CSSProperties, tinted: true, color };
-  }, [coverUrl, cover, name]);
+  }, [coverUrl, cover, palette]);
 }
