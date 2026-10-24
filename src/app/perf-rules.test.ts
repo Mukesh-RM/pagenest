@@ -45,8 +45,9 @@ describe('performance rules for src/app', () => {
       'pages/CollectionsPage',
       'pages/StatsPage',
       'pages/SettingsPage',
+      'pages/ReadRoute',
+      'pages/ListenRoute',
       'pages/PlayerScreen',
-      'pages/BookRoute',
       'onboarding/Onboarding',
     ];
     for (const route of routes) {

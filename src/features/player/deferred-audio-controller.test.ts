@@ -1,20 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAudioElement } from '@/engines/audio';
-import type { ProgressService } from '@/app/contracts';
+import { DexieProgressService } from '@/data/progress-service';
+import { getDb } from '@/data/db';
 import { createDeferredAudioController } from './deferred-audio-controller';
-
-const progress = {
-  report: vi.fn(),
-  save: vi.fn(),
-  flush: vi.fn(),
-  get: vi.fn(),
-  getLatest: vi.fn(),
-  subscribe: vi.fn(() => () => undefined),
-} as ProgressService;
 
 describe('createDeferredAudioController', () => {
   it('does not create an audio element until load or play', () => {
     const callsBefore = vi.mocked(createAudioElement).mock.calls.length;
+    const progress = new DexieProgressService(getDb(), { intervalMs: 60_000 });
     const controller = createDeferredAudioController(progress);
     expect(controller.getState().status).toBe('idle');
     expect(vi.mocked(createAudioElement).mock.calls.length).toBe(callsBefore);

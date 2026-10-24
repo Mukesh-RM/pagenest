@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
-import type { ProgressService } from '@/app/contracts';
 import type { AudioController } from '@/engines/audio/types';
 import { useServices } from '@/app/services-context';
 import { createDeferredAudioController } from './deferred-audio-controller';

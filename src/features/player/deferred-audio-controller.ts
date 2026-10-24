@@ -9,9 +9,10 @@ const IDLE_STATE: AudioState = {
   positionSec: 0,
   durationSec: 0,
   chapterIndex: -1,
+  chapterRemainingSec: 0,
+  bookRemainingSec: 0,
   speed: 1,
   options: { ...DEFAULT_AUDIO_OPTIONS },
-  sleep: { active: false },
   errorMessage: undefined,
 };
 
