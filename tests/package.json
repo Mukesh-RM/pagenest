@@ -1,0 +1,31 @@
+{
+  "name": "pagenest-tests",
+  "private": true,
+  "version": "0.0.0",
+  "description": "PageNest QA: Playwright end-to-end, axe accessibility, contrast and Lighthouse checks",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "install:browsers": "playwright install chromium webkit",
+    "test": "playwright test",
+    "test:fixture": "PAGENEST_TARGET=fixture playwright test",
+    "test:unit": "PAGENEST_NO_SERVER=1 playwright test --project=unit",
+    "test:e2e": "playwright test --project=chromium-desktop --project=chromium-mobile --project=webkit-iphone",
+    "lighthouse": "node lighthouse/run.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.5",
+    "chrome-launcher": "^1.2.2",
+    "lighthouse": "^11.7.1",
+    "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "basic-ftp": "^6.2.3"
+  }
+}

@@ -1,0 +1,19 @@
+/* Light theme values are the defaults so the first paint is never unstyled.
+   ThemeProvider overwrites these variables on <html> for the active theme. */
+:root {
+  --pn-page: 250 250 247;
+  --pn-surface: 255 255 255;
+  --pn-text: 28 27 25;
+  --pn-muted: 92 90 85;
+  --pn-accent: 62 91 219;
+  --pn-on-accent: 255 255 255;
+  --pn-line: 227 225 218;
+  --pn-safe-top: env(safe-area-inset-top, 0px);
+  --pn-safe-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+
+html[data-theme='dark'],
+html[data-theme='black'] {
+  color-scheme: dark;
+}
