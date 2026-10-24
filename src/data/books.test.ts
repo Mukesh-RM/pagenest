@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
-import { BookRepository, BookRepositoryError, safeFileName } from './books';
+import { BookRepository, BookRepositoryError, safeFileName, type WriteLocks } from './books';
 import { FileStoreError, MemoryFileStore, type FileData, type FileStore } from './opfs';
 import { bookRecord, newBook, setupFreshStorage } from './test-fixtures';
 
@@ -365,15 +365,43 @@ describe('BookRepository remove, undo and purge', () => {
   });
 });
 
+/** A small stand-in for `navigator.locks`: shared locks run together, an exclusive one runs alone. */
+class FakeLocks implements WriteLocks {
+  private shared = 0;
+  private exclusive = false;
+  private readonly waiting: Array<() => void> = [];
+
+  async request<T>(_name: string, options: { mode: 'shared' | 'exclusive'; ifAvailable?: boolean }, callback: (lock: unknown) => Promise<T>): Promise<T> {
+    const free = (): boolean => !this.exclusive && (options.mode === 'shared' || this.shared === 0);
+    if (!free()) {
+      if (options.ifAvailable) return callback(null);
+      await new Promise<void>((resolve) => this.waiting.push(resolve));
+      return this.request(_name, options, callback);
+    }
+    if (options.mode === 'shared') this.shared += 1;
+    else this.exclusive = true;
+    try {
+      return await callback({});
+    } finally {
+      if (options.mode === 'shared') this.shared -= 1;
+      else this.exclusive = false;
+      for (const wake of this.waiting.splice(0)) wake();
+    }
+  }
+}
+
+const tick = (ms = 10): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 describe('BookRepository.cleanupOrphans', () => {
-  it('deletes files that belong to no book, and keeps the rest', async () => {
-    const r = repo();
-    const kept = await r.add(newBook(1, { cover: new Blob(['c']) }));
+  it('deletes files that belong to no book, and keeps the rest (a fresh start)', async () => {
+    const before = repo();
+    const kept = await before.add(newBook(1, { cover: new Blob(['c']) }));
     if (kept.status !== 'added') throw new Error('seed');
     await ctx.files.write('books/ghost/book.epub', 'leftover');
     await ctx.files.write('covers/ghost.img', 'cover');
     await ctx.files.write('renders/ghost/1.opus', 'audio');
-    const report = await r.cleanupOrphans();
+
+    const report = await repo().cleanupOrphans(); // the next start: a new repository
     expect(report.removedBookIds).toEqual(['ghost']);
     expect(report.freedBytes).toBe('leftover'.length + 'cover'.length + 'audio'.length);
     expect(await ctx.files.exists('books/ghost/book.epub')).toBe(false);
@@ -381,31 +409,125 @@ describe('BookRepository.cleanupOrphans', () => {
     expect(await ctx.files.exists(kept.book.coverRef as string)).toBe(true);
   });
 
-  it('does not touch books waiting in the trash', async () => {
+  it('does not touch books waiting in this repository trash', async () => {
+    await ctx.db.books.add(bookRecord('t1', { fileRef: 'books/t1/book.epub' }));
+    await ctx.files.write('books/t1/book.epub', 'bytes');
     const r = repo();
-    const a = await r.add(newBook(1));
-    if (a.status !== 'added') throw new Error('seed');
-    await r.trash([a.book.id]);
+    await r.trash(['t1']);
     expect((await r.cleanupOrphans()).removedBookIds).toEqual([]);
-    expect(await ctx.files.exists(a.book.fileRef as string)).toBe(true);
-  });
-
-  it('does not touch a book being added right now', async () => {
-    const slow = new Promise<void>((resolve) => setTimeout(resolve, 20));
-    const files = new (class extends MemoryFileStore {
-      override async write(path: string, data: FileData): Promise<void> {
-        await super.write(path, data);
-        await slow;
-      }
-    })();
-    const repoSlow = new BookRepository(ctx.db, files);
-    const adding = repoSlow.add(newBook(1));
-    await new Promise((resolve) => setTimeout(resolve, 5));
-    expect((await repoSlow.cleanupOrphans()).removedBookIds).toEqual([]);
-    expect((await adding).status).toBe('added');
+    expect(await ctx.files.exists('books/t1/book.epub')).toBe(true);
   });
 
   it('is a no-op on empty storage', async () => {
     expect(await repo().cleanupOrphans()).toEqual({ removedBookIds: [], freedBytes: 0 });
+  });
+
+  describe('runs once, at startup, before any import', () => {
+    it('refuses a second call, with a typed error, and deletes nothing', async () => {
+      const r = repo();
+      await r.cleanupOrphans();
+      await ctx.files.write('books/ghost/book.epub', 'leftover');
+      const error = await r.cleanupOrphans().catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(BookRepositoryError);
+      expect(error).toMatchObject({ name: 'BookRepositoryError', code: 'cleanup-not-allowed' });
+      expect((error as Error).message).toMatch(/already ran/);
+      expect(await ctx.files.exists('books/ghost/book.epub')).toBe(true);
+    });
+
+    it('refuses a second call that overlaps the first', async () => {
+      const r = repo();
+      const first = r.cleanupOrphans();
+      await expect(r.cleanupOrphans()).rejects.toMatchObject({ code: 'cleanup-not-allowed' });
+      await expect(first).resolves.toBeDefined();
+    });
+
+    it('refuses once a book has been added, even if it turned out to be a duplicate', async () => {
+      const r = repo();
+      await r.add(newBook(1));
+      await ctx.files.write('books/ghost/book.epub', 'leftover');
+      await expect(r.cleanupOrphans()).rejects.toMatchObject({ code: 'cleanup-not-allowed', message: expect.stringMatching(/before any book is added/) });
+      expect(await ctx.files.exists('books/ghost/book.epub')).toBe(true);
+
+      const second = repo();
+      await second.add(newBook(1)); // duplicate of the first: nothing stored, but an import has begun
+      await expect(second.cleanupOrphans()).rejects.toMatchObject({ code: 'cleanup-not-allowed' });
+    });
+
+    it('is not blocked by an add that was rejected as invalid input', async () => {
+      const r = repo();
+      await expect(r.add(newBook(1, { title: ' ' }))).rejects.toMatchObject({ code: 'invalid-input' });
+      await expect(r.cleanupOrphans()).resolves.toBeDefined();
+    });
+
+    it('can be retried when the clean-up itself failed (nothing had started)', async () => {
+      let failures = 1;
+      const files = new (class extends MemoryFileStore {
+        override async list(path?: string) {
+          if (failures-- > 0) throw new Error('disk hiccup');
+          return super.list(path);
+        }
+      })();
+      const r = new BookRepository(ctx.db, files);
+      await expect(r.cleanupOrphans()).rejects.toThrow('disk hiccup');
+      await expect(r.cleanupOrphans()).resolves.toEqual({ removedBookIds: [], freedBytes: 0 });
+      await expect(r.cleanupOrphans()).rejects.toMatchObject({ code: 'cleanup-not-allowed' });
+    });
+
+    it('a book added during the clean-up waits for it and keeps its files', async () => {
+      const files = new (class extends MemoryFileStore {
+        override async list(path?: string) {
+          await tick(15);
+          return super.list(path);
+        }
+      })();
+      await files.write('books/ghost/book.epub', 'leftover');
+      const r = new BookRepository(ctx.db, files);
+      const cleaning = r.cleanupOrphans();
+      const adding = r.add(newBook(1));
+      const [report, added] = await Promise.all([cleaning, adding]);
+      expect(report.removedBookIds).toEqual(['ghost']);
+      if (added.status !== 'added') throw new Error('expected added');
+      expect(await files.exists(added.book.fileRef as string)).toBe(true);
+    });
+  });
+
+  describe('with Web Locks (another worker or tab may be importing)', () => {
+    it('refuses while another repository is adding a book, and deletes nothing', async () => {
+      const locks = new FakeLocks();
+      const slow = new (class extends MemoryFileStore {
+        override async write(path: string, data: FileData) {
+          await super.write(path, data);
+          await tick(30);
+        }
+      })();
+      const importer = new BookRepository(ctx.db, slow, () => 1, locks);
+      const adding = importer.add(newBook(1));
+      await tick(5);
+      await ctx.files.write('books/ghost/book.epub', 'leftover');
+      const starter = new BookRepository(ctx.db, ctx.files, () => 1, locks);
+      await expect(starter.cleanupOrphans()).rejects.toMatchObject({ code: 'cleanup-not-allowed', message: expect.stringMatching(/being added right now/) });
+      expect(await ctx.files.exists('books/ghost/book.epub')).toBe(true);
+      expect((await adding).status).toBe('added');
+      expect(await slow.list('books')).toHaveLength(1);
+    });
+
+    it('runs when nobody is importing, and an import that starts meanwhile waits for it', async () => {
+      const locks = new FakeLocks();
+      const slow = new (class extends MemoryFileStore {
+        override async list(path?: string) {
+          await tick(15);
+          return super.list(path);
+        }
+      })();
+      await slow.write('books/ghost/book.epub', 'leftover');
+      const starter = new BookRepository(ctx.db, slow, () => 1, locks);
+      const importer = new BookRepository(ctx.db, slow, () => 1, locks);
+      const cleaning = starter.cleanupOrphans();
+      await tick(3);
+      const added = await importer.add(newBook(1)); // waits for the exclusive lock
+      expect((await cleaning).removedBookIds).toEqual(['ghost']);
+      if (added.status !== 'added') throw new Error('expected added');
+      expect(await slow.exists(added.book.fileRef as string)).toBe(true);
+    });
   });
 });

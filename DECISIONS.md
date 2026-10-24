@@ -45,3 +45,6 @@ The bar lives in the owner's instructions and is applied to every screen: taps r
 
 ## Decision 13 (Oct 24, 2026) File type detection by content
 Import detects the file type from content (magic bytes), never from the file name or extension. A book named `book.epub__1_` or with no extension still opens as EPUB, PDF, DOCX or another supported format.
+
+## Decision 14 (Oct 24, 2026) Worker bundle budget and Phase 1 data layer scope
+Casey approved the Architect's proposal on feature/data-phase1-prep. Bundle budgets: first-load JS stays at 120 kB gzip and first-load CSS at 12 kB. Web Worker chunks (`*.worker-*.js`) get their own budget of 55 kB gzip, because each worker carries its own copy of Dexie (about 30 kB); screens and other lazy chunks stay at 40 kB. The budgets live in `scripts/check-bundle.mjs` and `docs/PERFORMANCE.md`. Data layer: no tags field and no schema change (search covers title, author, narrator and series); no import-job store (the importer keeps job state in memory, and re-adding a folder after a restart skips books already imported by fingerprint); `cleanupOrphans()` runs exactly once at startup before any import and refuses with `cleanup-not-allowed` otherwise (docs/DATA_LAYER.md).

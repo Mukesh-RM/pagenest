@@ -31,7 +31,9 @@ export type BookRepositoryErrorCode =
   /** A file or database write failed. Nothing was kept. */
   | 'write-failed'
   /** The book does not exist. */
-  | 'not-found';
+  | 'not-found'
+  /** `cleanupOrphans` was called when it is no longer safe (see its documentation). Nothing was deleted. */
+  | 'cleanup-not-allowed';
 
 export class BookRepositoryError extends Error {
   readonly code: BookRepositoryErrorCode;
@@ -155,8 +157,33 @@ function cleanText(value: string | undefined): string | undefined {
   return v === undefined || v === '' ? undefined : v;
 }
 
+/**
+ * The part of the browser's Web Locks API this file uses (`navigator.locks`). Every `add` holds the
+ * lock shared and `cleanupOrphans` takes it exclusive, so a clean-up can never overlap an import,
+ * even one running in another worker or tab. Without Web Locks the guard covers this instance only.
+ */
+export interface WriteLocks {
+  request<T>(
+    name: string,
+    options: { mode: 'shared' | 'exclusive'; ifAvailable?: boolean },
+    callback: (lock: unknown) => Promise<T>,
+  ): Promise<T>;
+}
+
+const WRITE_LOCK = 'pagenest:book-files';
+
+function browserLocks(): WriteLocks | undefined {
+  return (globalThis as { navigator?: { locks?: WriteLocks } }).navigator?.locks;
+}
+
 export class BookRepository {
   private readonly trashed = new Map<string, Snapshot>();
+  /** An `add` got past validation on this instance: orphan clean-up is no longer safe. */
+  private addsStarted = false;
+  /** Orphan clean-up finished on this instance. */
+  private cleanupDone = false;
+  /** The orphan clean-up in progress, if any. */
+  private cleanup: Promise<void> | undefined;
   /** Books whose files are being written right now; `cleanupOrphans` must not touch them. */
   private readonly inflight = new Set<string>();
 
@@ -164,6 +191,7 @@ export class BookRepository {
     private readonly db: PageNestDB,
     private readonly files: FileStore | Promise<FileStore>,
     private readonly now: () => number = Date.now,
+    private readonly locks: WriteLocks | undefined = browserLocks(),
   ) {}
 
   private store(): Promise<FileStore> {
@@ -216,6 +244,13 @@ export class BookRepository {
     }
     if (input.kind !== 'audio' && hasTracks) throw new BookRepositoryError('invalid-input', 'Only audiobooks have tracks.');
 
+    this.addsStarted = true;
+    // An orphan clean-up that is running finishes first, so it cannot take this book's new files.
+    await this.cleanup?.then(noop, noop);
+    return this.locks ? this.locks.request(WRITE_LOCK, { mode: 'shared' }, () => this.addValidated(input, title)) : this.addValidated(input, title);
+  }
+
+  private async addValidated(input: NewBook, title: string): Promise<AddBookResult> {
     const existing = await this.findByFingerprint(input.fingerprint);
     if (existing) return { status: 'duplicate', existing };
 
@@ -481,11 +516,44 @@ export class BookRepository {
 
   /**
    * Delete files of books that no longer exist: leftovers from a crash during an import or
-   * before an Undo timed out. Skips books being added by this repository and books waiting in
-   * the trash. Call it once at startup, before imports begin: a second importer's half-written
-   * book looks the same as an orphan.
+   * before an Undo timed out.
+   *
+   * **Call it exactly once, at startup, before any import begins.** It cannot tell a half-written
+   * import from a leftover, so it refuses instead of guessing:
+   * - after this repository has started adding a book,
+   * - a second time (also while the first call is still running),
+   * - while an `add` is running in another worker or tab (browsers with Web Locks).
+   *
+   * Books waiting in this repository's trash are never touched.
+   * @throws BookRepositoryError `cleanup-not-allowed` (nothing is deleted). Catch it and carry on:
+   *   it only means the clean-up is not needed or not safe right now; the leftovers go at the next start.
    */
   async cleanupOrphans(): Promise<OrphanReport> {
+    if (this.cleanupDone || this.cleanup) {
+      throw new BookRepositoryError('cleanup-not-allowed', 'Orphan clean-up already ran. It runs once, at startup.');
+    }
+    if (this.addsStarted || this.inflight.size > 0) {
+      throw new BookRepositoryError('cleanup-not-allowed', 'Orphan clean-up must run before any book is added, because a book being added looks like an orphan.');
+    }
+    const run = (): Promise<OrphanReport> => this.removeOrphans();
+    const locked = this.locks
+      ? this.locks.request(WRITE_LOCK, { mode: 'exclusive', ifAvailable: true }, async (lock) => {
+          if (!lock) throw new BookRepositoryError('cleanup-not-allowed', 'A book is being added right now, so orphan clean-up was skipped.');
+          return run();
+        })
+      : run();
+    const promise = locked.then((report) => {
+      this.cleanupDone = true;
+      return report;
+    });
+    // Never rejects: it only marks "running" and lets `add` wait for the end.
+    this.cleanup = promise.then(noop, noop).then(() => {
+      this.cleanup = undefined;
+    });
+    return promise;
+  }
+
+  private async removeOrphans(): Promise<OrphanReport> {
     const files = await this.store();
     const known = new Set(await this.db.books.toCollection().primaryKeys());
     for (const snap of this.trashed.values()) for (const b of snap.books) known.add(b.id);
@@ -524,6 +592,8 @@ export class BookRepository {
     return freed;
   }
 }
+
+function noop(): void {}
 
 function isConstraintError(error: unknown): boolean {
   return error instanceof Error && error.name === 'ConstraintError';

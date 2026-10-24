@@ -191,7 +191,7 @@ These were noticed, not changed, because the files belong to other roles.
 | No layout shift on tab load | Fixed in code; **no automatic test** (needs a real browser layout) | Same-height fallback in `ScreenFallback`; QA to add a trace check |
 | First-load budget | Fixed, enforced | `bundle-budget.test.ts`, `npm run build` |
 | Whole-table `progress` read for the `reading`/`listening` filters | Open (small): rows are one per book and mode, read in the worker only when that chip is used | `DATA_LAYER.md` |
-| Snapshot re-read after any `books` change | Open (not measured in a real browser) | `DATA_LAYER.md` "Known cost" |
+| Snapshot re-read after any `books` change | **Was open, now fixed** (measured 41 ms median at 5,000 books in Chrome, now 0.5–2 ms) | `docs/DATA_LAYER.md` "Cost of a change"; `library-query-patch.test.ts` counts rows read; `scripts/bench-library.mjs` |
 
 Everything under "Risks to watch" for `src/ui`, `src/sw`, the Library feature and QA is for those
 owners and was not touched.

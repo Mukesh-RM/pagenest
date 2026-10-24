@@ -202,6 +202,13 @@ describe('library APIs through the client', () => {
     client.close();
   });
 
+  it('orphan clean-up runs once; the refusal arrives as a coded error', async () => {
+    const client = createDataClient({ workerFactory: () => fakeWorker(freshDb()).port });
+    await expect(client.books.cleanupOrphans()).resolves.toEqual({ removedBookIds: [], freedBytes: 0 });
+    await expect(client.books.cleanupOrphans()).rejects.toMatchObject({ name: 'BookRepositoryError', code: 'cleanup-not-allowed' });
+    client.close();
+  });
+
   it('works in-process with the same results', async () => {
     const client = createDataClient({ workerFactory: () => undefined, db: freshDb(), files: new MemoryFileStore() });
     await exercise(client);

@@ -57,28 +57,43 @@ const NATURAL_DIRECTION: Record<LibrarySort, 'asc' | 'desc'> = {
 
 /**
  * Search, filter, sort and page the library. Keeps a snapshot of all books in memory (a few
- * hundred bytes each, so 5,000 books is about 1.5 MB) and rebuilds it lazily after any change to
- * the `books` table, including changes made by another worker or tab (Dexie's `storagemutated`
- * event). Queries on the snapshot take a few milliseconds; only the requested page is returned.
+ * hundred bytes each, so 5,000 books is about 1.5 MB) and keeps it current from Dexie's
+ * `storagemutated` event, which also reports writes made by another worker or tab. Queries on
+ * the snapshot take a few milliseconds; only the requested page is returned.
+ *
+ * Keeping it current is incremental: the event names the primary keys that were written, so only
+ * those books are read again and patched into the snapshot and into the sorted lists already built
+ * (see "Staying up to date" in docs/DATA_LAYER.md for the measurements). If a change cannot be
+ * named (a first open, `clear()`, a very large batch) the whole table is read once instead.
  *
  * Meant to run in the data worker. It is plain, so tests and the in-process fallback use it directly.
  */
 export class LibraryQueryService {
   private docs: IndexedBook[] = [];
+  private readonly byId = new Map<string, IndexedBook>();
+  /** The whole table must be read again. */
   private dirty = true;
+  /** Books written since the snapshot was taken, by primary key; only these are read again. */
+  private readonly pending = new Set<string>();
   private loading: Promise<void> | undefined;
-  private readonly sortedCache = new Map<string, readonly IndexedBook[]>();
+  private readonly sortedCache = new Map<string, SortedList>();
   private readonly onMutated: (parts: Record<string, unknown>) => void;
 
   constructor(private readonly db: PageNestDB) {
     const prefix = `idb://${db.name}/books/`;
     this.onMutated = (parts) => {
+      let touched = false;
       for (const key of Object.keys(parts)) {
         if (key.startsWith(prefix)) {
-          this.invalidate();
-          return;
+          touched = true;
+          break;
         }
       }
+      if (!touched) return;
+      // The primary-key entry lists exactly the keys that were written or deleted.
+      const keys = pointKeys(parts[prefix]);
+      if (keys === undefined || this.pending.size + keys.length > MAX_PATCH) this.invalidate();
+      else for (const key of keys) this.pending.add(key);
     };
     Dexie.on('storagemutated', this.onMutated as never);
   }
@@ -88,24 +103,52 @@ export class LibraryQueryService {
     Dexie.on('storagemutated').unsubscribe(this.onMutated as never);
   }
 
-  /** Mark the snapshot out of date. Called for you on any change to `books`. */
+  /** Mark the whole snapshot out of date. Normally unnecessary: changes to `books` are noticed (and patched) for you. */
   invalidate(): void {
     this.dirty = true;
   }
 
   private async ensure(): Promise<void> {
-    // Several callers share one load; a change that arrives during a load triggers another one.
-    while (this.dirty || this.loading) {
-      this.loading ??= (async () => {
-        this.dirty = false;
-        const books = await this.db.books.toArray();
-        this.docs = books.map(indexBook);
-        this.sortedCache.clear();
-      })().finally(() => {
+    // Several callers share one refresh; a change that arrives during a refresh triggers another one.
+    while (this.dirty || this.pending.size > 0 || this.loading) {
+      this.loading ??= this.refresh().finally(() => {
         this.loading = undefined;
       });
       await this.loading;
     }
+  }
+
+  private async refresh(): Promise<void> {
+    if (this.dirty) {
+      this.dirty = false;
+      this.pending.clear();
+      const books = await this.db.books.toArray();
+      this.byId.clear();
+      for (const book of books) this.byId.set(book.id, indexBook(book));
+      this.docs = [...this.byId.values()];
+      this.sortedCache.clear();
+      return;
+    }
+    const ids = [...this.pending];
+    this.pending.clear();
+    const rows = await this.db.books.bulkGet(ids);
+    // Something we cannot patch happened meanwhile: the next round reads everything.
+    if (this.dirty) return;
+    const removed = new Set<string>();
+    const added: IndexedBook[] = [];
+    for (const [i, id] of ids.entries()) {
+      const row = rows[i];
+      if (row) {
+        const doc = indexBook(row);
+        this.byId.set(id, doc);
+        added.push(doc);
+      } else {
+        this.byId.delete(id);
+      }
+      removed.add(id);
+    }
+    this.docs = [...this.byId.values()];
+    for (const list of this.sortedCache.values()) patchSorted(list, removed, added);
   }
 
   /** Number of books in the library. */
@@ -190,11 +233,12 @@ export class LibraryQueryService {
     }
     const key = `${sort}:${direction}`;
     const cached = this.sortedCache.get(key);
-    if (cached) return cached;
-    const asc = [...this.docs].sort(comparators[sort === 'relevance' ? 'recent' : sort]);
-    const result = direction === 'asc' ? asc : asc.reverse();
-    this.sortedCache.set(key, result);
-    return result;
+    if (cached) return cached.items;
+    const compare = comparators[sort === 'relevance' ? 'recent' : sort];
+    const asc = [...this.docs].sort(compare);
+    const list: SortedList = { compare: direction === 'asc' ? compare : (a, b) => compare(b, a), items: direction === 'asc' ? asc : asc.reverse() };
+    this.sortedCache.set(key, list);
+    return list.items;
   }
 
   /** Progress for just these books (one indexed read, not the whole table). */
@@ -205,6 +249,49 @@ export class LibraryQueryService {
     for (const r of rows) best.set(r.bookId, Math.max(best.get(r.bookId) ?? 0, r.percent));
     return best;
   }
+}
+
+/** More changed books than this in one go: read the whole table instead of looking each one up. */
+const MAX_PATCH = 500;
+
+/** A list kept in sort order, with the comparison that orders it (direction included). */
+interface SortedList {
+  readonly compare: (a: IndexedBook, b: IndexedBook) => number;
+  items: IndexedBook[];
+}
+
+/**
+ * The keys in a Dexie change set (`RangeSet`), when it names single keys only. `undefined` when it
+ * covers a range (a first open or `clear()`), which cannot be turned into a list of books.
+ * Works on the plain interval tree, so a set that came from another tab (already copied) is fine.
+ */
+function pointKeys(set: unknown): string[] | undefined {
+  const keys: string[] = [];
+  const walk = (node: unknown): boolean => {
+    if (node === null || node === undefined) return true;
+    const n = node as { from?: unknown; to?: unknown; l?: unknown; r?: unknown; d?: unknown };
+    if (n.from === undefined && n.to === undefined) return n.d === 0; // empty set
+    if (typeof n.from !== 'string' || n.from !== n.to) return false;
+    keys.push(n.from);
+    return walk(n.l) && walk(n.r);
+  };
+  return walk(set) ? keys : undefined;
+}
+
+/** Take the changed books out of a sorted list and put their new versions in at the right place. */
+function patchSorted(list: SortedList, removed: ReadonlySet<string>, added: readonly IndexedBook[]): void {
+  const items = list.items.filter((d) => !removed.has(d.book.id));
+  for (const doc of added) {
+    let lo = 0;
+    let hi = items.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >>> 1;
+      if (list.compare(items[mid] as IndexedBook, doc) <= 0) lo = mid + 1;
+      else hi = mid;
+    }
+    items.splice(lo, 0, doc);
+  }
+  list.items = items;
 }
 
 function engagedBooks(rows: readonly ProgressRow[], modes: readonly string[]): Set<string> {
