@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { launch, waitForServiceWorkerControl } from './support/app';
 
 // Blueprint section 14 (PWA setup) and 5.6 (install and first launch).
@@ -11,7 +11,7 @@ type Manifest = {
   share_target?: { action?: string; method?: string; enctype?: string; params?: unknown };
 };
 
-async function loadManifest(page: import('@playwright/test').Page): Promise<{ url: string; manifest: Manifest }> {
+async function loadManifest(page: Page): Promise<{ url: string; manifest: Manifest }> {
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
   expect(href, 'index.html must link a web app manifest').toBeTruthy();
   const url = new URL(href!, page.url()).toString();

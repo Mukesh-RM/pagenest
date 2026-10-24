@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "test": "vitest run",
-    "test:e2e": "playwright test --pass-with-no-tests",
+    "test:e2e": "playwright test --pass-with-no-tests && playwright test -c src/features/player/e2e/playwright.config.ts",
     "check:bundle": "node scripts/check-bundle.mjs",
     "icons": "node scripts/pwa/generate-icons.mjs",
     "validate:pwa": "node scripts/pwa/validate-pwa-assets.mjs",
@@ -26,6 +26,8 @@
   "dependencies": {
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
+    "mp4box": "^2.4.1",
+    "music-metadata": "^12.2.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.4",
