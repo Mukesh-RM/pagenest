@@ -11,7 +11,7 @@ import '../styles/surfaces.css';
 
 /* Redesign: presentational screens (props and callbacks only, no data layer) */
 export { LibraryScreen, type LibraryScreenProps, type LibraryView } from './LibraryScreen';
-export { DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, type LibraryFilterOption, type LibrarySortOption } from './libraryOptions';
+export { DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, LIBRARY_VIRTUALIZE_ABOVE, type LibraryFilterOption, type LibrarySortOption } from './libraryOptions';
 export { BookDetailSheet, type BookDetailSheetProps } from './BookDetailSheet';
 export { ReaderScreen, type ReaderScreenProps } from './ReaderScreen';
 export { ReaderSettingsSheet, type ReaderSettingsSheetProps } from './ReaderSettingsSheet';

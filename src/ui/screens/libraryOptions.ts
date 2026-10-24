@@ -22,3 +22,6 @@ export const DEFAULT_LIBRARY_SORTS: readonly LibrarySortOption[] = [
   { id: 'title', label: 'Title' },
   { id: 'author', label: 'Author' },
 ];
+
+/** More books than this and LibraryScreen windows the grid or list (VirtualList). Small libraries render every book. */
+export const LIBRARY_VIRTUALIZE_ABOVE = 60;

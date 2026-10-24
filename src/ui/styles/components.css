@@ -208,9 +208,8 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition:
-    transform var(--pn-duration-fast) var(--pn-ease-out),
-    border-color var(--pn-duration-fast) var(--pn-ease-out);
+  /* Only transform moves smoothly; the selected border swaps instantly (motion-rules.test.ts) */
+  transition: transform var(--pn-duration-fast) var(--pn-ease-out);
 }
 
 .pn-card--interactive:active {
@@ -405,7 +404,6 @@
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: color var(--pn-duration-fast) var(--pn-ease-out);
 }
 
 .pn-nav__item[aria-current="page"] {
@@ -1550,4 +1548,40 @@
   margin: var(--pn-space-2) 0 0;
   color: rgb(var(--pn-muted));
   font-size: var(--pn-text-sm);
+}
+
+/* ---------- VirtualList: only rows near the screen exist; rows move with transform, never top/height ---------- */
+.pn-vlist {
+  position: relative;
+}
+
+.pn-vlist--self {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pn-vlist__inner {
+  position: relative;
+  width: 100%;
+}
+
+.pn-vlist__row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  align-items: stretch;
+  will-change: transform;
+}
+
+.pn-vlist__item {
+  min-width: 0;
+}
+
+.pn-vlist__item:focus-visible {
+  outline: var(--pn-focus-width, 2px) solid rgb(var(--pn-focus-ring));
+  outline-offset: var(--pn-focus-offset, 2px);
+  border-radius: var(--pn-radius-card);
 }

@@ -8,6 +8,8 @@ import './styles/index.css';
 export { Button, type ButtonProps, type ButtonVariant, type IconButtonProps, type LabelButtonProps } from './components/Button';
 export { Chip, ChipGroup, type ChipGroupProps, type ChipProps } from './components/Chip';
 export { Card, LONG_PRESS_MS, type CardProps, type InteractiveCardProps, type StaticCardProps } from './components/Card';
+export { VirtualList, type VirtualListHandle, type VirtualListProps } from './components/VirtualList';
+export { autoColumns, navigate as navigateGrid, rowCountFor } from './utils/virtual';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export { BottomSheet, type BottomSheetProps, type SheetCloseReason } from './components/BottomSheet';
 export {

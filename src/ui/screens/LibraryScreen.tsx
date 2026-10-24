@@ -9,7 +9,9 @@ import type { StarterBookOffer } from '../components/StarterBookCard';
 import { Icon } from '../icons';
 import { SkeletonCard, SkeletonGroup } from '../components/Skeleton';
 import type { BookSummary } from '../types';
-import { DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, type LibraryFilterOption, type LibrarySortOption } from './libraryOptions';
+import { DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, LIBRARY_VIRTUALIZE_ABOVE, type LibraryFilterOption, type LibrarySortOption } from './libraryOptions';
+import { useLibraryGrid } from './libraryGrid';
+import { VirtualList } from '../components/VirtualList';
 
 export type { LibraryFilterOption, LibrarySortOption };
 import { cx } from '../utils/cx';
@@ -57,6 +59,11 @@ export interface LibraryScreenProps {
   onViewChange?: (view: LibraryView) => void;
   /** A real bundled public-domain book for the first-run path. Leave out when the app has none. */
   starter?: StarterBookOffer;
+  /**
+   * Window the grid or list (only the rows near the screen exist in the page) when there are more books than this.
+   * Default 60; pass `Infinity` to always draw every book. The page scrolls, so no height is needed.
+   */
+  virtualizeAbove?: number;
 }
 
 /**
@@ -87,10 +94,13 @@ export function LibraryScreen({
   view = 'grid',
   onViewChange,
   starter,
+  virtualizeAbove = LIBRARY_VIRTUALIZE_ABOVE,
 }: LibraryScreenProps) {
   const searchId = useId();
   const sortId = useId();
   const empty = !loading && books.length === 0;
+  const windowed = books.length > virtualizeAbove;
+  const grid = useLibraryGrid(view);
   const emptyKind = query ? 'search' : filter !== 'all' ? 'filter' : 'library';
   return (
     <div className="pn-screen pn-library">
@@ -194,9 +204,17 @@ export function LibraryScreen({
           extra={emptyKind === 'library' ? emptyActions : undefined}
         />
       ) : (
-        <ul className={cx('pn-library__grid', view === 'list' && 'pn-library__grid--list')} aria-label="Books">
-          {books.map((book, index) => (
-            <li key={book.id} className="pn-library__item">
+        windowed ? (
+          <VirtualList<BookSummary>
+            items={books}
+            aria-label="Books"
+            className="pn-library__virtual"
+            columns={grid.columns}
+            gap={grid.spec.gap}
+            rowGap={grid.spec.rowGap}
+            estimatedRowHeight={view === 'list' ? 88 : 280}
+            getKey={(book) => book.id}
+            renderItem={(book, index) => (
               <BookCard
                 book={book}
                 eager={index < 6}
@@ -205,9 +223,24 @@ export function LibraryScreen({
                 onOpen={onOpenBook}
                 onSelect={onSelectBook}
               />
-            </li>
-          ))}
-        </ul>
+            )}
+          />
+        ) : (
+          <ul className={cx('pn-library__grid', view === 'list' && 'pn-library__grid--list')} aria-label="Books">
+            {books.map((book, index) => (
+              <li key={book.id} className="pn-library__item">
+                <BookCard
+                  book={book}
+                  eager={index < 6}
+                  layout={view}
+                  selected={selectedIds.length ? selectedIds.includes(book.id) : undefined}
+                  onOpen={onOpenBook}
+                  onSelect={onSelectBook}
+                />
+              </li>
+            ))}
+          </ul>
+        )
       )}
     </div>
   );
