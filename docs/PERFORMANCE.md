@@ -57,6 +57,24 @@ How the worker is used:
 * Animations use `transform` and `opacity` only, and are off with `prefers-reduced-motion`
   (`src/index.css`).
 
+## Resume and first launch (owner's quality bar)
+
+* **Perfect resume.** Positions are saved as a `Locator` through `ProgressService` (throttled, and
+  flushed when the page is hidden). `loadResume` (`src/data/resume.ts`) reads the newest saved
+  position of a book that still exists and is not finished, plus that book's chapter, and returns
+  the exact `locator` for a reader or player to restore.
+* **"Welcome back, chapter 7" card** on the Library screen (`ResumeCard`). It is hidden when
+  there is nothing to resume. The chapter is the last chapter that starts at or before the saved
+  position (text, PDF page, audio track or M4B seconds); with no chapter info it says just
+  "Welcome back". Until a reader route exists it is **information only** (no button or link);
+  pass `href` to `ResumeCard` once a real route exists and it becomes a link.
+* **No layout shift.** The card has a fixed 88 px height, and its skeleton is the same size. The last
+  visit's "had a card" flag is kept in localStorage (`resume-hint.ts`), so the space is reserved from the
+  first frame; the Library renders books and card together once both are read.
+* **First launch to first book.** Onboarding is three cards, every one has **Skip**, nothing is
+  required, and the defaults (match my phone, 16 px text) need no setup. Getting a book in depends on
+  the import feature (Library), which is not built yet.
+
 ## Budgets
 
 `npm run build` ends with `scripts/check-bundle.mjs` and fails when a budget is exceeded.

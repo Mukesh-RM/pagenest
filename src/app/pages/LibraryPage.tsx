@@ -1,7 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { memo } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { EmptyState, ProgressBar, SkeletonCard, SkeletonGroup } from '@/ui';
+import { loadResume } from '@/data/resume';
 import { PageHeader } from '../components/PageHeader';
+import { ResumeCard, ResumeCardSkeleton } from '../components/ResumeCard';
+import { hadResumeCard, rememberResumeCard } from '../resume-hint';
 import { useServices } from '../services-context';
 
 interface BookCardProps {
@@ -41,10 +44,24 @@ export function LibraryPage() {
     return best;
   }, [db, progress]);
 
+  // The last saved position (newest progress row of an unfinished book), with its chapter.
+  const resume = useLiveQuery(async () => ({ value: await loadResume(db) }), [db, progress]);
+  // Reserve the card's space from the first frame if the last visit had one, so nothing jumps.
+  const [hadCard] = useState(hadResumeCard);
+  const shownCard = resume?.value !== undefined;
+  useEffect(() => {
+    if (resume) rememberResumeCard(shownCard);
+  }, [resume, shownCard]);
+
+  const ready = books !== undefined && resume !== undefined;
+  const resumeInfo = resume?.value;
+
   return (
     <>
       <PageHeader title="Library" />
-      {books === undefined ? (
+      {!ready ? null : resumeInfo ? <ResumeCard info={resumeInfo} /> : null}
+      {!ready && hadCard ? <ResumeCardSkeleton /> : null}
+      {!ready ? (
         <SkeletonGroup label="Loading your library">
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
             {Array.from({ length: 6 }, (_, i) => (

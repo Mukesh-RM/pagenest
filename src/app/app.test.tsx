@@ -77,7 +77,8 @@ describe('app shell', () => {
     });
     await db.progress.put({ bookId: id, mode: 'read', locator: { kind: 'reflow', section: 0, textOffset: 0 }, percent: 40, updatedAt: 1 });
     renderAt('/');
-    expect(await screen.findByText('Persuasion')).toBeInTheDocument();
+    expect((await screen.findAllByText('Persuasion')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Welcome back')).toBeInTheDocument();
     expect(screen.getByText('Jane Austen')).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByRole('progressbar', { name: 'Progress for Persuasion' })).toHaveAttribute('aria-valuenow', '40'),

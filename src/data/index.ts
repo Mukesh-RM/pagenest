@@ -9,3 +9,4 @@ export * from './stats';
 export * from './rpc';
 export * from './data-service';
 export * from './data-client';
+export * from './resume';
