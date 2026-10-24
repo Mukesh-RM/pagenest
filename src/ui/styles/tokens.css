@@ -1,0 +1,199 @@
+/*
+ * PageNest design tokens: the single source of truth for colors, spacing, shape and motion.
+ * The contrast test (src/ui/tokens/contrast.test.ts) parses THIS file, so values cannot drift.
+ *
+ * Themes are selected with the data-theme attribute on any element (document root for the app
+ * theme, a wrapper element for the separate reader theme). Page / text / accent values come
+ * straight from docs/BLUEPRINT.md section 5.2. The "system" app-theme mode is resolved in
+ * script (ThemeProvider) to light or dark and written into data-theme.
+ *
+ * Color tokens are space separated RGB triplets ("250 250 247"), the same format the app shell
+ * and Tailwind use (`rgb(var(--pn-page) / <alpha-value>)`). Use them as `rgb(var(--pn-page))`.
+ * Shared names with src/app: page, surface, text, muted, accent, on-accent, line.
+ *
+ * Keep one declaration per line inside theme blocks: tests read them line by line.
+ */
+
+/* ---------- Theme: Light (default when no data-theme is set) ---------- */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --pn-page: 250 250 247;
+  --pn-surface: 255 255 255;
+  --pn-surface-raised: 255 255 255;
+  --pn-text: 28 27 25;
+  --pn-muted: 92 90 84;
+  --pn-accent: 62 91 219;
+  --pn-on-accent: 255 255 255;
+  --pn-link: 62 91 219;
+  --pn-border-strong: 133 131 123;
+  --pn-line: 230 228 220;
+  --pn-focus-ring: 62 91 219;
+  --pn-danger: 179 38 30;
+  --pn-inverse-surface: 43 42 39;
+  --pn-inverse-text: 244 242 236;
+  --pn-inverse-accent: 174 189 255;
+  --pn-scrim: 20 19 17;
+  --pn-scrim-opacity: 0.45;
+  --pn-skeleton: 235 233 225;
+  --pn-skeleton-highlight: 246 245 240;
+  --pn-shadow-raised: 0 -2px 16px rgb(28 27 25 / 0.12);
+}
+
+/* ---------- Theme: Sepia ---------- */
+[data-theme="sepia"] {
+  color-scheme: light;
+  --pn-page: 244 236 216;
+  --pn-surface: 251 245 230;
+  --pn-surface-raised: 253 249 238;
+  --pn-text: 59 47 35;
+  --pn-muted: 98 81 63;
+  --pn-accent: 160 82 45;
+  --pn-on-accent: 255 255 255;
+  --pn-link: 143 71 38;
+  --pn-border-strong: 133 114 90;
+  --pn-line: 226 214 185;
+  --pn-focus-ring: 160 82 45;
+  --pn-danger: 163 42 30;
+  --pn-inverse-surface: 59 47 35;
+  --pn-inverse-text: 244 236 216;
+  --pn-inverse-accent: 240 191 159;
+  --pn-scrim: 59 47 35;
+  --pn-scrim-opacity: 0.45;
+  --pn-skeleton: 232 220 192;
+  --pn-skeleton-highlight: 243 233 209;
+  --pn-shadow-raised: 0 -2px 16px rgb(59 47 35 / 0.14);
+}
+
+/* ---------- Theme: Dark ---------- */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --pn-page: 23 24 28;
+  --pn-surface: 31 33 39;
+  --pn-surface-raised: 39 42 49;
+  --pn-text: 228 226 220;
+  --pn-muted: 169 168 162;
+  --pn-accent: 143 166 255;
+  --pn-on-accent: 16 19 31;
+  --pn-link: 143 166 255;
+  --pn-border-strong: 125 127 137;
+  --pn-line: 47 50 58;
+  --pn-focus-ring: 143 166 255;
+  --pn-danger: 255 143 134;
+  --pn-inverse-surface: 228 226 220;
+  --pn-inverse-text: 28 27 25;
+  --pn-inverse-accent: 47 73 184;
+  --pn-scrim: 0 0 0;
+  --pn-scrim-opacity: 0.6;
+  --pn-skeleton: 36 38 45;
+  --pn-skeleton-highlight: 46 49 57;
+  --pn-shadow-raised: none;
+}
+
+/* ---------- Theme: Black (OLED) ---------- */
+[data-theme="black"] {
+  color-scheme: dark;
+  --pn-page: 0 0 0;
+  --pn-surface: 14 14 16;
+  --pn-surface-raised: 26 26 29;
+  --pn-text: 207 205 199;
+  --pn-muted: 163 161 155;
+  --pn-accent: 143 166 255;
+  --pn-on-accent: 0 0 0;
+  --pn-link: 143 166 255;
+  --pn-border-strong: 122 124 132;
+  --pn-line: 38 38 42;
+  --pn-focus-ring: 143 166 255;
+  --pn-danger: 255 143 134;
+  --pn-inverse-surface: 207 205 199;
+  --pn-inverse-text: 0 0 0;
+  --pn-inverse-accent: 42 67 173;
+  --pn-scrim: 0 0 0;
+  --pn-scrim-opacity: 0.72;
+  --pn-skeleton: 23 23 26;
+  --pn-skeleton-highlight: 35 35 39;
+  --pn-shadow-raised: none;
+}
+
+/* ---------- Theme independent tokens ---------- */
+:root {
+  /* 4 px spacing grid (blueprint 5.4) */
+  --pn-space-1: 4px;
+  --pn-space-2: 8px;
+  --pn-space-3: 12px;
+  --pn-space-4: 16px;
+  --pn-space-5: 20px;
+  --pn-space-6: 24px;
+  --pn-space-8: 32px;
+  --pn-space-10: 40px;
+  --pn-space-12: 48px;
+  --pn-space-16: 64px;
+
+  /* Screen margins: 16 px on phones, 24 px from the tablet breakpoint */
+  --pn-margin: 16px;
+
+  /* Shape */
+  --pn-radius-card: 12px;
+  --pn-radius-sheet: 20px;
+  --pn-radius-pill: 9999px;
+
+  /* Touch targets (blueprint 5.4 and 5.8) */
+  --pn-touch: 44px;
+
+  /* Typography: Inter, sizes 12 / 14 / 16 / 20 / 28 (blueprint 5.3) */
+  --pn-font-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pn-text-xs: 12px;
+  --pn-text-sm: 14px;
+  --pn-text-md: 16px;
+  --pn-text-lg: 20px;
+  --pn-text-xl: 28px;
+  --pn-leading-tight: 1.25;
+  --pn-leading-normal: 1.5;
+  --pn-weight-regular: 400;
+  --pn-weight-medium: 500;
+  --pn-weight-semibold: 600;
+
+  /* Motion: 150 to 250 ms, ease-out (blueprint 5.4) */
+  --pn-duration-fast: 150ms;
+  --pn-duration-base: 200ms;
+  --pn-duration-slow: 250ms;
+  --pn-ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  /* Layers */
+  --pn-z-nav: 10;
+  --pn-z-miniplayer: 20;
+  --pn-z-sheet: 100;
+  --pn-z-snackbar: 200;
+
+  /* Navigation geometry */
+  --pn-tabbar-height: 56px;
+  --pn-rail-width: 80px;
+  --pn-miniplayer-height: 64px;
+  --pn-bottom-chrome: 0px;
+}
+
+/* Tablet and desktop: wider margins (the rail replaces the tab bar at the same breakpoint) */
+@media (min-width: 768px) {
+  :root {
+    --pn-margin: 24px;
+  }
+}
+
+/*
+ * Reduced motion: honors the system setting, and can be forced either way with
+ * data-reduce-motion="true" | "false" on the document root (in-app setting).
+ * Durations collapse to 0 so transitions and animations become instant.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-reduce-motion="false"]) {
+    --pn-duration-fast: 0ms;
+    --pn-duration-base: 0ms;
+    --pn-duration-slow: 0ms;
+  }
+}
+
+:root[data-reduce-motion="true"] {
+  --pn-duration-fast: 0ms;
+  --pn-duration-base: 0ms;
+  --pn-duration-slow: 0ms;
+}
