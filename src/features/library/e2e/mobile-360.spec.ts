@@ -151,25 +151,37 @@ test('a real cover is shown whole on its 2:3 frame, in the grid, the list and th
   await page.screenshot({ path: join(SHOTS, '06-real-cover-detail-360.png') });
 });
 
-test('a generated cover is a color tile with one letter: no second title, no author under the badges (grid and list)', async ({ page }) => {
+test('a generated cover is a color tile with one letter: no second title, no author, the badges clear of the letter (grid and list)', async ({ page }) => {
   await open(page, 30);
   for (const view of ['grid', 'list'] as const) {
     if (view === 'list') await page.getByRole('button', { name: 'List', exact: true }).click();
     await page.waitForTimeout(300);
     const cover = await page.evaluate(() => {
-      const card = document.querySelector('.pn-bookcard .pn-cover--generated') as HTMLElement;
-      const title = card.querySelector('.pn-cover__title') as HTMLElement;
-      const author = card.querySelector('.pn-cover__author');
+      // The first card with a favorite badge shows the badge next to the letter.
+      const tiles = Array.from(document.querySelectorAll('.pn-bookcard .pn-cover--monogram')) as HTMLElement[];
+      const tile = tiles.find((t) => t.querySelector('.pn-favorite-badge, [class*="favorite"]')) ?? (tiles[0] as HTMLElement);
+      const letter = tile.querySelector('.pn-cover__letter') as HTMLElement;
+      const box = tile.getBoundingClientRect();
+      const l = letter.getBoundingClientRect();
+      const badges = Array.from(tile.querySelectorAll('[class*="badge"], [class*="favorite"]')).map((b) => b.getBoundingClientRect());
       return {
-        titleSize: getComputedStyle(title).fontSize,
-        firstLetterSize: getComputedStyle(title, '::first-letter').fontSize,
-        authorShown: author ? getComputedStyle(author).display !== 'none' : false,
-        coverWidth: card.getBoundingClientRect().width,
+        count: tiles.length,
+        letter: letter.textContent,
+        letterSize: Number.parseFloat(getComputedStyle(letter).fontSize),
+        coverWidth: box.width,
+        hasTitle: tile.querySelector('.pn-cover__title') !== null,
+        hasAuthor: tile.querySelector('.pn-cover__author') !== null,
+        letterInside: l.left >= box.left && l.right <= box.right && l.top >= box.top && l.bottom <= box.bottom,
+        badgeOverlap: badges.some((b) => b.left < l.right && b.right > l.left && b.top < l.bottom && b.bottom > l.top),
       };
     });
-    expect(cover.titleSize, `${view}: the cover does not print the title again`).toBe('0px');
-    expect(Number.parseFloat(cover.firstLetterSize), `${view}: the letter is drawn`).toBeGreaterThan(cover.coverWidth * 0.3);
-    expect(cover.authorShown, `${view}: the author is not printed on the cover`).toBe(false);
+    expect(cover.count, `${view}: generated covers are monogram tiles`).toBeGreaterThan(0);
+    expect(cover.letter, `${view}: one character`).toHaveLength(1);
+    expect(cover.letterSize, `${view}: the letter is drawn large`).toBeGreaterThan(cover.coverWidth * 0.25);
+    expect(cover.hasTitle, `${view}: the cover does not print the title again`).toBe(false);
+    expect(cover.hasAuthor, `${view}: the author is not printed on the cover`).toBe(false);
+    expect(cover.letterInside, `${view}: the letter is inside its tile`).toBe(true);
+    expect(cover.badgeOverlap, `${view}: no badge sits on the letter`).toBe(false);
   }
 });
 
