@@ -821,6 +821,11 @@
   box-shadow: var(--pn-shadow-raised);
 }
 
+.pn-overflow__menu--down {
+  top: calc(100% + var(--pn-space-2));
+  bottom: auto;
+}
+
 .pn-overflow__item {
   display: flex;
   align-items: center;

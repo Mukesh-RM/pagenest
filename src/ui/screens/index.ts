@@ -26,3 +26,11 @@ export { OnboardingScreen, ONBOARDING_STEP_COUNT, type OnboardingScreenProps } f
 export { SettingsScreen, type SettingsScreenProps, type SettingsStorage } from './SettingsScreen';
 export { ThemePicker, type ThemePickerProps } from '../components/ThemePicker';
 export { TextSizeControl, type TextSizeControlProps } from '../components/TextSizeControl';
+
+/* Collections and Stats (presentational; the app owns the data) */
+export { CollectionsScreen, type CollectionsScreenProps } from './CollectionsScreen';
+export { DEFAULT_SMART_COLLECTIONS, MAX_SHELF_NAME_LENGTH, type CollectionShelf, type SmartCollection } from './collectionsOptions';
+export { StatsScreen, type StatsScreenProps } from './StatsScreen';
+export { CollectionNameSheet, type CollectionNameSheetProps } from '../components/CollectionNameSheet';
+export { CollectionBooksEmpty, type CollectionBooksEmptyProps } from '../components/CollectionBooksEmpty';
+export { barShare, minutesLabel, weekFigures, type WeekFigures } from '../utils/stats';

@@ -15,6 +15,8 @@ export interface OverflowMenuProps {
   /** Accessible name of the "⋯" button. Default "More options". */
   label?: string;
   items: OverflowMenuItem[];
+  /** Which way the menu opens. `up` (default) suits sheet footers, `down` suits rows in a list. */
+  placement?: 'up' | 'down';
   className?: string;
   children?: ReactNode;
 }
@@ -24,7 +26,7 @@ export interface OverflowMenuProps {
  * focus the first row, arrows move, Escape closes and returns focus to the button, Tab closes. A tap outside closes it.
  * The menu opens upward (it lives in sheet footers) and never moves the layout.
  */
-export function OverflowMenu({ label = 'More options', items, className }: OverflowMenuProps) {
+export function OverflowMenu({ label = 'More options', items, placement = 'up', className }: OverflowMenuProps) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -78,7 +80,7 @@ export function OverflowMenu({ label = 'More options', items, className }: Overf
         onClick={() => setOpen((o) => !o)}
       />
       {open ? (
-        <div id={menuId} role="menu" aria-label={label} className="pn-overflow__menu">
+        <div id={menuId} role="menu" aria-label={label} className={cx('pn-overflow__menu', placement === 'down' && 'pn-overflow__menu--down')}>
           {items.map((item) => (
             <button
               key={item.label}

@@ -3,6 +3,7 @@
  * production bundle imports it (a test and the build check both enforce that). All titles, names and text are
  * invented; the covers are drawn here as SVG, so no third-party artwork is involved.
  */
+import type { CollectionShelf } from '../screens/collectionsOptions';
 import type { BookDetail, BookSummary, ReaderFontOption, ReaderSettings, VoiceOption } from '../types';
 
 interface CoverSpec {
@@ -178,3 +179,14 @@ export const SAMPLE_CHAPTERS: readonly string[] = [
   'Chapter 7: The orchard in March',
   'Chapter 8: What the frost left',
 ];
+
+/** Shelves for the gallery: cover collages come from the sample books' generated covers. */
+export const SAMPLE_SHELVES: readonly CollectionShelf[] = [
+  { id: 's1', name: 'Summer reading', bookCount: 6, covers: SAMPLE_BOOKS.slice(0, 4).map((b) => b.coverUrl).filter((u): u is string => !!u) },
+  { id: 's2', name: 'Bedtime stories', bookCount: 3, covers: SAMPLE_BOOKS.slice(4, 6).map((b) => b.coverUrl).filter((u): u is string => !!u) },
+  { id: 's3', name: 'For the train', bookCount: 1, covers: SAMPLE_BOOKS.slice(7, 8).map((b) => b.coverUrl).filter((u): u is string => !!u) },
+  { id: 's4', name: 'Essays and long-form writing from the coast, kept together for the autumn', bookCount: 0 },
+];
+
+/** A plausible week for the Stats gallery: minutes per day, oldest first, ending today. */
+export const SAMPLE_WEEK_MINUTES: readonly number[] = [22, 0, 48, 35, 0, 71, 18];

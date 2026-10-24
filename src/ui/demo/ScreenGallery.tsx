@@ -16,6 +16,10 @@ import { ResumeCard } from '../components/ResumeCard';
 import { AudioPlayerScreen } from '../screens/AudioPlayerScreen';
 import { BookDetailSheet } from '../screens/BookDetailSheet';
 import { LibraryScreen } from '../screens/LibraryScreen';
+import { CollectionsScreen } from '../screens/CollectionsScreen';
+import { StatsScreen } from '../screens/StatsScreen';
+import { CollectionNameSheet } from '../components/CollectionNameSheet';
+import { CollectionBooksEmpty } from '../components/CollectionBooksEmpty';
 import { DEFAULT_LIBRARY_FILTERS } from '../screens/libraryOptions';
 import { ReaderScreen } from '../screens/ReaderScreen';
 import { VoiceStudioScreen } from '../screens/VoiceStudioScreen';
@@ -36,6 +40,8 @@ import {
   SAMPLE_DETAIL,
   SAMPLE_DETAIL_AUDIO,
   SAMPLE_DETAIL_LONG,
+  SAMPLE_SHELVES,
+  SAMPLE_WEEK_MINUTES,
   SAMPLE_FONTS,
   SAMPLE_PARAGRAPHS,
   SAMPLE_READER_SETTINGS,
@@ -67,6 +73,14 @@ export const GALLERY_SCREENS = [
   'settings',
   'install-sheet',
   'library-starter',
+  'collections',
+  'collections-empty',
+  'collections-loading',
+  'collections-new',
+  'collections-shelf-empty',
+  'stats',
+  'stats-empty',
+  'stats-loading',
 ] as const;
 export type GalleryScreenName = (typeof GALLERY_SCREENS)[number];
 
@@ -310,6 +324,45 @@ function SettingsDemo({ sheet, theme }: { sheet?: boolean; theme: ThemeName }) {
   );
 }
 
+function CollectionsDemo({ empty, loading, naming }: { empty?: boolean; loading?: boolean; naming?: boolean }) {
+  const [name, setName] = useState('');
+  const [open, setOpen] = useState(!!naming);
+  return (
+    <AppShell items={DEFAULT_NAV_ITEMS} value="collections" onSelect={noop}>
+      <CollectionsScreen
+        shelves={empty ? [] : SAMPLE_SHELVES}
+        loading={loading}
+        onOpenShelf={noop}
+        onOpenSmart={noop}
+        onCreate={() => setOpen(true)}
+        onRename={noop}
+        onDelete={noop}
+        onMove={noop}
+      />
+      <CollectionNameSheet open={open} mode="create" name={name} onNameChange={setName} onSubmit={() => setOpen(false)} onClose={() => setOpen(false)} />
+    </AppShell>
+  );
+}
+
+const WEEK_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const WEEK_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function StatsDemo({ empty, loading }: { empty?: boolean; loading?: boolean }) {
+  return (
+    <AppShell items={DEFAULT_NAV_ITEMS} value="stats" onSelect={noop}>
+      <StatsScreen
+        loading={loading}
+        minutesPerDay={empty ? Array<number>(7).fill(0) : SAMPLE_WEEK_MINUTES}
+        dayLabels={WEEK_LABELS}
+        dayNames={WEEK_NAMES}
+        sessionCount={empty ? 0 : 9}
+        finishedBooks={empty ? 0 : 4}
+        emptyAction={{ label: 'Open your library', icon: 'library', onClick: noop }}
+      />
+    </AppShell>
+  );
+}
+
 function ConfirmDemo() {
   const [open, setOpen] = useState(true);
   return (
@@ -372,6 +425,26 @@ export function ScreenGallery({ screen, theme = 'light' }: { screen: GalleryScre
       return <SettingsDemo sheet theme={theme} />;
     case 'library-starter':
       return <LibraryDemo empty starter={STARTER} />;
+    case 'collections':
+      return <CollectionsDemo />;
+    case 'collections-empty':
+      return <CollectionsDemo empty />;
+    case 'collections-loading':
+      return <CollectionsDemo loading />;
+    case 'collections-new':
+      return <CollectionsDemo naming />;
+    case 'collections-shelf-empty':
+      return (
+        <Frame>
+          <CollectionBooksEmpty name="Summer reading" action={{ label: 'Go to your library', icon: 'library', onClick: noop }} />
+        </Frame>
+      );
+    case 'stats':
+      return <StatsDemo />;
+    case 'stats-empty':
+      return <StatsDemo empty />;
+    case 'stats-loading':
+      return <StatsDemo loading />;
     case 'shortcuts':
       return <LibraryDemo helpOpen />;
     case 'finished':

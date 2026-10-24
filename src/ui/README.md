@@ -123,6 +123,30 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
 * `BookDetailSheet`: `onRemove` now appears as "Remove from library" inside a "More options" (⋯) menu, never as a loose red button.
 * `ErrorNotice`: DRM, damaged and unsupported files never show "Try again" (`canRetry(kind)`); they add one plain help line.
 
+### Collections and Stats (wire-ready, presentational)
+
+`import { CollectionsScreen, StatsScreen, CollectionNameSheet, CollectionBooksEmpty } from '@/ui/screens'` (lazy routes only).
+Gallery: `collections`, `collections-empty`, `collections-loading`, `collections-new`, `collections-shelf-empty`, `stats`,
+`stats-empty`, `stats-loading`. Empty states use `Illustration` (`shelf`, `books`, `chart`).
+
+**Wiring `src/app/pages/CollectionsPage.tsx` (or the Library bot's `CollectionsScreen` body):**
+1. Map shelves to `CollectionShelf[]` = `{ id, name, bookCount, covers?: string[] }` (`covers` = up to four cover URLs of the
+   shelf's first books; leave out for the shelf icon). Pass `loading` while `shelves === undefined`.
+2. `<CollectionsScreen shelves loading onOpenShelf onOpenSmart onCreate onRename onDelete onMove notice />`.
+   `onMove(shelf, -1 | 1)` replaces the four inline icon buttons (Rename, Move up/down and Delete live in one "⋯" menu per row;
+   the first shelf has no "Move up", the last no "Move down"). `smart` defaults to Unfinished and Recently added
+   (`DEFAULT_SMART_COLLECTIONS`, ids `unfinished` and `recent` to map to your presets).
+3. New and Rename: keep `naming` state and render `<CollectionNameSheet open mode name onNameChange onSubmit onClose error busy />`
+   (the sheet blocks blank names; trim and validate in the data layer; pass its message as `error`).
+4. An opened shelf with no books: `<CollectionBooksEmpty name action />`. Delete keeps its snackbar undo.
+5. Delete the page's own `ShelfRow`/Tailwind row markup and `LibIcon` imports (use `Icon` names `pencil`, `trash`).
+
+**Wiring `src/app/pages/StatsPage.tsx`:** keep `data.stats(Date.now())` and the visibility refresh, then render
+`<StatsScreen loading={summary === undefined} minutesPerDay={summary.minutesPerDay} dayLabels={short weekday names} dayNames={long weekday names} sessionCount={summary.sessionCount} finishedBooks={summary.finishedBooks} emptyAction={{ label: 'Open your library', icon: 'library', onClick: goToLibrary }} />`.
+Labels as today: `new Date(Date.now() - (6 - i) * DAY_MS).toLocaleDateString(undefined, { weekday: 'short' | 'long' })`.
+The screen draws its own header ("Stats"); drop `PageHeader` there. Bars are scaled with `transform` from a CSS variable,
+so nothing lays out while they grow, and each bar is read as "Wednesday: 35 min" (today as "Today: ...").
+
 ### Long lists: VirtualList (one windowing implementation)
 
 `VirtualList` (`components/VirtualList.tsx`, geometry in `utils/virtual.ts`) draws only the rows near the screen, so
