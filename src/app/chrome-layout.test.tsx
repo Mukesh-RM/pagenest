@@ -47,7 +47,7 @@ describe('app frame per route', () => {
     await screen.findByRole('heading', { level: 1 });
     expect(scope(container)).toHaveAttribute('data-chrome', 'full');
     expect(screen.getByTestId('pn-tabbar')).toBeInTheDocument();
-    expect(screen.getByTestId('pn-rail')).toBeInTheDocument();
+    expect(screen.queryByTestId('pn-rail')).toBeNull(); // phone width: only the tab bar is in the DOM
   });
 
   it('/read/:id is immersive as soon as the frame exists, before the book has loaded', async () => {
