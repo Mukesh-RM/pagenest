@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell as DesignAppShell } from '@/ui';
 import { NAV_ITEMS, tabForPath } from './tabs';
@@ -10,15 +11,15 @@ import { NAV_ITEMS, tabForPath } from './tabs';
 export function AppShell() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
+  const onSelect = useCallback(
+    (id: string) => {
+      const href = NAV_ITEMS.find((item) => item.id === id)?.href;
+      if (href) navigate(href);
+    },
+    [navigate],
+  );
   return (
-    <DesignAppShell
-      items={NAV_ITEMS}
-      value={tabForPath(pathname)}
-      onSelect={(id) => {
-        const href = NAV_ITEMS.find((item) => item.id === id)?.href;
-        if (href) navigate(href);
-      }}
-    >
+    <DesignAppShell items={NAV_ITEMS} value={tabForPath(pathname)} onSelect={onSelect}>
       <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
         <Outlet />
       </div>

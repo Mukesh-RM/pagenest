@@ -3,7 +3,7 @@ import { afterEach, beforeEach } from 'vitest';
 import { newId, type PageNestDB } from '@/data/db';
 import type { AppServices } from './services-context';
 import { useSettings } from './settings-store';
-import { minutesPerDay } from './stats';
+import { minutesPerDay } from '@/data/stats';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 
 

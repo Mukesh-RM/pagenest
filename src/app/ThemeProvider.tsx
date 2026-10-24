@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import { useCallback, useEffect, type ReactNode } from 'react';
 import { ThemeProvider as DesignThemeProvider } from '@/ui/theme/ThemeProvider';
 import { applyFontSize } from './apply-theme';
 import { useServices } from './services-context';
@@ -25,8 +25,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyFontSize(fontSizePx);
   }, [fontSizePx]);
 
+  const onModeChange = useCallback((mode: typeof preference) => void setPreference(db, mode), [db, setPreference]);
+
   return (
-    <DesignThemeProvider mode={preference} onModeChange={(mode) => void setPreference(db, mode)}>
+    <DesignThemeProvider mode={preference} onModeChange={onModeChange}>
       {children}
     </DesignThemeProvider>
   );

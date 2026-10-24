@@ -1,11 +1,20 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './AppShell';
 import { FirstRunGate } from './onboarding/FirstRunGate';
-import { CollectionsPage } from './pages/CollectionsPage';
-import { LibraryPage } from './pages/LibraryPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { StatsPage } from './pages/StatsPage';
+import { OnboardingFallback, ScreenFallback } from './ScreenFallback';
+import {
+  CollectionsScreen,
+  LibraryScreen,
+  OnboardingScreen,
+  SettingsScreen,
+  StatsScreen,
+  preloadScreens,
+  preloadScreensWhenIdle,
+} from './screens';
+
+// Start the home screen's download now, in parallel with reading saved settings.
+preloadScreens(['library']);
 
 /**
  * Design-system demo page, development only. `import.meta.env.DEV` is a build-time constant, so
@@ -14,15 +23,27 @@ import { StatsPage } from './pages/StatsPage';
  */
 const UiKitDemo = import.meta.env.DEV ? lazy(() => import('@/ui/demo/UiKitDemo')) : null;
 
+function screen(element: JSX.Element): JSX.Element {
+  return <Suspense fallback={<ScreenFallback />}>{element}</Suspense>;
+}
+
 function AppScreens() {
+  // When the browser is idle, fetch the other tabs so switching is instant (and works offline).
+  useEffect(() => preloadScreensWhenIdle(['collections', 'stats', 'settings']), []);
   return (
-    <FirstRunGate>
+    <FirstRunGate
+      onboarding={
+        <Suspense fallback={<OnboardingFallback />}>
+          <OnboardingScreen />
+        </Suspense>
+      }
+    >
       <Routes>
         <Route element={<AppShell />}>
-          <Route index element={<LibraryPage />} />
-          <Route path="collections" element={<CollectionsPage />} />
-          <Route path="stats" element={<StatsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route index element={screen(<LibraryScreen />)} />
+          <Route path="collections" element={screen(<CollectionsScreen />)} />
+          <Route path="stats" element={screen(<StatsScreen />)} />
+          <Route path="settings" element={screen(<SettingsScreen />)} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

@@ -1,4 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
+import { createDataClient } from '@/data/data-client';
 import { getDb } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
 import { ServicesContext, type AppServices } from './services-context';
@@ -8,7 +9,7 @@ export function ServicesProvider({ services, children }: { services?: AppService
   const value = useMemo<AppServices>(() => {
     if (services) return services;
     const db = getDb();
-    return { db, progress: new DexieProgressService(db) };
+    return { db, progress: new DexieProgressService(db), data: createDataClient({ db }) };
   }, [services]);
   return <ServicesContext.Provider value={value}>{children}</ServicesContext.Provider>;
 }

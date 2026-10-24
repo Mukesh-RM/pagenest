@@ -4,3 +4,8 @@ export * from './opfs';
 export * from './storage';
 export * from './settings';
 export * from './progress-service';
+export * from './fingerprint';
+export * from './stats';
+export * from './rpc';
+export * from './data-service';
+export * from './data-client';

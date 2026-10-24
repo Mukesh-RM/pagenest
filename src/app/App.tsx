@@ -4,12 +4,24 @@ import { attachProgressLifecycle } from '@/data/progress-service';
 import { AppRoutes } from './routes';
 import { ServicesProvider } from './services';
 import { useServices, type AppServices } from './services-context';
+import { flushSettings } from './settings-store';
 import { ThemeProvider } from './ThemeProvider';
 
-/** Saves any pending reading or listening position when the page is hidden or closed. */
+/** Saves pending reading or listening position and settings when the page is hidden or closed. */
 function ProgressLifecycle() {
   const { progress } = useServices();
   useEffect(() => attachProgressLifecycle(progress, { visibility: document, page: window }), [progress]);
+  useEffect(() => {
+    const flush = (): void => {
+      if (document.visibilityState !== 'visible') void flushSettings();
+    };
+    document.addEventListener('visibilitychange', flush);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', flush);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, []);
   return null;
 }
 

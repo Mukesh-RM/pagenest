@@ -1,6 +1,7 @@
 import { render, type RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { createDataClient } from '@/data/data-client';
 import { PageNestDB } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
 import { AppRoutes } from './routes';
@@ -15,7 +16,7 @@ let counter = 0;
 export function makeServices(prefix = 'pagenest-test'): AppServices {
   counter += 1;
   const db = new PageNestDB(`${prefix}-${counter}`);
-  return { db, progress: new DexieProgressService(db) };
+  return { db, progress: new DexieProgressService(db), data: createDataClient({ db, workerFactory: () => undefined }) };
 }
 
 /** Put the settings store back to its first-run defaults. */

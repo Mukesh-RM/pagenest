@@ -1,25 +1,48 @@
-import { useLiveQuery } from 'dexie-react-hooks';
+import { useEffect, useMemo, useState } from 'react';
+import { DAY_MS, type StatsSummary } from '@/data/stats';
 import { EmptyState } from '@/ui';
 import { PageHeader } from '../components/PageHeader';
 import { useServices } from '../services-context';
-import { DAY_MS, minutesPerDay } from '../stats';
 
 /** Reading and listening time. Simple bars, no clutter (blueprint 5.6). */
 export function StatsPage() {
-  const { db } = useServices();
-  const sessions = useLiveQuery(() => db.sessions.toArray(), [db]);
-  const finished = useLiveQuery(() => db.books.filter((b) => b.finished).count(), [db]);
+  const { data } = useServices();
+  const [summary, setSummary] = useState<StatsSummary | undefined>();
 
-  if (sessions === undefined) return <PageHeader title="Stats" />;
+  // The numbers are added up in a worker, so a long history never blocks scrolling or taps.
+  useEffect(() => {
+    let current = true;
+    const load = (): void => {
+      data.stats(Date.now()).then(
+        (next) => current && setSummary(next),
+        () => current && setSummary({ minutesPerDay: Array<number>(7).fill(0), sessionCount: 0, finishedBooks: 0 }),
+      );
+    };
+    load();
+    // Refresh when coming back to the app, e.g. after a reading session.
+    const onVisible = (): void => {
+      if (document.visibilityState === 'visible') load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      current = false;
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [data]);
 
-  const days = minutesPerDay(sessions, Date.now());
+  const days = summary?.minutesPerDay;
+  const labels = useMemo(
+    () => (days ?? []).map((_, i) => new Date(Date.now() - (6 - i) * DAY_MS).toLocaleDateString(undefined, { weekday: 'short' })),
+    [days],
+  );
+
+  if (summary === undefined || days === undefined) return <PageHeader title="Stats" />;
   const max = Math.max(1, ...days);
-  const labels = days.map((_, i) => new Date(Date.now() - (6 - i) * DAY_MS).toLocaleDateString(undefined, { weekday: 'short' }));
 
   return (
     <>
       <PageHeader title="Stats" />
-      {sessions.length === 0 ? (
+      {summary.sessionCount === 0 ? (
         <EmptyState
           art="stats"
           title="Nothing to count yet"
@@ -28,7 +51,7 @@ export function StatsPage() {
       ) : (
         <section aria-label="Last 7 days" className="rounded-card bg-surface p-4">
           <p className="mb-4 text-sm text-muted">
-            Minutes per day, last 7 days. Finished books: {finished ?? 0}.
+            Minutes per day, last 7 days. Finished books: {summary.finishedBooks}.
           </p>
           <ul className="flex h-40 items-end gap-2">
             {days.map((minutes, i) => (

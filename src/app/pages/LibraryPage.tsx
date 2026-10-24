@@ -1,7 +1,34 @@
 import { useLiveQuery } from 'dexie-react-hooks';
+import { memo } from 'react';
 import { EmptyState, ProgressBar, SkeletonCard, SkeletonGroup } from '@/ui';
 import { PageHeader } from '../components/PageHeader';
 import { useServices } from '../services-context';
+
+interface BookCardProps {
+  title: string;
+  author: string | undefined;
+  format: string;
+  percent: number;
+}
+
+/**
+ * One book tile. Memoized, and takes plain values (not the database row, which is a new object
+ * on every live-query run), so a progress write for one book re-renders only that book's tile.
+ */
+const BookCard = memo(function BookCard({ title, author, format, percent }: BookCardProps) {
+  return (
+    <li className="flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-card bg-surface p-3">
+      <div>
+        <p className="line-clamp-3 font-semibold">{title}</p>
+        {author ? <p className="line-clamp-1 text-sm text-muted">{author}</p> : null}
+      </div>
+      <div>
+        <p className="mb-1 text-xs uppercase text-muted">{format}</p>
+        <ProgressBar value={percent / 100} label={`Progress for ${title}`} />
+      </div>
+    </li>
+  );
+});
 
 /** Library home. Lists what is in the database; shows the empty state when nothing was added yet. */
 export function LibraryPage() {
@@ -35,21 +62,9 @@ export function LibraryPage() {
         />
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {books.map((book) => {
-            const percent = Math.round(percents?.get(book.id) ?? 0);
-            return (
-              <li key={book.id} className="flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-card bg-surface p-3">
-                <div>
-                  <p className="line-clamp-3 font-semibold">{book.title}</p>
-                  {book.author ? <p className="line-clamp-1 text-sm text-muted">{book.author}</p> : null}
-                </div>
-                <div>
-                  <p className="mb-1 text-xs uppercase text-muted">{book.format}</p>
-                  <ProgressBar value={percent / 100} label={`Progress for ${book.title}`} />
-                </div>
-              </li>
-            );
-          })}
+          {books.map((book) => (
+            <BookCard key={book.id} title={book.title} author={book.author} format={book.format} percent={Math.round(percents?.get(book.id) ?? 0)} />
+          ))}
         </ul>
       )}
     </>
