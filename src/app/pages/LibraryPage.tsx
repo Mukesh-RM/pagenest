@@ -137,12 +137,18 @@ export function LibraryPage() {
       if (!importer || files.length === 0) return;
       importer.importFiles(files).then(
         (outcomes) => {
-          const added = outcomes.filter((o) => 'result' in o).length;
+          const imported = outcomes.filter((o): o is Extract<typeof o, { result: unknown }> => 'result' in o);
+          const added = imported.filter((o) => !o.result.alreadyInLibrary).length;
+          const duplicates = imported.length - added;
           const firstError = outcomes.find((o): o is Extract<typeof o, { error: string }> => 'error' in o);
           if (firstError) setNotice({ kind: 'failed', message: firstError.error });
           if (added > 0)
             snackbar.show({
               message: added === 1 ? 'Added to your library.' : `Added ${added} books to your library.`,
+            });
+          else if (duplicates > 0)
+            snackbar.show({
+              message: duplicates === 1 ? 'That book is already in your library.' : 'Those books are already in your library.',
             });
         },
         () =>
