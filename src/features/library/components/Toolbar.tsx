@@ -1,103 +1,87 @@
 import { useId } from 'react';
-import { Button, Chip, ChipGroup, Icon } from '@/ui';
-import { LibIcon } from '../icons';
-import {
-  CHIP_LABELS,
-  SEGMENT_LABELS,
-  SORT_KEYS,
-  SORT_LABELS,
-  type FilterChip,
-  type Segment,
-  type SortKey,
-  type ViewMode,
-} from '../model';
+import { Chip, ChipGroup, Icon } from '@/ui';
+import { FILTERS, SORT_KEYS, SORT_LABELS, type FilterId, type SortKey, type ViewMode } from '../model';
 
 export interface ToolbarProps {
   text: string;
   onText: (text: string) => void;
-  view: ViewMode;
-  onView: (view: ViewMode) => void;
+  filter: FilterId;
+  onFilter: (filter: FilterId) => void;
   sort: SortKey;
   onSort: (sort: SortKey) => void;
-  segment: Segment;
-  onSegment: (segment: Segment) => void;
-  chip: FilterChip | null;
-  onChip: (chip: FilterChip | null) => void;
-  selectMode: boolean;
-  onSelectMode: () => void;
-  /** Hide the sort control (a shelf keeps its own order). */
+  view: ViewMode;
+  onView: (view: ViewMode) => void;
+  /** Hide the sort select (a search ranks by relevance, a shelf keeps its own order). */
   showSort?: boolean;
 }
 
-const SEGMENTS = Object.keys(SEGMENT_LABELS) as Segment[];
-const CHIPS = Object.keys(CHIP_LABELS) as FilterChip[];
-
 /**
- * Search, sort, view, select, and the filter chips. Sticky under the title; every control is 44 px
- * and the bar never changes height, so nothing moves when results change.
+ * Search, the filter chips, the labelled sort select and the grid or list switch. This is the design
+ * system's Library toolbar (`LibraryScreen`), with the same classes and words, so it looks the same:
+ * a pill search field, a chip row that scrolls with a fade at its end, then "Sort by" and the switch.
  */
-export function Toolbar({ text, onText, view, onView, sort, onSort, segment, onSegment, chip, onChip, selectMode, onSelectMode, showSort = true }: ToolbarProps) {
+export function Toolbar({ text, onText, filter, onFilter, sort, onSort, view, onView, showSort = true }: ToolbarProps) {
   const searchId = useId();
+  const sortId = useId();
   return (
-    <div className="pn-lib-bar">
-      <div className="pn-lib-bar__row">
-        <div className="pn-lib-search" role="search">
-          <label htmlFor={searchId} className="pn-visually-hidden">
-            Search your library
-          </label>
+    <div className="pn-library__tools">
+      <div className="pn-search" role="search">
+        <label htmlFor={searchId} className="pn-visually-hidden">
+          Search your library
+        </label>
+        <span className="pn-search__icon" aria-hidden="true">
           <Icon name="search" size={20} />
-          <input
-            id={searchId}
-            type="search"
-            className="pn-lib-search__input"
-            placeholder="Search title, author or narrator"
-            value={text}
-            onChange={(e) => onText(e.target.value)}
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint="search"
-          />
-        </div>
-        {showSort ? (
-          <label className="pn-lib-sort">
-            <LibIcon name="sort" size={20} />
-            <span className="pn-lib-sort__text">{SORT_LABELS[sort]}</span>
-            <select aria-label="Sort books" className="pn-lib-sort__select" value={sort} onChange={(e) => onSort(e.target.value as SortKey)}>
-              {SORT_KEYS.map((key) => (
-                <option key={key} value={key}>
-                  {SORT_LABELS[key]}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
-        <button
-          type="button"
-          className="pn-btn pn-btn--ghost pn-btn--icon"
-          aria-label={view === 'grid' ? 'Show as a list' : 'Show as a grid'}
-          onClick={() => onView(view === 'grid' ? 'list' : 'grid')}
-        >
-          <LibIcon name={view === 'grid' ? 'list' : 'grid'} />
-        </button>
-        <Button variant={selectMode ? 'secondary' : 'ghost'} iconOnly icon="check" aria-label={selectMode ? 'Stop selecting' : 'Select books'} aria-pressed={selectMode} onClick={onSelectMode} />
+        </span>
+        <input
+          id={searchId}
+          type="search"
+          className="pn-search__input"
+          placeholder="Search books"
+          value={text}
+          autoComplete="off"
+          enterKeyHint="search"
+          onChange={(event) => onText(event.target.value)}
+        />
       </div>
-      <div className="pn-lib-chips">
-        <ChipGroup label="Show">
-          {SEGMENTS.map((s) => (
-            <Chip key={s} selected={segment === s} onClick={() => onSegment(s)}>
-              {SEGMENT_LABELS[s]}
+      <div className="pn-library__filters">
+        <ChipGroup label="Filter library" scroll>
+          {FILTERS.map((f) => (
+            <Chip key={f.id} selected={filter === f.id} onClick={() => onFilter(f.id)}>
+              {f.label}
             </Chip>
           ))}
         </ChipGroup>
-        <span className="pn-lib-chips__rule" aria-hidden="true" />
-        <ChipGroup label="Filter">
-          {CHIPS.map((c) => (
-            <Chip key={c} selected={chip === c} onClick={() => onChip(chip === c ? null : c)}>
-              {CHIP_LABELS[c]}
-            </Chip>
-          ))}
-        </ChipGroup>
+      </div>
+      <div className="pn-library__options">
+        {showSort ? (
+          <div className="pn-sort">
+            <label htmlFor={sortId} className="pn-sort__label">
+              Sort by
+            </label>
+            <span className="pn-sort__field">
+              <select id={sortId} className="pn-sort__select" value={sort} onChange={(event) => onSort(event.target.value as SortKey)}>
+                {SORT_KEYS.map((key) => (
+                  <option key={key} value={key}>
+                    {SORT_LABELS[key]}
+                  </option>
+                ))}
+              </select>
+              <span className="pn-sort__chevron" aria-hidden="true">
+                <Icon name="chevronDown" size={18} />
+              </span>
+            </span>
+          </div>
+        ) : (
+          <span />
+        )}
+        <div role="group" aria-label="Library layout" className="pn-viewswitch">
+          <button type="button" className="pn-viewswitch__btn" aria-pressed={view === 'grid'} aria-label="Grid of covers" onClick={() => onView('grid')}>
+            <Icon name="layoutGrid" size={20} />
+          </button>
+          <button type="button" className="pn-viewswitch__btn" aria-pressed={view === 'list'} aria-label="List" onClick={() => onView('list')}>
+            <Icon name="list" size={20} />
+          </button>
+        </div>
       </div>
     </div>
   );

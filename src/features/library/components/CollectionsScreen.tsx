@@ -5,8 +5,7 @@ import { useLibraryRevision } from '@/app/library-hooks';
 import { useServices } from '@/app/services-context';
 import type { CollectionSummary } from '@/data/collections';
 import type { LibraryQuery } from '@/data/library-query';
-import { BottomSheet, Button, Card, EmptyState, SkeletonGroup, SnackbarProvider, useSnackbar } from '@/ui';
-import { LibIcon } from '../icons';
+import { BottomSheet, Button, Card, EmptyState, Icon, SkeletonGroup, SnackbarProvider, useSnackbar } from '@/ui';
 import { LibraryScreen } from './LibraryScreen';
 
 type Opened = { name: string; shelfId?: string; preset?: Partial<LibraryQuery> };
@@ -116,10 +115,10 @@ function Body() {
               <Button variant="ghost" iconOnly icon="chevronUp" aria-label={`Move ${s.name} up`} disabled={i === 0} onClick={() => void move(i, -1)} />
               <Button variant="ghost" iconOnly icon="chevronDown" aria-label={`Move ${s.name} down`} disabled={i === shelves.length - 1} onClick={() => void move(i, 1)} />
               <button type="button" className="pn-btn pn-btn--ghost pn-btn--icon" aria-label={`Rename ${s.name}`} onClick={() => setNaming({ id: s.id, name: s.name })}>
-                <LibIcon name="pencil" />
+                <Icon name="pencil" />
               </button>
               <button type="button" className="pn-btn pn-btn--ghost pn-btn--icon" aria-label={`Delete ${s.name}`} onClick={() => void del(s)}>
-                <LibIcon name="trash" />
+                <Icon name="trash" />
               </button>
             </li>
           ))}

@@ -34,8 +34,8 @@ for (const view of ['grid', 'list'] as const) {
     await openSeeded(page, 5000);
     await expect(cards(page).first()).toBeVisible({ timeout: 20_000 });
     if (view === 'list') {
-      await page.getByRole('button', { name: 'Show as a list' }).click();
-      await expect(page.getByRole('button', { name: 'Show as a grid' })).toBeVisible();
+      await page.getByRole('button', { name: 'List', exact: true }).click();
+      await expect(page.getByRole('button', { name: 'Grid of covers' })).toBeVisible();
     }
     await page.waitForTimeout(500);
     await resetLongTasks(page);
@@ -70,6 +70,7 @@ test('the Favorites chip responds within 100 ms on 1,000 books', async ({ page }
   await expect(cards(page).first()).toBeVisible({ timeout: 15_000 });
   const chip = page.getByRole('button', { name: /^Favorites$/ }).or(page.getByRole('radio', { name: /^Favorites$/ })).first();
   await expect(chip).toBeVisible();
+  await page.waitForTimeout(500); // the list has finished loading and drawing; this gate measures the tap, not the open
   const ms = await measureInput(page, firstCardsMatch('Starred Book'), () => chip.tap(), 3000);
   console.log(`PERF favorites filter 1000 books: ${ms.toFixed(0)} ms`);
   expect(ms).toBeLessThanOrEqual(G.inputMs);

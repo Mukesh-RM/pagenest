@@ -39,7 +39,7 @@ function Page() {
   const path = new URLSearchParams(window.location.search).get('screen') ?? 'library';
   return (
     <main className="pn-shell__main">
-      <div style={{ padding: 'calc(1rem + env(safe-area-inset-top, 0px)) var(--pn-margin) 24px' }}>
+      <div className="pn-screen">
         {path === 'settings' ? (
           <>
             <BackupRestorePanel />

@@ -1,21 +1,37 @@
 import '../library.css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import '@/ui/styles/screens.css';
+import '@/ui/styles/surfaces.css';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/app/components/PageHeader';
 import { SampleBookCard } from '@/app/components/SampleBookCard';
+import { useCoverUrl } from '@/app/library-hooks';
 import { pathForBook } from '@/app/route-paths';
 import { useServices } from '@/app/services-context';
 import type { BookSummary, LibraryQuery } from '@/data/library-query';
 import { getSetting, setSetting } from '@/data/settings';
-import { Button, EmptyState, SkeletonGroup, SnackbarProvider, useSnackbar } from '@/ui';
+import {
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  Illustration,
+  SkeletonCard,
+  SkeletonGroup,
+  SnackbarProvider,
+  useSnackbar,
+  type BookDetail,
+  type RectLike,
+  type SheetCloseReason,
+} from '@/ui';
 import { ImportProvider } from '../context';
 import type { ImportItem } from '@/workers/import/protocol';
 import { PREFS_KEY } from '../prefs';
-import { DEFAULT_PREFS, parsePrefs, toLibraryQuery, type FilterChip, type LibraryPrefs, type Segment, type SortKey, type ViewMode } from '../model';
+import { DEFAULT_PREFS, formatTag, parsePrefs, toLibraryQuery, type FilterId, type LibraryPrefs, type SortKey, type ViewMode } from '../model';
 import { createSampleBookProvider } from '../sample';
 import { getImportController } from '../registry';
 import { useLibraryItems } from '../use-library-items';
 import { AddSheet } from './AddSheet';
+import { toCardBook } from './card-book';
 import { BookList } from './BookList';
 import { BookSheet } from './BookSheet';
 import { DropOverlay } from './DropOverlay';
@@ -24,38 +40,51 @@ import { SelectionBar } from './SelectionBar';
 import { ShelfSheet } from './ShelfSheet';
 import { Toolbar } from './Toolbar';
 
-/** Default measurements until the real ones are read from a hidden sample (also used in tests). */
-const DEFAULT_META = 76;
-const DEFAULT_ROW = 80;
+/** The design system's book detail sheet loads when the first book is tapped, not with the list. */
+const BookDetailSheet = lazy(() => import('@/ui/screens/BookDetailSheet'));
 
-function useMeasured(ref: React.RefObject<HTMLElement | null>, fallback: number): number {
-  const [h, setH] = useState(fallback);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return undefined;
-    const read = (): void => {
-      const next = Math.ceil(el.getBoundingClientRect().height);
-      if (next > 0) setH(next);
-    };
-    read();
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(read);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref]);
-  return h;
-}
+const SKELETON_CARDS = 8;
 
-function SkeletonGrid() {
+function SkeletonGrid({ view }: { view: ViewMode }) {
   return (
-    <SkeletonGroup label="Loading your library" className="pn-lib-skeleton">
-      {Array.from({ length: 8 }, (_, i) => (
-        <div key={i} className="pn-lib-skeleton__card">
-          <span className="pn-skeleton pn-lib-skeleton__cover" aria-hidden="true" />
-          <span className="pn-skeleton pn-skeleton--text pn-lib-skeleton__line" aria-hidden="true" />
-        </div>
+    <SkeletonGroup label="Loading your library" className={view === 'list' ? 'pn-library__grid pn-library__grid--list' : 'pn-library__grid'}>
+      {Array.from({ length: SKELETON_CARDS }, (_, i) => (
+        <SkeletonCard key={i} />
       ))}
     </SkeletonGroup>
+  );
+}
+
+interface Detail {
+  book: BookSummary;
+  rect: RectLike | undefined;
+  open: boolean;
+}
+
+/** The design system's book sheet for the tapped book: Read or Listen, progress, and Remove in the ⋯ menu. */
+function DetailHost({ detail, onClose, onOpenBook, onRemove }: { detail: Detail; onClose: (reason: SheetCloseReason) => void; onOpenBook: (book: BookSummary) => void; onRemove: (book: BookSummary) => void }) {
+  const { book } = detail;
+  const coverUrl = useCoverUrl(book.id, book.coverRef !== undefined);
+  const shown = useMemo<BookDetail>(
+    () => ({
+      ...toCardBook(book, coverUrl),
+      format: formatTag(book),
+      ...(book.narrator ? { narrator: book.narrator } : {}),
+      ...(book.pages ? { pages: book.pages } : {}),
+      ...(book.durationSec ? { durationSeconds: book.durationSec } : {}),
+    }),
+    [book, coverUrl],
+  );
+  const listen = book.kind === 'audio';
+  return (
+    <BookDetailSheet
+      open={detail.open}
+      book={shown}
+      onClose={onClose}
+      {...(detail.rect ? { originRect: detail.rect } : {})}
+      {...(listen ? { onListen: () => onOpenBook(book) } : { onRead: () => onOpenBook(book) })}
+      onRemove={() => onRemove(book)}
+    />
   );
 }
 
@@ -68,9 +97,14 @@ export interface LibraryViewProps {
   onBack?: () => void;
   /** Fixed parts of the query (a smart shelf). Overrides the person's sort and filters. */
   preset?: Partial<LibraryQuery>;
+  /**
+   * Slot under the title, search and filters and above the books: the app puts the "Welcome back" resume
+   * card here (the design system's place for it). It scrolls with the page, like the books.
+   */
+  header?: ReactNode;
 }
 
-function LibraryBody({ shelfId, title = 'Library', onBack, preset }: LibraryViewProps) {
+function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: LibraryViewProps) {
   const { db, data, sampleBook } = useServices();
   const navigate = useNavigate();
   const snackbar = useSnackbar();
@@ -105,10 +139,10 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset }: LibraryView
   );
 
   const [text, setText] = useState('');
-  const [chip, setChip] = useState<FilterChip | null>(null);
+  const [filter, setFilter] = useState<FilterId>('all');
   const query = useMemo(
-    () => ({ ...toLibraryQuery({ text, segment: prefs.segment, chip, sort: prefs.sort, collectionId: shelfId }), ...(preset ?? {}) }),
-    [text, prefs.segment, chip, prefs.sort, shelfId, preset],
+    () => ({ ...toLibraryQuery({ text, filter, sort: prefs.sort, collectionId: shelfId }), ...(preset ?? {}) }),
+    [text, filter, prefs.sort, shelfId, preset],
   );
   const { items, total, libraryCount, ready, error, patch, remove, reload } = useLibraryItems(query);
 
@@ -119,26 +153,41 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset }: LibraryView
     if (bump > 0) reload();
   }, [bump, reload]);
 
-  // ----- selection -----
-  const [selectMode, setSelectMode] = useState(false);
+  // ----- selection (press and hold a book, or the context-menu key) -----
   const [selection, setSelection] = useState<ReadonlySet<string>>(new Set());
-  const selecting = selectMode || selection.size > 0;
+  const selecting = selection.size > 0;
+  const [selectMode, setSelectMode] = useState(false);
+  const selectingNow = selecting || selectMode;
   const toggle = useCallback((id: string) => {
+    setSelectMode(true);
     setSelection((s) => {
       const next = new Set(s);
       if (!next.delete(id)) next.add(id);
       return next;
     });
   }, []);
-  const startSelect = useCallback((id: string) => {
-    setSelectMode(true);
-    setSelection((s) => new Set(s).add(id));
-  }, []);
   const endSelect = useCallback(() => {
     setSelectMode(false);
     setSelection(new Set());
   }, []);
-  const open = useCallback((book: BookSummary) => navigate(pathForBook(book)), [navigate]);
+
+  // ----- opening a book: the detail sheet, then Read or Listen -----
+  const [detail, setDetail] = useState<Detail | undefined>();
+  const onOpenBook = useCallback(
+    (book: BookSummary, rect: RectLike | undefined) => {
+      if (selectingNow) toggle(book.id);
+      else setDetail({ book, rect, open: true });
+    },
+    [selectingNow, toggle],
+  );
+  const closeDetail = useCallback((_reason: SheetCloseReason) => setDetail((d) => (d ? { ...d, open: false } : d)), []);
+  const goToBook = useCallback(
+    (book: BookSummary) => {
+      setDetail(undefined);
+      navigate(pathForBook(book));
+    },
+    [navigate],
+  );
 
   // ----- importing -----
   const [adding, setAdding] = useState(false);
@@ -181,27 +230,40 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset }: LibraryView
   const favoriteSelected = (): void => void writeFlags(chosen, { favorite: !chosen.every((b) => b.favorite) });
   const finishedSelected = (): void => void writeFlags(chosen, { finished: !chosen.every((b) => b.finished) });
 
-  const deleteSelected = async (): Promise<void> => {
+  /** Removes books from the library with an Undo, for the selection bar and for the detail sheet. */
+  const removeBooks = useCallback(
+    async (ids: string[]): Promise<void> => {
+      if (ids.length === 0) return;
+      remove(ids);
+      try {
+        const receipt = await data.books.trash(ids);
+        snackbar.show({
+          message: ids.length === 1 ? 'Book removed' : `${ids.length} books removed`,
+          onAction: () => {
+            void data.books.restore(receipt.token).then(reload, () => say('That could not be undone. Add the book again from its file.'));
+          },
+          onDismiss: (reason) => {
+            if (reason !== 'action') void data.books.purge(receipt.token).catch(() => undefined);
+          },
+        });
+      } catch {
+        reload();
+        say('Those books could not be removed. Please try again.');
+      }
+    },
+    [data, remove, reload, snackbar, say],
+  );
+  const deleteSelected = (): void => {
     const ids = chosen.map((b) => b.id);
-    if (ids.length === 0) return;
-    remove(ids);
     endSelect();
-    try {
-      const receipt = await data.books.trash(ids);
-      snackbar.show({
-        message: ids.length === 1 ? 'Book deleted' : `${ids.length} books deleted`,
-        onAction: () => {
-          void data.books.restore(receipt.token).then(reload, () => say('That could not be undone. Add the book again from its file.'));
-        },
-        onDismiss: (reason) => {
-          if (reason !== 'action') void data.books.purge(receipt.token).catch(() => undefined);
-        },
-      });
-    } catch {
-      reload();
-      say('Those books could not be deleted. Please try again.');
-    }
+    void removeBooks(ids);
   };
+
+  const [removing, setRemoving] = useState<BookSummary | undefined>();
+  const askRemove = useCallback((book: BookSummary) => {
+    setDetail(undefined);
+    setRemoving(book);
+  }, []);
 
   const saveDetails = useCallback(
     async (id: string, details: { title: string; author: string }): Promise<string | undefined> => {
@@ -219,114 +281,89 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset }: LibraryView
     [data, patch, reload],
   );
 
-  // ----- measurements for the virtual list -----
-  const metaProbe = useRef<HTMLDivElement>(null);
-  const rowProbe = useRef<HTMLDivElement>(null);
-  const metaHeight = useMeasured(metaProbe, DEFAULT_META);
-  const rowHeight = useMeasured(rowProbe, DEFAULT_ROW);
-
   const provider = useMemo(() => sampleBook ?? createSampleBookProvider(), [sampleBook]);
-  const filtered = text.trim() !== '' || chip !== null || prefs.segment !== 'all';
+  const filtered = text.trim() !== '' || filter !== 'all';
   const showEmptyLibrary = ready && libraryCount === 0 && !shelfId && !preset;
 
   return (
     <>
       <PageHeader title={title}>
-        <span className="pn-lib-headactions">
-          {onBack ? (
+        {onBack ? (
+          <span className="pn-lib-headactions">
             <Button variant="ghost" onClick={onBack}>
               Back
             </Button>
-          ) : null}
+            <Button icon="plus" onClick={() => setAdding(true)}>
+              Add books
+            </Button>
+          </span>
+        ) : (
           <Button icon="plus" onClick={() => setAdding(true)}>
-            Add
+            Add books
           </Button>
-        </span>
+        )}
       </PageHeader>
       <Toolbar
         text={text}
         onText={setText}
-        view={prefs.view}
-        onView={(view: ViewMode) => setPrefs({ view })}
+        filter={filter}
+        onFilter={setFilter}
         sort={prefs.sort}
         onSort={(sort: SortKey) => setPrefs({ sort })}
-        segment={prefs.segment}
-        onSegment={(segment: Segment) => setPrefs({ segment })}
-        chip={chip}
-        onChip={setChip}
-        selectMode={selecting}
-        onSelectMode={() => (selecting ? endSelect() : setSelectMode(true))}
+        view={prefs.view}
+        onView={(view: ViewMode) => setPrefs({ view })}
         showSort={text.trim() === ''}
       />
+      {header}
       <div className="pn-visually-hidden" role="status">
         {ready && !showEmptyLibrary ? `${total} ${total === 1 ? 'book' : 'books'}` : ''}
       </div>
-      <div className="pn-lib-probes" aria-hidden="true" {...{ inert: '' }}>
-        <span ref={metaProbe} className="pn-lib-meta pn-lib-probe">
-          <span className="pn-lib-title">Title</span>
-          <span className="pn-lib-author">Author</span>
-        </span>
-        <span ref={rowProbe} className="pn-lib-rowprobe">
-          <span className="pn-lib-cover pn-lib-rowprobe__cover" />
-          <span className="pn-lib-rowmeta">
-            <span className="pn-lib-title">Title</span>
-            <span className="pn-lib-author">Author</span>
-            <span className="pn-lib-sub">EPUB</span>
-          </span>
-        </span>
-      </div>
 
       {!ready || !prefsReady ? (
-        <SkeletonGrid />
+        <SkeletonGrid view={prefs.view} />
       ) : error && items.length === 0 ? (
-        <EmptyState art="alert" title="Your library could not be read" description="Close other PageNest tabs and try again." action={{ label: 'Try again', onClick: reload }} />
+        <EmptyState
+          art={<Illustration name="offline" />}
+          title="Your library could not be read"
+          description="Close other PageNest tabs and try again."
+          action={{ label: 'Try again', onClick: reload }}
+        />
       ) : showEmptyLibrary ? (
-        <>
-          <EmptyState
-            art="bookOpen"
-            title="Your shelf is waiting"
-            description="Add books, PDFs or audiobooks and they appear here. Everything stays on this device."
-            action={{ label: 'Add files', icon: 'plus', onClick: () => setAdding(true) }}
-          />
-          {provider.available() ? (
-            <SampleBookCard provider={provider} onImported={(r) => navigate(pathForBook({ id: r.bookId, kind: r.kind }))} />
-          ) : null}
-        </>
+        <EmptyState
+          art={<Illustration name="books" />}
+          title="Your library is empty"
+          description="Add an EPUB, PDF or audiobook from your device. Everything stays on this device."
+          action={{ label: 'Add books', icon: 'plus', onClick: () => setAdding(true) }}
+          extra={
+            provider.available() ? (
+              <SampleBookCard provider={provider} onImported={(r) => navigate(pathForBook({ id: r.bookId, kind: r.kind }))} />
+            ) : undefined
+          }
+        />
       ) : items.length === 0 ? (
         <EmptyState
-          art="search"
-          title={shelfId || preset ? 'Nothing here yet' : 'No books match'}
-          description={shelfId ? 'Press and hold a book in your library and choose Add to a collection.' : 'Try different words, or clear the filters.'}
+          art={<Illustration name={shelfId || preset ? 'shelf' : 'search'} />}
+          title={shelfId || preset ? 'Nothing here yet' : text.trim() ? 'No books match that search' : 'Nothing on this shelf yet'}
+          description={shelfId ? 'Press and hold a book in your library and choose Add to a collection.' : 'Try a different word, or clear the filter.'}
           {...(filtered
             ? {
                 action: {
                   label: 'Clear search and filters',
                   onClick: () => {
                     setText('');
-                    setChip(null);
-                    setPrefs({ segment: 'all' });
+                    setFilter('all');
                   },
                 },
               }
             : {})}
         />
       ) : (
-        <BookList
-          books={items}
-          selection={selection}
-          selecting={selecting}
-          view={prefs.view}
-          metaHeight={metaHeight}
-          rowHeight={rowHeight}
-          onOpen={open}
-          onToggle={toggle}
-          onSelectStart={startSelect}
-        />
+        <BookList books={items} selection={selection} selecting={selectingNow} view={prefs.view} onOpen={onOpenBook} onSelect={(book) => toggle(book.id)} />
       )}
 
       <div className="pn-lib-dock">
         <ImportStatus />
-        {selecting ? (
+        {selectingNow ? (
           <SelectionBar
             count={selection.size}
             total={items.length}
@@ -335,13 +372,31 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset }: LibraryView
             onFinished={finishedSelected}
             onShelf={() => setShelfPick(true)}
             onDetails={chosen.length === 1 ? () => setEditing(chosen[0]) : undefined}
-            onDelete={() => void deleteSelected()}
+            onDelete={deleteSelected}
             onSelectAll={() => setSelection(new Set(items.map((b) => b.id)))}
             onDone={endSelect}
           />
         ) : null}
       </div>
 
+      {detail ? (
+        <Suspense fallback={null}>
+          <DetailHost detail={detail} onClose={closeDetail} onOpenBook={goToBook} onRemove={askRemove} />
+        </Suspense>
+      ) : null}
+      <ConfirmDialog
+        open={removing !== undefined}
+        title={removing ? `Remove \u201c${removing.title}\u201d?` : 'Remove this book?'}
+        description="It leaves your library and this device. You can undo for a few seconds."
+        confirmLabel="Remove"
+        destructive
+        onConfirm={() => {
+          const book = removing;
+          setRemoving(undefined);
+          if (book) void removeBooks([book.id]);
+        }}
+        onCancel={() => setRemoving(undefined)}
+      />
       <AddSheet open={adding} onClose={() => setAdding(false)} onPick={startImport} />
       <BookSheet book={editing} onClose={() => setEditing(undefined)} onSave={saveDetails} />
       <ShelfSheet open={shelfPick} bookIds={chosen.map((b) => b.id)} onClose={() => setShelfPick(false)} onDone={(m) => (say(m), endSelect())} />
