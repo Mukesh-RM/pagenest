@@ -24,6 +24,8 @@ export async function overflowProblems(page: Page): Promise<Problem[]> {
         while (scroller) { const o = getComputedStyle(scroller).overflowX; if ((o === 'auto' || o === 'scroll') && scroller.scrollWidth > scroller.clientWidth) { inside = true; break; } scroller = scroller.parentElement; }
         if (!inside) out.push({ what: 'element extends past the right edge', where: `${describe(el)} right=${Math.round(r.right)} viewport=${de.clientWidth}` });
       }
+      // aria-hidden text is a decorative duplicate (for example a generated cover repeating the title shown in the card body)
+      if (el.closest('[aria-hidden="true"]')) continue;
       const hasOwnText = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim());
       const clips = cs.overflowX === 'hidden' || cs.overflowX === 'clip';
       // line-clamp (ellipsis) is deliberate truncation, not clipping. Current Chromium reports it as `line-clamp` or on the legacy

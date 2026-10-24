@@ -14,12 +14,17 @@ test.describe('Library edge cases (quality gate)', () => {
 
   test('a long word without spaces in a title wraps or ends with an ellipsis instead of being cut off', async ({ page }) => {
     const card = await findCard(page, 'Pneumonoultramicroscopic');
-    const m = await card.evaluate((el) => {
-      const title = el.querySelector('p')!;
-      const cs = getComputedStyle(title);
-      return { scrollWidth: title.scrollWidth, clientWidth: title.clientWidth, ellipsis: cs.textOverflow === 'ellipsis', wraps: cs.overflowWrap === 'anywhere' || cs.overflowWrap === 'break-word' || cs.wordBreak === 'break-all' || cs.wordBreak === 'break-word' };
-    });
-    expect(m.scrollWidth > m.clientWidth + 1 && !m.ellipsis && !m.wraps,
-      `the title is cut off mid-word (scrollWidth ${m.scrollWidth} > clientWidth ${m.clientWidth}); add overflow-wrap:anywhere or an ellipsis`).toBe(false);
+    // every visible element in the card that carries the word (the title, and a generated cover may repeat it)
+    const ms = await card.evaluate((el) => [...el.querySelectorAll('*')]
+      .filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && /Pneumonoultra/.test(n.textContent ?? '')))
+      .map((e) => {
+        const cs = getComputedStyle(e);
+        return { where: `${e.tagName.toLowerCase()}.${String(e.className).slice(0, 30)}`, scrollWidth: e.scrollWidth, clientWidth: e.clientWidth, ellipsis: cs.textOverflow === 'ellipsis', wraps: cs.overflowWrap === 'anywhere' || cs.overflowWrap === 'break-word' || cs.wordBreak === 'break-all' || cs.wordBreak === 'break-word' };
+      }));
+    expect(ms.length, 'the word is on the card').toBeGreaterThan(0);
+    for (const m of ms) {
+      expect(m.scrollWidth > m.clientWidth + 1 && !m.ellipsis && !m.wraps,
+        `${m.where}: the title is cut off mid-word (scrollWidth ${m.scrollWidth} > clientWidth ${m.clientWidth}); add overflow-wrap:anywhere or an ellipsis`).toBe(false);
+    }
   });
 });
