@@ -311,6 +311,40 @@ describe('Library actions', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('protected by DRM');
   });
 
+  it('Add books says it is not ready when the importer exists but is not available', async () => {
+    const importer: BookImporter = { accept: '.epub', available: () => false, importFiles: vi.fn(async () => []) };
+    const value = await launch({ importer });
+    renderApp(value);
+    fireEvent.click((await screen.findAllByRole('button', { name: 'Add books' }))[0] as HTMLElement);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Adding books is not ready yet');
+    expect(importer.importFiles).not.toHaveBeenCalled();
+  });
+
+  it('tells the person when every chosen book was already in the library', async () => {
+    const importer: BookImporter = {
+      accept: '.epub',
+      available: () => true,
+      importFiles: async (files) =>
+        files.map((f) => ({ fileName: f.name, result: { bookId: 'x', kind: 'ebook' as const, format: 'epub' as const, title: 'X', alreadyInLibrary: true } })),
+    };
+    const value = await launch({ importer });
+    const { container } = renderApp(value);
+    await screen.findAllByRole('button', { name: 'Add books' });
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [new File(['x'], 'a.epub')] } });
+    expect(await screen.findByText('That book is already in your library.')).toBeInTheDocument();
+  });
+
+  it('says nothing was added when the importer rejects', async () => {
+    const importer: BookImporter = { accept: '.epub', available: () => true, importFiles: () => Promise.reject(new Error('boom')) };
+    const value = await launch({ importer });
+    const { container } = renderApp(value);
+    await screen.findAllByRole('button', { name: 'Add books' });
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [new File(['x'], 'a.epub')] } });
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Nothing was added. Please try again.');
+    expect(alert).not.toHaveTextContent('boom');
+  });
+
   it('Not now hides the Welcome back card for this visit', async () => {
     const value = await launch();
     await value.db.books.add(bookRecord('b1', { title: 'Midway' }));

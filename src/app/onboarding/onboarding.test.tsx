@@ -44,6 +44,16 @@ describe('first run', () => {
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
   });
 
+  it('card 2 points to Add books when an importer is registered, and does not promise a later release', async () => {
+    const withImporter: AppServices = { ...services, importer: { accept: '.epub', available: () => true, importFiles: async () => [] } };
+    renderApp(withImporter);
+    await heading(/no account/i);
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await heading('A home for your books');
+    expect(screen.getByText(/Add your own books with Add books/i)).toBeInTheDocument();
+    expect(screen.queryByText(/arrives in the next release/i)).not.toBeInTheDocument();
+  });
+
   it('shows nothing from onboarding while settings are loading, and never flashes it for returning users', async () => {
     await db.settings.put({ key: 'onboardingDone', value: true });
     renderApp(services);

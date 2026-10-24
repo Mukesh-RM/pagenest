@@ -34,7 +34,7 @@ function screen(element: JSX.Element, fallback: JSX.Element = <ScreenFallback />
 
 function AppScreens() {
   // When the browser is idle, fetch the other tabs so switching is instant (and works offline).
-  useEffect(() => preloadScreensWhenIdle(['collections', 'stats', 'settings']), []);
+  useEffect(() => preloadScreensWhenIdle(['collections', 'stats', 'settings', 'read', 'listen']), []);
   return (
     <FirstRunGate
       onboarding={

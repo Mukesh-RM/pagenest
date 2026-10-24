@@ -13,7 +13,8 @@ import {
   type RectLike,
   type SheetCloseReason,
 } from '@/ui';
-import { BookDetailHost, type OpenedBook } from '../components/BookDetailHost';
+import type { OpenedBook } from '../components/BookDetailHost';
+import { LazyBookDetailHost } from '../components/LazyBookDetailHost';
 import { LibraryResume, LibraryResumeSkeleton } from '../components/LibraryResume';
 import { SampleBookCard } from '../components/SampleBookCard';
 import { useCoverUrls, useLibraryPage } from '../library-hooks';
@@ -137,12 +138,18 @@ export function LibraryPage() {
       if (!importer || files.length === 0) return;
       importer.importFiles(files).then(
         (outcomes) => {
-          const added = outcomes.filter((o) => 'result' in o).length;
+          const imported = outcomes.filter((o): o is Extract<typeof o, { result: unknown }> => 'result' in o);
+          const added = imported.filter((o) => !o.result.alreadyInLibrary).length;
+          const duplicates = imported.length - added;
           const firstError = outcomes.find((o): o is Extract<typeof o, { error: string }> => 'error' in o);
           if (firstError) setNotice({ kind: 'failed', message: firstError.error });
           if (added > 0)
             snackbar.show({
               message: added === 1 ? 'Added to your library.' : `Added ${added} books to your library.`,
+            });
+          else if (duplicates > 0)
+            snackbar.show({
+              message: duplicates === 1 ? 'That book is already in your library.' : 'Those books are already in your library.',
             });
         },
         () =>
@@ -230,7 +237,7 @@ export function LibraryPage() {
       {importer ? (
         <input ref={picker} type="file" multiple accept={importer.accept} tabIndex={-1} aria-hidden="true" className="sr-only" onChange={onFiles} />
       ) : null}
-      <BookDetailHost opened={opened} onClose={closeDetail} onRead={openBook} onListen={openBook} onRemoveConfirmed={removeBook} />
+      <LazyBookDetailHost opened={opened} onClose={closeDetail} onRead={openBook} onListen={openBook} onRemoveConfirmed={removeBook} />
     </>
   );
 }

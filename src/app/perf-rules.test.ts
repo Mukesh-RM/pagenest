@@ -39,6 +39,21 @@ describe('performance rules for src/app', () => {
     }
   });
 
+  it('keeps overlays (PWA prompts, book detail sheet) out of the first-paint chunk: only dynamic imports', () => {
+    const lazyWrappers = /Lazy(PwaPrompts|BookDetailHost)\.tsx$/;
+    const offenders = files
+      .filter((f) => !lazyWrappers.test(f.name))
+      .filter((f) => f.text.split('\n').some((line) => /^import (?!type)/.test(line) && /from '[^']*\/(PwaPromptsHost|BookDetailHost)';/.test(line)))
+      .map((f) => f.name);
+    expect(offenders).toEqual([]);
+  });
+
+  it('does not load the file-store code (OPFS) on first paint', () => {
+    const client = readFileSync(join(process.cwd(), 'src', 'data', 'data-client.ts'), 'utf8');
+    expect(client).not.toMatch(/^import \{[^}]*createFileStore[^}]*\} from '\.\/opfs'/m);
+    expect(client).toContain("import('./opfs')");
+  });
+
   it('keeps the heavy demo out of the production bundle (dev-only import)', () => {
     const routes = files.find((f) => f.name.endsWith('routes.tsx'))?.text ?? '';
     expect(routes).toMatch(/import\.meta\.env\.DEV\s*\?\s*lazy\(/);

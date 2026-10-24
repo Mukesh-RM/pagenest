@@ -37,6 +37,12 @@ How the worker is used:
   (`React.lazy`, `src/app/screens.ts`). The first paint only needs the shell, router, theme and settings.
 * The Library chunk starts downloading at once; the other tabs are fetched when the browser is
   idle (`requestIdleCallback`), so switching tabs does not wait.
+* The reader and player screens are fetched when idle too (they are small and open on a tap).
+* Overlays are not part of first paint: the PWA prompts (`LazyPwaPrompts`) mount when idle, and the
+  book detail sheet (`LazyBookDetailHost`) is prefetched when idle after the grid is up. Both render
+  nothing in the page flow, so nothing shifts. The file-store code (`src/data/opfs.ts`) is only
+  loaded in the no-Worker fallback. `src/app/perf-rules.test.ts` fails if any of these becomes a
+  static import again. Initial JS went from 114.49 to 109.49 kB gzip (budget stays 120).
 * While a chunk loads, a fallback with the same header height and a skeleton block is shown, so
   the page does not jump (no layout shift).
 * The dev-only `/ui-kit` demo is behind `import.meta.env.DEV` and is not in the production build.

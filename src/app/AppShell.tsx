@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell as DesignAppShell } from '@/ui';
-import { PwaPromptsHost } from './components/PwaPromptsHost';
+import { LazyPwaPrompts } from './components/LazyPwaPrompts';
 import { MiniPlayerHost } from './MiniPlayerHost';
 import { useCurrentChrome } from './route-chrome';
 import { useServices } from './services-context';
@@ -42,7 +42,7 @@ export function AppShell() {
       <div className={full ? 'pt-[var(--pn-safe-top)]' : undefined}>
         <Outlet />
       </div>
-      <PwaPromptsHost />
+      <LazyPwaPrompts />
     </DesignAppShell>
   );
 }
