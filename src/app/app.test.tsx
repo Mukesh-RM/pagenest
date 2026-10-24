@@ -1,37 +1,25 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
-import { PageNestDB, newId } from '@/data/db';
-import { DexieProgressService } from '@/data/progress-service';
-import { AppRoutes } from './routes';
-import { ServicesProvider } from './services';
+import { newId, type PageNestDB } from '@/data/db';
 import type { AppServices } from './services-context';
 import { useSettings } from './settings-store';
-import { ThemeProvider } from './ThemeProvider';
 import { minutesPerDay } from './stats';
+import { makeServices, renderApp, resetSettings } from './test-utils';
 
 
-let counter = 0;
 let db: PageNestDB;
 let services: AppServices;
 
 function renderAt(path: string) {
-  return render(
-    <ServicesProvider services={services}>
-      <ThemeProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AppRoutes />
-        </MemoryRouter>
-      </ThemeProvider>
-    </ServicesProvider>,
-  );
+  return renderApp(services, { path });
 }
 
-beforeEach(() => {
-  counter += 1;
-  db = new PageNestDB(`pagenest-app-test-${counter}`);
-  services = { db, progress: new DexieProgressService(db) };
-  useSettings.setState({ loaded: false, themePreference: 'system' });
+beforeEach(async () => {
+  services = makeServices('pagenest-app-test');
+  db = services.db;
+  resetSettings();
+  // Returning user: onboarding is covered in onboarding.test.tsx.
+  await db.settings.put({ key: 'onboardingDone', value: true });
 });
 
 afterEach(() => {
@@ -42,7 +30,7 @@ afterEach(() => {
 describe('app shell', () => {
   it('shows the four tabs in order', async () => {
     renderAt('/');
-    const nav = screen.getByRole('navigation', { name: 'Main' });
+    const nav = await screen.findByRole('navigation', { name: 'Main' });
     const labels = Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
     await screen.findByText('Your shelf is waiting');
@@ -54,13 +42,13 @@ describe('app shell', () => {
     ['/stats', 'Stats', 'Nothing to count yet'],
   ])('%s shows its heading and a plain empty state', async (path, heading, empty) => {
     renderAt(path);
-    expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     expect(await screen.findByText(empty)).toBeInTheDocument();
   });
 
   it('settings shows appearance, storage and privacy', async () => {
     renderAt('/settings');
-    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('radiogroup', { name: 'App theme' })).toBeInTheDocument();
     expect(await screen.findByText(/does not say how much space|PageNest uses/)).toBeInTheDocument();
     expect(screen.getByText(/collects nothing/)).toBeInTheDocument();

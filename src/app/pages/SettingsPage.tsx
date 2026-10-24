@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
 import { formatBytes, getStorageStatus, requestPersistentStorage, type StorageStatus } from '@/data/storage';
+import { FontSizeControl } from '../components/FontSizeControl';
+import { InstallHelpSheet } from '../components/InstallHelpSheet';
 import { PageHeader } from '../components/PageHeader';
 import { useServices } from '../services-context';
 import { useSettings } from '../settings-store';
 import { THEME_LABELS, THEME_PREFERENCES } from '../themes';
 
-/** Settings: Appearance and Storage today; the other groups from blueprint 5.6 arrive with their features. */
+/** Settings: Appearance, Install help and Storage today; the other groups from blueprint 5.6 arrive with their features. */
 export function SettingsPage() {
   const { db } = useServices();
   const preference = useSettings((s) => s.themePreference);
   const setPreference = useSettings((s) => s.setThemePreference);
   const [storage, setStorage] = useState<StorageStatus | undefined>();
+  const [installHelpOpen, setInstallHelpOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -51,6 +54,24 @@ export function SettingsPage() {
             </button>
           ))}
         </div>
+        <div className="mt-4 max-w-sm">
+          <FontSizeControl />
+        </div>
+      </section>
+
+      <section aria-labelledby="install" className="mb-8">
+        <h2 id="install" className="mb-2 text-xl font-semibold">
+          Install help
+        </h2>
+        <p className="mb-2 text-muted">Put PageNest on your home screen so it opens like an app.</p>
+        <button
+          type="button"
+          onClick={() => setInstallHelpOpen(true)}
+          className="min-h-touch rounded-full border border-line bg-surface px-5 font-medium"
+        >
+          Install help
+        </button>
+        <InstallHelpSheet open={installHelpOpen} onClose={() => setInstallHelpOpen(false)} />
       </section>
 
       <section aria-labelledby="storage" className="mb-8">

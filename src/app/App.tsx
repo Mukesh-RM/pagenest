@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { attachProgressLifecycle } from '@/data/progress-service';
+import { BackStackProvider } from './back';
 import { AppRoutes } from './routes';
 import { ServicesProvider } from './services';
 import { useServices, type AppServices } from './services-context';
@@ -20,7 +21,9 @@ export function App({ services }: { services?: AppServices }) {
       <ProgressLifecycle />
       <ThemeProvider>
         <BrowserRouter>
-          <AppRoutes />
+          <BackStackProvider>
+            <AppRoutes />
+          </BackStackProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ServicesProvider>

@@ -6,3 +6,8 @@ export function applyTheme(theme: ThemeName, root: HTMLElement = document.docume
   root.dataset['theme'] = theme;
   root.style.colorScheme = THEMES[theme].scheme;
 }
+
+/** Write the app text size to the `--pn-font-size` CSS variable; `html` uses it as its font size. */
+export function applyFontSize(px: number, root: HTMLElement = document.documentElement): void {
+  root.style.setProperty('--pn-font-size', `${px}px`);
+}

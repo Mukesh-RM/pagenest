@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useBackStack } from './back';
 import { TABS } from './tabs';
 
 /**
@@ -6,9 +8,13 @@ import { TABS } from './tabs';
  * Tabs are 44 px or larger and respect the safe area for the home bar.
  */
 export function AppShell() {
+  const stack = useBackStack();
+  const { pathname } = useLocation();
+  // A screen change leaves any open sheet behind; close them without touching history.
+  useEffect(() => stack.dropAll(), [stack, pathname]);
   return (
     <div className="flex h-full flex-col md:flex-row-reverse">
-      <main id="main" className="min-h-0 flex-1 overflow-y-auto px-4 pb-6 pt-[calc(1rem+var(--pn-safe-top))] md:px-6">
+      <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none px-4 pb-6 pt-[calc(1rem+var(--pn-safe-top))] md:px-6">
         <Outlet />
       </main>
       <nav
@@ -21,7 +27,7 @@ export function AppShell() {
             to={to}
             end={to === '/'}
             className={({ isActive }) =>
-              `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 text-xs font-medium md:flex-none md:py-3 ${
+              `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium md:flex-none md:py-3 ${
                 isActive ? 'text-accent' : 'text-muted'
               }`
             }

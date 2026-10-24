@@ -4,6 +4,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* App text size setting (px), set by ThemeProvider. Rem-based sizes scale with it. */
+    font-size: var(--pn-font-size, 16px);
+  }
   html,
   body,
   #root {
@@ -11,7 +15,7 @@
   }
   body {
     @apply bg-page text-ink font-sans antialiased;
-    font-size: 16px;
+    font-size: 1rem;
     margin: 0;
     overscroll-behavior-y: none;
   }
@@ -25,6 +29,26 @@
     *::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .pn-sheet-backdrop {
+    animation: pn-fade-in 200ms ease-out;
+  }
+  .pn-sheet {
+    animation: pn-slide-up 220ms ease-out;
+  }
+  @keyframes pn-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pn-slide-up {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
     }
   }
 }
