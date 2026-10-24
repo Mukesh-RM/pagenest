@@ -67,7 +67,9 @@ export function currentTheme(page: Page): Promise<string | undefined> {
 export async function chooseTheme(page: Page, theme: ThemeName): Promise<void> {
   await gotoTab(page, 'Settings');
   const radio = page.getByRole('radio', { name: new RegExp(`^${theme}$`, 'i') });
-  await radio.check();
+  // The radio input is visually hidden (sr-only) inside a themed card; its <label> receives the pointer.
+  await page.locator('label', { has: radio }).click();
+  await expect(radio).toBeChecked();
   await expect.poll(() => currentTheme(page)).toBe(theme);
 }
 
