@@ -1,0 +1,104 @@
+name: CI
+
+# Runs on every pull request and every push. Free-tier friendly:
+# one Ubuntu job, npm cache, cancel superseded runs, short timeouts.
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: "true"
+  # PageNest never sends telemetry; keep tooling quiet too.
+  WRANGLER_SEND_METRICS: "false"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  verify:
+    name: Install, lint, test, build, smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Detect project files
+        id: detect
+        run: |
+          if [ -f package.json ]; then
+            echo "has_app=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_app=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No package.json yet; app jobs are skipped until the Vite project lands."
+          fi
+          if ls playwright.config.* >/dev/null 2>&1; then
+            echo "has_e2e=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_e2e=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node.js
+        if: steps.detect.outputs.has_app == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.detect.outputs.has_app == 'true'
+        run: npm ci
+
+      - name: Lint
+        if: steps.detect.outputs.has_app == 'true'
+        run: npm run lint --if-present
+
+      - name: Type check
+        if: steps.detect.outputs.has_app == 'true'
+        run: npm run typecheck --if-present
+
+      - name: Unit tests
+        if: steps.detect.outputs.has_app == 'true'
+        run: npm test --if-present
+
+      - name: Build
+        if: steps.detect.outputs.has_app == 'true'
+        run: npm run build --if-present
+
+      - name: Cache Playwright browsers
+        if: steps.detect.outputs.has_app == 'true' && steps.detect.outputs.has_e2e == 'true'
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright browser (Chromium only)
+        if: steps.detect.outputs.has_app == 'true' && steps.detect.outputs.has_e2e == 'true'
+        run: |
+          if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
+            npx playwright install-deps chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
+
+      - name: Playwright smoke tests
+        if: steps.detect.outputs.has_app == 'true' && steps.detect.outputs.has_e2e == 'true'
+        run: npm run test:e2e --if-present
+
+      - name: Upload Playwright report on failure
+        if: failure() && steps.detect.outputs.has_e2e == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
