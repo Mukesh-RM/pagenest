@@ -45,7 +45,6 @@ describe('performance rules for src/app', () => {
       'pages/CollectionsPage',
       'pages/StatsPage',
       'pages/SettingsPage',
-      'pages/ReaderScreen',
       'pages/PlayerScreen',
       'pages/BookRoute',
       'onboarding/Onboarding',
