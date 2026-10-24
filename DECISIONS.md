@@ -23,9 +23,25 @@ vite-plugin-pwa, workbox-precaching, workbox-routing, workbox-window (MIT); shar
 ## Decision 7 (Oct 24, 2026) Model
 Composer was requested for all work. Bots report they cannot select a model from inside their sessions, so this cannot be enforced from here; flagged to Mukeshh.
 
-## Decision 8 (Oct 24, 2026) Speech engine licensing (Auditor finding)
-eSpeak NG (GPL-3.0-or-later) is embedded by browser Piper stacks and by the phonemizer used by kokoro-js; Piper itself is GPL-3.0 since v1.3 (archived rhasspy/piper is MIT). The PWA is MIT, so shipping GPL code needs a deliberate choice. Plan: Phase 4 starts with a spike on a non-GPL phonemizer and non-GPL engine path. If none gives acceptable quality, fall back to relicensing the PageNest repo to GPL-3.0 (still free and open, still consistent with the product rules) and flag it to Mukeshh. Nothing GPL is added to main before that decision is recorded here.
-Voice rule: every Piper voice is checked per voice. en_US-lessac (Blizzard 2013, research-only) is NOT allowed; prefer libritts_r voices. Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) need the Hugging Face weight license tag checked before use.
+## Decision 8 (Oct 24, 2026, amended) Speech engine licensing (Auditor finding)
+Amended after the Narration Piper spike and the Auditor's voice vetting (docs/MODEL_VETTING.md). There is no GPL relicense: PageNest stays MIT.
+- Engine: Piper voices run through onnxruntime-web (MIT), with CMUdict (BSD-style licence, keep its copyright, conditions and disclaimer in the licenses screen) for grapheme-to-phoneme conversion.
+- Not allowed in the bundle: eSpeak NG, piper-phonemize, piper1-gpl and kokoro-js (it depends on a phonemizer that embeds GPL eSpeak NG). Nothing GPL is added to main.
+- Voice rule: every voice is checked per voice. en_US-lessac (Blizzard 2013, no commercial use) is NOT allowed. The earlier line "prefer libritts_r" was WRONG: en_US-libritts_r-medium is fine-tuned from lessac. Use en_US-libritts-high (trained from scratch, CC BY 4.0).
+- Only voices registered OK in docs/MODEL_VETTING.md may be used. Every new voice goes through that vetting first. The models audit (scripts/audit-models.mjs, run by npm run audit) fails on unregistered or NOT OK voices and Hugging Face repos.
+- Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) may be used only as registered in MODEL_VETTING.md.
 
 ## Decision 9 (Oct 24, 2026) Dev-only licenses
 MPL-2.0 dev-only tools (axe-core, @axe-core/playwright) are accepted. sharp's LGPL libvips binaries are accepted only as dev-only and never bundled; the audit script flags them if shipped.
+
+## Decision 10 (Oct 24, 2026) Sample book and reader routes
+The empty Library offers a "Try a sample book" card. It is one public-domain Project Gutenberg EPUB served from our own origin, not precached, and fetched only on tap. The Library bot provides it through SampleBookProvider (src/app/contracts/sample-book.ts); the card shows only when a provider is registered and available. Book routes are /read/:id and /listen/:id. Immersive routes hide the tab bar and rail; the mini-player persists on full routes (docs/ROUTE_CHROME.md).
+
+## Decision 11 (Oct 24, 2026) Model policy
+Composer was requested for all work. The CEO bot and the helper bots cannot select a model from inside the system, so the owner must set it on his side. This is flagged in every email until resolved.
+
+## Decision 12 (Oct 24, 2026) Product excellence bar
+The bar lives in the owner's instructions and is applied to every screen: taps respond in 100 ms, 60 fps, no layout shift, skeletons while loading, AA contrast in all 5 themes, Lighthouse 90+, usable at 200% text, works offline, no console errors, and proper laptop layouts. A Design Reviewer bot scores each screen 1-5; anything under 4 goes back to be redone. Approved screenshots are kept in docs/screens. A name-availability check runs before launch.
+
+## Decision 13 (Oct 24, 2026) File type detection by content
+Import detects the file type from content (magic bytes), never from the file name or extension. A book named `book.epub__1_` or with no extension still opens as EPUB, PDF, DOCX or another supported format.

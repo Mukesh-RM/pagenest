@@ -55,3 +55,13 @@ describe('performance rules for src/app', () => {
     for (const t of transitions) expect(t).not.toMatch(/\b(width|height|top|left|right|bottom|margin|padding|all)\b/);
   });
 });
+
+describe('motion preferences', () => {
+  it('turns animations and transitions off for prefers-reduced-motion, for every element', () => {
+    const css = readFileSync(join(process.cwd(), 'src', 'index.css'), 'utf8');
+    const block = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?\n\s*)\}\s*\n/.exec(css)?.[1] ?? '';
+    expect(block).toMatch(/\*,\s*\*::before,\s*\*::after/);
+    expect(block).toMatch(/animation-duration:\s*0\.01ms\s*!important/);
+    expect(block).toMatch(/transition-duration:\s*0\.01ms\s*!important/);
+  });
+});

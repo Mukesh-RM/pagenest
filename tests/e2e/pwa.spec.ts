@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { launch, waitForServiceWorkerControl } from './support/app';
 
 // Blueprint section 14 (PWA setup) and 5.6 (install and first launch).
@@ -11,7 +11,7 @@ type Manifest = {
   share_target?: { action?: string; method?: string; enctype?: string; params?: unknown };
 };
 
-async function loadManifest(page: import('@playwright/test').Page): Promise<{ url: string; manifest: Manifest }> {
+async function loadManifest(page: Page): Promise<{ url: string; manifest: Manifest }> {
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
   expect(href, 'index.html must link a web app manifest').toBeTruthy();
   const url = new URL(href!, page.url()).toString();
@@ -60,7 +60,7 @@ test.describe('pwa installability', () => {
   test('iPhone and browser chrome tags are present (blueprint 14)', async ({ page }) => {
     await launch(page);
     await expect(page.locator('meta[name="viewport"]')).toHaveAttribute('content', /viewport-fit=cover/);
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', /^#[0-9a-f]{6}$/i);
+    await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', /^#[0-9a-f]{6}$/i);
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
     const capable = await page
       .locator('meta[name="apple-mobile-web-app-capable"], meta[name="mobile-web-app-capable"]')

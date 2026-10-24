@@ -1,6 +1,7 @@
 import { render, type RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { CoverUrlCache } from '@/data/cover-url';
 import { createDataClient } from '@/data/data-client';
 import { PageNestDB } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
@@ -16,7 +17,8 @@ let counter = 0;
 export function makeServices(prefix = 'pagenest-test'): AppServices {
   counter += 1;
   const db = new PageNestDB(`${prefix}-${counter}`);
-  return { db, progress: new DexieProgressService(db), data: createDataClient({ db, workerFactory: () => undefined }) };
+  const data = createDataClient({ db, workerFactory: () => undefined });
+  return { db, progress: new DexieProgressService(db), data, covers: new CoverUrlCache({ load: (id) => data.books.getCover(id) }) };
 }
 
 /** Put the settings store back to its first-run defaults. */

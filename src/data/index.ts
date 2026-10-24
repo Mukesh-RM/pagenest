@@ -10,3 +10,8 @@ export * from './rpc';
 export * from './data-service';
 export * from './data-client';
 export * from './resume';
+export * from './books';
+export * from './collections';
+export * from './library-index';
+export * from './library-query';
+export * from './cover-url';

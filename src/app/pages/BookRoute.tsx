@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { loadBookPosition, type ResumeInfo } from '@/data/resume';
 import type { BookRecord } from '@/data/schema';
 import { EmptyState } from '@/ui';
-import { ScreenFallback } from '../ScreenFallback';
+import { ImmersiveFallback } from '../ScreenFallback';
 import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
 
@@ -47,7 +47,7 @@ function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
   // A different id than the one loaded means the new book is still loading.
   const loaded = state.id === id ? state.value : ({ status: 'loading' } as const);
 
-  if (loaded.status === 'loading') return <ScreenFallback />;
+  if (loaded.status === 'loading') return <ImmersiveFallback />;
   if (loaded.status === 'missing') {
     return (
       <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
@@ -65,7 +65,7 @@ function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
   const wrongKind = (book.kind === 'audio') !== (expected === 'listen');
   if (wrongKind) return <Navigate to={rightPath} replace />;
   return (
-    <Suspense fallback={<ScreenFallback />}>
+    <Suspense fallback={<ImmersiveFallback />}>
       {expected === 'listen' ? <PlayerScreen book={book} position={position} /> : <ReaderScreen book={book} position={position} />}
     </Suspense>
   );

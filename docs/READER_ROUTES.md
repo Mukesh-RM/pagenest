@@ -27,7 +27,7 @@ The Welcome back card and the sample book card both navigate with `pathForBook`.
 3. redirects a book opened on the wrong route to the right one (an audiobook on `/read/:id` goes to `/listen/:id`, and the reverse);
 4. renders the screen below inside `Suspense` with a skeleton, so the page does not jump.
 
-These routes sit outside the tab bar layout (full window). The screens are lazy chunks, so they cost nothing on first load.
+These routes are **immersive** (no tab bar, rail or mini-player; the screen has the whole window). The default is set in the route table and a screen can override it with `useRouteChrome`; see `docs/ROUTE_CHROME.md`. The frame adds no padding on immersive routes, so a replacement screen owns its margins and safe areas. The screens are lazy chunks, so they cost nothing on first load.
 
 ## Replacing the screen
 
@@ -45,6 +45,7 @@ interface BookScreenProps {
 
 `position.locator` is the exact saved `Locator`: pass it to the engine to land on the same spot.
 Save progress with `ProgressService.report` while the person reads or listens and `flush` on pause.
+`ImportResult` has `kind` (routing: use `pathForBook`) and `format` (engine choice: the real format detected from the file's content).
 Keep the page free of buttons that do nothing. The placeholder's "Back to Library" is a real link; keep a way back.
 
 ## Sample book

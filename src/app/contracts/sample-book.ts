@@ -1,11 +1,20 @@
-import type { BookKind, EntityId } from './common';
+import type { BookFormat, BookKind, EntityId } from './common';
 
 /** What `importSample` produced. Shaped like the result of the normal import path. */
 export interface ImportResult {
   /** The book's id in the `books` store. */
   readonly bookId: EntityId;
-  /** Decides whether the book opens in the reader (`/read/:id`) or the player (`/listen/:id`). */
+  /**
+   * **Route by `kind`.** Decides whether the book opens in the reader (`/read/:id`, for
+   * `ebook`, `pdf` and `doc`) or the player (`/listen/:id`, for `audio`). Use `pathForBook`.
+   */
   readonly kind: BookKind;
+  /**
+   * **Engines pick by `format`.** The real file format, detected from the file's content (not
+   * its name or extension), for example `epub`, `pdf`, `mp3` or `m4b`. The reader or player
+   * chooses its engine from this value. It is the same value stored in the book's `format` field.
+   */
+  readonly format: BookFormat;
   readonly title: string;
   /** True when the same file (same fingerprint) was already in the library, so nothing new was added. */
   readonly alreadyInLibrary: boolean;

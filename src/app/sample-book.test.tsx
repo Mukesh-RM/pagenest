@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ImportResult, SampleBookProvider } from '@/app/contracts';
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
+import type { BookFormat, BookKind, ImportResult, SampleBookProvider } from '@/app/contracts';
 import { pathForBook } from './route-paths';
 import { SampleBookCard } from './components/SampleBookCard';
 import { makeServices, renderApp, resetSettings } from './test-utils';
@@ -12,7 +12,7 @@ function fakeProvider(overrides: Partial<SampleBookProvider> = {}): SampleBookPr
   return {
     info: { title: 'Pride and Prejudice', author: 'Jane Austen', license: 'Public domain', provenance: 'Project Gutenberg, ebook 1342' },
     available: () => true,
-    importSample: vi.fn(async (): Promise<ImportResult> => ({ bookId: 'sample-1', kind: 'ebook', title: 'Pride and Prejudice', alreadyInLibrary: false })),
+    importSample: vi.fn(async (): Promise<ImportResult> => ({ bookId: 'sample-1', kind: 'ebook', format: 'epub', title: 'Pride and Prejudice', alreadyInLibrary: false })),
     ...overrides,
   } as SampleBookProvider & { importSample: ReturnType<typeof vi.fn> };
 }
@@ -56,7 +56,7 @@ describe('SampleBookCard', () => {
     expect(provider.importSample).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', { name: 'Adding…' })).toBeDisabled();
     expect(screen.getByRole('status')).toHaveTextContent('Adding to your library…');
-    await act(async () => finish({ bookId: 'x', kind: 'ebook', title: 't', alreadyInLibrary: false }));
+    await act(async () => finish({ bookId: 'x', kind: 'ebook', format: 'epub', title: 't', alreadyInLibrary: false }));
   });
 
   it('navigates to the read route of the new book on success', async () => {
@@ -66,7 +66,7 @@ describe('SampleBookCard', () => {
   });
 
   it('navigates audiobooks to the listen route', async () => {
-    renderCard(fakeProvider({ importSample: vi.fn(async () => ({ bookId: 'a1', kind: 'audio' as const, title: 'T', alreadyInLibrary: true })) }));
+    renderCard(fakeProvider({ importSample: vi.fn(async () => ({ bookId: 'a1', kind: 'audio' as const, format: 'm4b' as const, title: 'T', alreadyInLibrary: true })) }));
     fireEvent.click(screen.getByRole('button', { name: 'Add the sample book' }));
     expect(await screen.findByTestId('where')).toHaveTextContent('/listen/a1');
   });
@@ -75,7 +75,7 @@ describe('SampleBookCard', () => {
     const importSample = vi
       .fn()
       .mockRejectedValueOnce(new Error('Could not add the sample book. Check your connection.'))
-      .mockResolvedValueOnce({ bookId: 'ok', kind: 'ebook', title: 'T', alreadyInLibrary: false });
+      .mockResolvedValueOnce({ bookId: 'ok', kind: 'ebook', format: 'epub', title: 'T', alreadyInLibrary: false });
     renderCard(fakeProvider({ importSample }));
     fireEvent.click(screen.getByRole('button', { name: 'Add the sample book' }));
     expect(await screen.findByText('Could not add the sample book. Check your connection.')).toBeInTheDocument();
@@ -136,7 +136,7 @@ describe('sample card in the empty Library', () => {
     // The "import" really adds the book, as the Library's implementation would.
     provider.importSample.mockImplementation(async () => {
       await services.db.books.add({ id: 'sample-1', fingerprint: 'fp', kind: 'ebook', format: 'epub', title: 'Pride and Prejudice', author: 'Jane Austen', addedAt: 1, favorite: false, finished: false });
-      return { bookId: 'sample-1', kind: 'ebook', title: 'Pride and Prejudice', alreadyInLibrary: false };
+      return { bookId: 'sample-1', kind: 'ebook', format: 'epub', title: 'Pride and Prejudice', alreadyInLibrary: false };
     });
     renderApp(services);
     fireEvent.click(await screen.findByRole('button', { name: 'Add the sample book' }));
@@ -153,5 +153,22 @@ describe('sample card in the empty Library', () => {
     await screen.findByText('Mine');
     expect(screen.queryByText('Try a sample book')).toBeNull();
     services.db.close();
+  });
+});
+
+describe('ImportResult typing', () => {
+  it('carries both kind (routing) and format (engine choice), typed from the schema', () => {
+    expectTypeOf<ImportResult['kind']>().toEqualTypeOf<BookKind>();
+    expectTypeOf<ImportResult['format']>().toEqualTypeOf<BookFormat>();
+    const ok: ImportResult = { bookId: 'b', kind: 'audio', format: 'm4b', title: 't', alreadyInLibrary: false };
+    expect(pathForBook({ id: ok.bookId, kind: ok.kind })).toBe('/listen/b');
+  });
+
+  it('rejects a missing or unknown format at compile time', () => {
+    // @ts-expect-error format is required
+    const missing: ImportResult = { bookId: 'b', kind: 'ebook', title: 't', alreadyInLibrary: false };
+    // @ts-expect-error 'exe' is not a book format
+    const unknown: ImportResult = { bookId: 'b', kind: 'ebook', format: 'exe', title: 't', alreadyInLibrary: false };
+    expect([missing, unknown]).toHaveLength(2);
   });
 });
