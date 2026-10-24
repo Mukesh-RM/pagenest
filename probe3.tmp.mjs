@@ -1,0 +1,12 @@
+import { chromium } from '@playwright/test';
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 412, height: 860 } });
+const page = await ctx.newPage();
+page.on('pageerror', (e) => console.log('PAGEERROR', e.message, e.stack?.split('\n').slice(0,8).join('\n')));
+page.on('console', (m) => { if (m.type()==='error') console.log('ERR', m.text().slice(0,400)); });
+await page.goto('http://localhost:5199/dev/reader');
+await page.getByRole('button', { name: new RegExp(process.argv[2]) }).first().click();
+await page.waitForTimeout(6000);
+await page.screenshot({ path: '/workspace/scratch/p3.png' });
+console.log(await page.locator('.pn-opening__message, .pn-readererror').allInnerTexts());
+await b.close();

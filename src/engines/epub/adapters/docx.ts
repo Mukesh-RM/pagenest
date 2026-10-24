@@ -1,5 +1,5 @@
 import { readerError } from '@/features/reader/core/errors';
-import { convertDocxInline, type DocxResult } from './docx-core';
+import type { DocxResult } from './docx-core';
 
 export type { DocxResult };
 
@@ -18,7 +18,7 @@ export async function checkDocx(file: Blob): Promise<void> {
 export async function convertDocx(file: Blob): Promise<DocxResult> {
   await checkDocx(file);
   const buffer = await file.arrayBuffer();
-  if (typeof Worker === 'undefined') return convertDocxInline(buffer);
+  if (typeof Worker === 'undefined') return (await import('./docx-core')).convertDocxInline(buffer);
   const worker = new Worker(new URL('./docx.worker.ts', import.meta.url), { type: 'module' });
   try {
     return await new Promise<DocxResult>((resolve, reject) => {

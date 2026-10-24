@@ -1,0 +1,23 @@
+/** The Lucide icons the reader uses (the same icon set as src/ui/icons, imported one by one so the bundle stays small). */
+export {
+  AlignJustify,
+  AlignLeft,
+  ALargeSmall,
+  Bookmark,
+  BookmarkCheck,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Highlighter,
+  List,
+  Minus,
+  NotebookPen,
+  Plus,
+  Search,
+  Trash2,
+  X,
+  ZoomIn,
+  ZoomOut,
+  CircleAlert,
+  Lock,
+} from 'lucide-react';

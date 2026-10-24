@@ -32,7 +32,7 @@ interface Overlayer {
   redraw(): void;
 }
 interface FoliateRelocate {
-  index: number;
+  index?: number;
   fraction?: number;
   range?: Range;
   cfi?: string;
@@ -60,6 +60,12 @@ export interface FoliateDocumentInit {
   readonly host: HTMLElement;
   readonly appearance: ReaderAppearance;
   readonly fixed: boolean;
+}
+
+/** Section index of a `relocate` event: foliate's progress puts it in `section.current`. */
+export function sectionIndexOf(detail: FoliateRelocate): number | undefined {
+  const i = detail.section?.current ?? detail.index;
+  return typeof i === 'number' && Number.isInteger(i) && i >= 0 ? i : undefined;
 }
 
 const TAP_MAX_MS = 450;
@@ -110,6 +116,7 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
   readonly #cleanups: Array<() => void> = [];
   readonly #docs = new Set<Document>();
   #annotationTapAt = 0;
+  #lastIndex: number | undefined;
   #lastSelectionKey = '';
   #firstRelocate: (() => void) | undefined;
   readonly zoom = undefined;
@@ -282,8 +289,8 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
   minutesLeft(wordsPerMinute = 230): number | undefined {
     const remainingUnits = this.#view.lastLocation?.time?.section;
     if (remainingUnits === undefined || !Number.isFinite(remainingUnits) || this.#fixed) return undefined;
-    // foliate counts markup bytes at 1600 per time unit; markup is roughly 40% of an e-book section and a word is ~6 bytes.
-    return (remainingUnits * 1600) / (wordsPerMinute * 10);
+    // foliate measures sections in units of 1600 bytes of markup, about a minute at 250 words per minute.
+    return (remainingUnits * 250) / wordsPerMinute;
   }
 
   selectionRect(): DOMRect | undefined {
@@ -347,13 +354,13 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
 
   #atStart(): boolean {
     const r = this.#view.renderer;
-    if (this.#fixed) return (this.#view.lastLocation?.index ?? 0) <= 0;
+    if (this.#fixed) return (this.#lastIndex ?? 0) <= 0;
     return Boolean(r.atStart);
   }
 
   #atEnd(): boolean {
     const r = this.#view.renderer;
-    if (this.#fixed) return (this.#view.lastLocation?.index ?? 0) >= this.#book.sections.length - 1;
+    if (this.#fixed) return (this.#lastIndex ?? 0) >= this.#book.sections.length - 1;
     return Boolean(r.atEnd);
   }
 
@@ -490,9 +497,11 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
 
   #onRelocate(detail: FoliateRelocate): void {
     if (this.#closed) return;
-    const content = this.#view.renderer.getContents().find((c) => c.index === detail.index);
+    const index = sectionIndexOf(detail);
+    if (index === undefined) return;
+    const content = this.#view.renderer.getContents().find((c) => c.index === index);
     let locator: Locator;
-    if (this.#fixed) locator = { kind: 'page', page: detail.index + 1, offset: 0 };
+    if (this.#fixed) locator = { kind: 'page', page: index + 1, offset: 0 };
     else {
       let textOffset = 0;
       if (content && detail.range) {
@@ -502,15 +511,16 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
           textOffset = 0;
         }
       }
-      locator = reflowAt(detail.index, textOffset, detail.cfi);
+      locator = reflowAt(index, textOffset, detail.cfi);
     }
+    this.#lastIndex = index;
     const total = this.#book.sections.length;
-    const fraction = typeof detail.fraction === 'number' && Number.isFinite(detail.fraction) ? detail.fraction : this.#fixed ? detail.index / Math.max(1, total - 1) : 0;
+    const fraction = this.#fixed ? index / Math.max(1, total - 1) : typeof detail.fraction === 'number' && Number.isFinite(detail.fraction) ? detail.fraction : 0;
     this.#lastPosition = {
       locator,
       percent: Math.min(100, Math.max(0, fraction * 100)),
       ...(detail.tocItem?.label ? { chapterTitle: detail.tocItem.label.trim() } : {}),
-      ...(this.#fixed ? { page: detail.index + 1, pageCount: total } : {}),
+      ...(this.#fixed ? { page: index + 1, pageCount: total } : {}),
     };
     this.#position.emit(this.#lastPosition);
     this.#firstRelocate?.();

@@ -1,0 +1,148 @@
+/*
+ * PDF reader surface. Page, tint and accent come from custom properties the engine sets from the reader theme
+ * (design tokens), so this file holds no colors of its own.
+ *
+ * The .textLayer rules are the essential rules of pdf.js's pdf_viewer.css (Apache-2.0, Mozilla Foundation), kept so
+ * the invisible text lines sit exactly over the drawn page: selection, search and highlights rely on them.
+ */
+.pn-pdf {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--pn-pdf-bg, transparent);
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  outline: none;
+}
+
+.pn-pdf:focus-visible {
+  box-shadow: inset 0 0 0 2px rgb(var(--pn-focus-ring));
+}
+
+.pn-pdf-surface {
+  position: relative;
+  transform-origin: 0 0;
+}
+
+.pn-pdf-page {
+  position: absolute;
+  background: var(--pn-pdf-page-bg, #fff);
+  box-shadow: 0 0 0 1px rgb(var(--pn-line));
+  contain: strict;
+  overflow: hidden;
+}
+
+.pn-pdf-canvas {
+  position: absolute;
+  display: block;
+  filter: var(--pn-pdf-filter, none);
+  mix-blend-mode: var(--pn-pdf-blend, normal);
+  pointer-events: none;
+  user-select: none;
+}
+
+.pn-pdf-hl,
+.pn-pdf-links {
+  position: absolute;
+  inset: 0;
+}
+
+.pn-pdf-hl {
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] .pn-pdf-hl,
+[data-theme="black"] .pn-pdf-hl,
+.pn-pdf[data-theme="dark"] .pn-pdf-hl,
+.pn-pdf[data-theme="black"] .pn-pdf-hl {
+  mix-blend-mode: screen;
+}
+
+.pn-pdf-hl-rect {
+  position: absolute;
+  border-radius: 2px;
+}
+
+.pn-pdf-link {
+  position: absolute;
+  display: block;
+  border-radius: 2px;
+}
+
+.pn-pdf-link:focus-visible {
+  outline: 2px solid rgb(var(--pn-focus-ring));
+  outline-offset: 1px;
+}
+
+.pn-pdf-text {
+  position: absolute;
+  inset: 0;
+}
+
+.textLayer {
+  position: absolute;
+  text-align: initial;
+  inset: 0;
+  overflow: clip;
+  opacity: 1;
+  line-height: 1;
+  text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+  caret-color: CanvasText;
+  z-index: 1;
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor, 1) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.textLayer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0 0;
+}
+
+.textLayer > :not(.markedContent),
+.textLayer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.textLayer .markedContent {
+  display: contents;
+}
+
+.textLayer span[role="img"] {
+  user-select: none;
+  cursor: default;
+}
+
+.textLayer ::selection {
+  background: color-mix(in srgb, var(--pn-pdf-accent, #3e5bdb) 35%, transparent);
+}
+
+.textLayer br::selection {
+  background: transparent;
+}
+
+.textLayer .endOfContent {
+  display: block;
+  position: absolute;
+  inset: 100% 0 0;
+  z-index: 0;
+  cursor: default;
+  user-select: none;
+}
+
+.textLayer.selecting .endOfContent {
+  top: 0;
+}

@@ -1,0 +1,17 @@
+import { chromium } from '@playwright/test';
+const [,, file, out] = process.argv;
+const b = await chromium.launch();
+const ctx = await b.newContext({ viewport: { width: 412, height: 860 }, deviceScaleFactor: 2 });
+const page = await ctx.newPage();
+const logs = [];
+page.on('console', (m) => logs.push(m.type() + ': ' + m.text()));
+page.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message + '\n' + (e.stack||'').slice(0,400)));
+await page.goto('http://localhost:5199/dev/reader');
+await page.getByRole('button', { name: new RegExp(file) }).first().click();
+const t0 = Date.now();
+await page.waitForURL(/\/read\//);
+await page.waitForTimeout(4000);
+console.log('url', page.url());
+await page.screenshot({ path: out });
+console.log(logs.slice(0, 20).join('\n'));
+await b.close();

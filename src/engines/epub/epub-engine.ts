@@ -76,24 +76,24 @@ export async function convertDocument(source: ReaderSource): Promise<LoadedFolia
     case 'docx': {
       await checkDocx(file);
       const { html } = await convertDocx(file);
-      ({ title, sections } = htmlToSections(html, 'Document'));
+      ({ title, sections } = htmlToSections(html, 'Beginning'));
       break;
     }
     case 'html': {
-      ({ title, sections } = htmlToSections(decodeText(new Uint8Array(await file.arrayBuffer())).text, 'Document'));
+      ({ title, sections } = htmlToSections(decodeText(new Uint8Array(await file.arrayBuffer())).text, 'Beginning'));
       break;
     }
     case 'md':
-      sections = markdownToSections(decodeText(new Uint8Array(await file.arrayBuffer())).text, 'Document');
+      sections = markdownToSections(decodeText(new Uint8Array(await file.arrayBuffer())).text, 'Beginning');
       break;
     case 'rtf': {
       const raw = decodeText(new Uint8Array(await file.arrayBuffer())).text;
       if (!raw.trimStart().startsWith('{\\rtf')) throw readerError('corrupt');
-      sections = plainTextToSections(rtfToText(raw), 'Document');
+      sections = plainTextToSections(rtfToText(raw), 'Beginning');
       break;
     }
     case 'txt':
-      sections = plainTextToSections(decodeText(new Uint8Array(await file.arrayBuffer())).text, 'Text');
+      sections = plainTextToSections(decodeText(new Uint8Array(await file.arrayBuffer())).text, 'Beginning');
       break;
     default:
       throw readerError('unsupported');

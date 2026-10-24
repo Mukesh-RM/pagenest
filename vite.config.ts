@@ -18,9 +18,10 @@ export default defineConfig({
       injectManifest: {
         rollupFormat: 'iife', // classic worker: works on every iOS and Firefox version that supports workers
         // App shell, icons and ONLY the Inter and Literata fonts (Decision 3). Other fonts are cached on first use.
-        globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest}', '**/*[Ii]nter*.woff2', '**/*[Ll]iterata*.woff2'],
+        // `mjs` is the pdf.js worker (Reader): without it a PDF cannot open offline.
+        globPatterns: ['**/*.{js,mjs,css,html,png,svg,ico,webmanifest}', '**/*[Ii]nter*.woff2', '**/*[Ll]iterata*.woff2'],
         globIgnores: ['**/_headers', '**/*.wasm', '**/*.map'],
-        maximumFileSizeToCacheInBytes: 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 2 * 1024 * 1024, // the pdf.js worker is about 1.2 MB
       },
       devOptions: { enabled: false },
     }),

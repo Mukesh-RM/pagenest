@@ -1,0 +1,30 @@
+/* Shown while the reader code loads and while a book opens (kept separate so the app shell stays small). */
+.pn-opening {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--pn-space-6);
+  padding: var(--pn-space-8) var(--pn-margin);
+  background: var(--pn-reader-page, rgb(var(--pn-page)));
+}
+
+.pn-opening__page {
+  width: min(100%, 420px);
+}
+
+.pn-opening__page .pn-skeleton {
+  display: block;
+  height: var(--pn-space-4);
+  margin-block: var(--pn-space-3);
+}
+
+.pn-opening__message {
+  margin: 0;
+  color: rgb(var(--pn-muted));
+  font-size: 1rem;
+  text-align: center;
+}

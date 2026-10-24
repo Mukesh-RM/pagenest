@@ -94,7 +94,10 @@ export async function loadFoliateBook(format: BookFormat, file: Blob): Promise<L
         if (!(await isZipFile(file))) throw readerError('corrupt');
         const loader = await makeZipLoader(file);
         const { makeComicBook } = await import('foliate-js/comic-book.js');
-        return { book: await makeComicBook(loader, { name: 'Comic book' }), fixed: true };
+        const book = await makeComicBook(loader, { name: 'Comic book' });
+        // Entries are page images: a contents list of file names would only be noise.
+        book.toc = [];
+        return { book, fixed: true };
       }
       case 'mobi':
       case 'azw3': {

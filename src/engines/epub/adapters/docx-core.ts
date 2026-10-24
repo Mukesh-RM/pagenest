@@ -1,3 +1,5 @@
+import mammoth from 'mammoth';
+
 /** mammoth.js conversion, free of DOM and worker plumbing so it runs in a worker or inline. */
 
 export interface DocxResult {
@@ -6,7 +8,6 @@ export interface DocxResult {
 }
 
 export async function convertDocxInline(buffer: ArrayBuffer): Promise<DocxResult> {
-  const mammoth = (await import('mammoth')).default ?? (await import('mammoth'));
   const result = await mammoth.convertToHtml(
     { arrayBuffer: buffer },
     {
