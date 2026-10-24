@@ -3,7 +3,6 @@ import type { ReactElement } from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { PageNestDB } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
-import { BackStackProvider } from './back';
 import { AppRoutes } from './routes';
 import { ServicesProvider } from './services';
 import type { AppServices } from './services-context';
@@ -25,7 +24,7 @@ export function resetSettings(): void {
 }
 
 /**
- * Render the whole app (services, theme, router, back stack) at `path`.
+ * Render the whole app (services, theme, router) at `path`.
  * Uses `BrowserRouter` when `browserHistory` is true, so the real
  * `window.history` (and the back gesture) can be exercised.
  */
@@ -41,9 +40,7 @@ export function renderApp(
       <ServicesProvider services={services}>
         <ThemeProvider>
           <Router {...routerProps}>
-            <BackStackProvider>
-              <AppRoutes />
-            </BackStackProvider>
+            <AppRoutes />
           </Router>
         </ThemeProvider>
       </ServicesProvider>,

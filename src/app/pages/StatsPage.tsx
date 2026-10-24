@@ -1,6 +1,5 @@
-import { BarChart3 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { EmptyState } from '../components/EmptyState';
+import { EmptyState } from '@/ui';
 import { PageHeader } from '../components/PageHeader';
 import { useServices } from '../services-context';
 import { DAY_MS, minutesPerDay } from '../stats';
@@ -21,10 +20,11 @@ export function StatsPage() {
     <>
       <PageHeader title="Stats" />
       {sessions.length === 0 ? (
-        <EmptyState icon={BarChart3} title="Nothing to count yet">
-          Your reading and listening time will show up here, a little each day. There is no pressure and no streak to
-          keep.
-        </EmptyState>
+        <EmptyState
+          art="stats"
+          title="Nothing to count yet"
+          description="Your reading and listening time will show up here, a little each day. There is no pressure and no streak to keep."
+        />
       ) : (
         <section aria-label="Last 7 days" className="rounded-card bg-surface p-4">
           <p className="mb-4 text-sm text-muted">

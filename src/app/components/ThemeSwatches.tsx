@@ -1,4 +1,5 @@
-import { Check } from 'lucide-react';
+import { useId } from 'react';
+import { Icon } from '@/ui';
 import { useServices } from '../services-context';
 import { useSettings } from '../settings-store';
 import { THEME_LABELS, THEMES, type ThemeName } from '../themes';
@@ -6,7 +7,7 @@ import { THEME_LABELS, THEMES, type ThemeName } from '../themes';
 const SWATCHES: readonly ThemeName[] = ['light', 'sepia', 'dark', 'black'];
 
 /**
- * The four theme swatches from blueprint 5.2 plus "Match my phone". Native
+ * The four theme swatches from blueprint 5.2 plus "Match my phone" (Onboarding and Settings). Native
  * radio inputs, so arrow keys move the choice and screen readers read each
  * theme by name. The choice is saved at once and applied by ThemeProvider.
  */
@@ -14,6 +15,7 @@ export function ThemeSwatches() {
   const { db } = useServices();
   const preference = useSettings((s) => s.themePreference);
   const setPreference = useSettings((s) => s.setThemePreference);
+  const group = useId();
 
   return (
     <fieldset className="min-w-0">
@@ -25,7 +27,7 @@ export function ThemeSwatches() {
             <label key={name} className="relative block">
               <input
                 type="radio"
-                name="onboarding-theme"
+                name={group}
                 value={name}
                 checked={preference === name}
                 onChange={() => void setPreference(db, name)}
@@ -39,7 +41,9 @@ export function ThemeSwatches() {
                 <span className="mt-2 block h-2 w-10 rounded-full" style={{ backgroundColor: t.accent }} aria-hidden="true" />
               </span>
               {preference === name ? (
-                <Check size={20} aria-hidden="true" className="absolute right-2 top-2" style={{ color: t.accent }} />
+                <span className="absolute right-2 top-2" style={{ color: t.accent }}>
+                  <Icon name="check" size={20} />
+                </span>
               ) : null}
             </label>
           );
@@ -48,7 +52,7 @@ export function ThemeSwatches() {
       <label className="mt-3 flex min-h-touch cursor-pointer items-center gap-3">
         <input
           type="radio"
-          name="onboarding-theme"
+          name={group}
           value="system"
           checked={preference === 'system'}
           onChange={() => void setPreference(db, 'system')}

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { Button } from '@/ui';
 import { FontSizeControl } from '../components/FontSizeControl';
+import { ThemeSwatches } from '../components/ThemeSwatches';
 import { useServices } from '../services-context';
 import { useSettings } from '../settings-store';
-import { ThemeSwatches } from './ThemeSwatches';
 
 /** Number of onboarding cards (blueprint 5.6: three cards, skippable). */
 export const ONBOARDING_STEPS = 3;
@@ -10,7 +11,7 @@ export const ONBOARDING_STEPS = 3;
 const PREVIEW_TEXT =
   'Call me Ishmael. Some years ago, never mind how long precisely, having little or no money in my purse, I thought I would sail about a little and see the watery part of the world.';
 
-const HEADING = 'mb-3 text-[1.75rem] font-semibold leading-tight outline-none';
+const HEADING = 'mb-3 text-[length:var(--pn-text-xl)] font-semibold leading-tight outline-none';
 
 /**
  * First-run onboarding (blueprint 5.6): Welcome, where your books will live,
@@ -40,9 +41,9 @@ export function Onboarding() {
           Step {step + 1} of {ONBOARDING_STEPS}
         </p>
         {last ? null : (
-          <button type="button" onClick={finish} className="min-h-touch rounded-full px-4 font-medium text-accent">
+          <Button variant="ghost" onClick={finish}>
             Skip
-          </button>
+          </Button>
         )}
       </div>
 
@@ -94,28 +95,16 @@ export function Onboarding() {
 
       <div className="flex items-center justify-between gap-3">
         {step > 0 ? (
-          <button
-            type="button"
-            onClick={() => setStep(step - 1)}
-            className="min-h-touch rounded-full border border-line bg-surface px-6 font-medium"
-          >
+          <Button variant="secondary" onClick={() => setStep(step - 1)}>
             Back
-          </button>
+          </Button>
         ) : (
           <span />
         )}
         {last ? (
-          <button type="button" onClick={finish} className="min-h-touch rounded-full bg-accent px-8 font-medium text-on-accent">
-            Done
-          </button>
+          <Button onClick={finish}>Done</Button>
         ) : (
-          <button
-            type="button"
-            onClick={() => setStep(step + 1)}
-            className="min-h-touch rounded-full bg-accent px-8 font-medium text-on-accent"
-          >
-            Next
-          </button>
+          <Button onClick={() => setStep(step + 1)}>Next</Button>
         )}
       </div>
     </main>

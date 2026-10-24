@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
 import { newId, type PageNestDB } from '@/data/db';
 import type { AppServices } from './services-context';
@@ -30,9 +30,12 @@ afterEach(() => {
 describe('app shell', () => {
   it('shows the four tabs in order', async () => {
     renderAt('/');
-    const nav = await screen.findByRole('navigation', { name: 'Main' });
-    const labels = Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
+    const bar = await screen.findByTestId('pn-tabbar');
+    expect(bar).toHaveAccessibleName('Main navigation');
+    const labels = Array.from(bar.querySelectorAll('a')).map((a) => a.textContent);
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
+    expect(screen.getByTestId('pn-rail')).toBeInTheDocument();
+    expect(within(bar).getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
     await screen.findByText('Your shelf is waiting');
   });
 
@@ -49,7 +52,7 @@ describe('app shell', () => {
   it('settings shows appearance, storage and privacy', async () => {
     renderAt('/settings');
     expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup', { name: 'App theme' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
     expect(await screen.findByText(/does not say how much space|PageNest uses/)).toBeInTheDocument();
     expect(screen.getByText(/collects nothing/)).toBeInTheDocument();
   });
@@ -99,12 +102,11 @@ describe('theme', () => {
     await db.settings.put({ key: 'appTheme', value: 'sepia' });
     renderAt('/settings');
     await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('sepia'));
-    expect(document.documentElement.style.getPropertyValue('--pn-page')).toBe('244 236 216');
 
     fireEvent.click(screen.getByRole('radio', { name: 'Black' }));
     await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('black'));
     await waitFor(async () => expect((await db.settings.get('appTheme'))?.value).toBe('black'));
-    expect(screen.getByRole('radio', { name: 'Black' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Black' })).toBeChecked();
   });
 
   it('ignores an invalid saved value', async () => {

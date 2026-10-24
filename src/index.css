@@ -20,7 +20,7 @@
     overscroll-behavior-y: none;
   }
   :focus-visible {
-    outline: 2px solid rgb(var(--pn-accent));
+    outline: 2px solid rgb(var(--pn-focus-ring));
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
@@ -29,26 +29,6 @@
     *::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
-    }
-  }
-}
-
-@layer components {
-  .pn-sheet-backdrop {
-    animation: pn-fade-in 200ms ease-out;
-  }
-  .pn-sheet {
-    animation: pn-slide-up 220ms ease-out;
-  }
-  @keyframes pn-fade-in {
-    from {
-      opacity: 0;
-    }
-  }
-  @keyframes pn-slide-up {
-    from {
-      transform: translateY(24px);
-      opacity: 0;
     }
   }
 }

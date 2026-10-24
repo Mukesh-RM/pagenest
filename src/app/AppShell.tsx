@@ -1,42 +1,27 @@
-import { useEffect } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useBackStack } from './back';
-import { TABS } from './tabs';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { AppShell as DesignAppShell } from '@/ui';
+import { NAV_ITEMS, tabForPath } from './tabs';
 
 /**
- * Phone: content above a bottom tab bar. Tablet and desktop (md and up): a left rail.
- * Tabs are 44 px or larger and respect the safe area for the home bar.
+ * Router layout: the design system's responsive frame (bottom tab bar on phones, left rail from
+ * 768 px, room above the tab bar for the mini-player) around the current screen. Tabs are real
+ * links, so middle-click and long-press work; a plain tap navigates without a page load.
  */
 export function AppShell() {
-  const stack = useBackStack();
   const { pathname } = useLocation();
-  // A screen change leaves any open sheet behind; close them without touching history.
-  useEffect(() => stack.dropAll(), [stack, pathname]);
+  const navigate = useNavigate();
   return (
-    <div className="flex h-full flex-col md:flex-row-reverse">
-      <main id="main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none px-4 pb-6 pt-[calc(1rem+var(--pn-safe-top))] md:px-6">
+    <DesignAppShell
+      items={NAV_ITEMS}
+      value={tabForPath(pathname)}
+      onSelect={(id) => {
+        const href = NAV_ITEMS.find((item) => item.id === id)?.href;
+        if (href) navigate(href);
+      }}
+    >
+      <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
         <Outlet />
-      </main>
-      <nav
-        aria-label="Main"
-        className="flex shrink-0 border-t border-line bg-surface pb-[var(--pn-safe-bottom)] md:w-24 md:flex-col md:justify-start md:gap-1 md:border-r md:border-t-0 md:pt-[var(--pn-safe-top)]"
-      >
-        {TABS.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === '/'}
-            className={({ isActive }) =>
-              `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 text-[12px] font-medium md:flex-none md:py-3 ${
-                isActive ? 'text-accent' : 'text-muted'
-              }`
-            }
-          >
-            <Icon size={24} strokeWidth={1.75} aria-hidden="true" />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
-    </div>
+      </div>
+    </DesignAppShell>
   );
 }

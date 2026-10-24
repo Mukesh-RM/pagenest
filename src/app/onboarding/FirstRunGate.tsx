@@ -5,7 +5,7 @@ import { Onboarding } from './Onboarding';
 /**
  * Shows onboarding on first run and the app afterwards. While saved settings
  * are still loading it shows an empty themed page, so returning users never
- * see onboarding flash by. When onboarding ends, focus moves to the main area.
+ * see onboarding flash by. When onboarding ends, focus moves to the new screen's heading.
  */
 export function FirstRunGate({ children }: { children: ReactNode }) {
   const loaded = useSettings((s) => s.loaded);
@@ -16,7 +16,7 @@ export function FirstRunGate({ children }: { children: ReactNode }) {
     if (loaded && !done) wasOnboarding.current = true;
     if (loaded && done && wasOnboarding.current) {
       wasOnboarding.current = false;
-      document.getElementById('main')?.focus();
+      document.querySelector<HTMLElement>('main h1')?.focus();
     }
   }, [loaded, done]);
 

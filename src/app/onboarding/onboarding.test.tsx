@@ -40,7 +40,7 @@ describe('first run', () => {
     expect(h).toHaveFocus();
     expect(screen.getByText(/no sign-in, no ads and no tracking/i)).toBeInTheDocument();
     expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Main' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pn-tabbar')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Back' })).not.toBeInTheDocument();
   });
 
@@ -48,7 +48,7 @@ describe('first run', () => {
     await db.settings.put({ key: 'onboardingDone', value: true });
     renderApp(services);
     expect(screen.queryByText(/Step 1 of 3/)).not.toBeInTheDocument();
-    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(await screen.findByTestId('pn-tabbar')).toBeInTheDocument();
     expect(screen.queryByText(/Step \d of 3/)).not.toBeInTheDocument();
   });
 
@@ -96,7 +96,6 @@ describe('persistence', () => {
 
     fireEvent.click(screen.getByRole('radio', { name: 'Sepia' }));
     await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('sepia'));
-    expect(document.documentElement.style.getPropertyValue('--pn-page')).toBe('244 236 216');
     await waitFor(async () => expect(await getSetting(db, 'appTheme')).toBe('sepia'));
     expect(screen.getByRole('radio', { name: 'Sepia' })).toBeChecked();
 
@@ -105,7 +104,7 @@ describe('persistence', () => {
     await waitFor(async () => expect(await getSetting(db, 'appTheme')).toBe('black'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(await screen.findByTestId('pn-tabbar')).toBeInTheDocument();
     expect(document.documentElement.dataset['theme']).toBe('black');
     expect(await getSetting(db, 'onboardingDone')).toBe(true);
   });
@@ -129,13 +128,13 @@ describe('persistence', () => {
     renderApp(services);
     await goToLook();
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
-    await screen.findByRole('navigation', { name: 'Main' });
+    await screen.findByTestId('pn-tabbar');
     await waitFor(async () => expect(await getSetting(db, 'onboardingDone')).toBe(true));
     cleanup();
 
     resetSettings(); // simulates a new page load: store is empty, Dexie keeps the data
     renderApp(services);
-    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(await screen.findByTestId('pn-tabbar')).toBeInTheDocument();
     expect(screen.queryByText(/Step \d of 3/)).not.toBeInTheDocument();
   });
 
@@ -143,14 +142,14 @@ describe('persistence', () => {
     renderApp(services);
     await heading(/no account/i);
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(await screen.findByTestId('pn-tabbar')).toBeInTheDocument();
     await waitFor(async () => expect(await getSetting(db, 'onboardingDone')).toBe(true));
     expect(await getSetting(db, 'appTheme')).toBeUndefined();
     cleanup();
 
     resetSettings();
     renderApp(services);
-    expect(await screen.findByRole('navigation', { name: 'Main' })).toBeInTheDocument();
+    expect(await screen.findByTestId('pn-tabbar')).toBeInTheDocument();
   });
 
   it('Skip from card 2 keeps a theme chosen earlier in the session', async () => {
@@ -160,7 +159,7 @@ describe('persistence', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     await heading('A home for your books');
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    await screen.findByRole('navigation', { name: 'Main' });
+    await screen.findByTestId('pn-tabbar');
     expect(document.documentElement.dataset['theme']).toBe('dark');
     await waitFor(async () => expect(await getSetting(db, 'appTheme')).toBe('dark'));
   });
@@ -169,8 +168,8 @@ describe('persistence', () => {
     renderApp(services);
     await heading(/no account/i);
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    await screen.findByRole('navigation', { name: 'Main' });
-    await waitFor(() => expect(document.getElementById('main')).toHaveFocus());
+    await screen.findByTestId('pn-tabbar');
+    await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Library' })).toHaveFocus());
   });
 
   it('restores a saved text size and theme on start, and clamps a bad size', async () => {
@@ -180,7 +179,7 @@ describe('persistence', () => {
       { key: 'appTheme', value: 'dark' },
     ]);
     renderApp(services);
-    await screen.findByRole('navigation', { name: 'Main' });
+    await screen.findByTestId('pn-tabbar');
     expect(useSettings.getState().fontSizePx).toBe(FONT_SIZE_MAX);
     expect(document.documentElement.style.getPropertyValue('--pn-font-size')).toBe(`${FONT_SIZE_MAX}px`);
     expect(document.documentElement.dataset['theme']).toBe('dark');
@@ -207,10 +206,10 @@ describe('keyboard and small screens', () => {
     expect(labels).toEqual(['Light', 'Sepia', 'Dark', 'Black', 'Match my phone', 'Text size16 px', 'Back', 'Done']);
   });
 
-  it('gives every button a touch target class of at least 44 px', async () => {
+  it('uses the design system buttons, which are 44 px tall at least', async () => {
     renderApp(services);
     await heading(/no account/i);
-    for (const button of screen.getAllByRole('button')) expect(button.className).toContain('min-h-touch');
+    for (const button of screen.getAllByRole('button')) expect(button.className).toContain('pn-btn');
   });
 
   it('uses a single column that fits 360 px', async () => {

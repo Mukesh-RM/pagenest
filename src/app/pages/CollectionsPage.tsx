@@ -1,8 +1,7 @@
-import { Layers } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, type FormEvent } from 'react';
 import { newId } from '@/data/db';
-import { EmptyState } from '../components/EmptyState';
+import { Button, EmptyState } from '@/ui';
 import { PageHeader } from '../components/PageHeader';
 import { useServices } from '../services-context';
 
@@ -27,7 +26,7 @@ export function CollectionsPage() {
   }
 
   const form = (
-    <form onSubmit={(e) => void createShelf(e)} className="mt-2 flex w-full max-w-sm gap-2">
+    <form onSubmit={(e) => void createShelf(e)} className="flex w-full max-w-sm gap-2">
       <label className="sr-only" htmlFor="shelf-name">
         Shelf name
       </label>
@@ -37,11 +36,9 @@ export function CollectionsPage() {
         onChange={(e) => setName(e.target.value)}
         placeholder="Name your first shelf"
         maxLength={60}
-        className="min-h-touch min-w-0 flex-1 rounded-full border border-line bg-surface px-4 text-ink placeholder:text-muted"
+        className="min-h-touch min-w-0 flex-1 rounded-full border-2 border-[rgb(var(--pn-border-strong))] bg-surface px-4 text-ink placeholder:text-muted"
       />
-      <button type="submit" className="min-h-touch rounded-full bg-accent px-5 font-medium text-on-accent">
-        Add shelf
-      </button>
+      <Button type="submit">Add shelf</Button>
     </form>
   );
 
@@ -49,9 +46,14 @@ export function CollectionsPage() {
     <>
       <PageHeader title="Collections" />
       {shelves === undefined ? null : shelves.length === 0 ? (
-        <EmptyState icon={Layers} title="No shelves yet" action={form}>
-          Shelves group your books, like Favorites or Summer reading. Make one to get started.
-        </EmptyState>
+        <>
+          <EmptyState
+            art="collections"
+            title="No shelves yet"
+            description="Shelves group your books, like Favorites or Summer reading. Make one to get started."
+          />
+          <div className="flex justify-center">{form}</div>
+        </>
       ) : (
         <>
           <ul className="mb-4 flex flex-col gap-3">
