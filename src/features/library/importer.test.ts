@@ -2,7 +2,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { makeServices } from '@/app/test-utils';
 import type { AppServices } from '@/app/services-context';
 import { makeEpub, makeMp3, makePdf } from '@/workers/import/testing/fixtures';
-import { ACCEPT_ANY_FILE, createBookImporter } from './importer';
+import { ACCEPT_ANY_FILE, createBookImporter, createLibraryProvider } from './importer';
 import { resetImportController, setImportBackend } from './registry';
 import { inProcessBackend } from './testing/in-process-backend';
 import { polyfillBlob } from './testing/blob-polyfill';
@@ -82,5 +82,18 @@ describe('BookImporter (contract in src/app/contracts/importer.ts)', () => {
     expect(outcomes).toHaveLength(2);
     expect(await services.db.books.count()).toBe(1);
     expect(outcomes.every((o) => 'result' in o)).toBe(true);
+  });
+
+  it('is one provider for both contracts, with the sample going through the same import path', async () => {
+    const bytes = await makeEpub({ title: 'The Tale of Peter Rabbit', author: 'Beatrix Potter', salt: 'same' });
+    const provider = createLibraryProvider({ canRun: () => true, fetchFn: async () => new Response(bytes as BodyInit) });
+    expect(provider.accept).toBe('*/*');
+    expect(provider.info.title).toBe('The Tale of Peter Rabbit');
+    expect(provider.available()).toBe(true);
+    const [picked] = await provider.importFiles([file(bytes as BlobPart, 'mine.epub')]);
+    const sample = await provider.importSample();
+    expect(picked).toMatchObject({ result: { alreadyInLibrary: false } });
+    expect(sample.alreadyInLibrary).toBe(true);
+    expect(sample.bookId).toBe((picked as { result: { bookId: string } }).result.bookId);
   });
 });

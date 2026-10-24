@@ -19,6 +19,8 @@ export interface SampleDeps {
   url?: string;
   fetchFn?: typeof fetch;
   controller?: () => ImportController;
+  /** False when this browser cannot run the import worker. */
+  canRun?: () => boolean;
 }
 
 /**
@@ -31,7 +33,7 @@ export function createSampleBookProvider(deps: SampleDeps = {}): SampleBookProvi
   const controller = deps.controller ?? getImportController;
   return {
     info: SAMPLE_INFO,
-    available: () => typeof Worker !== 'undefined' || deps.controller !== undefined,
+    available: () => (deps.canRun ? deps.canRun() : typeof Worker !== 'undefined' || deps.controller !== undefined),
     async importSample(): Promise<ImportResult> {
       let bytes: ArrayBuffer;
       try {

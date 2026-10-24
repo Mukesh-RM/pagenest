@@ -1,7 +1,8 @@
-import type { BookImporter, ImportOutcome } from '@/app/contracts';
+import type { BookImporter, ImportOutcome, SampleBookProvider } from '@/app/contracts';
 import type { ItemOutcome } from '@/workers/import/protocol';
 import type { ImportController } from './import-controller';
 import { getImportController } from './registry';
+import { createSampleBookProvider, type SampleDeps } from './sample';
 
 /**
  * The file picker shows every file. PageNest decides what a file is from its content (magic
@@ -53,4 +54,23 @@ function toOutcome(fileName: string, outcome: ItemOutcome | undefined): ImportOu
   }
   if (outcome?.status === 'unsupported') return { fileName, error: outcome.message };
   return { fileName, error: NOT_ADDED };
+}
+
+/** The one object the app registers twice: `{ ...services, importer: library, sampleBook: library }`. */
+export type LibraryProvider = BookImporter & SampleBookProvider;
+
+/**
+ * Importer and sample book in one object (docs/IMPORTER_CONTRACT.md). Both go through the same import
+ * worker and controller, so a sample added with a tap behaves exactly like a file the person picked.
+ */
+export function createLibraryProvider(deps: BookImporterDeps & SampleDeps = {}): LibraryProvider {
+  const importer = createBookImporter(deps);
+  const sample = createSampleBookProvider(deps);
+  return {
+    accept: importer.accept,
+    available: () => importer.available(),
+    importFiles: (files) => importer.importFiles(files),
+    info: sample.info,
+    importSample: () => sample.importSample(),
+  };
 }
