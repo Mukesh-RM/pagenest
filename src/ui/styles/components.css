@@ -1413,3 +1413,32 @@
   align-items: center;
   justify-content: center;
 }
+
+/* ---------- Install help sheet ---------- */
+.pn-install-help__status {
+  margin: 0 0 var(--pn-space-4);
+  color: rgb(var(--pn-text));
+  outline: none;
+}
+
+.pn-install-help__section {
+  margin: 0 0 var(--pn-space-5);
+}
+
+.pn-install-help__heading {
+  margin: 0 0 var(--pn-space-2);
+  font-size: var(--pn-text-md);
+  font-weight: var(--pn-weight-semibold);
+  line-height: var(--pn-leading-tight);
+}
+
+.pn-install-help__text {
+  margin: 0 0 var(--pn-space-3);
+  color: rgb(var(--pn-muted));
+}
+
+.pn-install-help__meta {
+  margin: var(--pn-space-2) 0 0;
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+}
