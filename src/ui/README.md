@@ -221,7 +221,7 @@ App: persist the contrast setting next to the theme and pass both to `ThemeProvi
 
 All `--pn-text-*` tokens are `rem`. The app sets ONE value, `--pn-font-size`, through `applyTextSize(px)` (14 to 32,
 that is 87.5% to 200%), and `html { font-size: var(--pn-font-size) }` does the rest. Do not write `--pn-text-*` from
-the app. `TEXT_TOKEN_PX` is gone. The tab bar caps its labels in CSS so four tabs still fit at 200%.
+the app. `TEXT_TOKEN_PX` is gone. Tab bar labels are the full `--pn-text-xs` (12 px at 100%, 24 px at 200%, never capped or cut): four tabs sit in one row while each can hold "Collections" (container width above 21 rem, so it follows the text size), otherwise two rows of two; the bar grows, `AppShell` measures it (`--pn-bottom-chrome`), so content and the mini-player stay above it, and the safe-area inset stays under the labels.
 
 ### Wiring checklist for `src/app` (the designer does not edit it)
 

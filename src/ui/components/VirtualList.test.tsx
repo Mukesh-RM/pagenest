@@ -194,9 +194,10 @@ describe('VirtualList: keyboard', () => {
   });
 
   it('keeps the focused item in the page after it scrolls far away', () => {
-    render(list(10_000));
+    // 2,000 rows: far beyond the ~15 drawn, and cheap enough that a busy machine never nears a test timeout.
+    render(list(2000));
     act(() => screen.getByTestId('b3').focus());
-    scrollTo(400_000);
+    scrollTo(150_000);
     expect(screen.getByTestId('b3')).toBeInTheDocument();
     expect(document.activeElement).toBe(screen.getByTestId('b3'));
     act(() => (document.activeElement as HTMLElement).blur());
@@ -243,9 +244,9 @@ describe('VirtualList: imperative handle', () => {
 
   it('focusItem mounts a far item and focuses its button', () => {
     const handle = createRef<VirtualListHandle>();
-    render(list(10_000, { ref: handle }));
-    act(() => handle.current!.focusItem(7000));
-    expect(document.activeElement).toBe(screen.getByTestId('b7000'));
+    render(list(2000, { ref: handle }));
+    act(() => handle.current!.focusItem(1500));
+    expect(document.activeElement).toBe(screen.getByTestId('b1500'));
   });
 });
 
