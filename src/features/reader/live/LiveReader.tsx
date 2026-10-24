@@ -25,6 +25,8 @@ type Phase =
   | { readonly status: 'ready' }
   | { readonly status: 'error'; readonly title: string; readonly message: string; readonly retry: boolean };
 
+/** Save the reading spot this long after the last move (the service itself only saves every 5 s). */
+const SETTLE_SAVE_MS = 700;
 const SLOW_OPEN_MS = 1200;
 const MIN_SESSION_SEC = 5;
 const EDITABLE = /^(INPUT|TEXTAREA|SELECT|BUTTON|A)$/;
@@ -152,9 +154,15 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         window.clearTimeout(slowTimer);
         const publish = frameThrottle((p: ReaderPosition) => setPosition(p));
         cleanups.push(() => publish.cancel());
+        // ProgressService batches saves every 5 s; a tab closed sooner would lose the spot, because writes started
+        // while the page unloads are not reliable. So the spot is also flushed once the reader has stopped moving.
+        let settleFlush: number | undefined;
+        cleanups.push(() => window.clearTimeout(settleFlush));
         cleanups.push(
           document_.onPositionChange((p) => {
             progress.report(book.id, 'read', p.locator, p.percent);
+            window.clearTimeout(settleFlush);
+            settleFlush = window.setTimeout(() => void progress.flush(book.id).catch(() => undefined), SETTLE_SAVE_MS);
             publish(p);
           }),
         );
