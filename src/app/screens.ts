@@ -11,12 +11,7 @@ const loaders = {
   stats: () => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })),
   settings: () => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
   read: () => import('./pages/BookRoute').then((m) => ({ default: m.ReadRoute })),
-  listen: () =>
-    import('@/features/player/lazy-runtime')
-      .then((m) => {
-        m.preloadPlayerEngine();
-      })
-      .then(() => import('./pages/BookRoute').then((mod) => ({ default: mod.ListenRoute }))),
+  listen: () => import('./pages/BookRoute').then((mod) => ({ default: mod.ListenRoute })),
   onboarding: () => import('./onboarding/Onboarding').then((m) => ({ default: m.Onboarding })),
 } satisfies Record<string, () => Promise<{ default: ComponentType }>>;
 

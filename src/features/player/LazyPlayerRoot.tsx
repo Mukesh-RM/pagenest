@@ -1,6 +1,6 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useChromePlayerStore } from './chrome-store';
+import { useMiniPlayerActive } from './player-chrome';
 import { preloadPlayerEngine } from './lazy-runtime';
 
 /**
@@ -8,7 +8,7 @@ import { preloadPlayerEngine } from './lazy-runtime';
  */
 export function LazyPlayerRoot({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
-  const sessionActive = useChromePlayerStore((s) => s.sessionActive);
+  const sessionActive = useMiniPlayerActive();
   const onListen = pathname.startsWith('/listen/');
   const needEngine = onListen || sessionActive;
 

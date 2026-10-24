@@ -7,7 +7,6 @@ import { useServices, type AppServices } from './services-context';
 import { scheduleStartupCleanup } from './startup';
 import { flushSettings } from './settings-store';
 import { ThemeProvider } from './ThemeProvider';
-import { LazyPlayerRoot } from '@/features/player/LazyPlayerRoot';
 
 /** Saves pending reading or listening position and settings when the page is hidden or closed. */
 function ProgressLifecycle() {
@@ -38,9 +37,7 @@ export function App({ services }: { services?: AppServices }) {
       <ProgressLifecycle />
       <ThemeProvider>
         <BrowserRouter>
-          <LazyPlayerRoot>
-            <AppRoutes />
-          </LazyPlayerRoot>
+          <AppRoutes />
         </BrowserRouter>
       </ThemeProvider>
     </ServicesProvider>

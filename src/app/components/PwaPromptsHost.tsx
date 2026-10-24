@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { PwaPrompts } from '@/ui';
-import { useIsPlaying } from '@/features/player/chrome-store';
+import { useChromeStore } from '../route-chrome';
 import { localHintStore } from '../hint-store';
 import { useServices } from '../services-context';
 
@@ -16,6 +16,6 @@ export function PwaPromptsHost() {
   const { db } = useServices();
   const [store] = useState(() => localHintStore());
   const hasBook = useLiveQuery(async () => (await db.books.count()) > 0, [db]);
-  const playing = useIsPlaying();
+  const playing = useChromeStore((s) => s.audioSession);
   return <PwaPrompts isPlaying={playing} installOfferReady={hasBook === true} store={store} />;
 }

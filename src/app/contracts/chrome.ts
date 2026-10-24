@@ -16,8 +16,8 @@ export type RouteChrome = 'full' | 'immersive';
  * controller, not in this component, because the frame unmounts it on immersive routes.
  */
 export interface MiniPlayerSlot {
-  /** Renders the mini-player. Use the design system's `MiniPlayer`. Fills the width it is given. */
-  readonly Component: ComponentType;
+  /** Renders the mini-player. Omit to use the app's lazy default (audio integration). */
+  readonly Component?: ComponentType;
   /**
    * A hook that returns true while there is something to show (a book is loaded or playing).
    * When it returns false the frame reserves no space at all. Read your store with a selector

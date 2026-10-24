@@ -1,13 +1,27 @@
 import { useNavigate } from 'react-router-dom';
+import { registerMiniPlayerComponent } from '@/app/audio-mini-register';
 import { listenPath } from '@/app/route-paths';
 import { MiniPlayer } from '@/ui';
+import { PlayerProvider } from './PlayerProvider';
 import { useChromePlayerStore } from './chrome-store';
 import { preloadPlayerEngine } from './lazy-runtime';
 
 /**
- * Tab-bar mini-player shell: UI + chrome store only. The engine loads lazily on first control tap.
+ * Tab-bar mini-player shell: UI + chrome store. Mounts {@link PlayerProvider} in this lazy chunk.
  */
-export function ChromeMiniPlayer() {
+export function ChromeMiniPlayer(): JSX.Element {
+  return (
+    <div className="min-h-[calc(var(--pn-miniplayer-height)+var(--pn-space-2))]">
+      <PlayerProvider>
+        <ChromeMiniPlayerInner />
+      </PlayerProvider>
+    </div>
+  );
+}
+
+registerMiniPlayerComponent(ChromeMiniPlayer);
+
+function ChromeMiniPlayerInner(): null | JSX.Element {
   const chrome = useChromePlayerStore((s) => s.chrome);
   const navigate = useNavigate();
 

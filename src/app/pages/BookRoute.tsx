@@ -83,5 +83,8 @@ export function ReadRoute() {
 }
 
 export function ListenRoute() {
+  useEffect(() => {
+    void import('@/features/player/lazy-runtime').then((m) => m.preloadPlayerEngine());
+  }, []);
   return <BookRoute expected="listen" />;
 }

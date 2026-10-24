@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { publishAudioSession } from '@/app/route-chrome';
 
 /** Mini-player and PWA prompt data only — no audio engine imports. */
 export interface ChromePlayerSnapshot {
@@ -33,18 +34,13 @@ export interface ChromePlayerStore {
 export const useChromePlayerStore = create<ChromePlayerStore>((set) => ({
   chrome: empty,
   sessionActive: false,
-  setChrome: (chrome, sessionActive) => set({ chrome, sessionActive }),
-  clear: () => set({ chrome: empty, sessionActive: false }),
+  setChrome: (chrome, sessionActive) => {
+    set({ chrome, sessionActive });
+    publishAudioSession(sessionActive);
+    if (sessionActive) void import('./chrome-mini-player');
+  },
+  clear: () => {
+    set({ chrome: empty, sessionActive: false });
+    publishAudioSession(false);
+  },
 }));
-
-export function useIsPlaying(): boolean {
-  return useChromePlayerStore((s) => s.chrome.playing);
-}
-
-export function selectIsPlaying(): boolean {
-  return useChromePlayerStore.getState().chrome.playing;
-}
-
-export function useMiniPlayerActive(): boolean {
-  return useChromePlayerStore((s) => s.sessionActive);
-}

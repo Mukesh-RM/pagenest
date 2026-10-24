@@ -14,9 +14,18 @@ interface Entry {
 
 interface ChromeState {
   readonly entries: Readonly<Record<number, Entry>>;
+  /** True while the audio owner reports an active listening session (mini-player gate + PWA prompts). */
+  readonly audioSession: boolean;
 }
 
-const useChromeStore = create<ChromeState>(() => ({ entries: {} }));
+export const useChromeStore = create<ChromeState>(() => ({
+  entries: {},
+  audioSession: false,
+}));
+
+export function publishAudioSession(sessionActive: boolean): void {
+  useChromeStore.setState({ audioSession: sessionActive });
+}
 
 /** The chrome the frame must show now: screens beat route defaults, deeper beats shallower, none means `full`. */
 export function resolveChrome(entries: Readonly<Record<number, Entry>>): RouteChrome {
@@ -79,5 +88,5 @@ export function useCurrentChrome(): RouteChrome {
 
 /** Test helper: forget every registration. */
 export function resetRouteChromeForTests(): void {
-  useChromeStore.setState({ entries: {} });
+  useChromeStore.setState({ entries: {}, audioSession: false });
 }

@@ -1,6 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { useChromePlayerStore, useIsPlaying } from './chrome-store';
+import { useIsPlaying } from './player-chrome';
+import { useChromePlayerStore } from './chrome-store';
 
 describe('chrome playing flag', () => {
   it('tracks isPlaying from chrome store', () => {

@@ -100,7 +100,12 @@ describe('app frame per route', () => {
 });
 
 function slot(overrides: Partial<MiniPlayerSlot> = {}): MiniPlayerSlot {
-  return { Component: () => <section aria-label="Mini player">Now playing</section>, ...overrides };
+  const Component = () => (
+    <div className="min-h-[calc(var(--pn-miniplayer-height)+var(--pn-space-2))]">
+      <section aria-label="Mini player">Now playing</section>
+    </div>
+  );
+  return { Component, ...overrides };
 }
 
 describe('mini-player slot', () => {
@@ -116,7 +121,7 @@ describe('mini-player slot', () => {
     await launch({ miniPlayerSlot: slot() });
     renderApp(services, { path: '/stats' });
     const host = await screen.findByTestId('mini-player-slot');
-    expect(host.className).toContain('min-h-[calc(var(--pn-miniplayer-height)+var(--pn-space-2))]');
+    expect(host.querySelector('.min-h-\\[calc\\(var\\(--pn-miniplayer-height\\)\\+var\\(--pn-space-2\\)\\)\\]')).not.toBeNull();
     expect(screen.getByText('Now playing')).toBeInTheDocument();
     const bottom = host.parentElement;
     expect(bottom?.querySelector('[data-testid="pn-tabbar"]')).not.toBeNull();

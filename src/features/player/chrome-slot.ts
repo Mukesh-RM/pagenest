@@ -1,6 +1,6 @@
 import type { MiniPlayerSlot } from '@/app/contracts';
 import { ChromeMiniPlayer } from './chrome-mini-player';
-import { useMiniPlayerActive } from './chrome-store';
+import { useMiniPlayerActive } from './player-chrome';
 
 /**
  * Lightweight mini-player slot for `AppServices` (no audio engine on the main path).
