@@ -1,15 +1,19 @@
-import type { StoredBook } from '@/workers/import/protocol';
+import type { BookRecord } from '@/data/schema';
+import type { LibraryQuery } from '@/data/library-query';
+
+type StoredBook = Pick<BookRecord, 'id' | 'title' | 'author' | 'kind' | 'format' | 'favorite' | 'finished'>;
 
 /** Library view logic with no React and no storage, so it is easy to test. */
 
-export type SortKey = 'recent' | 'opened' | 'title' | 'author';
+/** `recent` is last opened (then newest added), `added` is newest added, as in the data layer's `LibraryQuery.sort`. */
+export type SortKey = 'recent' | 'added' | 'title' | 'author';
 export type Segment = 'all' | 'books' | 'audio';
 export type FilterChip = 'reading' | 'listening' | 'finished' | 'favorites';
 export type ViewMode = 'grid' | 'list';
 
 export const SORT_LABELS: Readonly<Record<SortKey, string>> = {
-  recent: 'Recently added',
-  opened: 'Recently opened',
+  recent: 'Recently opened',
+  added: 'Recently added',
   title: 'Title, A to Z',
   author: 'Author, A to Z',
 };
@@ -29,6 +33,8 @@ export interface LibraryPrefs {
   segment: Segment;
 }
 export const DEFAULT_PREFS: LibraryPrefs = { view: 'grid', sort: 'recent', segment: 'all' };
+
+export const SORT_DIRECTIONS: Readonly<Record<SortKey, 'asc' | 'desc'>> = { recent: 'desc', added: 'desc', title: 'asc', author: 'asc' };
 
 export function isSortKey(v: unknown): v is SortKey {
   return typeof v === 'string' && v in SORT_LABELS;
@@ -50,71 +56,30 @@ export function parsePrefs(value: unknown): LibraryPrefs {
   };
 }
 
-export interface ViewOptions {
+/** What the screen asks the data layer for. */
+export interface ViewQuery {
+  text: string;
   segment: Segment;
   chip: FilterChip | null;
   sort: SortKey;
-  /** Ids from a search, best first. `null` means no search. */
-  searchIds: readonly string[] | null;
-  /** Only books on this shelf. */
-  only?: ReadonlySet<string> | undefined;
+  collectionId?: string | undefined;
 }
 
-const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-
-export function isFinished(book: StoredBook, percent: number): boolean {
-  return book.finished || percent >= 100;
-}
-
-/** Does this book pass the chip filter? */
-export function matchesChip(book: StoredBook, percent: number, chip: FilterChip): boolean {
-  switch (chip) {
-    case 'reading':
-      return book.kind !== 'audio' && percent > 0 && !isFinished(book, percent);
-    case 'listening':
-      return book.kind === 'audio' && percent > 0 && !isFinished(book, percent);
-    case 'finished':
-      return isFinished(book, percent);
-    case 'favorites':
-      return book.favorite;
-  }
-}
-
-function compare(sort: SortKey): (a: StoredBook, b: StoredBook) => number {
-  switch (sort) {
-    case 'recent':
-      return (a, b) => b.addedAt - a.addedAt || collator.compare(a.title, b.title);
-    case 'opened':
-      return (a, b) => (b.lastOpenedAt ?? 0) - (a.lastOpenedAt ?? 0) || b.addedAt - a.addedAt;
-    case 'title':
-      return (a, b) => collator.compare(a.title, b.title) || b.addedAt - a.addedAt;
-    case 'author':
-      return (a, b) => {
-        if (!a.author !== !b.author) return a.author ? -1 : 1; // books without an author go last
-        return collator.compare(a.author ?? '', b.author ?? '') || collator.compare(a.title, b.title);
-      };
-  }
-}
-
-/** The books to show, filtered and ordered. A search keeps its own best-match order. */
-export function selectBooks(books: readonly StoredBook[], percents: ReadonlyMap<string, number>, options: ViewOptions): StoredBook[] {
-  const { segment, chip, sort, searchIds, only } = options;
-  const pass = (b: StoredBook): boolean => {
-    if (only && !only.has(b.id)) return false;
-    if (segment === 'audio' && b.kind !== 'audio') return false;
-    if (segment === 'books' && b.kind === 'audio') return false;
-    return chip === null || matchesChip(b, percents.get(b.id) ?? 0, chip);
+/** The data layer query for what is on screen. A shelf keeps its own order unless a sort is chosen. */
+export function toLibraryQuery(view: ViewQuery): Partial<LibraryQuery> {
+  const text = view.text.trim();
+  return {
+    ...(text ? { text } : {}),
+    segment: view.segment,
+    ...(view.chip ? { status: view.chip } : {}),
+    ...(view.collectionId ? { collectionId: view.collectionId } : {}),
+    // A search ranks by relevance; everything else uses the person's sort.
+    ...(text ? {} : { sort: view.sort }),
   };
-  if (searchIds) {
-    const byId = new Map(books.map((b) => [b.id, b] as const));
-    const out: StoredBook[] = [];
-    for (const id of searchIds) {
-      const b = byId.get(id);
-      if (b && pass(b)) out.push(b);
-    }
-    return out;
-  }
-  return books.filter(pass).sort(compare(sort));
+}
+
+export function isFinished(book: Pick<StoredBook, 'finished'>, percent: number): boolean {
+  return book.finished || percent >= 100;
 }
 
 /** Short format tag on a cover: `EPUB`, `M4B`. */

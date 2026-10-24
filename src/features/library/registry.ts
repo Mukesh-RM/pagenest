@@ -1,42 +1,23 @@
-import type { PageNestDB } from '@/data/db';
-import { createFileStore, type FileStore } from '@/data/opfs';
-import { LibraryController } from './controller';
+import { ImportController } from './import-controller';
 import { createWorkerBackend, ImportClient } from './import-client';
-import { createSearchClient } from './search-client';
-
-export type { LibraryController };
-
-let sharedFiles: Promise<FileStore> | undefined;
-/** The app's file store (OPFS), opened once. */
-export function getFileStore(): Promise<FileStore> {
-  sharedFiles ??= createFileStore();
-  return sharedFiles;
-}
-
-const controllers = new WeakMap<PageNestDB, LibraryController>();
 
 /**
- * One controller per database for the whole session, so switching tabs keeps the loaded books,
- * the search index and any import still running.
+ * One import controller for the whole session, so switching tabs keeps any import still running and
+ * its progress. The books themselves live in the database and are read through the data layer.
  */
-export function getLibraryController(db: PageNestDB): LibraryController {
-  let controller = controllers.get(db);
-  if (!controller) {
-    controller = new LibraryController({
-      db,
-      getFiles: getFileStore,
-      imports: new ImportClient(createWorkerBackend()),
-      search: createSearchClient(),
-      requestPersistence: async () => (await import('@/sw/persist')).requestPersistence(),
-      takeSharedFiles: async () => (await import('@/sw/share-target')).takeSharedFiles(),
-    });
-    controllers.set(db, controller);
-  }
-  return controller;
+let shared: ImportController | undefined;
+
+export function getImportController(): ImportController {
+  shared ??= new ImportController({
+    imports: new ImportClient(createWorkerBackend()),
+    requestPersistence: async () => (await import('@/sw/persist')).requestPersistence(),
+    takeSharedFiles: async () => (await import('@/sw/share-target')).takeSharedFiles(),
+  });
+  return shared;
 }
 
-/** Forget the controller of a database (tests). */
-export function resetLibraryController(db: PageNestDB): void {
-  controllers.get(db)?.dispose();
-  controllers.delete(db);
+/** Forget the shared controller (tests). */
+export function resetImportController(): void {
+  shared?.dispose();
+  shared = undefined;
 }

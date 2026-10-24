@@ -1,20 +1,20 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useStore } from 'zustand';
-import type { LibraryController, LibraryState } from './controller';
+import type { ImportController, ImportState } from './import-controller';
 
-const LibraryContext = createContext<LibraryController | undefined>(undefined);
+const ImportContext = createContext<ImportController | undefined>(undefined);
 
-export function LibraryProvider({ controller, children }: { controller: LibraryController; children: ReactNode }) {
-  return <LibraryContext.Provider value={controller}>{children}</LibraryContext.Provider>;
+export function ImportProvider({ controller, children }: { controller: ImportController; children: ReactNode }) {
+  return <ImportContext.Provider value={controller}>{children}</ImportContext.Provider>;
 }
 
-export function useController(): LibraryController {
-  const value = useContext(LibraryContext);
-  if (!value) throw new Error('Library components must be inside <LibraryProvider>.');
+export function useImportController(): ImportController {
+  const value = useContext(ImportContext);
+  if (!value) throw new Error('Library components must be inside <ImportProvider>.');
   return value;
 }
 
-/** Subscribe to a slice of the library state. Always pass a selector that returns a stable value. */
-export function useLibraryState<T>(selector: (state: LibraryState) => T): T {
-  return useStore(useController().store, selector);
+/** Subscribe to a slice of the import state. */
+export function useImportState<T>(selector: (state: ImportState) => T): T {
+  return useStore(useImportController().store, selector);
 }

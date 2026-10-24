@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { PageNestDB } from '@/data/db';
+import { BookRepository } from '@/data/books';
+import { CollectionRepository } from '@/data/collections';
 import { MemoryFileStore } from '@/data/opfs';
 import { createImportService } from './service';
 import type { ImportItem, ItemOutcome, RestoreSummary, WorkerEvent } from './protocol';
@@ -10,7 +12,7 @@ import {
   concat, jpegStub, makeCbz, makeDocx, makeEpub, makeFb2, makeFlac, makeHtml, makeMobi, makeMp3, makeMp4Audio, makeOgg, makePdf, makePdfCompressed, makePng,
   makeText, makeUtf16Text, makeWav, makeZip,
 } from './testing/fixtures';
-import { createBackup, listBackupFiles, restoreBackup, sweepOrphans, storageBreakdown, clearCaches } from './backup';
+import { createBackup, listBackupFiles, restoreBackup, storageBreakdown, clearCaches } from './backup';
 import { readZipEntries } from './zip';
 
 let db: PageNestDB;
@@ -27,7 +29,9 @@ afterEach(async () => {
   await db.delete();
 });
 
-const service = () => createImportService({ db, files, parseAudio, makeThumbnail: async () => undefined });
+const depsFor = (d: PageNestDB, f: MemoryFileStore) => ({ db: d, files: f, books: new BookRepository(d, f), collections: new CollectionRepository(d) });
+const serviceFor = (d: PageNestDB, f: MemoryFileStore) => createImportService({ ...depsFor(d, f), parseAudio, makeThumbnail: async () => undefined });
+const service = () => serviceFor(db, files);
 const item = (bytes: Uint8Array, name: string, relPath?: string, type = ''): ImportItem => ({ file: new File([bytes as BlobPart], name, { type }), ...(relPath ? { relPath } : {}) });
 
 async function run(items: ImportItem[]): Promise<{ outcomes: ItemOutcome[]; events: WorkerEvent[]; summary: unknown }> {
@@ -147,7 +151,7 @@ describe('importing files whose names lie', () => {
       return originalWrite(path, data);
     };
     const events: WorkerEvent[] = [];
-    await createImportService({ db, files: failing, parseAudio, makeThumbnail: async () => undefined }).handle({ type: 'import', jobId: 'q', items: [item(await makeEpub(), 'a')] }, (e) => events.push(e));
+    await serviceFor(db, failing).handle({ type: 'import', jobId: 'q', items: [item(await makeEpub(), 'a')] }, (e) => events.push(e));
     const outcome = events.find((e) => e.type === 'outcome');
     expect(outcome?.type === 'outcome' && outcome.outcome).toMatchObject({ status: 'unsupported', reason: 'storage-full' });
     expect(await db.books.count()).toBe(0);
@@ -224,17 +228,22 @@ describe('backup and restore', () => {
     const db2 = new PageNestDB(`restore-${counter}-${Math.random()}`);
     const files2 = new MemoryFileStore();
     try {
-      const summary = await restoreBackup(zip, db2, files2);
+      const summary = await restoreBackup(zip, depsFor(db2, files2));
       expect(summary).toMatchObject({ booksAdded: 3, booksAlreadyThere: 0 });
       expect(await db2.books.count()).toBe(3);
       expect(await db2.progress.count()).toBe(1);
-      expect((await db2.bookmarks.get('bm1'))?.label).toBe('Here');
-      expect((await db2.collectionBooks.toArray()).length).toBe(1);
+      const book0 = (await db2.books.toArray()).find((b) => b.title === 'Backed Up');
+      expect((await db2.bookmarks.get('bm1'))?.bookId).toBe(book0?.id);
+      expect((await db2.collections.toArray()).map((c) => c.name)).toEqual(['Favorites']);
+      expect((await db2.collectionBooks.toArray()).map((l) => l.bookId)).toEqual([book0?.id]);
       expect((await db2.settings.get('appTheme'))?.value).toBe('dark');
       expect((await db2.voices.get('v1'))?.name).toBe('Mine');
-      expect(await listBackupFiles(files2)).toEqual(await listBackupFiles(files));
+      expect((await listBackupFiles(files2)).length).toBe((await listBackupFiles(files)).length);
       const book = (await db2.books.toArray()).find((b) => b.title === 'Backed Up');
-      const original = await files.open(book?.fileRef as string);
+      const before = (await db.books.toArray()).find((b) => b.title === 'Backed Up');
+      expect(book?.id).not.toBe(before?.id); // restored through BookRepository.add: new id, same book
+      expect(book?.coverRef).toBeDefined();
+      const original = await files.open(before?.fileRef as string);
       const copy = await files2.open(book?.fileRef as string);
       expect(new Uint8Array(await copy.arrayBuffer())).toEqual(new Uint8Array(await original.arrayBuffer()));
     } finally {
@@ -250,18 +259,18 @@ describe('backup and restore', () => {
     const db2 = new PageNestDB(`merge-${counter}-${Math.random()}`);
     const files2 = new MemoryFileStore();
     try {
-      await createImportService({ db: db2, files: files2, parseAudio, makeThumbnail: async () => undefined }).handle(
+      await serviceFor(db2, files2).handle(
         { type: 'import', jobId: 'm', items: [item(await makeEpub({ title: 'Backed Up', author: 'B', cover: png }), 'zzz')] },
         () => undefined,
       );
       const existing = (await db2.books.toArray())[0];
       await db2.progress.put({ bookId: existing?.id as string, mode: 'read', locator: { kind: 'reflow', section: 9, textOffset: 1 }, percent: 90, updatedAt: 5000 });
-      const summary = await restoreBackup(zip, db2, files2);
+      const summary = await restoreBackup(zip, depsFor(db2, files2));
       expect(summary).toMatchObject({ booksAdded: 2, booksAlreadyThere: 1 });
       expect(await db2.books.count()).toBe(3);
       expect((await db2.progress.get([existing?.id as string, 'read']))?.percent).toBe(90); // newer progress kept
       expect((await db2.collectionBooks.toArray())[0]?.bookId).toBe(existing?.id); // shelf link follows the kept book
-      expect((await db2.bookmarks.get('bm1'))?.bookId).toBeUndefined(); // bookmark belongs to the skipped copy
+      expect(await db2.bookmarks.get('bm1')).toBeUndefined(); // the bookmark belongs to the copy that was not restored
     } finally {
       db2.close();
       await db2.delete();
@@ -269,9 +278,10 @@ describe('backup and restore', () => {
   });
 
   it('refuses files that are not backups, or are damaged, in plain words', async () => {
+    const fresh = new PageNestDB(`damaged-${counter}-${Math.random()}`);
     const msg = async (blob: Blob): Promise<string> => {
       const events: WorkerEvent[] = [];
-      await service().handle({ type: 'restore', jobId: 'r', file: blob }, (e) => events.push(e));
+      await serviceFor(fresh, new MemoryFileStore()).handle({ type: 'restore', jobId: 'r', file: blob }, (e) => events.push(e));
       const failed = events.find((e) => e.type === 'failed');
       return failed?.type === 'failed' ? failed.message : 'no failure';
     };
@@ -286,6 +296,8 @@ describe('backup and restore', () => {
     const damaged = good.slice();
     damaged[at] = (damaged[at] as number) ^ 0xff; // flip a byte inside a stored file
     expect(await msg(new Blob([damaged as BlobPart]))).toMatch(/damaged/);
+    fresh.close();
+    await fresh.delete();
   });
 
   it('writes ZIP64 structures when sizes pass the 4 GB limit (checked with a low threshold)', async () => {
@@ -295,7 +307,7 @@ describe('backup and restore', () => {
     expect(entries.length).toBeGreaterThan(5);
     const db2 = new PageNestDB(`z64-${counter}-${Math.random()}`);
     try {
-      const summary = (await restoreBackup(zip, db2, new MemoryFileStore())) as RestoreSummary;
+      const summary = (await restoreBackup(zip, depsFor(db2, new MemoryFileStore()))) as RestoreSummary;
       expect(summary.booksAdded).toBe(3);
     } finally {
       db2.close();
@@ -309,7 +321,9 @@ describe('housekeeping', () => {
     await run([item(await makeEpub(), 'a')]);
     await files.write('books/ghost/book.epub', new Uint8Array(5));
     await files.write('covers/ghost.img', new Uint8Array(5));
-    expect(await sweepOrphans(db, files)).toBe(2);
+    const events: WorkerEvent[] = [];
+    await service().handle({ type: 'sweep', jobId: 's' }, (e) => events.push(e));
+    expect(events.find((e) => e.type === 'done')).toMatchObject({ result: { removed: 1 } });
     expect((await files.list('books')).length).toBe(1);
   });
   it('splits storage by kind and frees only caches', async () => {

@@ -1,7 +1,9 @@
+import { BookRepository } from '@/data/books';
+import { CollectionRepository } from '@/data/collections';
 import { PageNestDB } from '@/data/db';
-import { createFileStore, openOpfsRoot } from '@/data/opfs';
+import { createFileStore, openOpfsRoot, type FileStore } from '@/data/opfs';
 import { createRpcClient, type RpcPort } from '@/data/rpc';
-import { createStreamWriter } from './opfs-stream';
+import { streamingFileStore } from './opfs-stream';
 import type { WorkerEvent, WorkerRequest } from './protocol';
 import { createImportService } from './service';
 import { makeThumbnail } from './thumbnail';
@@ -36,10 +38,13 @@ const rootPromise = openOpfsRoot();
 
 const service = (async () => {
   const [files, root] = await Promise.all([filesPromise, rootPromise]);
+  const db = new PageNestDB();
+  const store: FileStore = root ? streamingFileStore(files, root) : files;
   return createImportService({
-    db: new PageNestDB(),
-    files,
-    ...(root ? { writeBlob: createStreamWriter(root) } : {}),
+    db,
+    files: store,
+    books: new BookRepository(db, store),
+    collections: new CollectionRepository(db),
     parseAudio: async (blob) => (await audioWorker()?.parseAudio(blob)) ?? {},
     makeThumbnail,
   });

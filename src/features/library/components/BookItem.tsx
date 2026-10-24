@@ -1,26 +1,31 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { Card, Icon } from '@/ui';
-import type { FileStore } from '@/data/opfs';
-import type { StoredBook } from '@/workers/import/protocol';
-import { useCoverUrl } from '../covers';
+import { useCoverUrl } from '@/app/library-hooks';
+import type { BookSummary } from '@/data/library-query';
 import { LibIcon } from '../icons';
 import { describeBook, formatDuration, formatTag, isFinished } from '../model';
 import { TitleCard } from './TitleCard';
 
 export interface BookItemProps {
-  book: StoredBook;
-  percent: number;
+  book: BookSummary;
   selected: boolean;
   selecting: boolean;
   view: 'grid' | 'list';
-  getFiles: () => Promise<FileStore>;
-  onOpen: (book: StoredBook) => void;
+  onOpen: (book: BookSummary) => void;
   onToggle: (id: string) => void;
   onSelectStart: (id: string) => void;
 }
 
-function Cover({ book, getFiles }: { book: StoredBook; getFiles: () => Promise<FileStore> }) {
-  const url = useCoverUrl(book, getFiles);
+const COVER_DELAY_MS = 90;
+
+/** A cover is asked for only after its card stayed on screen a moment, so a fast scroll decodes nothing. */
+function Cover({ book }: { book: BookSummary }) {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(true), COVER_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  const url = useCoverUrl(book.id, settled && book.coverRef !== undefined);
   return (
     <span className="pn-lib-cover">
       {url ? (
@@ -32,8 +37,8 @@ function Cover({ book, getFiles }: { book: StoredBook; getFiles: () => Promise<F
   );
 }
 
-function Badges({ book, percent }: { book: StoredBook; percent: number }) {
-  const finished = isFinished(book, percent);
+function Badges({ book }: { book: BookSummary }) {
+  const finished = isFinished(book, book.percent);
   return (
     <span className="pn-lib-badges" aria-hidden="true">
       {book.kind === 'audio' ? <Icon name="headphones" size={16} /> : null}
@@ -44,7 +49,8 @@ function Badges({ book, percent }: { book: StoredBook; percent: number }) {
 }
 
 /** One book in the grid or list. Memoized: only the cards whose book, progress or selection changed redraw. */
-export const BookItem = memo(function BookItem({ book, percent, selected, selecting, view, getFiles, onOpen, onToggle, onSelectStart }: BookItemProps) {
+export const BookItem = memo(function BookItem({ book, selected, selecting, view, onOpen, onToggle, onSelectStart }: BookItemProps) {
+  const percent = book.percent;
   const press = useCallback(() => (selecting ? onToggle(book.id) : onOpen(book)), [selecting, onToggle, onOpen, book]);
   const longPress = useCallback(() => onSelectStart(book.id), [onSelectStart, book.id]);
   const label = describeBook(book, percent);
@@ -54,7 +60,7 @@ export const BookItem = memo(function BookItem({ book, percent, selected, select
   if (view === 'list') {
     return (
       <Card flush onPress={press} onLongPress={longPress} selected={selecting ? selected : undefined} aria-label={label} className="pn-lib-row">
-        <Cover book={book} getFiles={getFiles} />
+        <Cover book={book} />
         <span className="pn-lib-rowmeta">
           <span className="pn-lib-title">{book.title}</span>
           {book.author ? <span className="pn-lib-author">{book.author}</span> : null}
@@ -64,7 +70,7 @@ export const BookItem = memo(function BookItem({ book, percent, selected, select
           </span>
         </span>
         <span className="pn-lib-rowend">
-          <Badges book={book} percent={percent} />
+          <Badges book={book} />
           {shown > 0 ? <span className="pn-lib-percent">{shown}%</span> : null}
         </span>
         {selecting ? <SelectMark selected={selected} /> : null}
@@ -73,11 +79,11 @@ export const BookItem = memo(function BookItem({ book, percent, selected, select
   }
   return (
     <Card flush onPress={press} onLongPress={longPress} selected={selecting ? selected : undefined} aria-label={label} className="pn-lib-card">
-      <Cover book={book} getFiles={getFiles} />
+      <Cover book={book} />
       <span className="pn-lib-tagpill" aria-hidden="true">
         {formatTag(book)}
       </span>
-      <Badges book={book} percent={percent} />
+      <Badges book={book} />
       {shown > 0 ? (
         <span className="pn-lib-progress" aria-hidden="true">
           <span className="pn-lib-progress__fill" style={{ width: `${shown}%` }} />

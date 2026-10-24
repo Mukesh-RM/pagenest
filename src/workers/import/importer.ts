@@ -1,9 +1,6 @@
 import type { BookFormat } from '@/app/contracts';
+import { BookRepository, BookRepositoryError, type NewChapter, type NewTrack } from '@/data/books';
 import { computeFingerprint } from '@/data/fingerprint';
-import type { PageNestDB } from '@/data/db';
-import { newId } from '@/data/db';
-import type { ChapterRecord, TrackRecord } from '@/data/schema';
-import { FilePaths, type FileStore } from '@/data/opfs';
 import { naturalCompare, readRange } from './bytes';
 import { folderOf, lastFolderName, titleFromFileName } from './names';
 import { parseCbz } from './parsers/cbz';
@@ -14,21 +11,18 @@ import { parseHtml } from './parsers/html';
 import { parseMobi } from './parsers/mobi';
 import { parseMp4Chapters } from './parsers/mp4chapters';
 import { parsePdf } from './parsers/pdf';
-import type { ImportItem, ItemOutcome, StoredBook } from './protocol';
+import type { ImportItem, ItemOutcome } from './protocol';
 import { imageType, sniffFile } from './sniff';
 import { UNSUPPORTED_MESSAGES, type ParsedMeta, type UnsupportedReason } from './types';
 
 /**
  * The import pipeline, free of any worker plumbing so it can be tested in Node:
- * sniff the content, fingerprint, read metadata and cover, copy the bytes into the file store,
- * and write the book rows. Runs inside `import.worker.ts`; the main thread only draws.
+ * sniff the content, fingerprint, read metadata and cover, then hand the book to `BookRepository.add`. Runs inside `import.worker.ts`; the main thread only draws.
  */
 
 export interface ImportDeps {
-  readonly db: PageNestDB;
-  readonly files: FileStore;
-  /** Copy a blob into the file store without loading it into memory. Defaults to `files.write`. */
-  readonly writeBlob?: (path: string, blob: Blob) => Promise<void>;
+  /** All storage goes through the data layer's repository (atomic add, duplicate detection, covers). */
+  readonly books: BookRepository;
   /** Audio tags (music-metadata). May reject; the file is still imported. */
   readonly parseAudio: (blob: Blob) => Promise<ParsedMeta>;
   /** Shrink a cover to card size. Return `undefined` to keep the original bytes. */
@@ -71,8 +65,9 @@ async function mapPool<T>(items: readonly T[], size: number, work: (item: T, ind
   await Promise.all(runners);
 }
 
-/** Map a thrown storage error to plain words. */
+/** Map a thrown storage error to a plain-words reason. */
 export function reasonForError(error: unknown): UnsupportedReason {
+  if (error instanceof BookRepositoryError) return error.code === 'storage-full' ? 'storage-full' : 'failed';
   const name = error instanceof Error ? error.name : '';
   if (name === 'QuotaExceededError' || (error instanceof Error && /quota|no space|full/i.test(error.message))) return 'storage-full';
   if (name === 'SecurityError' || name === 'NotAllowedError' || (error instanceof Error && error.name === 'FileStoreError' && /unsupported/.test(String((error as { code?: string }).code)))) return 'storage-unavailable';
@@ -89,10 +84,6 @@ export class Importer {
     const t = (this.deps.now ?? Date.now)();
     this.lastAddedAt = Math.max(t, this.lastAddedAt + 1);
     return this.lastAddedAt;
-  }
-
-  private write(path: string, blob: Blob): Promise<void> {
-    return (this.deps.writeBlob ?? ((p, b) => this.deps.files.write(p, b)))(path, blob);
   }
 
   /** Import every item. Outcomes arrive through `run.onOutcome` in completion order. */
@@ -164,15 +155,21 @@ export class Importer {
   // -------------------------------------------------------------------------
 
   private async findDuplicate(fingerprint: string): Promise<{ id: string; title: string } | undefined> {
-    const row = await this.deps.db.books.where('fingerprint').equals(fingerprint).first();
+    const row = await this.deps.books.findByFingerprint(fingerprint);
     return row ? { id: row.id, title: row.title } : undefined;
+  }
+
+  /** A cover blob at card size (or the original bytes when it cannot be shrunk). */
+  private async coverBlob(bytes: Uint8Array | undefined): Promise<Blob | undefined> {
+    if (!bytes) return undefined;
+    const thumb = (await this.deps.makeThumbnail(bytes).catch(() => undefined)) ?? bytes;
+    return new Blob([thumb as BlobPart]);
   }
 
   private async importSingle(s: Sniffed): Promise<ItemOutcome> {
     const { file } = s.item;
     if (!s.result.ok) return unsupported(s.name, s.result.reason);
     const { kind, format } = s.result;
-    const id = newId();
     let fingerprint = '';
     let claimed = false;
     try {
@@ -183,13 +180,13 @@ export class Importer {
 
       const meta = await this.readMeta(file, format);
       const title = meta.title ?? titleFromFileName(s.name);
-      const fileRef = FilePaths.book(id, `book.${format}`);
-      await this.write(fileRef, file);
-      let coverRef: string | undefined;
-      if (meta.cover) coverRef = await this.storeCover(id, meta.cover.bytes);
-
-      const book: StoredBook = {
-        id,
+      const chapters: NewChapter[] = (meta.chapters ?? []).map((c, index) => ({ index, title: c.title, startSec: c.startSec }));
+      const files =
+        kind === 'audio'
+          ? { tracks: [{ file, fileName: `track-0.${format}`, title, durationSec: meta.durationSec ?? 0, startOffsetSec: 0 } satisfies NewTrack] }
+          : { file, fileName: `book.${format}` };
+      const cover = await this.coverBlob(meta.cover?.bytes);
+      const result = await this.deps.books.add({
         fingerprint,
         kind,
         format,
@@ -198,21 +195,17 @@ export class Importer {
         ...(meta.narrator ? { narrator: meta.narrator } : {}),
         ...(meta.series ? { series: meta.series } : {}),
         ...(meta.language ? { language: meta.language } : {}),
-        ...(coverRef ? { coverRef } : {}),
-        fileRef,
         ...(meta.durationSec ? { durationSec: meta.durationSec } : {}),
         ...(meta.pages ? { pages: meta.pages } : {}),
         addedAt: this.now(),
-        favorite: false,
-        finished: false,
-        sizeBytes: file.size,
-      };
-      const tracks: TrackRecord[] =
-        kind === 'audio' ? [{ bookId: id, index: 0, fileRef, title, durationSec: meta.durationSec ?? 0, startOffsetSec: 0 }] : [];
-      const chapters: ChapterRecord[] = (meta.chapters ?? []).map((c, index) => ({ bookId: id, index, title: c.title, startSec: c.startSec }));
-      return await this.commit(book, tracks, chapters, s.name, id);
+        ...files,
+        ...(cover ? { cover } : {}),
+        ...(chapters.length > 0 ? { chapters } : {}),
+      });
+      return result.status === 'added'
+        ? { status: 'added', name: s.name, book: result.book }
+        : { status: 'duplicate', name: s.name, title: result.existing.title, bookId: result.existing.id };
     } catch (error) {
-      await this.cleanup(id);
       return unsupported(s.name, reasonForError(error));
     } finally {
       if (claimed) this.inFlight.delete(fingerprint);
@@ -222,7 +215,6 @@ export class Importer {
   private async importAlbum(folder: string, tracksIn: Sniffed[], sidecars: Sniffed[]): Promise<ItemOutcome> {
     const tracks = [...tracksIn].sort((a, b) => naturalCompare(a.item.relPath ?? a.name, b.item.relPath ?? b.name));
     const name = lastFolderName(folder);
-    const id = newId();
     let fingerprint = '';
     let claimed = false;
     try {
@@ -234,32 +226,26 @@ export class Importer {
       if (dup) return { status: 'duplicate', name, title: dup.title, bookId: dup.id };
       claimed = true;
 
-      const trackRows: TrackRecord[] = [];
-      const chapters: ChapterRecord[] = [];
+      const trackRows: NewTrack[] = [];
+      const chapters: NewChapter[] = [];
       let offset = 0;
       let first: ParsedMeta = {};
       let coverBytes: Uint8Array | undefined;
-      let size = 0;
       for (const [index, t] of tracks.entries()) {
         const format = (t.result.ok ? t.result.format : 'mp3') as BookFormat;
         const meta = await this.readMeta(t.item.file, format);
         if (index === 0) first = meta;
         coverBytes ??= meta.cover?.bytes;
-        const ref = FilePaths.track(id, index, `track.${format}`);
-        await this.write(ref, t.item.file);
-        size += t.item.file.size;
         const title = meta.trackTitle ?? titleFromFileName(t.name);
         const duration = meta.durationSec ?? 0;
-        trackRows.push({ bookId: id, index, fileRef: ref, title, durationSec: duration, startOffsetSec: offset });
-        chapters.push({ bookId: id, index, title, locator: { kind: 'audio', trackIndex: index, positionSec: 0 } });
+        trackRows.push({ file: t.item.file, fileName: `track.${format}`, title, durationSec: duration, startOffsetSec: offset });
+        chapters.push({ index, title, locator: { kind: 'audio', trackIndex: index, positionSec: 0 } });
         offset += duration;
       }
       coverBytes ??= await this.pickSidecarCover(sidecars);
-      let coverRef: string | undefined;
-      if (coverBytes) coverRef = await this.storeCover(id, coverBytes);
+      const cover = await this.coverBlob(coverBytes);
       const firstFormat = (tracks[0]?.result.ok ? tracks[0].result.format : 'mp3') as BookFormat;
-      const book: StoredBook = {
-        id,
+      const result = await this.deps.books.add({
         fingerprint,
         kind: 'audio',
         format: firstFormat,
@@ -268,16 +254,16 @@ export class Importer {
         ...(first.narrator ? { narrator: first.narrator } : {}),
         ...(first.series ? { series: first.series } : {}),
         ...(first.language ? { language: first.language } : {}),
-        ...(coverRef ? { coverRef } : {}),
         ...(offset > 0 ? { durationSec: offset } : {}),
         addedAt: this.now(),
-        favorite: false,
-        finished: false,
-        sizeBytes: size,
-      };
-      return await this.commit(book, trackRows, chapters, name, id);
+        tracks: trackRows,
+        ...(cover ? { cover } : {}),
+        chapters,
+      });
+      return result.status === 'added'
+        ? { status: 'added', name, book: result.book }
+        : { status: 'duplicate', name, title: result.existing.title, bookId: result.existing.id };
     } catch (error) {
-      await this.cleanup(id);
       return unsupported(name, reasonForError(error));
     } finally {
       if (claimed) this.inFlight.delete(fingerprint);
@@ -298,41 +284,6 @@ export class Importer {
       return existing;
     }
     return undefined;
-  }
-
-  private async commit(book: StoredBook, tracks: TrackRecord[], chapters: ChapterRecord[], name: string, id: string): Promise<ItemOutcome> {
-    const { db } = this.deps;
-    try {
-      await db.transaction('rw', db.books, db.tracks, db.chapters, async () => {
-        await db.books.add(book);
-        if (tracks.length > 0) await db.tracks.bulkAdd(tracks);
-        if (chapters.length > 0) await db.chapters.bulkAdd(chapters);
-      });
-    } catch (error) {
-      await this.cleanup(id);
-      if (error instanceof Error && error.name === 'ConstraintError') {
-        const dup = await this.findDuplicate(book.fingerprint);
-        return { status: 'duplicate', name, title: dup?.title ?? book.title, bookId: dup?.id ?? '' };
-      }
-      throw error;
-    }
-    return { status: 'added', name, book };
-  }
-
-  private async cleanup(id: string): Promise<void> {
-    await this.deps.files.remove(`books/${id}`).catch(() => undefined);
-    await this.deps.files.remove(FilePaths.cover(id)).catch(() => undefined);
-  }
-
-  private async storeCover(id: string, bytes: Uint8Array): Promise<string | undefined> {
-    try {
-      const thumb = (await this.deps.makeThumbnail(bytes).catch(() => undefined)) ?? bytes;
-      const ref = FilePaths.cover(id);
-      await this.write(ref, new Blob([thumb as BlobPart]));
-      return ref;
-    } catch {
-      return undefined; // a missing cover is fine: the card shows a generated title card
-    }
   }
 
   private async pickSidecarCover(sidecars: Sniffed[]): Promise<Uint8Array | undefined> {

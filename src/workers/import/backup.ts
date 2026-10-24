@@ -1,6 +1,8 @@
+import type { BookRepository, NewChapter, NewTrack } from '@/data/books';
+import type { CollectionRepository } from '@/data/collections';
 import type { PageNestDB } from '@/data/db';
 import type { FileStore } from '@/data/opfs';
-import type { BookRecord } from '@/data/schema';
+import type { BookRecord, ChapterRecord, CollectionBookRecord, CollectionRecord, TrackRecord } from '@/data/schema';
 import { readRange } from './bytes';
 import type { RestoreSummary, StorageBreakdown } from './protocol';
 import { crc32Blob, readZipEntries, readZipEntry, storedEntryBlob, ZipBuilder, ZipError } from './zip';
@@ -103,11 +105,25 @@ async function putAll(db: PageNestDB, store: DataStore, rows: unknown[]): Promis
   }
 }
 
+/** What `restoreBackup` writes through: books and shelves go through the data layer's repositories. */
+export interface RestoreDeps {
+  db: PageNestDB;
+  files: FileStore;
+  books: BookRepository;
+  collections: CollectionRepository;
+}
+
+const DAMAGED = 'This backup is damaged. Try another copy.';
+const baseName = (ref: string): string => ref.slice(ref.lastIndexOf('/') + 1);
+
 /**
  * Restore a backup into the library. Safe to run on a library that already has books: books with
- * the same fingerprint are kept as they are (their progress is merged), everything else is added.
+ * the same fingerprint are kept as they are (their progress is merged), everything else is added
+ * through `BookRepository.add` (one book at a time, all or nothing), so ids are new and every other
+ * record is re-pointed to them.
  */
-export async function restoreBackup(source: Blob, db: PageNestDB, files: FileStore, progress: Progress = () => undefined): Promise<RestoreSummary> {
+export async function restoreBackup(source: Blob, deps: RestoreDeps, progress: Progress = () => undefined): Promise<RestoreSummary> {
+  const { db, files, books, collections } = deps;
   let entries;
   try {
     entries = await readZipEntries(source);
@@ -121,7 +137,7 @@ export async function restoreBackup(source: Blob, db: PageNestDB, files: FileSto
   try {
     manifest = JSON.parse(new TextDecoder().decode(await readZipEntry(source, manifestEntry, 1_000_000))) as Manifest;
   } catch {
-    throw new BackupError('This backup is damaged. Try another copy.');
+    throw new BackupError(DAMAGED);
   }
   if (manifest.format !== BACKUP_FORMAT) throw new BackupError('This file is not a PageNest backup.');
   if (manifest.version > BACKUP_VERSION) throw new BackupError('This backup was made by a newer PageNest. Update the app, then try again.');
@@ -133,73 +149,127 @@ export async function restoreBackup(source: Blob, db: PageNestDB, files: FileSto
       const parsed: unknown = JSON.parse(new TextDecoder().decode(await readZipEntry(source, entry)));
       return Array.isArray(parsed) ? parsed : [];
     } catch {
-      throw new BackupError('This backup is damaged. Try another copy.');
+      throw new BackupError(DAMAGED);
     }
   };
-
-  // Decide which backed-up books are already in the library (same fingerprint).
-  const backupBooks = (await readRows('books')) as BookRecord[];
-  const idMap = new Map<string, string>();
-  const skipIds = new Set<string>();
-  for (const b of backupBooks) {
-    const existing = await db.books.where('fingerprint').equals(b.fingerprint).first();
-    if (existing && existing.id !== b.id) {
-      idMap.set(b.id, existing.id);
-      skipIds.add(b.id);
-    }
-  }
-  const remap = (id: string): string => idMap.get(id) ?? id;
-
-  // Files first, so the library never points at a file that is not there yet.
-  const fileEntries = entries.filter((e) => e.name.startsWith('files/') && !e.isDirectory);
-  const wanted = fileEntries.filter((e) => {
-    const ref = e.name.slice(6);
-    const m = /^(?:books\/([^/]+)\/|covers\/([^/.]+)\.)/.exec(ref);
-    const bookId = m?.[1] ?? m?.[2];
-    return !(bookId && skipIds.has(bookId));
-  });
-  const total = wanted.reduce((n, e) => n + e.size, 0);
-  let done = 0;
-  for (const entry of wanted) {
-    const ref = entry.name.slice(6);
+  const byName = new Map(entries.filter((e) => e.name.startsWith('files/') && !e.isDirectory).map((e) => [e.name.slice(6), e] as const));
+  const checked = async (ref: string | undefined): Promise<Blob | undefined> => {
+    const entry = ref ? byName.get(ref) : undefined;
+    if (!entry) return undefined;
     let blob: Blob;
     try {
       blob = await storedEntryBlob(source, entry);
     } catch {
-      throw new BackupError('This backup is damaged. Try another copy.');
+      throw new BackupError(DAMAGED);
     }
-    const base = done;
-    const crc = await crc32Blob(blob, (bytes) => progress('Checking files', base + bytes, total));
     const expected = await readCrc(source, entry.localOffset);
-    if (expected !== undefined && expected !== crc) throw new BackupError('This backup is damaged. Try another copy.');
-    await files.write(ref, blob);
-    done += entry.size;
-    progress('Restoring files', done, total);
-  }
+    if (expected !== undefined && expected !== (await crc32Blob(blob))) throw new BackupError(DAMAGED);
+    return blob;
+  };
 
-  progress('Restoring your library', 0, 1);
-  const added = backupBooks.filter((b) => !skipIds.has(b.id));
-  await putAll(db, 'books', added);
-  for (const store of ['tracks', 'chapters', 'bookmarks', 'highlights', 'sessions'] as const) {
-    const rows = ((await readRows(store)) as { bookId: string }[]).filter((r) => !skipIds.has(r.bookId));
+  const backupBooks = (await readRows('books')) as BookRecord[];
+  const allTracks = (await readRows('tracks')) as TrackRecord[];
+  const allChapters = (await readRows('chapters')) as ChapterRecord[];
+  const idMap = new Map<string, string>();
+  const restored = new Set<string>();
+  let booksAlreadyThere = 0;
+  let fileCount = 0;
+  for (const [i, b] of backupBooks.entries()) {
+    progress('Restoring books', i, backupBooks.length);
+    const fingerprint = b.fingerprint || b.id;
+    const existing = await books.findByFingerprint(fingerprint);
+    if (existing) {
+      idMap.set(b.id, existing.id);
+      booksAlreadyThere += 1;
+      continue;
+    }
+    const tracks: NewTrack[] = [];
+    for (const t of allTracks.filter((r) => r.bookId === b.id).sort((x, y) => x.index - y.index)) {
+      const file = await checked(t.fileRef);
+      if (!file) throw new BackupError(DAMAGED);
+      fileCount += 1;
+      tracks.push({ file, fileName: baseName(t.fileRef).replace(/^\d+-/, ''), title: t.title, durationSec: t.durationSec, startOffsetSec: t.startOffsetSec });
+    }
+    const file = tracks.length === 0 ? await checked(b.fileRef) : undefined;
+    if (tracks.length === 0 && !file) throw new BackupError(DAMAGED);
+    if (file) fileCount += 1;
+    const cover = await checked(b.coverRef);
+    if (cover) fileCount += 1;
+    const chapters: NewChapter[] = allChapters.filter((r) => r.bookId === b.id).map(({ bookId: _b, ...c }) => c);
+    const result = await books.add({
+      fingerprint,
+      kind: b.kind,
+      format: b.format,
+      title: b.title,
+      ...(b.author ? { author: b.author } : {}),
+      ...(b.narrator ? { narrator: b.narrator } : {}),
+      ...(b.series ? { series: b.series } : {}),
+      ...(b.language ? { language: b.language } : {}),
+      ...(b.durationSec !== undefined ? { durationSec: b.durationSec } : {}),
+      ...(b.pages !== undefined ? { pages: b.pages } : {}),
+      addedAt: b.addedAt,
+      favorite: b.favorite === true,
+      finished: b.finished === true,
+      ...(file ? { file, ...(b.fileRef ? { fileName: baseName(b.fileRef) } : {}) } : {}),
+      ...(tracks.length > 0 ? { tracks } : {}),
+      ...(cover ? { cover } : {}),
+      chapters,
+    });
+    if (result.status === 'duplicate') {
+      idMap.set(b.id, result.existing.id);
+      booksAlreadyThere += 1;
+      continue;
+    }
+    idMap.set(b.id, result.book.id);
+    restored.add(b.id);
+    if (b.lastOpenedAt !== undefined) await books.update(result.book.id, { lastOpenedAt: b.lastOpenedAt });
+  }
+  const remap = (id: string): string | undefined => idMap.get(id);
+
+  progress('Restoring your notes and progress', 0, 1);
+  for (const store of ['bookmarks', 'highlights', 'sessions'] as const) {
+    const rows = ((await readRows(store)) as { bookId: string }[])
+      .filter((r) => restored.has(r.bookId))
+      .map((r) => ({ ...r, bookId: remap(r.bookId) as string }));
     await putAll(db, store, rows);
   }
   // Progress: keep the newer position when both sides have one.
-  const progressRows = (await readRows('progress')) as { bookId: string; mode: string; updatedAt: number }[];
   const progressOut: unknown[] = [];
-  for (const row of progressRows) {
+  for (const row of (await readRows('progress')) as { bookId: string; mode: string; updatedAt: number }[]) {
     const bookId = remap(row.bookId);
+    if (!bookId) continue;
     const current = await db.progress.get([bookId, row.mode as 'read']);
     if (!current || current.updatedAt < row.updatedAt) progressOut.push({ ...row, bookId });
   }
   await putAll(db, 'progress', progressOut);
-  await putAll(db, 'collections', await readRows('collections'));
-  const links = ((await readRows('collectionBooks')) as { bookId: string }[]).map((r) => ({ ...r, bookId: remap(r.bookId) }));
-  await putAll(db, 'collectionBooks', links);
+
+  // Shelves: a shelf with the same name is reused, books are added in their saved order.
+  const shelves = (await readRows('collections')) as CollectionRecord[];
+  const links = (await readRows('collectionBooks')) as CollectionBookRecord[];
+  for (const shelf of shelves.sort((a, b) => a.order - b.order)) {
+    const current = await collections.list();
+    const wanted = shelf.name.trim().toLocaleLowerCase();
+    const target = current.find((c) => c.name.trim().toLocaleLowerCase() === wanted) ?? (await collections.create(shelf.name));
+    const ids = links
+      .filter((l) => l.collectionId === shelf.id)
+      .sort((a, b) => a.order - b.order)
+      .map((l) => remap(l.bookId))
+      .filter((id): id is string => id !== undefined);
+    if (ids.length > 0) await collections.addBooks(target.id, ids);
+  }
+  // Voices and settings are not books: they are copied as they are.
+  for (const ref of byName.keys()) {
+    if (!ref.startsWith('voices/')) continue;
+    const blob = await checked(ref);
+    if (blob) {
+      await files.write(ref, blob);
+      fileCount += 1;
+    }
+  }
   await putAll(db, 'voices', await readRows('voices'));
   await putAll(db, 'settings', await readRows('settings'));
-  progress('Restoring your library', 1, 1);
-  return { booksAdded: added.length, booksAlreadyThere: skipIds.size, files: wanted.length };
+  progress('Restoring your notes and progress', 1, 1);
+  return { booksAdded: restored.size, booksAlreadyThere, files: fileCount };
 }
 
 /** CRC-32 stored in the local header of an entry. */
@@ -234,27 +304,4 @@ export async function clearCaches(db: PageNestDB, files: FileStore): Promise<num
   await files.remove('renders').catch(() => undefined);
   await db.renders.clear();
   return freed;
-}
-
-/** Remove files that no book points at (an import that was cut short, for example). */
-export async function sweepOrphans(db: PageNestDB, files: FileStore): Promise<number> {
-  let removed = 0;
-  const known = new Set<string>();
-  await db.books.each((b) => {
-    known.add(b.id);
-  });
-  for (const entry of await files.list('books')) {
-    if (!known.has(entry.name)) {
-      await files.remove(`books/${entry.name}`);
-      removed += 1;
-    }
-  }
-  for (const entry of await files.list('covers')) {
-    const id = entry.name.replace(/\.[^.]*$/, '');
-    if (!known.has(id)) {
-      await files.remove(`covers/${entry.name}`);
-      removed += 1;
-    }
-  }
-  return removed;
 }

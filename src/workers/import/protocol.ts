@@ -12,8 +12,8 @@ export interface ImportItem {
   relPath?: string;
 }
 
-/** A book as stored. `sizeBytes` is the Library's own addition (see docs in features/library/README.md). */
-export type StoredBook = BookRecord & { sizeBytes?: number };
+/** A book as stored. */
+export type StoredBook = BookRecord;
 
 /** What happened to one file (or one folder of audio files that became one book). */
 export type ItemOutcome =

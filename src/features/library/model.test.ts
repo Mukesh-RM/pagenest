@@ -1,43 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredBook } from '@/workers/import/protocol';
-import { CARD_COLORS, cardColor, describeBook, formatDuration, initials, parsePrefs, selectBooks } from './model';
+import type { BookRecord as StoredBook } from '@/data/schema';
+import { CARD_COLORS, cardColor, describeBook, formatDuration, initials, parsePrefs, toLibraryQuery } from './model';
 
 const book = (id: string, over: Partial<StoredBook> = {}): StoredBook => ({
   id, fingerprint: id, kind: 'ebook', format: 'epub', title: id, addedAt: 1, favorite: false, finished: false, ...over,
 });
 
-const books = [
-  book('b', { title: 'Beta', author: 'Zed', addedAt: 2 }),
-  book('a', { title: 'alpha 10', author: 'Amy', addedAt: 3 }),
-  book('c', { title: 'alpha 2', addedAt: 1, kind: 'audio', format: 'm4b', lastOpenedAt: 50 }),
-  book('d', { title: 'Delta', author: 'Amy', addedAt: 4, favorite: true, lastOpenedAt: 90 }),
-  book('e', { title: 'Echo', addedAt: 5, finished: true }),
-];
-const none = { segment: 'all', chip: null, searchIds: null } as const;
-const ids = (list: StoredBook[]): string[] => list.map((b) => b.id);
-const percents = new Map([['b', 30], ['c', 10], ['d', 100]]);
-
-describe('selectBooks', () => {
-  it('sorts by recently added, opened, title (numbers in order) and author (missing last)', () => {
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'recent' }))).toEqual(['e', 'd', 'a', 'b', 'c']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'opened' }))).toEqual(['d', 'c', 'e', 'a', 'b']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title' }))).toEqual(['c', 'a', 'b', 'd', 'e']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'author' }))).toEqual(['a', 'd', 'b', 'c', 'e']);
+describe('toLibraryQuery', () => {
+  const base = { text: '', segment: 'all', chip: null, sort: 'title' } as const;
+  it('asks only for what is set', () => {
+    expect(toLibraryQuery(base)).toEqual({ segment: 'all', sort: 'title' });
+    expect(toLibraryQuery({ ...base, chip: 'favorites', segment: 'audio' })).toEqual({ segment: 'audio', status: 'favorites', sort: 'title' });
   });
-  it('filters by segment and chip', () => {
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', segment: 'audio' }))).toEqual(['c']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', segment: 'books' }))).toEqual(['a', 'b', 'd', 'e']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', chip: 'reading' }))).toEqual(['b']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', chip: 'listening' }))).toEqual(['c']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', chip: 'finished' }))).toEqual(['d', 'e']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', chip: 'favorites' }))).toEqual(['d']);
+  it('ranks a search by relevance instead of the chosen sort, and trims it', () => {
+    expect(toLibraryQuery({ ...base, text: '  zebra ' })).toEqual({ text: 'zebra', segment: 'all' });
   });
-  it('keeps search order and still applies the other filters', () => {
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', searchIds: ['d', 'zzz', 'a', 'c'] }))).toEqual(['d', 'a', 'c']);
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', segment: 'audio', searchIds: ['d', 'a', 'c'] }))).toEqual(['c']);
-  });
-  it('limits to a shelf', () => {
-    expect(ids(selectBooks(books, percents, { ...none, sort: 'title', only: new Set(['a', 'e']) }))).toEqual(['a', 'e']);
+  it('keeps a shelf', () => {
+    expect(toLibraryQuery({ ...base, collectionId: 'c1' })).toMatchObject({ collectionId: 'c1' });
   });
 });
 

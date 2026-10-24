@@ -1,6 +1,6 @@
 import { newId } from '@/data/db';
 import { Importer, type ImportDeps } from './importer';
-import { backupFileName, clearCaches, createBackup, restoreBackup, storageBreakdown, sweepOrphans, BackupError } from './backup';
+import { backupFileName, clearCaches, createBackup, restoreBackup, storageBreakdown, BackupError, type RestoreDeps } from './backup';
 import type { ImportSummary, WorkerEvent, WorkerRequest } from './protocol';
 
 /**
@@ -19,7 +19,9 @@ function messageFor(error: unknown): string {
   return 'Something went wrong. Please try again.';
 }
 
-export function createImportService(deps: ImportDeps): ImportService {
+export type ImportServiceDeps = ImportDeps & Omit<RestoreDeps, 'books'>;
+
+export function createImportService(deps: ImportServiceDeps): ImportService {
   const importer = new Importer(deps);
   const cancelled = new Set<string>();
   let activeImports = 0;
@@ -59,12 +61,12 @@ export function createImportService(deps: ImportDeps): ImportService {
             return;
           }
           case 'restore': {
-            const result = await restoreBackup(request.file, deps.db, deps.files, (stage, done, total) => emit({ type: 'progress', jobId, stage, done, total }));
+            const result = await restoreBackup(request.file, deps, (stage, done, total) => emit({ type: 'progress', jobId, stage, done, total }));
             emit({ type: 'done', jobId, result });
             return;
           }
           case 'sweep': {
-            const removed = activeImports === 0 ? await sweepOrphans(deps.db, deps.files) : 0;
+            const removed = activeImports === 0 ? (await deps.books.cleanupOrphans()).removedBookIds.length : 0;
             emit({ type: 'done', jobId, result: { removed } });
             return;
           }

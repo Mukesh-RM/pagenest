@@ -1,4 +1,4 @@
-import { parsePath } from '@/data/opfs';
+import { parsePath, type FileData, type FileStore } from '@/data/opfs';
 
 /**
  * Copy a blob into the origin private file system chunk by chunk, so a 2 GB audiobook never sits in
@@ -75,5 +75,24 @@ export function createStreamWriter(root: unknown): (path: string, blob: Blob) =>
       await dir.removeEntry(name).catch(() => undefined);
       throw error;
     }
+  };
+}
+
+/**
+ * The data layer's file store, except that writing a Blob copies it in chunks (see above) instead of
+ * loading it whole. Everything else is passed straight through, so `BookRepository` works unchanged.
+ */
+export function streamingFileStore(inner: FileStore, root: unknown): FileStore {
+  const stream = createStreamWriter(root);
+  return {
+    kind: inner.kind,
+    persistent: inner.persistent,
+    write: (path: string, data: FileData) => (data instanceof Blob ? stream(path, data) : inner.write(path, data)),
+    open: (path) => inner.open(path),
+    exists: (path) => inner.exists(path),
+    size: (path) => inner.size(path),
+    remove: (path) => inner.remove(path),
+    list: (path) => inner.list(path),
+    usage: (path) => inner.usage(path),
   };
 }

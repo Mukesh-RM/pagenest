@@ -1,20 +1,17 @@
 import { useRef } from 'react';
-import type { FileStore } from '@/data/opfs';
-import type { StoredBook } from '@/workers/import/protocol';
+import type { BookSummary } from '@/data/library-query';
 import { useWindowVirtual } from '../virtual';
 import type { ViewMode } from '../model';
 import { BookItem } from './BookItem';
 
 export interface BookListProps {
-  books: readonly StoredBook[];
-  percents: ReadonlyMap<string, number>;
+  books: readonly BookSummary[];
   selection: ReadonlySet<string>;
   selecting: boolean;
   view: ViewMode;
   metaHeight: number;
   rowHeight: number;
-  getFiles: () => Promise<FileStore>;
-  onOpen: (book: StoredBook) => void;
+  onOpen: (book: BookSummary) => void;
   onToggle: (id: string) => void;
   onSelectStart: (id: string) => void;
 }
@@ -23,7 +20,7 @@ export interface BookListProps {
  * The grid and the list. Both are virtualized against the page scroll: however many books there
  * are, only the rows near the screen are in the page, and each is placed with a transform.
  */
-export function BookList({ books, percents, selection, selecting, view, metaHeight, rowHeight, getFiles, onOpen, onToggle, onSelectStart }: BookListProps) {
+export function BookList({ books, selection, selecting, view, metaHeight, rowHeight, onOpen, onToggle, onSelectStart }: BookListProps) {
   const ref = useRef<HTMLUListElement>(null);
   const { layout, boxes } = useWindowVirtual(ref, { count: books.length, mode: view, metaHeight, rowHeight });
   return (
@@ -41,11 +38,9 @@ export function BookList({ books, percents, selection, selecting, view, metaHeig
           >
             <BookItem
               book={book}
-              percent={percents.get(book.id) ?? 0}
               selected={selection.has(book.id)}
               selecting={selecting}
               view={view}
-              getFiles={getFiles}
               onOpen={onOpen}
               onToggle={onToggle}
               onSelectStart={onSelectStart}
