@@ -1,3 +1,4 @@
+import { cpus, loadavg } from 'node:os';
 import type { CDPSession, Page } from '@playwright/test';
 
 /** Mid-range phone emulation. Chromium only; other engines run unthrottled and the helper reports that. */
@@ -6,6 +7,11 @@ export async function throttleCpu(page: Page, rate: number): Promise<CDPSession 
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate });
   return cdp;
+}
+
+/** 1-minute load average per CPU core of the machine running the tests (1 = every core busy). */
+export function machineLoadPerCore(): number {
+  return loadavg()[0]! / Math.max(1, cpus().length);
 }
 
 export function percentile(values: number[], p: number): number {
