@@ -17,6 +17,7 @@ export type ShortcutAction =
   | 'seekForward'
   | 'next'
   | 'previous'
+  | 'bookmark'
   | 'search'
   | 'theme'
   | 'close'
@@ -32,6 +33,7 @@ export const DEFAULT_SHORTCUTS: ShortcutBindings = {
   seekForward: ['ArrowRight'],
   next: ['j'],
   previous: ['k'],
+  bookmark: ['b'],
   search: ['/'],
   theme: ['t'],
   close: ['Escape'],
@@ -45,6 +47,7 @@ export const SHORTCUT_DESCRIPTIONS: Readonly<Record<ShortcutAction, string>> = {
   seekForward: 'Forward 15 seconds, or the next page',
   next: 'Next chapter or next book in the list',
   previous: 'Previous chapter or previous book in the list',
+  bookmark: 'Add a bookmark here',
   search: 'Search your library',
   theme: 'Switch the theme',
   close: 'Close the open panel',
@@ -57,6 +60,7 @@ const SHORTCUT_ORDER: readonly ShortcutAction[] = [
   'seekForward',
   'next',
   'previous',
+  'bookmark',
   'search',
   'theme',
   'close',

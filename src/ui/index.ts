@@ -64,6 +64,7 @@ export type {
   BookDetail,
   BookSummary,
   HintStore,
+  PlayerBookmark,
   LineSpacing,
   MarginSize,
   ReaderFontOption,

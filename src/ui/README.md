@@ -152,6 +152,31 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
   2. `src/features/library/library.css`: delete the two last blocks, "Real covers are shown whole" (`.pn-bookcard .pn-cover__img`) and "Generated covers in library cards" (every `.pn-bookcard .pn-cover--generated …` rule). `BookCard` now draws the monogram and the whole cover itself, so nothing else changes in `BookItem`.
   3. `src/features/library/components/LibraryScreen.tsx` (the lazy `BookDetailSheet`): pass `onEdit={(book) => …}` to get "Edit details" before "Remove from library"; leave it out until the edit sheet exists.
 
+### Audio player: bookmarks and skip lengths (`feature/ui-audio-bookmarks`)
+
+Matches `src/engines/audio/types.ts` (`AudioController.skip/seekTo/setOptions`, `AudioOptions.skipBackSec/skipForwardSec` = 10, 15, 30 or 60)
+and `src/data/schema.ts` (`BookmarkRecord { id, label, locator: { kind: 'audio', trackIndex, positionSec }, createdAt }`). Nothing in those files changed.
+
+* **Bookmark chip**: `onAddBookmark?(positionSec)` shows a "Bookmark" chip in the secondary row (Speed, Sleep, Bookmark, Chapters). `positionSec` is
+  seconds from the start of the book (add the track's `startOffsetSec` when you build the locator). A polite status says "Bookmark added at 1:02:03".
+* **Bookmarks list**: `bookmarks?: PlayerBookmark[]` (`{ id, positionSec, label?, chapter? }`, exported type) adds "Bookmarks (n)" to a ⋯ menu in the
+  player header. It opens `BookmarksSheet` (time, label or "Bookmark", chapter, in book order; tap to seek and close; trash button when
+  `onDeleteBookmark?(bookmark)` is given, no confirm step so the app can offer Undo; an empty state; "Add bookmark here" when adding is possible).
+  `onOpenBookmarks?()` replaces the built-in sheet when the app wants its own list.
+* **Skip lengths**: `skipBackSeconds` (default 15) and `skipForwardSeconds` (default 30) name the buttons ("Back 15 seconds") and show the number in the glyph.
+  With `onSkipIntervalChange?(direction, seconds)` the user can hold a skip button (500 ms), use the context-menu key or a right click, or pick
+  "Skip buttons" in the ⋯ menu, to open a sheet with two radio groups. The app stores the choice (`engine.setOptions({ skipBackSec })` or
+  `{ skipForwardSec }`) and passes it back; the screen is controlled. `skipIntervals?` changes the choices (default `SKIP_INTERVALS` = 10, 15, 30, 60; the
+  engine type has no 45, so add it to `AudioOptions` first if you offer it). Without `onSkipIntervalChange` the lengths are fixed and nothing about choosing appears.
+* **`AudioPlayerController`** gained optional `skipBackSeconds`, `skipForwardSeconds`, `setSkipInterval`, `bookmarks`, `addBookmark`, `removeBookmark`, `openBookmarks` (the controller wins over the props).
+* **Keyboard** (laptop, through the shared `useShortcuts`, so the app's remaps and the "ignored while typing / on a focused control" rules apply): Space plays or pauses, ← and → skip by the chosen lengths
+  (`seekBack` / `seekForward`), **B** adds a bookmark (new `bookmark` action, default `B`). Each key works only when its handler was given, and all are off while a sheet is open; `shortcuts={false}` turns them off.
+  For the "?" dialog use `descriptions={playerShortcutDescriptions(back, forward)}` (from `@/ui/screens`) so it reads "Back 10 seconds" for the chosen length.
+* All new code is in the lazy audio screen chunk (`@/ui/screens/AudioPlayerScreen`); the initial bundle did not change. Gallery: `?screen=player` has bookmarks and skip lengths wired.
+* App wiring: pass `controller` (or the props) from the audio store: `skipBackSeconds: options.skipBackSec`, `skipForwardSeconds: options.skipForwardSec`,
+  `setSkipInterval: (d, s) => engine.setOptions(d === 'back' ? { skipBackSec: s } : { skipForwardSec: s })` (persist it in settings), `bookmarks` from the bookmarks store mapped to `PlayerBookmark`,
+  `addBookmark: (sec) => …create a BookmarkRecord at the locator for sec (label '')` plus a snackbar with Undo, `removeBookmark` with Undo.
+
 ### Collections and Stats (wire-ready, presentational)
 
 `import { CollectionsScreen, StatsScreen, CollectionNameSheet, CollectionBooksEmpty } from '@/ui/screens'` (lazy routes only).
