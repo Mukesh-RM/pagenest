@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Runs the three PageNest audits (licenses, privacy, secrets) and prints one summary.
+// Runs the four PageNest audits (licenses, privacy, models, secrets) and prints one summary.
 //
 //   node scripts/audit-all.mjs                run all three
 //   node scripts/audit-all.mjs --history      also scan git history for secrets
@@ -29,6 +29,7 @@ export function run(argv, { cwd = process.cwd(), log = console.log, errLog = con
   const jobs = [
     ['licenses', 'audit-licenses.mjs', [...rootArgs, ...(args.write ? ['--write'] : []), ...(args.check ? ['--check'] : [])]],
     ['privacy', 'audit-privacy.mjs', [...rootArgs, ...(args.strict ? ['--strict'] : [])]],
+    ['models', 'audit-models.mjs', [...rootArgs, ...(args.write ? ['--write'] : []), ...(args.check ? ['--check'] : [])]],
     ['secrets', 'audit-secrets.mjs', [...rootArgs, ...(args.history ? ['--history'] : []), ...(args.builtin ? ['--builtin'] : [])]],
   ];
   const results = [];
