@@ -79,8 +79,9 @@ test.describe('phase 0 smoke', () => {
     await launch(page);
     await openSheet(page);
     await expect(sheet(page)).toBeVisible();
-    // the sheet may offer both a header Close and a footer Done; either closes it (the first one is the header Close)
-    await sheet(page).getByRole('button', { name: /close|done/i }).first().click();
+    // The sheet may offer a header "Close" icon button AND a footer "Done" button; both close it. Exact names (not a
+    // substring match) and the first in DOM order, which is the header Close, so the click is never ambiguous.
+    await sheet(page).getByRole('button', { name: /^(close|done)$/i }).first().click();
     await expect(sheet(page)).toBeHidden();
     await expect(installHelpButton(page)).toBeFocused();
   });
