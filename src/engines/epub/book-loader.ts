@@ -10,9 +10,6 @@ import { readerError, toReaderError } from '@/features/reader/core/errors';
  * damaged in plain words instead of crashing a parser.
  */
 
-/** Formats foliate-js parses. */
-export const FOLIATE_FORMATS = ['epub', 'mobi', 'azw3', 'fb2', 'cbz'] as const satisfies readonly BookFormat[];
-
 const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
 
 export async function isZipFile(file: Blob): Promise<boolean> {

@@ -5,6 +5,7 @@ import type { OpenOptions, ReaderSource } from '@/engines/reader/types';
 import { DEFAULT_APPEARANCE } from '@/features/reader/core/appearance';
 import { readerError, throwIfAborted, toReaderError } from '@/features/reader/core/errors';
 import type { ReaderEngineExt } from '@/features/reader/core/ext-types';
+import { PDF_FORMATS } from './formats';
 import type { PageAnchor } from './page-layout';
 import { PdfReaderDocument } from './pdf-document';
 import { loadPdfjs } from './pdfjs';
@@ -31,7 +32,7 @@ export function pdfErrorCode(error: unknown): 'drm' | 'corrupt' | 'aborted' {
 /** PDF engine: pdf.js in a worker, continuous scroll, tiled and lazy canvases, text layer, outline, search. */
 export class PdfEngine implements ReaderEngineExt {
   readonly id = 'pdfjs';
-  readonly formats: readonly BookFormat[] = ['pdf'];
+  readonly formats: readonly BookFormat[] = PDF_FORMATS;
   readonly #options: PdfEngineOptions;
 
   constructor(options: PdfEngineOptions = {}) {

@@ -8,6 +8,8 @@ import type { OpenOptions, ReaderDocument, ReaderEngine, ReaderSource } from '@/
 export interface ReaderDocumentExt extends ReaderDocument {
   /** `fixed` for page based content (PDF, CBZ), `reflow` for text that repaginates. */
   readonly layout: 'fixed' | 'reflow';
+  /** Reading direction: in `rtl` books the left tap zone goes forward. */
+  readonly direction: 'ltr' | 'rtl';
   /** Jump to a point of the whole document, 0 to 1 (the scrubber). */
   goToFraction(fraction: number): Promise<void>;
   /** Chapter starts as fractions of the whole document (ticks on the scrubber). */
@@ -22,6 +24,10 @@ export interface ReaderDocumentExt extends ReaderDocument {
   clearSelection(): void;
   /** Key presses seen inside the document (iframes swallow them). Not called for keys the engine used. */
   onKey(listener: (event: KeyboardLike) => void): Unsubscribe;
+  /** An image was tapped (for the zoom view). `src` is a URL the page can show. */
+  onImageTap(listener: (image: { src: string; alt: string }) => void): Unsubscribe;
+  /** A footnote or endnote reference was tapped; `text` is the note, ready for a popover. */
+  onFootnote(listener: (note: { text: string }) => void): Unsubscribe;
   /** A highlight was tapped. */
   onHighlightTap(listener: (id: string) => void): Unsubscribe;
   /** Jump to a range (search hit, highlight). Resolves once visible. */

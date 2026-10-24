@@ -68,6 +68,7 @@ interface HighlightEntry {
 /** One open PDF: continuous scrolling pages with tiled, lazy canvases, a text layer and a link layer. */
 export class PdfReaderDocument implements ReaderDocumentExt {
   readonly layout = 'fixed' as const;
+  readonly direction = 'ltr' as const;
   metadata: DocumentMetadata = {};
   #toc: readonly TocItem[] = [];
 
@@ -301,6 +302,14 @@ export class PdfReaderDocument implements ReaderDocumentExt {
 
   onKey(listener: (event: KeyboardLike) => void): Unsubscribe {
     return this.#keys.on(listener);
+  }
+
+  onImageTap(): Unsubscribe {
+    return () => undefined; // PDF pages are drawn as a whole; pinch or double-tap zooms them
+  }
+
+  onFootnote(): Unsubscribe {
+    return () => undefined;
   }
 
   onHighlightTap(listener: (id: string) => void): Unsubscribe {
