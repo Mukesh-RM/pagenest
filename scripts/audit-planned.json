@@ -1,0 +1,368 @@
+{
+  "_comment": "Planned (not yet installed) assets derived from docs/BLUEPRINT.md sections 5.3, 9.3, 10, 11. Used by audit-licenses.mjs --write to build docs/LICENSES.md. Edit when the blueprint changes. status: OK | OK-NOTE | VERIFY | NOT-OK. Rows with VERIFY or NOT-OK are listed as open risks but do not fail the script; only installed packages do.",
+  "fonts": [
+    {
+      "name": "Inter (variable)",
+      "version": "4.x",
+      "license": "OFL-1.1",
+      "source": "https://github.com/rsms/inter",
+      "status": "OK-NOTE",
+      "note": "Interface font (5.3). Self-host; ship OFL text and copyright with the font files."
+    },
+    {
+      "name": "Literata",
+      "version": "latest",
+      "license": "OFL-1.1",
+      "source": "https://github.com/googlefonts/literata",
+      "status": "OK-NOTE",
+      "note": "Reading font. Ship OFL text. Check Reserved Font Name before subsetting or converting."
+    },
+    {
+      "name": "Source Serif 4",
+      "version": "latest",
+      "license": "OFL-1.1",
+      "source": "https://github.com/adobe-fonts/source-serif",
+      "status": "OK-NOTE",
+      "note": "Reading font. Adobe fonts use Reserved Font Name 'Source'; subsetting counts as a modified version, so rename or ship unmodified files."
+    },
+    {
+      "name": "Merriweather",
+      "version": "latest",
+      "license": "OFL-1.1",
+      "source": "https://github.com/SorkinType/Merriweather",
+      "status": "OK-NOTE",
+      "note": "Reading font. Ship OFL text."
+    },
+    {
+      "name": "Lora",
+      "version": "latest",
+      "license": "OFL-1.1",
+      "source": "https://github.com/cyrealtype/Lora-Cyrillic",
+      "status": "OK-NOTE",
+      "note": "Reading font. Ship OFL text."
+    },
+    {
+      "name": "Atkinson Hyperlegible",
+      "version": "latest",
+      "license": "OFL-1.1",
+      "source": "https://github.com/googlefonts/atkinson-hyperlegible",
+      "status": "OK-NOTE",
+      "note": "Reading font (Braille Institute). Use the OFL release; the older Braille Institute font license is not the same, so verify the files you copy."
+    },
+    {
+      "name": "OpenDyslexic",
+      "version": "2019+ (OFL release)",
+      "license": "OFL-1.1",
+      "source": "https://opendyslexic.org",
+      "status": "OK-NOTE",
+      "note": "Only the 2019+ SIL OFL files. Older releases were Bitstream Vera derivatives with a different license. Reserved Font Name 'OpenDyslexic'."
+    },
+    {
+      "name": "System serif and sans",
+      "version": "n/a",
+      "license": "n/a (device fonts)",
+      "source": "user device",
+      "status": "OK",
+      "note": "Not bundled, nothing to distribute."
+    },
+    {
+      "name": "User-imported font files",
+      "version": "n/a",
+      "license": "user's own",
+      "source": "user device",
+      "status": "OK",
+      "note": "Stays on the device, never uploaded or redistributed by PageNest."
+    }
+  ],
+  "icons": [
+    {
+      "name": "Lucide icons",
+      "version": "latest",
+      "license": "ISC",
+      "source": "https://github.com/lucide-icons/lucide",
+      "status": "OK-NOTE",
+      "note": "ISC; parts derived from Feather are MIT. Keep the license notice with the package (lucide-react or lucide-static)."
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "react / react-dom",
+      "version": "18.x",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/react",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "vite",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/vite",
+      "status": "OK",
+      "note": "dev"
+    },
+    {
+      "name": "typescript",
+      "version": "latest",
+      "license": "Apache-2.0",
+      "source": "https://www.npmjs.com/package/typescript",
+      "status": "OK",
+      "note": "dev"
+    },
+    {
+      "name": "tailwindcss",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/tailwindcss",
+      "status": "OK",
+      "note": "dev"
+    },
+    {
+      "name": "radix-ui / @radix-ui/*",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/org/radix-ui",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "zustand",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/zustand",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "react-router",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/react-router",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "vite-plugin-pwa",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/vite-plugin-pwa",
+      "status": "OK",
+      "note": "dev; pulls in workbox-* (MIT)"
+    },
+    {
+      "name": "dexie",
+      "version": "latest",
+      "license": "Apache-2.0",
+      "source": "https://www.npmjs.com/package/dexie",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "comlink",
+      "version": "latest",
+      "license": "Apache-2.0",
+      "source": "https://www.npmjs.com/package/comlink",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "pdfjs-dist",
+      "version": "latest",
+      "license": "Apache-2.0",
+      "source": "https://www.npmjs.com/package/pdfjs-dist",
+      "status": "OK",
+      "note": "Worker file must be self-hosted, not loaded from a CDN."
+    },
+    {
+      "name": "foliate-js",
+      "version": "git/vendored",
+      "license": "MIT",
+      "source": "https://github.com/johnfactotum/foliate-js",
+      "status": "OK-NOTE",
+      "note": "Not published to npm; vendored or git dependency. Its bundled sub-libraries (zip.js, fflate, PDF.js parts) carry their own licenses: check each vendored file."
+    },
+    {
+      "name": "mammoth",
+      "version": "latest",
+      "license": "BSD-2-Clause",
+      "source": "https://www.npmjs.com/package/mammoth",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "minisearch",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/minisearch",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "music-metadata",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/music-metadata",
+      "status": "OK",
+      "note": "Browser build."
+    },
+    {
+      "name": "mp4box",
+      "version": "latest",
+      "license": "BSD-3-Clause",
+      "source": "https://www.npmjs.com/package/mp4box",
+      "status": "OK",
+      "note": ""
+    },
+    {
+      "name": "onnxruntime-web",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/onnxruntime-web",
+      "status": "OK",
+      "note": "WASM and WebGPU files must be self-hosted."
+    },
+    {
+      "name": "jszip",
+      "version": "3.x",
+      "license": "MIT OR GPL-3.0-or-later",
+      "source": "https://www.npmjs.com/package/jszip",
+      "status": "OK-NOTE",
+      "note": "Dual license; PageNest uses it under MIT. State this choice in the license notices."
+    },
+    {
+      "name": "vitest",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://www.npmjs.com/package/vitest",
+      "status": "OK",
+      "note": "dev. Configure include/exclude so it does not pick up scripts/audit-*.test.mjs (they use node:test)."
+    },
+    {
+      "name": "@playwright/test",
+      "version": "latest",
+      "license": "Apache-2.0",
+      "source": "https://www.npmjs.com/package/@playwright/test",
+      "status": "OK",
+      "note": "dev. Browser binaries are downloaded at install time and not shipped."
+    },
+    {
+      "name": "@lhci/cli",
+      "version": "latest",
+      "license": "Apache-2.0",
+      "source": "https://www.npmjs.com/package/@lhci/cli",
+      "status": "OK",
+      "note": "dev."
+    }
+  ],
+  "models": [
+    {
+      "name": "Browser Speech Synthesis (Tier 0)",
+      "version": "n/a",
+      "license": "n/a (platform API)",
+      "source": "Web Speech API",
+      "status": "OK",
+      "note": "Nothing bundled."
+    },
+    {
+      "name": "Piper engine, rhasspy/piper",
+      "version": "archived",
+      "license": "MIT",
+      "source": "https://github.com/rhasspy/piper",
+      "status": "OK-NOTE",
+      "note": "Archived; development moved to OHF-Voice/piper1-gpl (GPL). The MIT repo still depends on piper-phonemize / espeak-ng for phonemes, see espeak-ng row."
+    },
+    {
+      "name": "Piper engine, OHF-Voice/piper1-gpl (piper-tts 1.3+)",
+      "version": "1.3+",
+      "license": "GPL-3.0-or-later",
+      "source": "https://github.com/OHF-Voice/piper1-gpl",
+      "status": "NOT-OK",
+      "note": "GPL since v1.3.0 (espeak-ng embedded). Do not bundle or link into the MIT web app. Allowed only as a separate tool the user runs (for example the training script), never shipped inside the PWA."
+    },
+    {
+      "name": "espeak-ng (phonemizer inside Piper and Kokoro WASM stacks)",
+      "version": "any",
+      "license": "GPL-3.0-or-later",
+      "source": "https://github.com/espeak-ng/espeak-ng",
+      "status": "NOT-OK",
+      "note": "OPEN RISK. Browser Piper builds and the 'phonemizer' npm package (declared Apache-2.0) embed eSpeak NG compiled to WASM. Shipping it in the PWA means distributing GPL-3.0 code. Needs an owner decision: non-GPL phonemizer (dictionary/rule based), or accept GPL for that component with corresponding source and notices. audit-licenses.mjs flags the known packages even though they declare a permissive license."
+    },
+    {
+      "name": "Piper voice models (each voice)",
+      "version": "per voice",
+      "license": "per voice, see MODEL_CARD",
+      "source": "https://huggingface.co/rhasspy/piper-voices",
+      "status": "VERIFY",
+      "note": "License is per voice and records the training DATASET only; whether weights inherit it is not settled. Check the MODEL_CARD of every voice before adding it and record voice, dataset and license here. Reject en_US-lessac (Blizzard 2013, research use only, no commercial or product use) and any NC/ND/SA dataset. Prefer voices trained on libritts_r, CC0 or CC-BY-4.0 data."
+    },
+    {
+      "name": "Piper voice en_US-lessac (low/medium/high)",
+      "version": "n/a",
+      "license": "Blizzard 2013 (research only)",
+      "source": "https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html",
+      "status": "NOT-OK",
+      "note": "Dataset license excludes commercial use and voice synthesis products. Voices derived from it are also in doubt. Do not add."
+    },
+    {
+      "name": "ONNX Runtime WASM binaries",
+      "version": "match onnxruntime-web",
+      "license": "MIT",
+      "source": "https://github.com/microsoft/onnxruntime",
+      "status": "OK",
+      "note": "Self-host the .wasm files."
+    },
+    {
+      "name": "Kokoro-82M weights (onnx-community/Kokoro-82M-v1.0-ONNX)",
+      "version": "v1.0",
+      "license": "Apache-2.0",
+      "source": "https://huggingface.co/hexgrad/Kokoro-82M",
+      "status": "OK-NOTE",
+      "note": "Apache-2.0 weights. ONNX export by onnx-community inherits it; re-check the HF license tag at download time. Voice style files (voices/*.bin) ship with the model."
+    },
+    {
+      "name": "kokoro-js",
+      "version": "1.2.x",
+      "license": "Apache-2.0",
+      "source": "https://github.com/hexgrad/kokoro",
+      "status": "OK-NOTE",
+      "note": "Apache-2.0 itself, but depends on 'phonemizer' which embeds GPL eSpeak NG (see espeak-ng row)."
+    },
+    {
+      "name": "Chatterbox (Voice Helper, Tier 3)",
+      "version": "latest",
+      "license": "MIT",
+      "source": "https://github.com/resemble-ai/chatterbox",
+      "status": "OK-NOTE",
+      "note": "MIT code. Verify the HF weights license tag when adopted. Output carries a Perth watermark, which matches the 'generated audio is synthetic' rule. Runs on the user's computer, not shipped in the PWA."
+    },
+    {
+      "name": "Orpheus TTS 3B (Voice Helper, Tier 3)",
+      "version": "0.1",
+      "license": "Apache-2.0 (declared) on Llama-3.2-3B",
+      "source": "https://github.com/canopyai/Orpheus-TTS",
+      "status": "VERIFY",
+      "note": "Built on Llama 3.2, so Meta's Llama 3.2 Community License also applies (Built with Llama notice, acceptable-use policy, 'Llama' model-name rule). Not an OSI open license; prefer a different model unless the owner accepts it."
+    },
+    {
+      "name": "Voice Helper training script / Colab notebook (My Voice Pack)",
+      "version": "planned",
+      "license": "to be chosen",
+      "source": "to be created",
+      "status": "VERIFY",
+      "note": "Must itself use permissive dependencies only (check Piper training stack: piper1-gpl training is GPL). Audit its requirements file with audit-licenses.mjs --root before release."
+    }
+  ],
+  "sections": [
+    {
+      "title": "Speech engine licensing",
+      "paragraphs": [
+        "Summary of DECISIONS.md, Decision 8 (Oct 24, 2026). Nothing GPL is in the repository today; the rows above marked NOT OK are planned risks only.",
+        "- **The problem:** eSpeak NG (GPL-3.0-or-later) is embedded by browser Piper stacks and by the `phonemizer` package used by `kokoro-js`. Piper itself has been GPL-3.0 since v1.3 (the archived `rhasspy/piper` is MIT). PageNest is MIT, so shipping GPL code needs a deliberate choice.",
+        "- **The plan:** Phase 4 starts with a spike on a non-GPL phonemizer and a non-GPL engine path. If none gives acceptable quality, the fallback is to relicense the PageNest repository to GPL-3.0 (still free and open, still consistent with the product rules) and flag it to Mukeshh. Nothing GPL is added to `main` before that decision is recorded in DECISIONS.md.",
+        "- **Voice rule:** every Piper voice is checked per voice. `en_US-lessac` (Blizzard 2013, research only) is NOT allowed; prefer `libritts_r` voices. Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) need the Hugging Face weight license tag checked before use.",
+        "- **Enforcement:** `audit-licenses.mjs` fails when an installed package is `phonemizer`, `espeak*`, `piper-wasm`, `piper-phonemize*` or similar, even if it declares a permissive license, unless a reviewed entry is added to `scripts/audit-license-overrides.json` after the decision is recorded.",
+        "- **Related, Decision 9 (dev-only licenses):** MPL-2.0 dev-only tools (`axe-core`, `@axe-core/playwright`) are accepted. LGPL libvips binaries shipped with `sharp` are accepted only as dev-only and never bundled; the audit flags them if shipped."
+      ]
+    }
+  ]
+}
