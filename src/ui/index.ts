@@ -32,6 +32,10 @@ export {
 } from './components/Snackbar';
 export { InstallBanner, type InstallBannerProps } from './components/InstallBanner';
 export { IosInstallSheet, type IosInstallSheetProps } from './components/IosInstallSheet';
+export { IosInstallSteps } from './components/IosInstallSteps';
+export { InstallHelpSheet, type InstallHelpPersistence, type InstallHelpSheetProps } from './components/InstallHelpSheet';
+export { InstallHelp, type InstallHelpProps } from './pwa/InstallHelp';
+export { PwaPrompts, INSTALL_BANNER_ID, IOS_INSTALL_ID, type PwaPromptsProps } from './pwa/PwaPrompts';
 export { UpdateAvailableSnackbar, type UpdateAvailableSnackbarProps } from './components/UpdateAvailableSnackbar';
 export { Skeleton, SkeletonCard, SkeletonGroup, type SkeletonGroupProps, type SkeletonProps } from './components/Skeleton';
 export { EmptyState, type EmptyStateAction, type EmptyStateProps } from './components/EmptyState';
