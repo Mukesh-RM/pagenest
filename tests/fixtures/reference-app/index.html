@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FAFAF7">
+  <meta name="description" content="Test fixture that implements the PageNest shell contract (tests/README.md). Not product code.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>PageNest</title>
+  <style>
+    :root { --page:#FAFAF7; --text:#1C1B19; --accent:#3E5BDB; }
+    [data-theme="sepia"] { --page:#F4ECD8; --text:#3B2F23; --accent:#A0522D; }
+    [data-theme="dark"]  { --page:#17181C; --text:#E4E2DC; --accent:#8FA6FF; }
+    [data-theme="black"] { --page:#000000; --text:#CFCDC7; --accent:#8FA6FF; }
+    body { margin:0; background:var(--page); color:var(--text); font:16px system-ui, sans-serif;
+           padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); }
+    main { padding:16px 16px 96px; }
+    nav { position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--page);
+          border-top:1px solid var(--accent); padding-bottom:env(safe-area-inset-bottom); }
+    nav a { flex:1; min-height:44px; display:flex; align-items:center; justify-content:center;
+            color:var(--text); text-decoration:none; }
+    nav a[aria-current="page"] { color:var(--accent); font-weight:700; }
+    button { min-height:44px; min-width:44px; border-radius:22px; border:1px solid var(--accent);
+             background:transparent; color:var(--text); padding:0 16px; font:inherit; }
+    .sheet { position:fixed; left:0; right:0; bottom:0; background:var(--page); color:var(--text);
+             border-radius:20px 20px 0 0; border:1px solid var(--accent); padding:24px 16px; }
+    fieldset { border:0; padding:0; margin:0 0 16px; }
+  </style>
+</head>
+<body>
+  <main id="screen" tabindex="-1"></main>
+  <nav aria-label="Primary">
+    <a href="#/library">Library</a>
+    <a href="#/collections">Collections</a>
+    <a href="#/stats">Stats</a>
+    <a href="#/settings">Settings</a>
+  </nav>
+  <div id="sheet-root"></div>
+  <script src="app.js"></script>
+</body>
+</html>
