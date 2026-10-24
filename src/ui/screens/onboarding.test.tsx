@@ -2,7 +2,7 @@ import '../test/setup';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { listUiFiles, readUiFile } from '../test/css';
 import { FirstRunBooks } from '../components/FirstRunBooks';
 import type { StarterBookOffer } from '../components/StarterBookCard';

@@ -47,8 +47,8 @@
 .pn-snackbar__action:focus-visible,
 .pn-sheet:focus-visible,
 .pn-focus-target:focus-visible {
-  outline: 2px solid rgb(var(--pn-focus-ring));
-  outline-offset: 2px;
+  outline: var(--pn-focus-width) solid rgb(var(--pn-focus-ring));
+  outline-offset: var(--pn-focus-offset);
 }
 
 /* Every other interactive element inside a themed scope: hints, choices, player controls, ranges, links */

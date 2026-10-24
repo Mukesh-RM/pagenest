@@ -111,6 +111,77 @@ describe('custom theme: AA contrast', () => {
   });
 });
 
+describe('custom theme: high contrast', () => {
+  const failsHigh = (input: { page: string; text: string; accent: string }): string[] => {
+    const r = resolveCustomTheme(input, 'high');
+    const out = customContrastPairs(r)
+      .filter((p) => contrastRatio(p.fg, p.bg) < p.min)
+      .map((p) => `${JSON.stringify(input)} ${p.name}: ${contrastRatio(p.fg, p.bg).toFixed(3)} < ${p.min}`);
+    // AA is never given up: even the lowest target stays at 4.5 or better.
+    if (r.textTarget < 4.5) out.push(`${JSON.stringify(input)} textTarget ${r.textTarget}`);
+    // 7:1 for text whenever the page can give black or white 7:1.
+    const best = Math.max(contrastRatio('#ffffff', r.palette.page), contrastRatio('#000000', r.palette.page));
+    if (best >= 7 && r.textTarget < 7) out.push(`${JSON.stringify(input)} should target 7, got ${r.textTarget}`);
+    return out;
+  };
+
+  it('the default theme reaches 7:1 for every text pair in high contrast', () => {
+    const r = resolveCustomTheme(DEFAULT_CUSTOM_THEME, 'high');
+    expect(r.textTarget).toBe(7);
+    for (const p of customContrastPairs(r)) expect(contrastRatio(p.fg, p.bg), p.name).toBeGreaterThanOrEqual(p.min);
+    expect(r.level).toBe('high');
+  });
+
+  it('standard resolution is unchanged by the new level argument', () => {
+    expect(resolveCustomTheme(DEFAULT_CUSTOM_THEME).palette).toEqual(resolveCustomTheme(DEFAULT_CUSTOM_THEME, 'standard').palette);
+    expect(resolveCustomTheme(DEFAULT_CUSTOM_THEME).textTarget).toBe(4.5);
+  });
+
+  for (const seed of [11, 2025, 424242]) {
+    it(`holds for 3000 random colors (seed ${seed})`, () => {
+      const next = rng(seed);
+      const all: string[] = [];
+      for (let i = 0; i < 3000; i += 1) all.push(...failsHigh({ page: hex(next()), text: hex(next()), accent: hex(next()) }));
+      expect(all.slice(0, 5), `seed ${seed}`).toEqual([]);
+    });
+  }
+
+  it('holds for pure and mid-tone pages against hostile text and accent colors', () => {
+    const pages = ['#000000', '#ffffff', '#808080', '#767676', '#595959', '#1e2230', '#f4ecd8', '#ff00ff', '#00ff00'];
+    const inks = ['#000000', '#ffffff', '#808080', '#ff00ff', '#00ffff', '#ffff00', '#0000ff'];
+    const all: string[] = [];
+    for (const page of pages) for (const text of inks) for (const accent of inks) all.push(...failsHigh({ page, text, accent }));
+    expect(all.slice(0, 5)).toEqual([]);
+  });
+
+  it('writes the stronger scrim and keeps the standard one otherwise', () => {
+    const hi = customThemeStyle(resolveCustomTheme(DEFAULT_CUSTOM_THEME, 'high')) as Record<string, string>;
+    const std = customThemeStyle(resolveCustomTheme(DEFAULT_CUSTOM_THEME)) as Record<string, string>;
+    expect(Number(hi['--pn-scrim-opacity'])).toBeGreaterThan(Number(std['--pn-scrim-opacity']));
+  });
+
+  it('the provider recomputes the Custom palette when the contrast setting changes', () => {
+    function Probe() {
+      const { custom, contrast } = useTheme();
+      return <p data-testid="p">{`${contrast}:${custom?.textTarget}`}</p>;
+    }
+    const { rerender } = render(
+      <ThemeProvider mode="custom" contrastMode="standard">
+        <Probe />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId('p')).toHaveTextContent('standard:4.5');
+    rerender(
+      <ThemeProvider mode="custom" contrastMode="high">
+        <Probe />
+      </ThemeProvider>,
+    );
+    expect(screen.getByTestId('p')).toHaveTextContent('high:7');
+    expect(document.documentElement.getAttribute('data-contrast')).toBe('high');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('custom');
+  });
+});
+
 describe('custom theme: tokens', () => {
   it('the data-theme="custom" block in tokens.css matches the resolved default', () => {
     const decl = declarationsFor(parseCss(readUiFile('styles/tokens.css')), '[data-theme="custom"]');

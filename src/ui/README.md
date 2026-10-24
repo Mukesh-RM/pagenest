@@ -42,6 +42,24 @@ text. Two families and three weights are enforced by `styles/design-rules.test.t
 Latin, 97 kB in total (recipe in `fonts/README.md`). `preloadCriticalFonts()` (from `fonts/preload.ts`, exported from `@/ui`) adds
 `<link rel="preload">` for Inter and Literata regular only.
 
+**High contrast** (blueprint 5.8): `data-contrast="high"` layers over any theme, on the same element as
+`data-theme` (`<ThemeProvider>`, `<ThemeScope>` and `<ThemedPortal>` write both, so scopes and sheets match).
+`data-contrast="standard"` switches it off for a subtree. With no attribute, `prefers-contrast: more` turns it on
+in CSS, and `<ThemeProvider>` resolves it in script. It replaces text, muted, accent, on-accent, link, danger,
+border-strong, line, focus-ring and the snackbar (`--pn-inverse-*`) colors and strengthens the scrim; page and
+surface colors stay the theme's own. Strokes get thicker through `--pn-focus-width` (2 to 4 px),
+`--pn-focus-offset` and `--pn-border-width` (1 to 2 px). Text pairs are at least 7:1, focus ring and accent
+fill at least 7:1, control borders at least 4.5:1, hairlines at least 3:1, on all 8 theme x contrast combinations.
+
+```tsx
+<ThemeProvider mode="sepia" contrastMode="high">...</ThemeProvider>   // contrastMode: 'system' | 'standard' | 'high'
+const { contrast, contrastMode, setContrastMode } = useTheme();
+<ThemeScope theme="light" contrast="standard">...</ThemeScope>       // omit contrast to inherit
+```
+
+Code that needs hex values: `getPalette(theme, 'high')`, `HIGH_CONTRAST_PALETTE`; helpers `resolveContrast`,
+`CONTRAST_MODES`, `CONTRAST_LABELS`, `useSystemPrefersMoreContrast`. Persisting the setting is the app's job.
+
 **Reduced motion**: durations become 0 under `prefers-reduced-motion: reduce`, and the document root
 attribute `data-reduce-motion="true" | "false"` forces it on or off (in-app setting).
 
@@ -104,6 +122,19 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
 * `ReaderScreen`: optional `minutesLeftInChapter` ("8 min left in chapter" above the book progress, always visible).
 * `BookDetailSheet`: `onRemove` now appears as "Remove from library" inside a "More options" (⋯) menu, never as a loose red button.
 * `ErrorNotice`: DRM, damaged and unsupported files never show "Try again" (`canRetry(kind)`); they add one plain help line.
+
+### High contrast (blueprint 5.8)
+
+`ThemeProvider` takes `contrastMode` ("system" | "standard" | "high", default "system" = `prefers-contrast: more`),
+`onContrastModeChange`, and writes `data-contrast` next to `data-theme`; `ThemeScope contrast="high"` forces a subtree.
+Every theme x high contrast keeps text at 7:1 or better and non-text at 3:1 or better (computed from `tokens.css` in
+`styles/contrast.high.test.ts`). The accents stay in the **teal family** (dark teal on Light and Sepia, light teal on
+Dark and Black; a test checks the hue), so high contrast looks like the same app, not another one.
+**Custom + high contrast**: `resolveCustomTheme(input, 'high')` (the provider does it when `mode="custom"`) raises every
+text pair to `textTarget`: 7:1 whenever the chosen page color can give black or white 7:1, otherwise the best the page
+allows and never below AA; strong borders 4.5:1, hairlines 3:1, focus ring in the text color, stronger scrim.
+`SettingsScreen` shows a "Contrast" row when `contrastMode` and `onContrastModeChange` are passed.
+App: persist the contrast setting next to the theme and pass both to `ThemeProvider`.
 
 ### Text size is rem-only
 
@@ -221,7 +252,7 @@ All interactive controls are at least 44 x 44 px, have a visible `:focus-visible
 
 ## Demo page (dev only)
 
-`demo/UiKitDemo.tsx` shows every component in every theme with a theme switcher. It is not exported from
+`demo/UiKitDemo.tsx` shows every component in every theme with a theme switcher and a contrast toggle (System, Standard, High contrast). It is not exported from
 `index.ts`, so production bundles do not include it. The Architect mounts it in the router like this
 (only the app code outside `src/ui` changes):
 
@@ -255,6 +286,9 @@ import { THEME_PALETTE, THEME_SCHEME } from '@/ui/theme/palette';
 
 - `styles/contrast.test.ts`: WCAG ratios computed from `styles/tokens.css` for every theme (text pairs at least 4.5:1,
   focus ring, control borders and accent fill at least 3:1). Fails if any token drifts.
+- `styles/contrast.high.test.ts`: the same computed check for all 8 theme x high-contrast combinations (text at least 7:1),
+  CSS and `palette.ts` sync, the `prefers-contrast: more` block, thicker strokes.
+- `theme/contrast.test.tsx`: contrast attribute and API behavior, system preference, scopes and portals.
 - `styles/tokens.test.ts`: 4 px grid, radii, 150 to 250 ms motion, reduced motion, 44 px targets, breakpoints,
   palette in sync with CSS, self-hosted assets, no network code.
 - `components/*.test.tsx`, `theme/theme.test.tsx`, `demo/UiKitDemo.test.tsx`: behavior and accessibility.
@@ -262,4 +296,4 @@ import { THEME_PALETTE, THEME_SCHEME } from '@/ui/theme/palette';
 - `styles/design-rules.test.ts`: 4 px grid, two font families, three weights, one icon set, one accent per theme, font budget, demo isolation.
 - `screens/screens.test.tsx`, `components/Redesign.test.tsx`, `utils/utils.test.ts`, `shortcuts.test.tsx`: screens by role and label, focus order, tint contrast on every theme, time-left, shortcuts.
 
-`test/user.ts` is a tiny stand-in for `@testing-library/user-event` (not a project dependency).
+User interaction in tests uses the real `@testing-library/user-event` (MIT, dev dependency).

@@ -1,7 +1,7 @@
 import '../test/setup';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 import { Chip, ChipGroup } from './Chip';

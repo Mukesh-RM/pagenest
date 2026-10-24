@@ -8,7 +8,7 @@ import { OverflowMenu } from '../components/OverflowMenu';
 import { ThemeProvider } from '../theme';
 import { rememberFlipOrigin, takeFlipOrigin } from '../utils/flip';
 import { chapterLeftLabel } from '../utils/time';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { resetSheetHistoryForTests } from '../utils/sheetHistory';
 import { AudioPlayerScreen, type AudioPlayerController } from './AudioPlayerScreen';
 import { LibraryScreen } from './LibraryScreen';
@@ -172,6 +172,34 @@ describe('SettingsScreen', () => {
   it('offers Keep my data only when the browser may clear data', () => {
     render(<SettingsHarness />);
     expect(screen.getByRole('button', { name: 'Keep my data' })).toBeInTheDocument();
+  });
+});
+
+describe('SettingsScreen contrast row', () => {
+  it('shows a Contrast group only when the app passes the setting, and reports the choice', () => {
+    const onContrast = vi.fn();
+    const { rerender } = render(
+      <ThemeProvider mode="light">
+        <SettingsScreen theme="light" onThemeChange={noop} onCustomThemeChange={noop} textSize={16} onTextSizeChange={noop} storage={null} />
+      </ThemeProvider>,
+    );
+    expect(screen.queryByRole('radiogroup', { name: 'Contrast' })).toBeNull();
+    rerender(
+      <ThemeProvider mode="light">
+        <SettingsScreen
+          theme="light"
+          onThemeChange={noop}
+          onCustomThemeChange={noop}
+          textSize={16}
+          onTextSizeChange={noop}
+          storage={null}
+          contrastMode="system"
+          onContrastModeChange={onContrast}
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Contrast' })).getByRole('radio', { name: 'High contrast' }));
+    expect(onContrast).toHaveBeenCalledWith('high');
   });
 });
 

@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { Button } from '../components/Button';
+import { ChoiceGroup } from '../components/ChoiceGroup';
 import { TextSizeControl } from '../components/TextSizeControl';
 import { ThemePicker } from '../components/ThemePicker';
 import type { CustomThemeInput } from '../theme/custom';
-import type { ThemeChoice } from '../theme/themes';
+import { CONTRAST_LABELS, CONTRAST_MODES, type ContrastMode, type ThemeChoice } from '../theme/themes';
 import '../styles/screens.css';
 import '../styles/surfaces.css';
 
@@ -22,6 +23,9 @@ export interface SettingsScreenProps {
   /** The three Custom colors (any shape; invalid ones are corrected for display). */
   customTheme?: Partial<CustomThemeInput>;
   onCustomThemeChange: (next: CustomThemeInput) => void;
+  /** High contrast: "System" follows the device, or force Standard or High contrast. Leave both out to hide the row. */
+  contrastMode?: ContrastMode;
+  onContrastModeChange?: (mode: ContrastMode) => void;
   /** Text size in px, 14 to 32 on a 16 px base (87% to 200%). */
   textSize: number;
   onTextSizeChange: (px: number) => void;
@@ -43,6 +47,8 @@ export function SettingsScreen({
   onThemeChange,
   customTheme,
   onCustomThemeChange,
+  contrastMode,
+  onContrastModeChange,
   textSize,
   onTextSizeChange,
   install,
@@ -62,6 +68,14 @@ export function SettingsScreen({
           Appearance
         </h2>
         <ThemePicker value={theme} onChange={onThemeChange} custom={customTheme} onCustomChange={onCustomThemeChange} />
+        {contrastMode && onContrastModeChange ? (
+          <ChoiceGroup
+            label="Contrast"
+            value={contrastMode}
+            options={CONTRAST_MODES.map((m) => ({ value: m, label: CONTRAST_LABELS[m] }))}
+            onChange={onContrastModeChange}
+          />
+        ) : null}
         <TextSizeControl value={textSize} onChange={onTextSizeChange} />
         <p className="pn-set-card__sample" data-testid="text-sample">
           The orchard was quiet that morning, and the light came through the leaves in long, slow bars.
