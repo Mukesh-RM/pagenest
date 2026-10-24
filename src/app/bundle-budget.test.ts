@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -74,13 +74,12 @@ describe('bundle budget script', () => {
     expect(code).toBe(1);
   });
 
-  it('gives only the Library import worker the 60 kB worker budget; other workers stay at 55 kB', () => {
-    const imp = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'import.worker-1.js': 58_000 }, page());
-    expect(run(imp)).toMatchObject({ code: 0 });
-    const tooBig = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'import.worker-1.js': 62_000 }, page());
-    expect(run(tooBig).out).toMatch(/FAIL worker chunk import\.worker-1\.js/);
-    const other = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'search.worker-1.js': 58_000 }, page());
-    expect(run(other).out).toMatch(/FAIL worker chunk search\.worker-1\.js/);
+  it('holds every worker, including the Library import worker, to the same 55 kB budget (no per-file exceptions)', () => {
+    const fits = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'import.worker-1.js': 54_000 }, page());
+    expect(run(fits)).toMatchObject({ code: 0 });
+    const over = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'import.worker-1.js': 58_000 }, page());
+    expect(run(over).out).toMatch(/FAIL worker chunk import\.worker-1\.js/);
+    expect(readFileSync(SCRIPT, 'utf8')).not.toMatch(/WORKER_OVERRIDES/);
   });
 
   it('gives a Web Worker chunk more room than a screen (it carries its own Dexie), but not unlimited', () => {

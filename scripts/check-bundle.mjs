@@ -21,14 +21,6 @@ export const BUDGETS_KB = {
   workerChunk: 55,
 };
 
-/**
- * Workers that need more than `workerChunk`, matched by file-name prefix. The Library's import worker
- * is Dexie (about 30 kB) plus the whole import path (format sniffing, EPUB/PDF/zip/XML parsing, OPFS
- * streaming copy, fingerprint): measured 56.96 kB gzip. Its audio tag parser (music-metadata) is a
- * separate nested worker and has the normal worker budget. Initial JS and CSS budgets are unchanged.
- */
-export const WORKER_OVERRIDES_KB = { 'import.worker-': 60 };
-
 const kb = (bytes) => bytes / 1000;
 const gzipSize = (file) => gzipSync(readFileSync(file), { level: 9 }).length;
 
@@ -82,8 +74,7 @@ export function checkBundle(distDir, budgets = BUDGETS_KB) {
   if (existsSync(assetsDir)) {
     for (const name of readdirSync(assetsDir).filter((n) => n.endsWith('.js') && !initial.has(n)).sort()) {
       const isWorker = /\.worker-/.test(name);
-      const override = isWorker ? Object.entries(WORKER_OVERRIDES_KB).find(([prefix]) => name.startsWith(prefix))?.[1] : undefined;
-      const budget = isWorker ? (override ?? budgets.workerChunk ?? budgets.lazyChunk) : budgets.lazyChunk;
+      const budget = isWorker ? (budgets.workerChunk ?? budgets.lazyChunk) : budgets.lazyChunk;
       report(`${isWorker ? 'worker chunk' : 'lazy chunk'} ${name}`, kb(gzipSize(join(assetsDir, name))), budget);
     }
   }
