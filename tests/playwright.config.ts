@@ -1,0 +1,69 @@
+import { defineConfig, devices } from '@playwright/test';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Target selection (first match wins):
+ *   PAGENEST_BASE_URL=https://host/path/  test an already running or deployed build (no server started)
+ *   PAGENEST_TARGET=fixture               serve tests/fixtures/reference-app (harness self-check only)
+ *   default                               build the real app from the repo root and run `vite preview`
+ *
+ * Service workers only run in production builds, so the real app is always built, never run with `vite dev`.
+ */
+const PORT = Number(process.env.PAGENEST_PORT ?? 4173);
+const external = process.env.PAGENEST_BASE_URL;
+const useFixture = process.env.PAGENEST_TARGET === 'fixture';
+const repoRoot = resolve(here, '..');
+
+const rawBase = external ?? `http://127.0.0.1:${PORT}/`;
+export const baseURL = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+
+const webServer = external
+  ? undefined
+  : useFixture
+    ? {
+        command: `node fixtures/serve.mjs fixtures/reference-app ${PORT}`,
+        cwd: here,
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 30_000,
+      }
+    : {
+        command: `npm run build && npm run preview -- --host 127.0.0.1 --port ${PORT} --strictPort`,
+        cwd: repoRoot,
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+        timeout: 300_000,
+      };
+
+export default defineConfig({
+  testDir: '.',
+  testMatch: ['e2e/**/*.spec.ts', 'unit/**/*.spec.ts'],
+  outputDir: 'test-results',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  workers: process.env.CI ? 2 : undefined,
+  timeout: 30_000,
+  expect: { timeout: 7_000 },
+  reporter: process.env.CI
+    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    : [['list']],
+  use: {
+    baseURL,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    serviceWorkers: 'allow',
+  },
+  projects: [
+    // Pure logic tests (no browser, no app): contrast maths and blueprint palette.
+    { name: 'unit', testMatch: 'unit/**/*.spec.ts' },
+    { name: 'chromium-desktop', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium-mobile', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Pixel 7'] } },
+    // WebKit stands in for Safari on iPhone. It is a proxy, not a replacement for the real-device checklist.
+    { name: 'webkit-iphone', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['iPhone 14'] } },
+  ],
+  webServer,
+});
