@@ -8,10 +8,10 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 ## Summary
 
-- Installed packages audited: 685 (19 production, 666 development)
+- Installed packages audited: 697 (33 production, 664 development)
 - Source of data: package-lock.json + node_modules
 - QA toolchain (`tests/`, dev only, never shipped): 183 packages from package-lock.json; OK: 180, OK with note: 3, NOT OK: 0
-- OK: 657, OK with note: 28, NOT OK: 0
+- OK: 669, OK with note: 28, NOT OK: 0
 - Planned assets with open risks: 6 (see the Models table)
 
 ## Dependencies (npm)
@@ -115,6 +115,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | @babel/template | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/template/v/7.29.7 | OK |
 | @babel/traverse | 7.29.10 | dev | MIT | https://www.npmjs.com/package/@babel/traverse/v/7.29.10 | OK |
 | @babel/types | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/types/v/7.29.11 | OK |
+| @borewit/text-codec | 0.2.2 | prod | MIT | https://www.npmjs.com/package/@borewit/text-codec/v/0.2.2 | OK |
 | @csstools/color-helpers | 5.1.0 | dev | MIT-0 | https://www.npmjs.com/package/@csstools/color-helpers/v/5.1.0 | OK |
 | @csstools/css-calc | 2.1.4 | dev | MIT | https://www.npmjs.com/package/@csstools/css-calc/v/2.1.4 | OK |
 | @csstools/css-color-parser | 3.1.0 | dev | MIT | https://www.npmjs.com/package/@csstools/css-color-parser/v/3.1.0 | OK |
@@ -234,6 +235,8 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | @testing-library/dom | 10.4.2 | dev | MIT | https://www.npmjs.com/package/@testing-library/dom/v/10.4.2 | OK |
 | @testing-library/jest-dom | 6.9.1 | dev | MIT | https://www.npmjs.com/package/@testing-library/jest-dom/v/6.9.1 | OK |
 | @testing-library/react | 16.3.3 | dev | MIT | https://www.npmjs.com/package/@testing-library/react/v/16.3.3 | OK |
+| @tokenizer/inflate | 0.5.1 | prod | MIT | https://www.npmjs.com/package/@tokenizer/inflate/v/0.5.1 | OK |
+| @tokenizer/token | 0.3.0 | prod | MIT | https://www.npmjs.com/package/@tokenizer/token/v/0.3.0 | OK |
 | @trickfilm400/rollup-plugin-off-main-thread | 3.0.0-pre1 | dev | Apache-2.0 | https://www.npmjs.com/package/@trickfilm400/rollup-plugin-off-main-thread/v/3.0.0-pre1 | OK |
 | @types/aria-query | 5.0.4 | dev | MIT | https://www.npmjs.com/package/@types/aria-query/v/5.0.4 | OK |
 | @types/babel__core | 7.20.5 | dev | MIT | https://www.npmjs.com/package/@types/babel__core/v/7.20.5 | OK |
@@ -321,6 +324,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | commander | 4.1.1 | dev | MIT | https://www.npmjs.com/package/commander/v/4.1.1 | OK |
 | common-tags | 1.8.2 | dev | MIT | https://www.npmjs.com/package/common-tags/v/1.8.2 | OK |
 | concat-map | 0.0.1 | dev | MIT | https://www.npmjs.com/package/concat-map/v/0.0.1 | OK |
+| content-type | 3.1.1 | prod | MIT | https://www.npmjs.com/package/content-type/v/3.1.1 | OK |
 | convert-source-map | 2.0.0 | dev | MIT | https://www.npmjs.com/package/convert-source-map/v/2.0.0 | OK |
 | cookie | 1.1.1 | prod | MIT | https://www.npmjs.com/package/cookie/v/1.1.1 | OK |
 | core-js-compat | 3.51.0 | dev | MIT | https://www.npmjs.com/package/core-js-compat/v/3.51.0 | OK |
@@ -334,7 +338,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | data-view-buffer | 1.0.2 | dev | MIT | https://www.npmjs.com/package/data-view-buffer/v/1.0.2 | OK |
 | data-view-byte-length | 1.0.2 | dev | MIT | https://www.npmjs.com/package/data-view-byte-length/v/1.0.2 | OK |
 | data-view-byte-offset | 1.0.1 | dev | MIT | https://www.npmjs.com/package/data-view-byte-offset/v/1.0.1 | OK |
-| debug | 4.4.3 | dev | MIT | https://www.npmjs.com/package/debug/v/4.4.3 | OK |
+| debug | 4.4.3 | prod | MIT | https://www.npmjs.com/package/debug/v/4.4.3 | OK |
 | decimal.js | 10.6.0 | dev | MIT | https://www.npmjs.com/package/decimal.js/v/10.6.0 | OK |
 | deep-eql | 5.0.2 | dev | MIT | https://www.npmjs.com/package/deep-eql/v/5.0.2 | OK |
 | deep-is | 0.1.4 | dev | MIT | https://www.npmjs.com/package/deep-is/v/0.1.4 | OK |
@@ -390,6 +394,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | fdir | 6.5.0 | dev | MIT | https://www.npmjs.com/package/fdir/v/6.5.0 | OK |
 | fdir | 6.5.0 | dev | MIT | https://www.npmjs.com/package/fdir/v/6.5.0 | OK |
 | file-entry-cache | 8.0.0 | dev | MIT | https://www.npmjs.com/package/file-entry-cache/v/8.0.0 | OK |
+| file-type | 22.2.0 | prod | MIT | https://www.npmjs.com/package/file-type/v/22.2.0 | OK |
 | filelist | 1.0.6 | dev | Apache-2.0 | https://www.npmjs.com/package/filelist/v/1.0.6 | OK |
 | fill-range | 7.1.1 | dev | MIT | https://www.npmjs.com/package/fill-range/v/7.1.1 | OK |
 | find-up | 5.0.0 | dev | MIT | https://www.npmjs.com/package/find-up/v/5.0.0 | OK |
@@ -430,6 +435,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | https-proxy-agent | 7.0.6 | dev | MIT | https://www.npmjs.com/package/https-proxy-agent/v/7.0.6 | OK |
 | iconv-lite | 0.6.3 | dev | MIT | https://www.npmjs.com/package/iconv-lite/v/0.6.3 | OK |
 | idb | 7.1.1 | dev | ISC | https://www.npmjs.com/package/idb/v/7.1.1 | OK |
+| ieee754 | 1.2.1 | prod | BSD-3-Clause | https://www.npmjs.com/package/ieee754/v/1.2.1 | OK |
 | ignore | 5.3.2 | dev | MIT | https://www.npmjs.com/package/ignore/v/5.3.2 | OK |
 | ignore | 7.0.14 | dev | MIT | https://www.npmjs.com/package/ignore/v/7.0.14 | OK |
 | import-fresh | 3.3.1 | dev | MIT | https://www.npmjs.com/package/import-fresh/v/3.3.1 | OK |
@@ -498,10 +504,10 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | lru-cache | 5.1.1 | dev | ISC | https://www.npmjs.com/package/lru-cache/v/5.1.1 | OK |
 | lru-cache | 10.4.3 | dev | ISC | https://www.npmjs.com/package/lru-cache/v/10.4.3 | OK |
 | lru-cache | 11.5.3 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/lru-cache/v/11.5.3 | OK |
-| lucide-react | 1.61.0 | prod | ISC | https://www.npmjs.com/package/lucide-react/v/1.61.0 | OK |
 | lz-string | 1.5.0 | dev | MIT | https://www.npmjs.com/package/lz-string/v/1.5.0 | OK |
 | magic-string | 0.30.21 | dev | MIT | https://www.npmjs.com/package/magic-string/v/0.30.21 | OK |
 | math-intrinsics | 1.1.0 | dev | MIT | https://www.npmjs.com/package/math-intrinsics/v/1.1.0 | OK |
+| media-typer | 2.0.0 | prod | MIT | https://www.npmjs.com/package/media-typer/v/2.0.0 | OK |
 | merge2 | 1.4.1 | dev | MIT | https://www.npmjs.com/package/merge2/v/1.4.1 | OK |
 | micromatch | 4.0.8 | dev | MIT | https://www.npmjs.com/package/micromatch/v/4.0.8 | OK |
 | min-indent | 1.0.1 | dev | MIT | https://www.npmjs.com/package/min-indent/v/1.0.1 | OK |
@@ -510,7 +516,9 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | minimatch | 10.2.6 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/minimatch/v/10.2.6 | OK |
 | minimatch | 10.2.6 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/minimatch/v/10.2.6 | OK |
 | minipass | 7.1.3 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/minipass/v/7.1.3 | OK |
-| ms | 2.1.3 | dev | MIT | https://www.npmjs.com/package/ms/v/2.1.3 | OK |
+| mp4box | 2.4.1 | prod | BSD-3-Clause | https://www.npmjs.com/package/mp4box/v/2.4.1 | OK |
+| ms | 2.1.3 | prod | MIT | https://www.npmjs.com/package/ms/v/2.1.3 | OK |
+| music-metadata | 12.2.3 | prod | MIT | https://www.npmjs.com/package/music-metadata/v/12.2.3 | OK |
 | mz | 2.7.0 | dev | MIT | https://www.npmjs.com/package/mz/v/2.7.0 | OK |
 | nanoid | 3.3.20 | dev | MIT | https://www.npmjs.com/package/nanoid/v/3.3.20 | OK |
 | natural-compare | 1.4.0 | dev | MIT | https://www.npmjs.com/package/natural-compare/v/1.4.0 | OK |
@@ -621,6 +629,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | strip-indent | 3.0.0 | dev | MIT | https://www.npmjs.com/package/strip-indent/v/3.0.0 | OK |
 | strip-json-comments | 3.1.1 | dev | MIT | https://www.npmjs.com/package/strip-json-comments/v/3.1.1 | OK |
 | strip-literal | 3.1.0 | dev | MIT | https://www.npmjs.com/package/strip-literal/v/3.1.0 | OK |
+| strtok3 | 10.6.2 | prod | MIT | https://www.npmjs.com/package/strtok3/v/10.6.2 | OK |
 | sucrase | 3.35.1 | dev | MIT | https://www.npmjs.com/package/sucrase/v/3.35.1 | OK |
 | supports-color | 7.2.0 | dev | MIT | https://www.npmjs.com/package/supports-color/v/7.2.0 | OK |
 | supports-preserve-symlinks-flag | 1.0.0 | dev | MIT | https://www.npmjs.com/package/supports-preserve-symlinks-flag/v/1.0.0 | OK |
@@ -640,6 +649,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | tldts | 6.1.86 | dev | MIT | https://www.npmjs.com/package/tldts/v/6.1.86 | OK |
 | tldts-core | 6.1.86 | dev | MIT | https://www.npmjs.com/package/tldts-core/v/6.1.86 | OK |
 | to-regex-range | 5.0.1 | dev | MIT | https://www.npmjs.com/package/to-regex-range/v/5.0.1 | OK |
+| token-types | 6.1.2 | prod | MIT | https://www.npmjs.com/package/token-types/v/6.1.2 | OK |
 | tough-cookie | 5.1.2 | dev | BSD-3-Clause | https://www.npmjs.com/package/tough-cookie/v/5.1.2 | OK |
 | tr46 | 5.1.1 | dev | MIT | https://www.npmjs.com/package/tr46/v/5.1.1 | OK |
 | ts-api-utils | 2.5.0 | dev | MIT | https://www.npmjs.com/package/ts-api-utils/v/2.5.0 | OK |
@@ -653,6 +663,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | typed-array-length | 1.0.8 | dev | MIT | https://www.npmjs.com/package/typed-array-length/v/1.0.8 | OK |
 | typescript | 5.9.3 | dev | Apache-2.0 | https://www.npmjs.com/package/typescript/v/5.9.3 | OK |
 | typescript-eslint | 8.72.0 | dev | MIT | https://www.npmjs.com/package/typescript-eslint/v/8.72.0 | OK |
+| uint8array-extras | 1.6.0 | prod | MIT | https://www.npmjs.com/package/uint8array-extras/v/1.6.0 | OK |
 | unbox-primitive | 1.1.0 | dev | MIT | https://www.npmjs.com/package/unbox-primitive/v/1.1.0 | OK |
 | undici-types | 6.21.0 | dev | MIT | https://www.npmjs.com/package/undici-types/v/6.21.0 | OK |
 | unicode-canonical-property-names-ecmascript | 2.0.1 | dev | MIT | https://www.npmjs.com/package/unicode-canonical-property-names-ecmascript/v/2.0.1 | OK |
@@ -680,6 +691,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | which-collection | 1.0.2 | dev | MIT | https://www.npmjs.com/package/which-collection/v/1.0.2 | OK |
 | which-typed-array | 1.1.24 | dev | MIT | https://www.npmjs.com/package/which-typed-array/v/1.1.24 | OK |
 | why-is-node-running | 2.3.0 | dev | MIT | https://www.npmjs.com/package/why-is-node-running/v/2.3.0 | OK |
+| win-guid | 0.2.1 | prod | MIT | https://www.npmjs.com/package/win-guid/v/0.2.1 | OK |
 | word-wrap | 1.2.5 | dev | MIT | https://www.npmjs.com/package/word-wrap/v/1.2.5 | OK |
 | workbox-background-sync | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-background-sync/v/7.4.1 | OK |
 | workbox-broadcast-update | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-broadcast-update/v/7.4.1 | OK |
@@ -975,8 +987,6 @@ Expected licenses from the upstream projects. Once a package is installed it mov
 | foliate-js | git/vendored | MIT | https://github.com/johnfactotum/foliate-js | OK (see note) | Not published to npm; vendored or git dependency. Its bundled sub-libraries (zip.js, fflate, PDF.js parts) carry their own licenses: check each vendored file. |
 | mammoth | latest | BSD-2-Clause | https://www.npmjs.com/package/mammoth | OK |  |
 | minisearch | latest | MIT | https://www.npmjs.com/package/minisearch | OK |  |
-| music-metadata | latest | MIT | https://www.npmjs.com/package/music-metadata | OK | Browser build. |
-| mp4box | latest | BSD-3-Clause | https://www.npmjs.com/package/mp4box | OK |  |
 | onnxruntime-web | latest | MIT | https://www.npmjs.com/package/onnxruntime-web | OK | WASM and WebGPU files must be self-hosted. |
 | jszip | 3.x | MIT OR GPL-3.0-or-later | https://www.npmjs.com/package/jszip | OK (see note) | Dual license; PageNest uses it under MIT. State this choice in the license notices. |
 | @lhci/cli | latest | Apache-2.0 | https://www.npmjs.com/package/@lhci/cli | OK | dev. |
