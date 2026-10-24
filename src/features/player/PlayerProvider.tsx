@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { createAudioController, createAudioElement } from '@/engines/audio';
 import type { AudioController } from '@/engines/audio/types';
-import type { ProgressService } from '@/app/contracts';
 import { useServices } from '@/app/services-context';
 import { usePlayerStore } from './audio-store';
 import { attachPlayerKeyboard } from './keyboard-shortcuts';
-import { MiniPlayerHost } from './MiniPlayerHost';
-import { FullPlayerSheet } from './FullPlayerSheet';
+
+const AudioControllerContext = createContext<AudioController | undefined>(undefined);
 
 let sharedAudio: HTMLAudioElement | undefined;
 let sharedController: AudioController | undefined;
@@ -15,29 +14,31 @@ export function getAudioController(): AudioController | undefined {
   return sharedController;
 }
 
-function ensureController(progress: ProgressService): AudioController {
+function ensureController(progress: import('@/app/contracts').ProgressService): AudioController {
   if (!sharedAudio) sharedAudio = createAudioElement();
   if (!sharedController) sharedController = createAudioController({ audio: sharedAudio, progress });
   return sharedController;
 }
 
+export function useAudioController(): AudioController {
+  const controller = useContext(AudioControllerContext);
+  if (!controller) throw new Error('useAudioController must be used inside <PlayerProvider>.');
+  return controller;
+}
+
 /**
- * Owns the single audio element, syncs Zustand, renders mini and full player chrome.
- * Mount once near the app root (Architect: wrap inside AppShell).
+ * Owns the single audio element and Zustand sync. Render {@link PlayerChrome} inside a Router.
  */
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const { progress } = useServices();
   const controller = useMemo(() => ensureController(progress), [progress]);
   const setState = usePlayerStore((s) => s.setState);
-  const detachKeyboard = useRef<(() => void) | undefined>();
+
+  useEffect(() => controller.subscribe((state) => setState(state)), [controller, setState]);
 
   useEffect(() => {
-    return controller.subscribe((state) => setState(state));
-  }, [controller, setState]);
-
-  useEffect(() => {
-    detachKeyboard.current = attachPlayerKeyboard(controller);
-    return () => detachKeyboard.current?.();
+    const detach = attachPlayerKeyboard(controller);
+    return detach;
   }, [controller]);
 
   useEffect(() => {
@@ -58,11 +59,5 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  return (
-    <>
-      {children}
-      <MiniPlayerHost controller={controller} />
-      <FullPlayerSheet controller={controller} />
-    </>
-  );
+  return <AudioControllerContext.Provider value={controller}>{children}</AudioControllerContext.Provider>;
 }

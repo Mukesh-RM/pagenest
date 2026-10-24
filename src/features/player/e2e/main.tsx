@@ -6,25 +6,26 @@ import { createDataClient } from '@/data/data-client';
 import { getDb } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
 import { ServicesProvider } from '@/app/services';
-import { DEV_FIXTURE_BOOK_ID, ListenRoute, PlayerProvider } from '@/features/player';
+import { DEV_FIXTURE_BOOK_ID, ListenRoute, PlayerChrome, PlayerProvider } from '@/features/player';
 
 const db = getDb();
 const services = {
   db,
   progress: new DexieProgressService(db),
-  data: createDataClient({ db }),
+  data: createDataClient({ db, workerFactory: () => undefined }),
 };
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ServicesProvider services={services}>
-      <PlayerProvider>
-        <MemoryRouter initialEntries={[`/listen/${DEV_FIXTURE_BOOK_ID}`]}>
+      <MemoryRouter initialEntries={[`/listen/${DEV_FIXTURE_BOOK_ID}`]}>
+        <PlayerProvider>
           <Routes>
             <Route path="/listen/:id" element={<ListenRoute />} />
           </Routes>
-        </MemoryRouter>
-      </PlayerProvider>
+          <PlayerChrome />
+        </PlayerProvider>
+      </MemoryRouter>
     </ServicesProvider>
   </StrictMode>,
 );

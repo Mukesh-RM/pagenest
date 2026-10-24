@@ -1,4 +1,5 @@
-export { PlayerProvider, getAudioController } from './PlayerProvider';
+export { PlayerProvider, getAudioController, useAudioController } from './PlayerProvider';
+export { PlayerChrome } from './PlayerChrome';
 export { ListenRoute } from './ListenRoute';
 export { useIsPlaying, usePlayerStore, selectIsPlaying } from './audio-store';
 export { attachPlayerKeyboard } from './keyboard-shortcuts';
