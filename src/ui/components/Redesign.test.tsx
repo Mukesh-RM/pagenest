@@ -155,7 +155,8 @@ describe('BookCard and BookCover', () => {
     render(<BookCard book={{ id: 'y', title: 'Untitled Scans, Box 4', progress: 0.11 }} onOpen={() => undefined} />);
     expect(screen.getByRole('button', { name: 'Untitled Scans, Box 4. 11% read' })).toBeInTheDocument();
     expect(screen.getByText('Unknown author')).toBeInTheDocument();
-    expect(document.querySelector('.pn-cover--generated')).not.toBeNull();
+    // Cards use the monogram tile; the detail sheet keeps the full title card (no monogram prop).
+    expect(document.querySelector('.pn-cover--monogram')).not.toBeNull();
   });
 
   it('the generated title card color is stable per title and always one of the AA pairs', () => {

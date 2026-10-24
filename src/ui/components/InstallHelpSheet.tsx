@@ -103,7 +103,8 @@ export function InstallHelpSheet({
       >
         {installed
           ? 'PageNest is installed on this device. Open it from your home screen.'
-          : 'Installing is optional and free. It makes PageNest open full screen and work offline.'}
+          : 'Installing is optional and free. It makes PageNest open full screen'}
+        {installed ? null : offlineReady ? '.' : ' and work offline.'}
         {offlineReady ? ' Ready to use offline.' : ''}
       </p>
       {installed ? null : iosFirst ? [ios, android] : [android, ios]}

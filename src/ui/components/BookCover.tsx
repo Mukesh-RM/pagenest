@@ -21,6 +21,40 @@ export function titleCardIndex(title: string): number {
   return Math.abs(hash) % TITLE_CARD_COLORS.length;
 }
 
+/**
+ * Tiles for monogram covers: a white or near-black letter on a flat color. Every pair is 7:1 or better, so the letter
+ * passes AA in every theme and also the 7:1 of high contrast (a tile does not change with the theme). Checked in tests.
+ */
+export const MONOGRAM_COLORS: ReadonlyArray<{ background: string; foreground: string }> = [
+  { background: '#246058', foreground: '#ffffff' },
+  { background: '#6f382a', foreground: '#ffffff' },
+  { background: '#2a3f6f', foreground: '#ffffff' },
+  { background: '#482a6f', foreground: '#ffffff' },
+  { background: '#6f512a', foreground: '#ffffff' },
+  { background: '#256225', foreground: '#ffffff' },
+  { background: '#6f2a4d', foreground: '#ffffff' },
+  { background: '#2a586f', foreground: '#ffffff' },
+  { background: '#cbebe7', foreground: '#111111' },
+  { background: '#ebe1cb', foreground: '#111111' },
+  { background: '#cbd5eb', foreground: '#111111' },
+  { background: '#ebcbdb', foreground: '#111111' },
+];
+
+/** First letter (or digit) of the title, upper-cased. "" for a title with none. */
+export function monogramLetter(title: string): string {
+  for (const ch of Array.from(title.trim())) {
+    if (/[\p{L}\p{N}]/u.test(ch)) return ch.toLocaleUpperCase();
+  }
+  return '';
+}
+
+/** Stable tile pick from the title, same hash as the title card, so a book keeps its color on every device. */
+export function monogramIndex(title: string): number {
+  let hash = 5381;
+  for (let i = 0; i < title.length; i += 1) hash = ((hash << 5) + hash + title.charCodeAt(i)) | 0;
+  return Math.abs(hash) % MONOGRAM_COLORS.length;
+}
+
 export interface BookCoverProps {
   title: string;
   author?: string;
@@ -28,6 +62,13 @@ export interface BookCoverProps {
   src?: string;
   /** Eager loading for the first screen of covers (LCP); the default is lazy. */
   eager?: boolean;
+  /**
+   * Without an image (or when it fails), draw a colored tile with the first letter of the title and nothing else (no
+   * author, no title text) instead of the generated title card. Cards use it: a long title never has to fit a small tile.
+   */
+  monogram?: boolean;
+  /** `contain` (default) shows the whole 2:3 image, letterboxed on a neutral tile when its shape differs; `cover` fills and crops. */
+  fit?: 'contain' | 'cover';
   /** Draws the small "Favorite" heart in the bottom-left corner. Off by default; cards draw their own badges. */
   favorite?: boolean;
   className?: string;
@@ -38,14 +79,14 @@ export interface BookCoverProps {
  * designed title card with the title in Literata and the author in Inter. Decorative for screen readers: the
  * title and author are announced by the card or sheet that contains it.
  */
-export function BookCover({ title, author, src, eager, favorite, className }: BookCoverProps) {
+export function BookCover({ title, author, src, eager, favorite, monogram, fit = 'contain', className }: BookCoverProps) {
   const [failed, setFailed] = useState<string | undefined>();
   const showImage = Boolean(src) && failed !== src;
   if (showImage) {
     return (
       <span className={cx('pn-cover', className)}>
         <img
-          className="pn-cover__img"
+          className={cx('pn-cover__img', fit === 'cover' && 'pn-cover__img--fill')}
           src={src}
           alt=""
           width={200}
@@ -55,6 +96,18 @@ export function BookCover({ title, author, src, eager, favorite, className }: Bo
           draggable={false}
           onError={() => setFailed(src)}
         />
+        {favorite ? <FavoriteBadge /> : null}
+      </span>
+    );
+  }
+  if (monogram && monogramLetter(title)) {
+    const tile = MONOGRAM_COLORS[monogramIndex(title)]!;
+    const tileStyle = { '--pn-cover-bg': tile.background, '--pn-cover-fg': tile.foreground } as CSSProperties;
+    return (
+      <span className={cx('pn-cover', 'pn-cover--monogram', className)} style={tileStyle} aria-hidden={favorite ? undefined : 'true'}>
+        <span className="pn-cover__letter" aria-hidden="true">
+          {monogramLetter(title)}
+        </span>
         {favorite ? <FavoriteBadge /> : null}
       </span>
     );

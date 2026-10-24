@@ -4,6 +4,7 @@ import '../styles/screens.css';
 import '../styles/surfaces.css';
 import './gallery.css';
 import { AppShell } from '../components/AppShell';
+import { BookCard } from '../components/BookCard';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorNotice, PLAIN_ERRORS, type PlainErrorKind } from '../components/ErrorNotice';
@@ -52,6 +53,7 @@ import {
 export const GALLERY_SCREENS = [
   'library',
   'library-resume',
+  'covers',
   'library-loading',
   'library-empty',
   'library-error',
@@ -94,6 +96,49 @@ const NOW_PLAYING = SAMPLE_BOOKS[0]!;
 
 function Frame({ children }: { children: ReactNode }) {
   return <div className="pn-gallery-page">{children}</div>;
+}
+
+/** A plain rectangle as a cover image, to show how `contain` letterboxes pictures that are not 2:3. */
+function shapeCover(width: number, height: number, label: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}"><rect width="${width}" height="${height}" fill="#2a3f6f"/><text x="${width / 2}" y="${height / 2}" text-anchor="middle" dominant-baseline="middle" font-family="Georgia, serif" font-size="${Math.round(Math.min(width, height) / 6)}" fill="#ffffff">${label}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+/** Covers: monogram tiles with every badge, and pictures of other shapes shown whole. */
+function CoversDemo() {
+  const plain = SAMPLE_BOOKS.filter((b) => !b.coverUrl);
+  const pictures: BookSummary[] = [
+    { id: 'p1', title: 'Square picture', progress: 0.5, coverUrl: shapeCover(600, 600, '1 : 1') },
+    { id: 'p2', title: 'Wide picture', progress: 0.5, coverUrl: shapeCover(900, 600, '3 : 2') },
+    { id: 'p3', title: 'Tall picture', progress: 0.5, coverUrl: shapeCover(400, 600, '2 : 3') },
+  ];
+  const badged: BookSummary[] = [
+    { id: 'm1', title: 'Quiet Hours', progress: 1, favorite: true },
+    { id: 'm2', title: 'Nightjar', progress: 0.4, audio: true, favorite: true },
+    { id: 'm3', title: 'Orchard Keeper', progress: 1, audio: true, favorite: true },
+    { id: 'm4', title: 'Zebra Crossing', progress: 0 },
+  ];
+  const group = (label: string, books: readonly BookSummary[]) => (
+    <section aria-label={label}>
+      <h2 className="pn-gallery-h">{label}</h2>
+      <ul className="pn-gallery-covers">
+        {books.map((book) => (
+          <li key={book.id}>
+            <BookCard book={book} onOpen={noop} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+  return (
+    <Frame>
+      <div className="pn-gallery-stack">
+        {group('Monogram covers (no cover image)', plain)}
+        {group('Monogram with favorite, audio and finished badges', badged)}
+        {group('Pictures that are not 2:3 are shown whole', pictures)}
+      </div>
+    </Frame>
+  );
 }
 
 function LibraryDemo({
@@ -185,6 +230,7 @@ function LibraryDemo({
         onClose={() => setOpen(false)}
         onRead={noop}
         onListen={noop}
+        onEdit={noop}
         onRemove={noop}
       />
       {helpOpen ? <HelpOpener /> : null}
@@ -389,6 +435,8 @@ export function ScreenGallery({ screen, theme = 'light' }: { screen: GalleryScre
   switch (screen) {
     case 'library':
       return <LibraryDemo />;
+    case 'covers':
+      return <CoversDemo />;
     case 'library-resume':
       return <LibraryDemo welcome />;
     case 'library-loading':

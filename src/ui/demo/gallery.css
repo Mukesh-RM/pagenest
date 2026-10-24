@@ -21,3 +21,18 @@ body {
   display: grid;
   gap: var(--pn-space-8);
 }
+
+.pn-gallery-h {
+  margin: 0 0 var(--pn-space-4);
+  font-size: var(--pn-text-lg);
+  font-weight: var(--pn-weight-heading);
+}
+
+.pn-gallery-covers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--pn-space-6) var(--pn-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

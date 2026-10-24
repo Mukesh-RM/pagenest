@@ -13,15 +13,27 @@ export function FirstRunGate({ children, onboarding }: { children: ReactNode; on
 
   useEffect(() => {
     if (loaded && !done) wasOnboarding.current = true;
-    if (loaded && done && wasOnboarding.current) {
-      wasOnboarding.current = false;
-      // Design system screens render a plain h1; make it focusable (not tabbable) so focus can land on it.
+    if (!(loaded && done && wasOnboarding.current)) return;
+    wasOnboarding.current = false;
+    // Design system screens render a plain h1; make it focusable (not tabbable) so focus can land on it. The
+    // new screen may still be loading (its chunk, its first read), so wait for the heading for a moment.
+    const focusHeading = (): boolean => {
       const heading = document.querySelector<HTMLElement>('main h1');
-      if (heading) {
-        if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1;
-        heading.focus();
-      }
-    }
+      if (!heading) return false;
+      if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1;
+      heading.focus();
+      return true;
+    };
+    if (focusHeading()) return;
+    const observer = new MutationObserver(() => {
+      if (focusHeading()) observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    const giveUp = window.setTimeout(() => observer.disconnect(), 5000);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(giveUp);
+    };
   }, [loaded, done]);
 
   if (!loaded) return <div aria-busy="true" className="h-full" />;

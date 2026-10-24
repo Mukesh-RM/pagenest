@@ -27,6 +27,20 @@ export default defineConfig({
   ],
   // Workers are ES modules: the Library's import and search workers use dynamic import and nested workers.
   worker: { format: 'es' },
+  // The entry used to evaluate as one ~100 ms task at 4x CPU (a long task). Vendor code in its own chunks is parsed and
+  // compiled separately, which breaks that task up; the total first-load size is unchanged (they are modulepreloaded).
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules/react-dom')) return 'react-dom';
+          if (id.includes('node_modules/dexie')) return 'dexie';
+          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) return 'router';
+          return undefined;
+        },
+      },
+    },
+  },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

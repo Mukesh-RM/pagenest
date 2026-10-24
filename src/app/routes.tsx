@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { SnackbarProvider } from '@/ui';
 import { AppShell } from './AppShell';
+import { isReturningDevice } from './first-run-hint';
 import { FirstRunGate } from './onboarding/FirstRunGate';
 import { RouteChrome } from './RouteChrome';
 import { LISTEN_ROUTE, READ_ROUTE } from './route-paths';
@@ -18,8 +19,12 @@ import {
   preloadScreensWhenIdle,
 } from './screens';
 
-// Start the home screen's download now, in parallel with reading saved settings.
-preloadScreens(['library']);
+// Start the first screen's download now, in parallel with reading saved settings: the Library for a
+// device that finished onboarding before, onboarding for a new one (see first-run-hint.ts).
+preloadScreens([isReturningDevice() ? 'library' : 'onboarding']);
+
+/** How long after start the other tabs are fetched: past the first paint of the first screen. */
+const TAB_PRELOAD_DELAY_MS = 2000;
 
 /**
  * Design-system demo page, development only. `import.meta.env.DEV` is a build-time constant, so
@@ -34,7 +39,7 @@ function screen(element: JSX.Element, fallback: JSX.Element = <ScreenFallback />
 
 function AppScreens() {
   // When the browser is idle, fetch the other tabs so switching is instant (and works offline).
-  useEffect(() => preloadScreensWhenIdle(['collections', 'stats', 'settings', 'read', 'listen']), []);
+  useEffect(() => preloadScreensWhenIdle(['library', 'collections', 'stats', 'settings', 'read', 'listen'], TAB_PRELOAD_DELAY_MS), []);
   return (
     <FirstRunGate
       onboarding={

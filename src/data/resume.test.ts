@@ -81,6 +81,12 @@ describe('pickResume', () => {
     expect(info).toMatchObject({ bookId: 'b', title: 'Title b', author: 'Ann Lee', percent: 42, mode: 'read' });
   });
 
+  it('skips a position at 0 %: a book that was only opened has nothing to come back to', () => {
+    const info = pickResume([row('a', 100, { percent: 20 }), row('b', 300, { percent: 0 })], books, none);
+    expect(info).toMatchObject({ bookId: 'a', percent: 20 });
+    expect(pickResume([row('b', 300, { percent: 0 })], books, none)).toBeUndefined();
+  });
+
   it('keeps the exact locator so a reader can land on the same spot', () => {
     const where = reflow(6, 1234);
     expect(pickResume([row('a', 1, { locator: where })], books, none)?.locator).toEqual(where);
@@ -117,6 +123,17 @@ describe('loadResume', () => {
   });
 
   it('is undefined for an empty database', async () => {
+    expect(await loadResume(db)).toBeUndefined();
+  });
+
+  it('returns nothing when the newest position is at 0 % (opened, not read), and falls back to an older book that was read', async () => {
+    await db.books.bulkAdd([book('b1', { title: 'Opened only' }), book('b2', { title: 'Half read' })]);
+    await db.progress.bulkAdd([
+      { bookId: 'b1', mode: 'read', locator: reflow(0), percent: 0, updatedAt: 900 },
+      { bookId: 'b2', mode: 'read', locator: reflow(3), percent: 50, updatedAt: 800 },
+    ]);
+    expect(await loadResume(db)).toMatchObject({ bookId: 'b2', percent: 50 });
+    await db.progress.where('bookId').equals('b2').delete();
     expect(await loadResume(db)).toBeUndefined();
   });
 

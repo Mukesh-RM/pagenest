@@ -3,8 +3,7 @@ import { SnackbarProvider } from '@/ui';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResumeInfo } from '@/data/resume';
-import { LibraryResume, LibraryResumeSkeleton, RESUME_CARD_HEIGHT_REM } from './components/LibraryResume';
-import { hadResumeCard, rememberResumeCard } from './resume-hint';
+import { LibraryResume } from './components/LibraryResume';
 import { LibraryRoute } from './pages/LibraryRoute';
 import { ServicesProvider } from './services';
 import { makeServices, renderApp, resetSettings } from './test-utils';
@@ -65,22 +64,6 @@ describe('LibraryResume (design system Welcome back card)', () => {
     render(<LibraryResume info={{ ...info, mode: 'listen', kind: 'audio' }} onResume={() => undefined} onDismiss={() => undefined} />);
     expect(screen.getByRole('button', { name: 'Keep listening' })).toBeInTheDocument();
   });
-
-  it('the skeleton reserves the height in rem, so it follows the text size', () => {
-    const { container } = render(<LibraryResumeSkeleton />);
-    expect((container.firstElementChild as HTMLElement).style.height).toBe(`${RESUME_CARD_HEIGHT_REM}rem`);
-  });
-});
-
-describe('resume hint', () => {
-  beforeEach(() => localStorage.clear());
-  it('round-trips', () => {
-    expect(hadResumeCard()).toBe(false);
-    rememberResumeCard(true);
-    expect(hadResumeCard()).toBe(true);
-    rememberResumeCard(false);
-    expect(hadResumeCard()).toBe(false);
-  });
 });
 
 describe('Library resume card', () => {
@@ -131,7 +114,6 @@ describe('Library resume card', () => {
         name: 'The Long Road Home',
       }),
     ).toBeInTheDocument();
-    await waitFor(() => expect(hadResumeCard()).toBe(true));
     services.db.close();
   });
 
@@ -157,9 +139,10 @@ describe('Library resume card', () => {
     services.db.close();
   });
 
-  it('reserves the card space with a skeleton while loading when the last visit had a card', async () => {
-    rememberResumeCard(true);
+  it('draws the Library and the Welcome back card in the same frame: the title and toolbar never move when the card arrives', async () => {
     const services = await launch();
+    await services.db.books.add({ id: 'b9', fingerprint: 'f9', kind: 'ebook', format: 'epub', title: 'Steady Book', addedAt: 1, favorite: false, finished: false });
+    await services.progress.save('b9', 'read', { kind: 'reflow', section: 0, textOffset: 5 }, 30);
     const { container } = render(
       <MemoryRouter>
         <ServicesProvider services={services}>
@@ -169,8 +152,23 @@ describe('Library resume card', () => {
         </ServicesProvider>
       </MemoryRouter>,
     );
-    expect(container.querySelector('[aria-hidden="true"][style*="rem"]')).not.toBeNull();
-    await screen.findByText('Your library is empty');
+    // Before the saved position is read there is only the skeleton: no Library title that could be pushed down.
+    expect(screen.queryByRole('heading', { level: 1, name: 'Library' })).toBeNull();
+    expect(container.querySelector('[aria-busy="true"], [role="status"]')).not.toBeNull();
+    const title = await screen.findByRole('heading', { level: 1, name: 'Library' });
+    // The moment the title exists, the card is already there.
+    expect(title).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    services.db.close();
+  });
+
+  it('does not offer to resume a book that was opened but not read yet (0 %)', async () => {
+    const services = await launch();
+    await services.db.books.add({ id: 'z0', fingerprint: 'z0', kind: 'ebook', format: 'epub', title: 'Not Started Yet', addedAt: 1, favorite: false, finished: false });
+    await services.progress.save('z0', 'read', { kind: 'reflow', section: 0, textOffset: 0 }, 0);
+    renderApp(services);
+    await screen.findAllByText('Not Started Yet');
+    expect(screen.queryByText(/Welcome back/)).toBeNull();
     services.db.close();
   });
 });

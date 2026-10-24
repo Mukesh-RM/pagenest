@@ -36,4 +36,8 @@ describe('service worker precache configuration (vite.config.ts)', () => {
   it('builds ES-module workers (the Library workers use dynamic import and nested workers)', () => {
     expect(config).toMatch(/worker:\s*\{\s*format:\s*'es'\s*\}/);
   });
+
+  it('splits react-dom, dexie and the router into their own chunks, so the entry does not evaluate as one long task', () => {
+    for (const name of ['react-dom', 'dexie', 'router']) expect(config).toContain(`return '${name}'`);
+  });
 });

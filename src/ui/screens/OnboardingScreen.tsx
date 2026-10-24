@@ -79,9 +79,10 @@ export function OnboardingScreen({ step, onNext, onBack, onSkip, onDone, starter
       <section className="pn-onb__card" aria-describedby="pn-onb-step">
         {step === 0 ? (
           <>
-            <div className="pn-onb__hero">
-              <AppMark size={96} />
+            <div className="pn-onb__hero pn-onb__hero--mark">
+              <AppMark size={112} />
             </div>
+            <div className="pn-onb__content">
             <h1 ref={heading} tabIndex={-1} className="pn-onb__title">
               Your books, your voice, no account.
             </h1>
@@ -99,12 +100,14 @@ export function OnboardingScreen({ step, onNext, onBack, onSkip, onDone, starter
                 </li>
               ))}
             </ul>
+            </div>
           </>
         ) : step === 1 ? (
           <>
             <div className="pn-onb__hero pn-onb__hero--art">
               <Illustration name="shelf" />
             </div>
+            <div className="pn-onb__content">
             <h1 ref={heading} tabIndex={-1} className="pn-onb__title">
               A home for your books
             </h1>
@@ -124,13 +127,19 @@ export function OnboardingScreen({ step, onNext, onBack, onSkip, onDone, starter
                 Add your book
               </Button>
             ) : null}
+            </div>
           </>
         ) : (
           <>
+            <div className="pn-onb__hero pn-onb__hero--art">
+              <Illustration name="done" />
+            </div>
+            <div className="pn-onb__content">
             <h1 ref={heading} tabIndex={-1} className="pn-onb__title">
               Pick a look
             </h1>
             <div className="pn-onb__look">{look}</div>
+            </div>
           </>
         )}
       </section>

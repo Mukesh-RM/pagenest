@@ -38,8 +38,8 @@ export interface SettingsScreenProps {
 }
 
 /**
- * Settings (blueprint 5.6) in grouped cards: Appearance (theme cards with a clear selected state and Custom colors,
- * text size to 200%, a live sample), Install help, Storage and About. Presentational: the app saves what changes.
+ * Settings (blueprint 5.6) in grouped cards: Appearance (theme cards with a clear selected state, Custom colors and contrast),
+ * Reading (text size to 200% with a live sample), Install help, Storage and About. Presentational: the app saves what changes.
  * Every group is a labelled section, so a screen reader can jump between them.
  */
 export function SettingsScreen({
@@ -76,6 +76,12 @@ export function SettingsScreen({
             onChange={onContrastModeChange}
           />
         ) : null}
+      </section>
+
+      <section aria-labelledby="pn-set-reading" className="pn-set-card">
+        <h2 id="pn-set-reading" className="pn-set-card__title">
+          Reading
+        </h2>
         <TextSizeControl value={textSize} onChange={onTextSizeChange} />
         <p className="pn-set-card__sample" data-testid="text-sample">
           The orchard was quiet that morning, and the light came through the leaves in long, slow bars.

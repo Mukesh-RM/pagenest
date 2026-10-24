@@ -4,6 +4,7 @@ import type { PageNestDB } from '@/data/db';
 import { clampFontSize, FONT_SIZE_DEFAULT, parseSavedFontSize } from './font-size';
 import { DEFAULT_CUSTOM_THEME, parseCustomTheme, type CustomThemeInput } from '@/ui/theme/custom';
 import { isContrastMode, type ContrastMode } from '@/ui/theme/themes';
+import { rememberOnboarded } from './first-run-hint';
 import { isThemePreference, type ThemePreference } from './themes';
 
 interface SettingsState {
@@ -108,6 +109,7 @@ export const useSettings = create<SettingsState>((set) => ({
       // Storage blocked or closed: keep the defaults and still show the app.
     }
     const size = parseSavedFontSize(font);
+    if (done !== undefined || theme !== undefined || font !== undefined) rememberOnboarded(done === true);
     set((state) => ({
       loaded: true,
       themePreference: isThemePreference(theme) ? theme : state.themePreference,
@@ -138,5 +140,6 @@ export const useSettings = create<SettingsState>((set) => ({
     set({ onboardingDone: true });
     await flushSettings();
     await persist(db, SETTING_KEYS.onboardingDone, true);
+    rememberOnboarded(true);
   },
 }));
