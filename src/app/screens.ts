@@ -32,14 +32,28 @@ export function preloadScreens(names: readonly ScreenName[]): void {
 
 /**
  * Warm the screens the user is likely to open next, when the browser is idle, so tab switches
- * and first launch never wait on the network. Returns a cancel function.
+ * and first launch never wait on the network. `delayMs` keeps the downloads out of the first paint. Returns a cancel function.
  */
-export function preloadScreensWhenIdle(names: readonly ScreenName[]): () => void {
-  const idle = (window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-  if (typeof idle === 'function') {
-    const handle = idle.call(window, () => preloadScreens(names), { timeout: 3000 });
-    return () => (window as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(handle);
+export function preloadScreensWhenIdle(names: readonly ScreenName[], delayMs = 0): () => void {
+  let cancelIdle = (): void => {};
+  const start = (): void => {
+    const idle = (window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    if (typeof idle === 'function') {
+      const handle = idle.call(window, () => preloadScreens(names), { timeout: 3000 });
+      cancelIdle = () => (window as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(handle);
+      return;
+    }
+    const timer = window.setTimeout(() => preloadScreens(names), 1500);
+    cancelIdle = () => window.clearTimeout(timer);
+  };
+  if (delayMs <= 0) {
+    start();
+    return () => cancelIdle();
   }
-  const timer = window.setTimeout(() => preloadScreens(names), 1500);
-  return () => window.clearTimeout(timer);
+  // Wait out the first paint first: these downloads are for the next tap, never for the first screen.
+  const wait = window.setTimeout(start, delayMs);
+  return () => {
+    window.clearTimeout(wait);
+    cancelIdle();
+  };
 }
