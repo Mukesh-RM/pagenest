@@ -260,3 +260,54 @@ test('tests/ QA toolchain is audited too (violations fail, doc has its table)', 
   assert.match(r.out, /bad@1\.0\.0/);
   assert.match(fs.readFileSync(path.join(root, 'docs', 'LICENSES.md'), 'utf8'), /QA toolchain \(tests\/, dev only\)/);
 });
+
+const SHARP_OVERRIDES = [
+  { name: '@img/sharp-libvips-*', version: '1.3.4', license: 'declared', scope: 'dev', distForbid: ['libvips', '@img/sharp'], reason: 'test' },
+  { name: '@img/sharp-*', version: '0.35.5', license: 'declared', scope: 'dev', distForbid: ['libvips', '@img/sharp'], reason: 'test' },
+];
+
+test('dev-only override with a name prefix accepts LGPL packages in the dev tree only', () => {
+  const pkg = (name, version, scope, license) => ({ name, version, scope, license, source: '' });
+  const rows = analyzePackages(
+    [
+      pkg('@img/sharp-libvips-linux-x64', '1.3.4', 'dev', 'LGPL-3.0-or-later'),
+      pkg('@img/sharp-win32-x64', '0.35.5', 'dev', 'Apache-2.0 AND LGPL-3.0-or-later'),
+      pkg('@img/sharp-libvips-linux-x64', '1.3.4', 'prod', 'LGPL-3.0-or-later'),
+      pkg('@img/sharp-win32-x64', '0.35.5', 'prod', 'Apache-2.0 AND LGPL-3.0-or-later'),
+      pkg('@img/sharp-libvips-linux-x64', '9.9.9', 'dev', 'LGPL-3.0-or-later'),
+      pkg('other-lgpl', '1.0.0', 'dev', 'LGPL-3.0-or-later'),
+    ],
+    { overrides: SHARP_OVERRIDES },
+  );
+  const by = (i) => rows.find((r, n) => n >= 0 && `${r.name}@${r.version}/${r.scope}` === i);
+  assert.equal(by('@img/sharp-libvips-linux-x64@1.3.4/dev').status, 'note');
+  assert.equal(by('@img/sharp-win32-x64@0.35.5/dev').status, 'note');
+  assert.equal(by('@img/sharp-libvips-linux-x64@1.3.4/prod').status, 'violation');
+  assert.match(by('@img/sharp-libvips-linux-x64@1.3.4/prod').reason, /PRODUCTION/);
+  assert.equal(by('@img/sharp-win32-x64@0.35.5/prod').status, 'violation');
+  assert.equal(by('@img/sharp-libvips-linux-x64@9.9.9/dev').status, 'violation', 'other versions need a new review');
+  assert.equal(by('other-lgpl@1.0.0/dev').status, 'violation', 'no blanket allow');
+});
+
+test('dev-only override fails when dist/ or public/ contain libvips or native binaries', async () => {
+  const root = tmp();
+  fs.mkdirSync(path.join(root, 'scripts'), { recursive: true });
+  write(root, 'scripts/audit-license-overrides.json', { overrides: SHARP_OVERRIDES });
+  write(root, 'package.json', { name: 'app' });
+  write(root, 'dist/assets/app.js', 'console.log("hello")');
+  assert.equal((await capture(['--root', root])).code, 0);
+  write(root, 'dist/assets/vendor.js', 'var x = require("@img/sharp-libvips-linux-x64")');
+  let r = await capture(['--root', root]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /dist\/assets\/vendor\.js: contains "@img\/sharp"/);
+  fs.rmSync(path.join(root, 'dist/assets/vendor.js'));
+  write(root, 'public/tool.node', 'x');
+  r = await capture(['--root', root]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /public\/tool\.node: native binary/);
+  fs.rmSync(path.join(root, 'public/tool.node'));
+  write(root, 'dist/lib/libvips-cpp.wasm', 'xx LIBVIPS xx');
+  r = await capture(['--root', root]);
+  assert.equal(r.code, 1);
+  assert.match(r.out, /contains "libvips"/);
+});
