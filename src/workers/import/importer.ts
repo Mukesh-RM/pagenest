@@ -4,14 +4,7 @@ import { BookRepositoryError, type NewChapter, type NewTrack } from '@/data/book
 import { computeFingerprint } from '@/data/fingerprint';
 import { naturalCompare, readRange } from './bytes';
 import { folderOf, lastFolderName, titleFromFileName } from './names';
-import { parseCbz } from './parsers/cbz';
-import { parseDocx } from './parsers/docx';
 import { parseEpub } from './parsers/epub';
-import { parseFb2 } from './parsers/fb2';
-import { parseHtml } from './parsers/html';
-import { parseMobi } from './parsers/mobi';
-import { parseMp4Chapters } from './parsers/mp4chapters';
-import { parsePdf } from './parsers/pdf';
 import type { ImportItem, ItemOutcome } from './protocol';
 import { imageType, sniffFile } from './sniff';
 import { UNSUPPORTED_MESSAGES, type ParsedMeta, type UnsupportedReason } from './types';
@@ -316,18 +309,18 @@ export class Importer {
         case 'epub':
           return await parseEpub(file);
         case 'docx':
-          return await parseDocx(file);
+          return await (await import('./parsers/docx')).parseDocx(file);
         case 'cbz':
-          return await parseCbz(file);
+          return await (await import('./parsers/cbz')).parseCbz(file);
         case 'mobi':
         case 'azw3':
-          return await parseMobi(file);
+          return await (await import('./parsers/mobi')).parseMobi(file);
         case 'fb2':
-          return await parseFb2(file);
+          return await (await import('./parsers/fb2')).parseFb2(file);
         case 'pdf':
-          return await parsePdf(file);
+          return await (await import('./parsers/pdf')).parsePdf(file);
         case 'html':
-          return await parseHtml(file);
+          return await (await import('./parsers/html')).parseHtml(file);
         case 'mp3':
         case 'm4a':
         case 'm4b':
@@ -338,7 +331,7 @@ export class Importer {
         case 'wav': {
           const meta = await this.deps.parseAudio(file).catch((): ParsedMeta => ({}));
           if ((format === 'm4b' || format === 'm4a') && !meta.chapters?.length) {
-            const chapters = await parseMp4Chapters(file).catch(() => []);
+            const chapters = await (await import('./parsers/mp4chapters')).parseMp4Chapters(file).catch(() => []);
             if (chapters.length > 0) meta.chapters = chapters;
           }
           return meta;

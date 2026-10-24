@@ -1,3 +1,4 @@
+import '../library.css';
 import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 import { PageHeader } from '@/app/components/PageHeader';
 import { useLibraryRevision } from '@/app/library-hooks';

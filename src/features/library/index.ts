@@ -1,4 +1,3 @@
-import './library.css';
 
 export { LibraryScreen } from './components/LibraryScreen';
 export type { LibraryViewProps } from './components/LibraryScreen';
