@@ -1,6 +1,6 @@
 # Wired screens at 360 px, integrate-2
 
-Production build of `feature/integrate-2` (the design system's Onboarding and Settings screens, the
+Production build of `feature/integrate-2` after merging `feature/library-2` 4349453 (the design system's Onboarding and Settings screens, the
 Library's Collections screen and Backup/Storage panels), at a 360 × 740 phone viewport, 2× pixel ratio,
 taken with touch input. The Library holds the real sample book (Peter Rabbit) from the real provider.
 Docs only: nothing in the app reads these files. PNGs are palette-optimised. The same run checked, on
