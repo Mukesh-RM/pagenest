@@ -117,14 +117,14 @@ describe('Collections on the design system screen', () => {
       title: 'Untouched',
       addedAt: 2,
       favorite: false,
-      finished: false,
+      finished: true,
     });
     await services.db.progress.put({ bookId: 'u1', mode: 'read', locator: { kind: 'reflow', section: 0, textOffset: 0 }, percent: 40, updatedAt: 5 });
     renderApp(services, { path: '/collections' });
     fireEvent.click(await screen.findByRole('button', { name: /^Unfinished/ }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Unfinished' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /^Half Read/ })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^Untouched/ })).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Untouched/ })).toBeNull());
   });
 });
 
