@@ -53,6 +53,9 @@ export default function ReaderScreen({ book, position }: BookScreenProps) {
 * Reader and Audio owners who want chrome to come and go on a tap (for example "tap to show the
   controls") should draw their own overlay inside the immersive screen. The tab bar is for navigation between tabs.
 
+Both book routes are `immersive` by route default, so the Reader and the Audiobook player draw their own top and bottom bars and
+safe areas. Neither needs `useRouteChrome` unless it wants the tab bar back (for example an error screen that offers the Library tabs).
+
 Under the hood: a small Zustand store, read with a selector (`useCurrentChrome`) that returns only
 `'full'` or `'immersive'`. Only the frame re-renders when that answer changes.
 Registration uses a layout effect, so there is no frame where the tab bar flashes on an immersive route.
@@ -78,7 +81,8 @@ const miniPlayerSlot: MiniPlayerSlot = {
   timers must live in the audio controller (a service or store), never in the component. Its "expand" action
   navigates with `pathForBook` (see `docs/READER_ROUTES.md`).
 * There is no registration yet in the app; until the Audio owner adds one, no mini-player shows.
-  Registering means adding it to the services created in `src/app/services.tsx`.
+  **Registration point:** `miniPlayerSlot` in the services object built in `src/app/services.tsx` (the Audio bot exports a ready-made
+  `miniPlayerSlot` from `@/features/player`). `MiniPlayerHost` renders it on `full` routes only.
 
 ## For UI/UX
 

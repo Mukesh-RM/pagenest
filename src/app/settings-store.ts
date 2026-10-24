@@ -3,6 +3,8 @@ import { getSetting, setSetting, SETTING_KEYS } from '@/data/settings';
 import type { PageNestDB } from '@/data/db';
 import { clampFontSize, FONT_SIZE_DEFAULT, parseSavedFontSize } from './font-size';
 import { DEFAULT_CUSTOM_THEME, parseCustomTheme, type CustomThemeInput } from '@/ui/theme/custom';
+import { isContrastMode, type ContrastMode } from '@/ui/theme/themes';
+import { rememberOnboarded } from './first-run-hint';
 import { isThemePreference, type ThemePreference } from './themes';
 
 interface SettingsState {
@@ -11,6 +13,8 @@ interface SettingsState {
   themePreference: ThemePreference;
   /** The Custom theme's colors (used when `themePreference` is `custom`); always valid hex. */
   customTheme: CustomThemeInput;
+  /** High contrast: `system` follows the device, or force `standard` / `high`. */
+  contrastMode: ContrastMode;
   /** App text size in px, always inside the allowed range. */
   fontSizePx: number;
   /** True once first-run onboarding was finished or skipped. */
@@ -21,6 +25,8 @@ interface SettingsState {
   setThemePreference: (db: PageNestDB, preference: ThemePreference) => Promise<void>;
   /** Change and save the Custom theme's colors. The change shows immediately. */
   setCustomTheme: (db: PageNestDB, colors: CustomThemeInput) => Promise<void>;
+  /** Change and save the contrast mode. The change shows immediately. */
+  setContrastMode: (db: PageNestDB, mode: ContrastMode) => Promise<void>;
   /** Change and save the app text size (clamped). The change shows immediately. */
   setFontSizePx: (db: PageNestDB, px: number) => Promise<void>;
   /** Mark onboarding as finished, for both Done and Skip. Never shown again. */
@@ -82,17 +88,20 @@ export const useSettings = create<SettingsState>((set) => ({
   loaded: false,
   themePreference: 'system',
   customTheme: { ...DEFAULT_CUSTOM_THEME },
+  contrastMode: 'system',
   fontSizePx: FONT_SIZE_DEFAULT,
   onboardingDone: false,
   async load(db) {
     let theme: unknown;
     let custom: unknown;
+    let contrast: unknown;
     let font: unknown;
     let done: unknown;
     try {
-      [theme, custom, font, done] = await Promise.all([
+      [theme, custom, contrast, font, done] = await Promise.all([
         getSetting<unknown>(db, SETTING_KEYS.appTheme),
         getSetting<unknown>(db, SETTING_KEYS.customTheme),
+        getSetting<unknown>(db, SETTING_KEYS.contrastMode),
         getSetting<unknown>(db, SETTING_KEYS.fontSizePx),
         getSetting<unknown>(db, SETTING_KEYS.onboardingDone),
       ]);
@@ -100,10 +109,12 @@ export const useSettings = create<SettingsState>((set) => ({
       // Storage blocked or closed: keep the defaults and still show the app.
     }
     const size = parseSavedFontSize(font);
+    if (done !== undefined || theme !== undefined || font !== undefined) rememberOnboarded(done === true);
     set((state) => ({
       loaded: true,
       themePreference: isThemePreference(theme) ? theme : state.themePreference,
       customTheme: parseCustomTheme(custom) ?? state.customTheme,
+      contrastMode: isContrastMode(contrast) ? contrast : state.contrastMode,
       fontSizePx: size ?? state.fontSizePx,
       onboardingDone: done === true || state.onboardingDone,
     }));
@@ -116,6 +127,10 @@ export const useSettings = create<SettingsState>((set) => ({
     set({ customTheme: colors });
     await persist(db, SETTING_KEYS.customTheme, colors);
   },
+  async setContrastMode(db, mode) {
+    set({ contrastMode: mode });
+    await persist(db, SETTING_KEYS.contrastMode, mode);
+  },
   async setFontSizePx(db, px) {
     const size = clampFontSize(px);
     set({ fontSizePx: size });
@@ -125,5 +140,6 @@ export const useSettings = create<SettingsState>((set) => ({
     set({ onboardingDone: true });
     await flushSettings();
     await persist(db, SETTING_KEYS.onboardingDone, true);
+    rememberOnboarded(true);
   },
 }));

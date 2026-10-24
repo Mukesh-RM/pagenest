@@ -1,8 +1,7 @@
-import { useRef } from 'react';
 import type { BookSummary } from '@/data/library-query';
-import type { RectLike } from '@/ui';
+import { VirtualList, type RectLike } from '@/ui';
+import { useLibraryGrid } from '@/ui/screens/libraryGrid';
 import type { ViewMode } from '../model';
-import { useGridWindow } from '../virtual';
 import { BookItem } from './BookItem';
 
 export interface BookListProps {
@@ -14,34 +13,39 @@ export interface BookListProps {
   onSelect: (book: BookSummary) => void;
 }
 
+/** Width and height drawn from until the real ones are measured (first paint and tests). */
+const FIRST_SIZE = { width: 360, height: 760 } as const;
+
+const keyOf = (book: BookSummary): string => book.id;
+
 /**
- * The grid and the list, in the design system's own layout (`pn-library__grid`). Both are windowed
- * against the page scroll: however many books there are, only the rows near the screen are in the
- * page, and padding stands in for the rest.
+ * The grid and the list: the design system's shared `VirtualList`, with the columns and gaps of the
+ * design system's own library grid, so a windowed library looks like a plain one. However many books
+ * there are, only the rows near the screen are in the page.
  */
 export function BookList({ books, selection, selecting, view, onOpen, onSelect }: BookListProps) {
-  const ref = useRef<HTMLUListElement>(null);
-  const { start, end, padTop, padBottom } = useGridWindow(ref, books.length, view);
-  const drawn = books.slice(start, end);
+  const grid = useLibraryGrid(view);
   return (
-    <ul
-      ref={ref}
-      className={view === 'list' ? 'pn-library__grid pn-library__grid--list' : 'pn-library__grid'}
+    <VirtualList<BookSummary>
+      items={books}
       aria-label="Books"
-      style={{ paddingTop: padTop, paddingBottom: padBottom, overflowAnchor: 'none' }}
-    >
-      {drawn.map((book, i) => (
-        <li key={book.id} className="pn-library__item" aria-setsize={books.length} aria-posinset={start + i + 1}>
-          <BookItem
-            book={book}
-            selected={selecting ? selection.has(book.id) : undefined}
-            view={view}
-            eager={start + i < 6}
-            onOpen={onOpen}
-            onSelect={onSelect}
-          />
-        </li>
-      ))}
-    </ul>
+      className="pn-library__virtual"
+      columns={grid.columns}
+      gap={grid.spec.gap}
+      rowGap={grid.spec.rowGap}
+      estimatedRowHeight={view === 'list' ? 88 : 280}
+      initialSize={FIRST_SIZE}
+      getKey={keyOf}
+      renderItem={(book, index) => (
+        <BookItem
+          book={book}
+          selected={selecting ? selection.has(book.id) : undefined}
+          view={view}
+          eager={index < 6}
+          onOpen={onOpen}
+          onSelect={onSelect}
+        />
+      )}
+    />
   );
 }

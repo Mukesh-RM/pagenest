@@ -14,6 +14,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const { db } = useServices();
   const preference = useSettings((s) => s.themePreference);
   const customTheme = useSettings((s) => s.customTheme);
+  const contrastMode = useSettings((s) => s.contrastMode);
+  const setContrast = useSettings((s) => s.setContrastMode);
   const fontSizePx = useSettings((s) => s.fontSizePx);
   const load = useSettings((s) => s.load);
   const setPreference = useSettings((s) => s.setThemePreference);
@@ -26,10 +28,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyTextSize(fontSizePx);
   }, [fontSizePx]);
 
+  const onContrastModeChange = useCallback((next: typeof contrastMode) => void setContrast(db, next), [db, setContrast]);
   const onModeChange = useCallback((mode: typeof preference) => void setPreference(db, mode), [db, setPreference]);
 
   return (
-    <DesignThemeProvider mode={preference} customTheme={customTheme} onModeChange={onModeChange}>
+    <DesignThemeProvider mode={preference} customTheme={customTheme} onModeChange={onModeChange} contrastMode={contrastMode} onContrastModeChange={onContrastModeChange}>
       {children}
     </DesignThemeProvider>
   );

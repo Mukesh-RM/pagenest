@@ -92,3 +92,21 @@ describe('theme preference and the custom theme', () => {
     expect(await getSetting(db, 'fontSizePx')).toBe(32);
   });
 });
+
+describe('contrast mode', () => {
+  it('defaults to following the device, saves a change at once, and a fresh store reads it back', async () => {
+    expect(useSettings.getState().contrastMode).toBe('system');
+    await useSettings.getState().setContrastMode(db, 'high');
+    expect(useSettings.getState().contrastMode).toBe('high');
+    expect(await getSetting(db, 'contrastMode')).toBe('high');
+    resetSettings();
+    await useSettings.getState().load(db);
+    expect(useSettings.getState().contrastMode).toBe('high');
+  });
+
+  it('ignores a saved value that is not a contrast mode', async () => {
+    await db.settings.put({ key: 'contrastMode', value: 'extreme' });
+    await useSettings.getState().load(db);
+    expect(useSettings.getState().contrastMode).toBe('system');
+  });
+});

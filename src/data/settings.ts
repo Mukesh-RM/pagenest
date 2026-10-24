@@ -16,6 +16,8 @@ export const SETTING_KEYS = {
   appTheme: 'appTheme',
   /** The three colors of the Custom theme (`{ page, text, accent }` as `#rrggbb`). */
   customTheme: 'customTheme',
+  /** `ContrastMode`: `system` (follow `prefers-contrast`), `standard` or `high`. */
+  contrastMode: 'contrastMode',
   /** Text size in px for the whole app (see `src/app/font-size.ts`). */
   fontSizePx: 'fontSizePx',
   /** `true` once the first-run onboarding was finished or skipped. */

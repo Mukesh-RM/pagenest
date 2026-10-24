@@ -28,7 +28,7 @@ export function makeServices(prefix = 'pagenest-test'): AppServices {
 
 /** Put the settings store back to its first-run defaults. */
 export function resetSettings(): void {
-  useSettings.setState({ loaded: false, themePreference: 'system', customTheme: { ...DEFAULT_CUSTOM_THEME }, fontSizePx: 16, onboardingDone: false });
+  useSettings.setState({ loaded: false, themePreference: 'system', customTheme: { ...DEFAULT_CUSTOM_THEME }, contrastMode: 'system', fontSizePx: 16, onboardingDone: false });
 }
 
 /**

@@ -24,9 +24,25 @@
     <meta name="apple-mobile-web-app-title" content="PageNest" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
+
+    <!-- Boot screen: painted with the page stylesheet, before any script has run, so the first paint does not wait for the
+         app code. React replaces it on the first render. Inline style only (the CSP has no inline scripts). -->
+    <style>
+      #pn-boot {
+        display: flex;
+        box-sizing: border-box;
+        min-height: 100%;
+        align-items: center;
+        justify-content: center;
+        background: rgb(var(--pn-page, 250 250 247));
+        color: rgb(var(--pn-muted, 92 92 88));
+        font: 600 1.25rem/1.2 Georgia, 'Times New Roman', serif;
+        letter-spacing: 0.01em;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="pn-boot" aria-hidden="true">PageNest</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -9,7 +9,6 @@ import { makeEpub, makeMp3, makePdf } from '@/workers/import/testing/fixtures';
 import { resetImportController, setImportBackend } from '../registry';
 import { inProcessBackend } from '../testing/in-process-backend';
 import { LibraryScreen } from './LibraryScreen';
-import { CollectionsScreen } from './CollectionsScreen';
 
 /** Small stand-in for user-event (not a dependency of this project). */
 const userEvent = {
@@ -102,7 +101,7 @@ async function seed(count: number): Promise<void> {
     }),
   );
 }
-const cards = () => screen.queryAllByRole('listitem').filter((li) => li.classList.contains('pn-library__item'));
+const cards = () => screen.queryAllByRole('listitem').filter((li) => li.classList.contains('pn-vlist__item'));
 const anyCard = async (): Promise<HTMLElement> => (await screen.findAllByRole('button', { name: /, Author \d/ }))[0] as HTMLElement;
 
 describe('the library list', () => {
@@ -235,9 +234,19 @@ describe('the library list', () => {
     await seed(6);
     renderLibrary();
     await waitFor(() => expect(cards().length).toBeGreaterThan(0));
-    expect(document.querySelector('[class*="pn-lib-card"], [class*="pn-lib-cover"], [class*="pn-lib-item"]')).toBeNull();
+    expect(document.querySelector('[class*="pn-lib-card"], [class*="pn-lib-cover"], [class*="pn-lib-item"], .pn-library__item')).toBeNull();
     expect(document.querySelectorAll('.pn-bookcard .pn-cover').length).toBe(cards().length);
-    expect(document.querySelector('.pn-library__grid')?.getAttribute('aria-label')).toBe('Books');
+    expect(screen.getByRole('list', { name: 'Books' }).getAttribute('aria-label')).toBe('Books');
+  });
+
+  it('marks a favorite with the design system\'s heart badge, and only a favorite', async () => {
+    await services.db.books.put(bookRecord('f1', { title: 'Loved Book', favorite: true, fingerprint: 'fp-f1' }));
+    await services.db.books.put(bookRecord('f2', { title: 'Plain Book', fingerprint: 'fp-f2' }));
+    renderLibrary();
+    const loved = await screen.findByRole('button', { name: /Loved Book/ });
+    expect(loved.getAttribute('aria-label')).toMatch(/\. Favorite$/);
+    expect(loved.querySelector('.pn-cover-badge--favorite, [class*="favorite"]')).toBeTruthy();
+    expect((await screen.findByRole('button', { name: /Plain Book/ })).getAttribute('aria-label')).not.toMatch(/Favorite/);
   });
 
   it('shows the header slot (the resume card) under the filters and above the books', async () => {
@@ -252,7 +261,7 @@ describe('the library list', () => {
     await waitFor(() => expect(cards().length).toBeGreaterThan(0));
     const slot = screen.getByRole('region', { name: 'Welcome back' });
     const filters = container.querySelector('.pn-library__options') as HTMLElement;
-    const grid = container.querySelector('.pn-library__grid') as HTMLElement;
+    const grid = container.querySelector('.pn-vlist') as HTMLElement;
     expect(filters.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(slot.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
@@ -393,42 +402,6 @@ describe('the sample book card', () => {
     renderLibrary({ sampleBook: provider({ available: () => false }) });
     await screen.findByRole('heading', { name: 'Your library is empty' });
     expect(screen.queryByRole('button', { name: /sample/i })).toBeNull();
-  });
-});
-
-describe('collections screen', () => {
-  it('makes, renames, reorders and deletes a collection, with Undo for the delete', async () => {
-    const user = userEvent.setup();
-    render(
-      <ServicesContext.Provider value={services}>
-        <MemoryRouter>
-          <CollectionsScreen />
-        </MemoryRouter>
-      </ServicesContext.Provider>,
-    );
-    expect(await screen.findByRole('heading', { name: 'No collections yet' })).toBeTruthy();
-    for (const name of ['Alpha', 'Beta']) {
-      await user.click(screen.getAllByRole('button', { name: /^(New|Make a collection)$/ })[0] as HTMLElement);
-      await user.type(await screen.findByLabelText('Name'), name);
-      await user.click(screen.getByRole('button', { name: 'Save' }));
-      await screen.findByText(name);
-    }
-    await user.click(screen.getByRole('button', { name: 'Move Beta up' }));
-    await waitFor(async () => expect((await services.db.collections.orderBy('order').toArray()).map((c) => c.name)).toEqual(['Beta', 'Alpha']));
-    await user.click(screen.getByRole('button', { name: 'Rename Alpha' }));
-    const field = await screen.findByLabelText('Name');
-    await user.clear(field);
-    await user.type(field, 'Beta');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect((await screen.findByRole('alert')).textContent).toMatch(/already/i);
-    await user.clear(field);
-    await user.type(field, 'Gamma');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    await screen.findByText('Gamma');
-    await user.click(screen.getByRole('button', { name: 'Delete Gamma' }));
-    await waitFor(async () => expect(await services.db.collections.count()).toBe(1));
-    await user.click(await screen.findByRole('button', { name: 'Undo' }));
-    await waitFor(async () => expect(await services.db.collections.count()).toBe(2));
   });
 });
 

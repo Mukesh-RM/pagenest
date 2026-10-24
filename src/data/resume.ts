@@ -61,7 +61,8 @@ export function resumeHeading(info: Pick<ResumeInfo, 'chapterNumber'>): string {
 
 /**
  * Choose what to resume from the saved positions, newest first: the most recently saved
- * position of a book that still exists and is not finished (below 100 %, not marked finished).
+ * position of a book that still exists, was really started (above 0 %) and is not finished (below 100 %,
+ * not marked finished). A book opened but not read yet has nothing to come back to.
  */
 export function pickResume(
   rows: readonly ProgressRow[],
@@ -70,7 +71,7 @@ export function pickResume(
 ): ResumeInfo | undefined {
   for (const row of [...rows].sort((a, b) => b.updatedAt - a.updatedAt)) {
     const book = books.get(row.bookId);
-    if (!book || book.finished || row.percent >= 100) continue;
+    if (!book || book.finished || row.percent >= 100 || row.percent <= 0) continue;
     const chapter = chapterForLocator(chaptersOf(row.bookId), row.locator);
     return {
       bookId: book.id,
@@ -101,7 +102,7 @@ export async function loadResume(db: PageNestDB): Promise<ResumeInfo | undefined
   // Chapters only for the book that will be chosen.
   const first = rows.find((r) => {
     const b = books.get(r.bookId);
-    return b && !b.finished && r.percent < 100;
+    return b && !b.finished && r.percent < 100 && r.percent > 0;
   });
   const chapters = first ? await db.chapters.where('bookId').equals(first.bookId).toArray() : [];
   return pickResume(rows, books, () => chapters);
