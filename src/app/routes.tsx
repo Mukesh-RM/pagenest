@@ -10,13 +10,17 @@ import { ImmersiveFallback, OnboardingFallback, ScreenFallback } from './ScreenF
 import {
   CollectionsScreen,
   LibraryScreen,
+  ListenScreen,
   OnboardingScreen,
+  ReadScreen,
   SettingsScreen,
   StatsScreen,
   preloadScreens,
   preloadScreensWhenIdle,
 } from './screens';
-import { DynamicImmersiveScreen } from './DynamicImmersiveScreen';
+
+// Start the first screen's download now, in parallel with reading saved settings.
+preloadScreens([isReturningDevice() ? 'library' : 'onboarding']);
 
 /** How long after start the other tabs are fetched: past the first paint of the first screen. */
 const TAB_PRELOAD_DELAY_MS = 2000;
@@ -33,10 +37,6 @@ function screen(element: JSX.Element, fallback: JSX.Element = <ScreenFallback />
 }
 
 function AppScreens() {
-  // Start the first screen's download after mount (keeps Vite's preload helper out of the entry chunk).
-  useEffect(() => {
-    preloadScreens([isReturningDevice() ? 'library' : 'onboarding']);
-  }, []);
   // When the browser is idle, fetch the other tabs so switching is instant (and works offline).
   useEffect(() => preloadScreensWhenIdle(['library', 'collections', 'stats', 'settings'], TAB_PRELOAD_DELAY_MS), []);
   return (
@@ -56,11 +56,11 @@ function AppScreens() {
           {/* Book screens are immersive by default; a screen can override it with useRouteChrome (docs/ROUTE_CHROME.md). */}
           <Route
             path={READ_ROUTE}
-            element={<RouteChrome chrome="immersive">{screen(<DynamicImmersiveScreen kind="read" />, <ImmersiveFallback />)}</RouteChrome>}
+            element={<RouteChrome chrome="immersive">{screen(<ReadScreen />, <ImmersiveFallback />)}</RouteChrome>}
           />
           <Route
             path={LISTEN_ROUTE}
-            element={<RouteChrome chrome="immersive">{screen(<DynamicImmersiveScreen kind="listen" />, <ImmersiveFallback />)}</RouteChrome>}
+            element={<RouteChrome chrome="immersive">{screen(<ListenScreen />, <ImmersiveFallback />)}</RouteChrome>}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

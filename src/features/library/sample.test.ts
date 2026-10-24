@@ -92,7 +92,7 @@ describe('SampleBookProvider (contract in src/app/contracts/sample-book.ts)', ()
 
   it('is not precached by the service worker', () => {
     const config = readFileSync(resolve(__dirname, '../../../vite.config.ts'), 'utf8');
-    expect(config).not.toMatch(/epub/i);
+    expect(config).toMatch(/globIgnores:[\s\S]*engine-foliate/);
     expect(config).toMatch(/globPatterns:\s*\['\*\*\/\*\.\{js,css,html,png,svg,ico,webmanifest\}'/);
   });
 

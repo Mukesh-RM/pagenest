@@ -34,7 +34,7 @@ describe('performance rules for src/app', () => {
     const offenders = files.filter((f) => staticImport.test(f.text)).map((f) => f.name);
     expect(offenders).toEqual([]);
     const screens = files.find((f) => f.name.endsWith('screens.ts'))?.text ?? '';
-    for (const page of ['LibraryRoute', 'CollectionsPage', 'StatsPage', 'SettingsPage', 'onboarding/Onboarding']) {
+    for (const page of ['LibraryRoute', 'CollectionsPage', 'StatsPage', 'SettingsPage', 'ReadRoute', 'ListenRoute', 'onboarding/Onboarding']) {
       expect(screens).toContain(`import('./${page.includes('/') ? page : `pages/${page}`}')`);
     }
   });

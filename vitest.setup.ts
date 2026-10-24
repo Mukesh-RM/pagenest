@@ -8,7 +8,7 @@ vi.mock('@/engines/audio', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...(actual as Record<string, unknown>),
-    createAudioElement: () => createMockAudioElement(),
+    createAudioElement: vi.fn(() => createMockAudioElement()),
   };
 });
 
