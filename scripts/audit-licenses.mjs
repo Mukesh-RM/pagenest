@@ -18,6 +18,7 @@
 // Owner: Auditor.
 import fs from 'node:fs';
 import path from 'node:path';
+import { renderLicensesSection } from './audit-models.mjs';
 import { SCRIPTS_DIR, escapeMd, exists, isMain, parseArgs, readJson, readText, relPath, walk } from './audit-lib.mjs';
 
 // ---------------------------------------------------------------- policy
@@ -597,6 +598,9 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMod
   table('Planned stack (blueprint section 11, not installed yet)', plannedDeps, 'Expected licenses from the upstream projects. Once a package is installed it moves to the npm table above with the license read from the lockfile, and this row disappears.');
   table('Models and voice engines (planned)', planned.models, 'Blueprint 9.3 and 10: the license of the model WEIGHTS is checked per model before it is added. For Piper, every voice has its own MODEL_CARD; record each voice here when added.');
 
+  const modelReg = readJson(path.join(SCRIPTS_DIR, 'audit-models.json'));
+  if (modelReg) out.push(...renderLicensesSection(modelReg));
+
   for (const sec of planned.sections || []) {
     out.push(`## ${sec.title}`, '');
     for (let i = 0; i < sec.paragraphs.length; i++) {
@@ -606,7 +610,7 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMod
     }
   }
 
-  out.push('## How to check', '', '```bash', 'node scripts/audit-licenses.mjs           # audit installed dependencies', 'node scripts/audit-licenses.mjs --write   # regenerate this file', 'node scripts/audit-licenses.mjs --check   # CI: fail if this file is stale', '```', '');
+  out.push('## How to check', '', '```bash', 'node scripts/audit-licenses.mjs           # audit installed dependencies', 'node scripts/audit-licenses.mjs --write   # regenerate this file', 'node scripts/audit-licenses.mjs --check   # CI: fail if this file is stale', 'node scripts/audit-models.mjs             # voices, models and model hosts referenced in the code must be OK in the registry', '```', '');
   return out.join('\n');
 }
 
