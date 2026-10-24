@@ -275,7 +275,8 @@ export async function expectTextScaleOk(page: Page, label: string, scale: number
   expect(r.rootPx / r.baseRootPx, `${label}: root font size did not scale (${r.baseRootPx} -> ${r.rootPx} px); the gate would test nothing`).toBeGreaterThanOrEqual(scale * 0.99);
   expect(r.bodyPx / r.baseBodyPx, `${label}: body text did not scale (${r.baseBodyPx} -> ${r.bodyPx} px); the gate would test nothing`).toBeGreaterThanOrEqual(scale * 0.97);
   expect(r.sampled, `${label}: no visible text found to scale`).toBeGreaterThan(0);
-  expect(r.unscaledText.length / r.sampled, `${label}: text that ignores the text size (${r.unscaledText.length} of ${r.sampled}):\n${r.unscaledText.slice(0, 8).map((t) => `  - ${t}`).join('\n')}`).toBeLessThanOrEqual(0.1);
+  // soft: report it, but keep running the overflow and reachability checks below so one run shows everything that is wrong
+  expect.soft(r.unscaledText.length / r.sampled, `${label}: text that ignores the text size (${r.unscaledText.length} of ${r.sampled}):\n${r.unscaledText.slice(0, 8).map((t) => `  - ${t}`).join('\n')}`).toBeLessThanOrEqual(0.1);
   await expectNoOverflow(page, label);
   await expectControlsReachable(page, label);
   return r;
