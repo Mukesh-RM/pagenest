@@ -78,8 +78,10 @@ export function themeOption(page: Page, name: string): Locator {
 /** Chooses a theme in Settings (blueprint 5.2: Light, Sepia, Dark, Black). */
 export async function chooseTheme(page: Page, theme: ThemeName): Promise<void> {
   await gotoTab(page, 'Settings');
-  await themeOption(page, theme).click();
-  await expect(themeRadio(page, theme)).toBeChecked();
+  const radio = page.getByRole('radio', { name: new RegExp(`^${theme}$`, 'i') });
+  // The radio input is visually hidden (sr-only) inside a themed card; its <label> receives the pointer.
+  await page.locator('label', { has: radio }).click();
+  await expect(radio).toBeChecked();
   await expect.poll(() => currentTheme(page)).toBe(theme);
 }
 
