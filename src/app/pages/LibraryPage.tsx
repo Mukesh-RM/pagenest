@@ -1,9 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { ImportResult } from '@/app/contracts';
 import { EmptyState, ProgressBar, SkeletonCard, SkeletonGroup } from '@/ui';
 import { loadResume } from '@/data/resume';
 import { PageHeader } from '../components/PageHeader';
 import { ResumeCard, ResumeCardSkeleton } from '../components/ResumeCard';
+import { SampleBookCard } from '../components/SampleBookCard';
+import { pathForBook } from '../route-paths';
 import { hadResumeCard, rememberResumeCard } from '../resume-hint';
 import { useServices } from '../services-context';
 
@@ -35,7 +39,22 @@ const BookCard = memo(function BookCard({ title, author, format, percent }: Book
 
 /** Library home. Lists what is in the database; shows the empty state when nothing was added yet. */
 export function LibraryPage() {
-  const { db, progress } = useServices();
+  const { db, progress, sampleBook } = useServices();
+  const navigate = useNavigate();
+  const here = useRef(true);
+  useEffect(() => {
+    here.current = true;
+    return () => {
+      here.current = false;
+    };
+  }, []);
+  // Open the sample once it is added, unless the person already left the Library meanwhile.
+  const openImported = useCallback(
+    (result: ImportResult) => {
+      if (here.current) navigate(pathForBook({ id: result.bookId, kind: result.kind }));
+    },
+    [navigate],
+  );
   const books = useLiveQuery(() => db.books.orderBy('addedAt').reverse().toArray(), [db]);
   const percents = useLiveQuery(async () => {
     const rows = await db.progress.toArray();
@@ -59,7 +78,7 @@ export function LibraryPage() {
   return (
     <>
       <PageHeader title="Library" />
-      {!ready ? null : resumeInfo ? <ResumeCard info={resumeInfo} /> : null}
+      {!ready ? null : resumeInfo ? <ResumeCard info={resumeInfo} href={pathForBook({ id: resumeInfo.bookId, kind: resumeInfo.kind })} /> : null}
       {!ready && hadCard ? <ResumeCardSkeleton /> : null}
       {!ready ? (
         <SkeletonGroup label="Loading your library">
@@ -72,11 +91,14 @@ export function LibraryPage() {
           </ul>
         </SkeletonGroup>
       ) : books.length === 0 ? (
-        <EmptyState
-          art="bookOpen"
-          title="Your shelf is waiting"
-          description="Books, PDFs and audiobooks you add will appear here, and they stay on this device. Adding files arrives in the next update."
-        />
+        <>
+          <EmptyState
+            art="bookOpen"
+            title="Your shelf is waiting"
+            description="Books, PDFs and audiobooks you add will appear here, and they stay on this device. Adding files arrives in the next update."
+          />
+          {sampleBook?.available() ? <SampleBookCard provider={sampleBook} onImported={openImported} /> : null}
+        </>
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {books.map((book) => (

@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { ProgressService } from '@/app/contracts';
+import type { ProgressService, SampleBookProvider } from '@/app/contracts';
 import type { DataClient } from '@/data/data-client';
 import type { PageNestDB } from '@/data/db';
 
@@ -9,6 +9,11 @@ export interface AppServices {
   readonly progress: ProgressService;
   /** Heavy work (file I/O, hashing, stats) that runs in a Web Worker. */
   readonly data: DataClient;
+  /**
+   * Optional "try a sample book" source, implemented by the Library. Without it the Library shows
+   * no sample card at all (see `SampleBookProvider`).
+   */
+  readonly sampleBook?: SampleBookProvider;
 }
 
 export const ServicesContext = createContext<AppServices | undefined>(undefined);

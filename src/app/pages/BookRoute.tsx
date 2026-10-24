@@ -1,0 +1,80 @@
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { loadBookPosition, type ResumeInfo } from '@/data/resume';
+import type { BookRecord } from '@/data/schema';
+import { EmptyState } from '@/ui';
+import { ScreenFallback } from '../ScreenFallback';
+import { pathForBook } from '../route-paths';
+import { useServices } from '../services-context';
+
+const ReaderScreen = lazy(() => import('./ReaderScreen'));
+const PlayerScreen = lazy(() => import('./PlayerScreen'));
+
+type Loaded =
+  | { status: 'loading' }
+  | { status: 'missing' }
+  | { status: 'ready'; book: BookRecord; position: ResumeInfo | undefined };
+
+/**
+ * Shared by `/read/:id` and `/listen/:id`: loads the book by id from the database, shows a real
+ * "not found" for an unknown id, sends a book opened on the wrong route to the right one, and
+ * otherwise renders the reader or player screen with the book and its saved position.
+ */
+function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
+  const { id = '' } = useParams();
+  const { db, progress } = useServices();
+  const navigate = useNavigate();
+  const [state, setState] = useState<{ id: string; value: Loaded }>({ id, value: { status: 'loading' } });
+
+  useEffect(() => {
+    let current = true;
+    const done = (value: Loaded): void => {
+      if (current) setState({ id, value });
+    };
+    db.books.get(id).then(
+      async (book) => {
+        if (!book) return done({ status: 'missing' });
+        const position = await loadBookPosition(db, progress, id).catch(() => undefined);
+        done({ status: 'ready', book, position });
+      },
+      () => done({ status: 'missing' }),
+    );
+    return () => {
+      current = false;
+    };
+  }, [db, progress, id]);
+
+  // A different id than the one loaded means the new book is still loading.
+  const loaded = state.id === id ? state.value : ({ status: 'loading' } as const);
+
+  if (loaded.status === 'loading') return <ScreenFallback />;
+  if (loaded.status === 'missing') {
+    return (
+      <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
+        <EmptyState
+          art="bookOpen"
+          title="We can't find that book"
+          description="It may have been removed from this device. Your library still has everything else."
+          action={{ label: 'Go to Library', onClick: () => navigate('/', { replace: true }) }}
+        />
+      </div>
+    );
+  }
+  const { book, position } = loaded;
+  const rightPath = pathForBook(book);
+  const wrongKind = (book.kind === 'audio') !== (expected === 'listen');
+  if (wrongKind) return <Navigate to={rightPath} replace />;
+  return (
+    <Suspense fallback={<ScreenFallback />}>
+      {expected === 'listen' ? <PlayerScreen book={book} position={position} /> : <ReaderScreen book={book} position={position} />}
+    </Suspense>
+  );
+}
+
+export function ReadRoute() {
+  return <BookRoute expected="read" />;
+}
+
+export function ListenRoute() {
+  return <BookRoute expected="listen" />;
+}

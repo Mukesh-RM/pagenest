@@ -2,11 +2,14 @@ import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './AppShell';
 import { FirstRunGate } from './onboarding/FirstRunGate';
+import { LISTEN_ROUTE, READ_ROUTE } from './route-paths';
 import { OnboardingFallback, ScreenFallback } from './ScreenFallback';
 import {
   CollectionsScreen,
   LibraryScreen,
+  ListenScreen,
   OnboardingScreen,
+  ReadScreen,
   SettingsScreen,
   StatsScreen,
   preloadScreens,
@@ -46,6 +49,9 @@ function AppScreens() {
           <Route path="settings" element={screen(<SettingsScreen />)} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        {/* Book screens use the whole window (no tab bar). Their own screens are replaceable: docs/READER_ROUTES.md. */}
+        <Route path={READ_ROUTE} element={screen(<ReadScreen />)} />
+        <Route path={LISTEN_ROUTE} element={screen(<ListenScreen />)} />
       </Routes>
     </FirstRunGate>
   );
