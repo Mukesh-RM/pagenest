@@ -123,6 +123,34 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
 * `BookDetailSheet`: `onRemove` now appears as "Remove from library" inside a "More options" (⋯) menu, never as a loose red button.
 * `ErrorNotice`: DRM, damaged and unsupported files never show "Try again" (`canRetry(kind)`); they add one plain help line.
 
+### Long lists: VirtualList (one windowing implementation)
+
+`VirtualList` (`components/VirtualList.tsx`, geometry in `utils/virtual.ts`) draws only the rows near the screen, so
+5,000 books cost the same to scroll as 30. Props: `items`, `renderItem(item, index)`, `getKey`, `columns` (a number, or a
+function of the list width: use `autoColumns(width, minItemWidth, gap)` for the CSS auto-fill rule), `gap`, `rowGap`,
+`rowHeight` (fixed, exact scrolling) **or** measured rows with `estimatedRowHeight` (rows not drawn yet use the average
+of the measured ones, rows re-measure when text size or width changes), `overscan` (rows, default 3), `scroller`
+(`window` default, or `self` for a box with its own height), `scrollPaddingTop` (sticky headers), `role` (`list` or
+`listbox`), `keyboardNav`, `initialSize`, `onRangeChange`. A ref gives `scrollToIndex(i, {align})` and `focusItem(i)`.
+
+- Rows move with `transform: translate3d`, never `top`; rows are `role="presentation"`, items are `listitem` (or
+  `option`) with `aria-posinset` and `aria-setsize` for the whole set ("12 of 4800").
+- Keyboard: Tab walks the drawn items; the focused item and its neighbouring rows stay drawn even when scrolled far away;
+  arrows move by item or row, Home/End jump to the first/last item, Page Up/Down move a screenful; text fields inside
+  items keep their keys; at the edges the key is not swallowed, so the page still scrolls.
+- `LibraryScreen` uses it only when there are more than `virtualizeAbove` books (default `LIBRARY_VIRTUALIZE_ABOVE` = 60);
+  smaller libraries render the plain CSS grid. `screens/libraryGrid.ts` mirrors the CSS grid (9/10/11/12 rem minimums,
+  the same gaps per breakpoint), so the windowed grid is pixel-identical to the plain one.
+- The Library feature's own `useWindowVirtual` (`src/features/library/virtual.ts`) is a second implementation of the same
+  idea; recommendation: Library adopts `VirtualList` and deletes it (same geometry: columns from auto-fill, row pitch,
+  overscan; plus keyboard, ARIA set size, measured rows and focus retention).
+
+### Motion rule
+
+CSS transitions and keyframes may only change `transform`, `opacity` (and `translate`, `scale`, `rotate`). Colors, borders,
+shadows and sizes swap instantly. `styles/motion-rules.test.ts` fails otherwise, for `src/ui` and every other stylesheet
+under `src`; the documented `MOTION_ALLOW_LIST` there (file, selector, property, reason; stale entries fail) is empty today.
+
 ### High contrast (blueprint 5.8)
 
 `ThemeProvider` takes `contrastMode` ("system" | "standard" | "high", default "system" = `prefers-contrast: more`),
