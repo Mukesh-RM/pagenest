@@ -63,11 +63,23 @@ export function currentTheme(page: Page): Promise<string | undefined> {
   return page.evaluate(() => document.documentElement.dataset.theme);
 }
 
-/** Chooses a theme in Settings through the "Theme" radio group (blueprint 5.2: Light, Sepia, Dark, Black). */
+/**
+ * A theme option in Settings or onboarding. The app uses native radio inputs hidden behind a swatch label, so the label is
+ * what a finger or mouse hits (and Playwright cannot click the 1 px input itself). Pass "Match my phone" for system.
+ */
+export function themeRadio(page: Page, name: string): Locator {
+  return page.getByRole('radio', { name: new RegExp(`^${name}$`, 'i') });
+}
+
+export function themeOption(page: Page, name: string): Locator {
+  return themeRadio(page, name).locator('xpath=ancestor::label[1]');
+}
+
+/** Chooses a theme in Settings (blueprint 5.2: Light, Sepia, Dark, Black). */
 export async function chooseTheme(page: Page, theme: ThemeName): Promise<void> {
   await gotoTab(page, 'Settings');
-  const radio = page.getByRole('radio', { name: new RegExp(`^${theme}$`, 'i') });
-  await radio.check();
+  await themeOption(page, theme).click();
+  await expect(themeRadio(page, theme)).toBeChecked();
   await expect.poll(() => currentTheme(page)).toBe(theme);
 }
 

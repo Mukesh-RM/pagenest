@@ -52,7 +52,10 @@ export async function smallTargets(page: Page, minPx: number): Promise<Problem[]
     for (const el of document.querySelectorAll(sel)) {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden' || (el as HTMLElement).hidden) continue;
-      const r = el.getBoundingClientRect();
+      let r = el.getBoundingClientRect();
+      // Native radios and checkboxes: the whole label is the tap target, so measure the label when it is larger than the input.
+      const label = (el as HTMLInputElement).labels?.[0];
+      if (label && (el as HTMLInputElement).type !== 'text') { const lr = label.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
       if (r.width === 0 && r.height === 0) continue;
       if (el.tagName === 'A' && el.closest('p, li > span, dd')) { const p = el.closest('p'); if (p && (p.textContent ?? '').trim() !== (el.textContent ?? '').trim()) continue; }
       if (r.width < minPx - 0.5 || r.height < minPx - 0.5) {
@@ -76,13 +79,15 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
     for (const el of document.querySelectorAll(sel)) {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-      el.scrollIntoView({ block: 'center', inline: 'center' });
-      const r = el.getBoundingClientRect();
+      const label = (el as HTMLInputElement).labels?.[0];
+      const probe: Element = label && (el as HTMLInputElement).type !== 'text' ? label : el;
+      probe.scrollIntoView({ block: 'center', inline: 'center' });
+      const r = probe.getBoundingClientRect();
       const x = r.left + r.width / 2; const y = r.top + r.height / 2;
       const name = `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}"`;
       if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) { out.push({ what: 'control cannot be scrolled into view', where: name }); continue; }
       const top = document.elementFromPoint(x, y);
-      if (top && !(el === top || el.contains(top) || top.contains(el))) out.push({ what: 'control is covered', where: `${name} covered by ${top.tagName.toLowerCase()} "${(top.textContent ?? '').trim().slice(0, 30)}"` });
+      if (top && !(probe === top || probe.contains(top) || top.contains(probe))) out.push({ what: 'control is covered', where: `${name} covered by ${top.tagName.toLowerCase()} "${(top.textContent ?? '').trim().slice(0, 30)}"` });
     }
     document.querySelector('main')?.scrollTo(0, 0);
     return out;

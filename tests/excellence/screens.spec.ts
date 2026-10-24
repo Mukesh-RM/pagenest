@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { TABS, chooseTheme, gotoTab, launch, openSheet, primaryNav, sheet, tab, waitForServiceWorkerControl, type TabName } from '../e2e/support/app';
+import { TABS, chooseTheme, gotoTab, launch, openSheet, primaryNav, sheet, tab, themeOption, themeRadio, waitForServiceWorkerControl, type TabName } from '../e2e/support/app';
 import { expectNoA11yViolations, expectNoContrastViolations } from '../e2e/support/axe';
 import {
   expectControlsReachable, expectNoOverflow, expectTargetsBigEnough, longestMotion, readCls, recordLayoutShift,
@@ -22,8 +22,9 @@ test.describe('five themes (blueprint 5.2)', () => {
   test('Settings offers all five themes: Light, Sepia, Dark, Black and Custom', async ({ page }) => {
     await launch(page);
     await gotoTab(page, 'Settings');
-    const offered = await page.getByRole('radio').allInnerTexts();
-    const names = offered.map((n) => n.trim().toLowerCase());
+    const offered = await page.getByRole('radio').evaluateAll((els) =>
+      els.map((el) => ((el as HTMLInputElement).labels?.[0]?.textContent ?? el.getAttribute('aria-label') ?? '').trim()));
+    const names = offered.map((n) => n.toLowerCase());
     for (const theme of X.themes) {
       expect(names, `Theme "${theme}" is not offered in Settings. Offered: ${JSON.stringify(offered)}. Blueprint 5.2 lists five themes (Custom: "You pick").`).toContain(theme.toLowerCase());
     }
@@ -32,9 +33,9 @@ test.describe('five themes (blueprint 5.2)', () => {
   test('Custom theme: contrast is AA on every screen', async ({ page }) => {
     await launch(page);
     await gotoTab(page, 'Settings');
-    const custom = page.getByRole('radio', { name: /^custom$/i });
-    await expect(custom, 'No "Custom" theme option (blueprint 5.2); the app exposes only four themes').toBeVisible();
-    await custom.check();
+    const custom = themeRadio(page, 'Custom');
+    await expect(custom, 'No "Custom" theme option (blueprint 5.2); the app exposes only four themes').toHaveCount(1);
+    await themeOption(page, 'Custom').click();
     for (const name of TABS) {
       await gotoTab(page, name);
       await expectNoContrastViolations(page, `custom theme, ${name} screen`);
@@ -132,7 +133,7 @@ test.describe('reduced motion is respected', () => {
     }
     // while a change is happening, not only at rest
     await gotoTab(page, 'Settings');
-    await page.getByRole('radio', { name: /^dark$/i }).click();
+    await themeOption(page, 'Dark').click();
     const during = await longestMotion(page);
     expect(during.ms, `theme change: longest motion ${during.ms} ms at ${during.where}`).toBeLessThanOrEqual(X.reducedMotionMaxMs);
   });

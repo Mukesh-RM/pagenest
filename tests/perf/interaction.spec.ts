@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { TABS, installHelpButton, gotoTab, launch, sheet, tab, type TabName } from '../e2e/support/app';
+import { TABS, installHelpButton, gotoTab, launch, sheet, tab, themeOption, type TabName } from '../e2e/support/app';
 import { longTasks, measureInput, percentile, recordLongTasks, throttleCpu } from '../e2e/support/perf';
 import { BUDGETS } from './budgets';
 
@@ -45,7 +45,7 @@ test('choosing a theme repaints the app within the tap budget (p95)', async ({ p
     samples.push(await measureInput(
       page,
       `document.documentElement.dataset.theme === ${JSON.stringify(name.toLowerCase())}`,
-      () => page.getByRole('radio', { name: new RegExp(`^${name}$`, 'i') }).tap(),
+      () => themeOption(page, name).tap(),
     ));
   }
   const line = report('theme tap', samples);
