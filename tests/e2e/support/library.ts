@@ -141,7 +141,7 @@ export async function findCard(page: Page, text: string | RegExp): Promise<Locat
       }
     }
     const moved = await page.evaluate(() => { const before = scrollY; window.scrollBy(0, Math.max(200, innerHeight * 0.7)); return scrollY - before; });
-    await page.waitForTimeout(80);
+    await page.waitForTimeout(220);
     if (moved <= 0) break;
   }
   throw new Error(`No Library card with text ${String(text)} appeared while scrolling the whole list`);
@@ -154,7 +154,7 @@ export async function scanCards(page: Page): Promise<{ text: string; right: numb
   for (let i = 0; i < 60; i++) {
     for (const c of await bookCards(page).evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { text: (el.textContent ?? '').replace(/\s+/g, ' ').trim(), right: r.right, width: r.width }; }))) seen.set(c.text, c);
     const moved = await page.evaluate(() => { const before = scrollY; window.scrollBy(0, Math.max(200, innerHeight * 0.7)); return scrollY - before; });
-    await page.waitForTimeout(80);
+    await page.waitForTimeout(220);
     if (moved <= 0) break;
   }
   await page.evaluate(() => window.scrollTo(0, 0));

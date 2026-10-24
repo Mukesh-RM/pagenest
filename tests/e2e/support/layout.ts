@@ -60,7 +60,7 @@ export async function smallTargets(page: Page, minPx: number): Promise<Problem[]
       let r = el.getBoundingClientRect();
       // Native radios and checkboxes: the whole label is the tap target, so measure the label when it is larger than the input.
       const label = (el as HTMLInputElement).labels?.[0];
-      if (label && (el as HTMLInputElement).type !== 'text') { const lr = label.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
+      if (label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type)) { const lr = label.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
       if (r.width === 0 && r.height === 0) continue;
       if (el.tagName === 'A' && el.closest('p, li > span, dd')) { const p = el.closest('p'); if (p && (p.textContent ?? '').trim() !== (el.textContent ?? '').trim()) continue; }
       if (r.width < minPx - 0.5 || r.height < minPx - 0.5) {
@@ -81,12 +81,14 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
   return page.evaluate(() => {
     const out: { what: string; where: string }[] = [];
     const sel = 'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="radio"], [role="tab"], [role="switch"], [role="checkbox"]';
-    for (const el of document.querySelectorAll(sel)) {
+    // With a modal dialog open, everything behind it is meant to be covered by the scrim: judge only the controls inside the dialog.
+    const modal = [...document.querySelectorAll('[role="dialog"][aria-modal="true"], dialog[open]')].find((d) => !d.closest('[aria-hidden="true"]') && d.getAttribute('aria-hidden') !== 'true' && d.getBoundingClientRect().height > 0);
+    for (const el of (modal ?? document).querySelectorAll(sel)) {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') continue;
       const label = (el as HTMLInputElement).labels?.[0];
       if (!label && (el.getBoundingClientRect().width === 0 || el.getBoundingClientRect().height === 0)) continue; // not rendered (for example the tablet rail on a phone)
-      const probe: Element = label && (el as HTMLInputElement).type !== 'text' ? label : el;
+      const probe: Element = label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type) ? label : el;
       probe.scrollIntoView({ block: 'center', inline: 'center' });
       const r = probe.getBoundingClientRect();
       const x = r.left + r.width / 2; const y = r.top + r.height / 2;

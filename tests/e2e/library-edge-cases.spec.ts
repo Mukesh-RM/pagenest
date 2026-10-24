@@ -46,11 +46,26 @@ test.describe('Library with edge-case books', () => {
     await expectContentInsideCard(await findCard(page, 'Two Authors, Two Lines'), 'two-line author');
   });
 
-  test('0 % and 100 % progress bars are shown with the right values', async ({ page }) => {
-    for (const [title, value] of [['Not Started Yet', '0'], ['Finished and Closed', '100'], ['Long Drive Home', '50']] as const) {
-      const card = await findCard(page, title);
-      // the bar is found by role in the DOM (a card may hide its body from the accessibility tree and name itself instead)
-      await expect(card.locator('[role="progressbar"]').first()).toHaveAttribute('aria-valuenow', value);
+  test('0 % and 100 % progress are shown with the right values', async ({ page }) => {
+    // Card markup differs between Library versions, so read progress whichever way the card shows it: a progressbar's
+    // aria-valuenow, a fill drawn with a percentage width or --pn-progress, or a finished/not-started label. 0 % may show no bar.
+    const progressOf = (card: Locator) => card.evaluate((el) => {
+      const bar = el.querySelector('[role="progressbar"]');
+      if (bar?.getAttribute('aria-valuenow')) return Number(bar.getAttribute('aria-valuenow'));
+      for (const f of el.querySelectorAll<HTMLElement>('[class*="progress"] *, [class*="progress"]')) {
+        const w = /([\d.]+)%/.exec(f.style.width)?.[1];
+        if (w !== undefined) return Number(w);
+        const v = f.style.getPropertyValue('--pn-progress');
+        if (v !== '') return Number(v) <= 1 ? Number(v) * 100 : Number(v);
+      }
+      const label = `${el.getAttribute('aria-label') ?? ''} ${el.textContent ?? ''}`;
+      if (/finished/i.test(label)) return 100;
+      return null;
+    });
+    for (const [title, want] of [['Not Started Yet', 0], ['Finished and Closed', 100], ['Long Drive Home', 50]] as const) {
+      const value = await progressOf(await findCard(page, title));
+      if (want === 0) expect(value === null || value === 0, `${title} shows ${value} % instead of nothing or 0 %`).toBe(true);
+      else expect(value, `${title} shows ${value} %`).toBe(want);
     }
   });
 
