@@ -1,0 +1,33 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.npm/
+.eslintcache
+coverage/
+
+# Build output
+dist/
+.wrangler/
+playwright-report/
+test-results/
+
+# Models (never commit; downloaded on demand into OPFS)
+models/
+*.onnx
+*.onnx.json
+*.gguf
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

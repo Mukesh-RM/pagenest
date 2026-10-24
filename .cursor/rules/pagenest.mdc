@@ -1,0 +1,43 @@
+---
+description: PageNest stack and coding rules
+alwaysApply: true
+---
+
+# PageNest
+
+Free, offline-first PWA for e-books, PDFs and audiobooks. Source of truth: `docs/BLUEPRINT.md`.
+No login, no ads, no analytics, no payments, no backend.
+
+## Stack (blueprint section 11)
+
+- TypeScript, React 18 with Vite
+- Tailwind CSS plus CSS variables for themes; Radix UI primitives
+- Zustand (state), React Router
+- vite-plugin-pwa (Workbox), web app manifest, service worker
+- OPFS for files, IndexedDB through Dexie for data
+- Web Workers via Comlink
+- pdf.js (PDF), foliate-js (EPUB, MOBI, FB2, CBZ), mammoth.js (DOCX), MiniSearch (search)
+- HTML audio element + Media Session API; music-metadata (browser build), mp4box.js
+- ONNX Runtime Web (WASM, WebGPU when available) running Piper and Kokoro
+- getUserMedia, AudioWorklet, WAV encoder (Voice Studio); JSZip (backup)
+- Lucide icons, self-hosted open-license fonts
+- Vitest, Playwright, Lighthouse CI; hosting on Cloudflare Pages (free plan)
+
+## Rules the code must follow (blueprint section 12.2)
+
+- **Engines behind interfaces.** ReaderEngine (PDF and reflow share one reader UI), AudioController, and VoiceEngine (Speech, Piper, Kokoro, Helper) are interfaces; new formats and voices are plug-ins.
+- **One progress service.** A single ProgressService saves reading position and listening position through a common locator, so every feature resumes the same way.
+- **UI never blocks.** Parsing, hashing, search indexing, cover making and speech synthesis run in workers; the main thread only draws.
+- **Audio state lives in one controller**, never inside components, so screens can close without stopping playback.
+- **No network code** except loading the app, optional model downloads and the user's own backup file.
+- **Everything testable offline.** Each engine has sample files and unit tests.
+
+## Working rules
+
+- No placeholders; the code must run; write tests.
+- No network calls except the app itself and optional model downloads.
+- Never commit secrets, model files, bundled copyrighted books or personal data.
+- Voice cloning only of the user's own voice, with the live consent phrase and one-tap delete.
+- Only libraries, fonts and models with licenses that allow free distribution.
+- Respect folder ownership listed in STATUS.md; ask Casey to reassign instead of editing another bot's files.
+- Conventional commits; never force-push main.
