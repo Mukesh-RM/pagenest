@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Locator } from '@/app/contracts';
 import { PageNestDB } from './db';
-import { chapterForLocator, loadResume, pickResume, resumeHeading } from './resume';
+import { DexieProgressService } from './progress-service';
+import { chapterForLocator, loadBookPosition, loadResume, pickResume, resumeHeading } from './resume';
 import type { BookRecord, ChapterRecord, ProgressRow } from './schema';
 
 const reflow = (section: number, textOffset = 0): Locator => ({ kind: 'reflow', section, textOffset });
@@ -135,5 +136,46 @@ describe('loadResume', () => {
     await db.books.add(book('f', { finished: true }));
     await db.progress.bulkAdd([row('f', 1, { mode: 'read' }), row('f', 2, { mode: 'listen', locator: { kind: 'audio', trackIndex: 0, positionSec: 1 } })]);
     expect(await loadResume(db)).toBeUndefined();
+  });
+});
+
+describe('loadBookPosition', () => {
+  let db: PageNestDB;
+  beforeEach(() => {
+    db = new PageNestDB(`position-${Math.random()}`);
+  });
+  afterEach(async () => {
+    db.close();
+    await db.delete();
+  });
+
+  it('carries the book kind so callers can choose the route', async () => {
+    await db.books.add(book('a', { kind: 'audio', format: 'm4b' }));
+    await db.progress.add(row('a', 1, { mode: 'listen', locator: { kind: 'audio', trackIndex: 0, positionSec: 5 } }));
+    expect((await loadResume(db))?.kind).toBe('audio');
+  });
+
+  it('returns the newest position of one book, even a finished one, with its chapter', async () => {
+    const progress = new DexieProgressService(db);
+    await db.books.add(book('b1', { finished: true }));
+    await db.chapters.add(chapter(2, 'Three', { locator: reflow(2) }));
+    await progress.save('b1', 'read', reflow(2, 9), 100);
+    const info = await loadBookPosition(db, progress, 'b1');
+    expect(info).toMatchObject({ bookId: 'b1', kind: 'ebook', percent: 100, chapterNumber: 3, chapterTitle: 'Three' });
+  });
+
+  it('is undefined for an unknown book or a book never opened', async () => {
+    const progress = new DexieProgressService(db);
+    await db.books.add(book('b1'));
+    expect(await loadBookPosition(db, progress, 'b1')).toBeUndefined();
+    expect(await loadBookPosition(db, progress, 'nope')).toBeUndefined();
+  });
+
+  it('sees a position that is reported but not written yet', async () => {
+    const progress = new DexieProgressService(db, { intervalMs: 60_000 });
+    await db.books.add(book('b1'));
+    progress.report('b1', 'read', reflow(0, 4), 33);
+    expect((await loadBookPosition(db, progress, 'b1'))?.percent).toBe(33);
+    await progress.flush();
   });
 });

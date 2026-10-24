@@ -17,3 +17,5 @@ export {
   locatorsEqual,
 } from './locator';
 export type { ProgressRecord, ProgressService } from './progress';
+export type { ImportResult, SampleBookInfo, SampleBookProvider } from './sample-book';
+export type { MiniPlayerSlot, RouteChrome } from './chrome';

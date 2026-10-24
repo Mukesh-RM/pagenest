@@ -14,6 +14,7 @@ const info: ResumeInfo = {
   bookId: 'b1',
   title: 'The Long Road Home',
   author: 'Ann Lee',
+  kind: 'ebook',
   mode: 'read',
   locator: { kind: 'reflow', section: 6, textOffset: 0 },
   percent: 61.4,
@@ -97,7 +98,7 @@ describe('Library resume card', () => {
     services.db.close();
   });
 
-  it('shows the last-read book and chapter from the saved progress, and not as a dead control', async () => {
+  it('shows the last-read book and chapter from the saved progress, linking to its real route', async () => {
     const services = await launch();
     await services.db.books.add({ id: 'b1', fingerprint: 'f', kind: 'ebook', format: 'epub', title: 'The Long Road Home', addedAt: 1, favorite: false, finished: false });
     await services.db.chapters.bulkAdd([
@@ -107,7 +108,7 @@ describe('Library resume card', () => {
     await services.progress.save('b1', 'read', { kind: 'reflow', section: 6, textOffset: 20 }, 55);
     renderApp(services);
     expect(await screen.findByText('Welcome back, chapter 7')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Welcome back/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Welcome back, chapter 7/ })).toHaveAttribute('href', '/read/b1');
     await waitFor(() => expect(hadResumeCard()).toBe(true));
     services.db.close();
   });
@@ -129,9 +130,11 @@ describe('Library resume card', () => {
     rememberResumeCard(true);
     const services = await launch();
     const { container } = render(
-      <ServicesProvider services={services}>
-        <LibraryPage />
-      </ServicesProvider>,
+      <MemoryRouter>
+        <ServicesProvider services={services}>
+          <LibraryPage />
+        </ServicesProvider>
+      </MemoryRouter>,
     );
     expect(container.innerHTML).toContain('min-h-[88px]');
     await screen.findByText('Your shelf is waiting');
