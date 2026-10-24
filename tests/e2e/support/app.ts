@@ -28,22 +28,60 @@ export async function gotoTab(page: Page, name: TabName): Promise<void> {
   await expect(screenHeading(page, name)).toBeVisible();
 }
 
-/** Opens the app at its start URL and waits for the library screen (the home tab). */
+/** The first-run onboarding (src/app/onboarding): three cards, "Skip" on the first two, "Done" on the last. */
+export function onboardingSkip(page: Page): Locator {
+  return page.getByRole('button', { name: /^skip$/i });
+}
+
+/**
+ * Gets past first-run onboarding if it is showing: clicks Skip, which stores `onboardingDone` in IndexedDB so it never
+ * returns on this browser profile. Works whether or not the app has onboarding (the reference fixture has none).
+ */
+export async function skipOnboarding(page: Page): Promise<void> {
+  const skip = onboardingSkip(page);
+  await expect(skip.or(primaryNav(page)).first()).toBeVisible();
+  if (await skip.isVisible()) {
+    await skip.click();
+    await expect(primaryNav(page)).toBeVisible();
+  }
+}
+
+/** Opens the app at its start URL, skips onboarding, and waits for the library screen (the home tab). */
 export async function launch(page: Page): Promise<void> {
   await page.goto('./');
+  await skipOnboarding(page);
   await expect(primaryNav(page)).toBeVisible();
   await expect(screenHeading(page, 'Library')).toBeVisible();
+}
+
+/** Opens the app WITHOUT skipping onboarding. Only the dedicated onboarding tests use this. */
+export async function launchFresh(page: Page): Promise<void> {
+  await page.goto('./');
 }
 
 export function currentTheme(page: Page): Promise<string | undefined> {
   return page.evaluate(() => document.documentElement.dataset.theme);
 }
 
-/** Chooses a theme in Settings through the "Theme" radio group (blueprint 5.2: Light, Sepia, Dark, Black). */
+/**
+ * A theme option in Settings or onboarding. The app uses native radio inputs hidden behind a swatch label, so the label is
+ * what a finger or mouse hits (and Playwright cannot click the 1 px input itself). Pass "Match my phone" for system.
+ */
+export function themeRadio(page: Page, name: string): Locator {
+  return page.getByRole('radio', { name: new RegExp(`^${name}$`, 'i') });
+}
+
+export function themeOption(page: Page, name: string): Locator {
+  return themeRadio(page, name).locator('xpath=ancestor::label[1]');
+}
+
+/** Chooses a theme in Settings (blueprint 5.2: Light, Sepia, Dark, Black). */
 export async function chooseTheme(page: Page, theme: ThemeName): Promise<void> {
   await gotoTab(page, 'Settings');
   const radio = page.getByRole('radio', { name: new RegExp(`^${theme}$`, 'i') });
-  await radio.check();
+  // The radio input is visually hidden (sr-only) inside a themed card; its <label> receives the pointer.
+  await page.locator('label', { has: radio }).click();
+  await expect(radio).toBeChecked();
   await expect.poll(() => currentTheme(page)).toBe(theme);
 }
 
@@ -67,10 +105,13 @@ export async function openSheet(page: Page): Promise<void> {
  * very load, a reload is needed before it controls the page, so we do exactly that once.
  */
 export async function waitForServiceWorkerControl(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+  // `ready` never settles when the app registers no service worker, so race it against a timeout and fail with a clear reason.
+  await page.evaluate(async (timeoutMs) => {
     if (!('serviceWorker' in navigator)) throw new Error('Service workers are not supported');
-    await navigator.serviceWorker.ready;
-  });
+    const none = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`No service worker became active within ${timeoutMs} ms (is one registered?)`)), timeoutMs));
+    await Promise.race([navigator.serviceWorker.ready, none]);
+  }, 8_000);
   const controlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
   if (!controlled) {
     await page.reload();
