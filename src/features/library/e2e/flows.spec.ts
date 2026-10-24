@@ -63,6 +63,22 @@ test('the sample book is fetched only when tapped, and opens within 30 s of firs
   expect(await consoleErrors(page)).toEqual([]);
 });
 
+test('the 1.5 MB sample is still ready within 30 s on a slow connection (Fast 3G, 4x slower CPU)', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Your shelf is waiting' })).toBeVisible();
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Network.enable');
+  // Chrome's "Fast 3G" preset: 1.6 Mbit/s down, 150 ms round trip.
+  await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 });
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  const started = Date.now();
+  await page.getByRole('button', { name: 'Add the sample book' }).click();
+  await expect(page.getByTestId('where')).toHaveText(/^\/(read|listen)\//, { timeout: 29_000 });
+  const seconds = (Date.now() - started) / 1000;
+  console.log(`PERF sample on Fast 3G + 4x CPU: ${seconds.toFixed(1)} s from the tap to the book opening`);
+  expect(seconds).toBeLessThan(30);
+});
+
 test('asks the browser to keep the library after the first import, once', async ({ page }) => {
   await page.addInitScript(() => {
     const w = window as unknown as { __persistCalls: number };

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,12 +31,13 @@ describe('SampleBookProvider (contract in src/app/contracts/sample-book.ts)', ()
   it('describes the book and its license in plain words', () => {
     const provider = createSampleBookProvider();
     expect(provider.info).toBe(SAMPLE_INFO);
-    expect(SAMPLE_INFO).toMatchObject({ title: 'The Tale of Peter Rabbit', author: 'Beatrix Potter', license: 'Public domain' });
-    expect(SAMPLE_INFO.provenance).toMatch(/Project Gutenberg/);
+    expect(SAMPLE_INFO).toMatchObject({ title: 'The Tale of Peter Rabbit', author: 'Beatrix Potter', license: 'Public domain in the USA' });
+    expect(SAMPLE_INFO.provenance).toBe('Project Gutenberg, ebook 14838');
   });
 
-  it('is small and really an EPUB (a zip), so it is cheap to fetch and carries no surprises', () => {
-    expect(asset.byteLength).toBeLessThan(1_000_000);
+  it('is the official, unmodified Project Gutenberg file (1,510,461 bytes)', () => {
+    expect(asset.byteLength).toBe(1_510_461);
+    expect(createHash('sha256').update(asset).digest('hex')).toBe('fa91774a0e841557f4d33e63f13aab7f7dcfb8cf05ca4eb8733308eeb40e69c5');
     expect([...asset.subarray(0, 4)]).toEqual([0x50, 0x4b, 0x03, 0x04]);
   });
 
@@ -99,5 +101,7 @@ describe('SampleBookProvider (contract in src/app/contracts/sample-book.ts)', ()
     expect(licenses).toMatch(/Peter Rabbit/);
     expect(licenses).toMatch(/Project Gutenberg/);
     expect(licenses).toMatch(/14838/);
+    expect(licenses).toMatch(/fa91774a0e841557f4d33e63f13aab7f7dcfb8cf05ca4eb8733308eeb40e69c5/);
+    expect(licenses).toMatch(/1\.5 MB/);
   });
 });

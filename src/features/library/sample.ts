@@ -8,7 +8,7 @@ import sampleUrl from './sample/peter-rabbit.epub?url';
 export const SAMPLE_INFO: SampleBookInfo = {
   title: 'The Tale of Peter Rabbit',
   author: 'Beatrix Potter',
-  license: 'Public domain',
+  license: 'Public domain in the USA',
   provenance: 'Project Gutenberg, ebook 14838',
 };
 
