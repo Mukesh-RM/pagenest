@@ -35,9 +35,9 @@ afterEach(async () => {
 const openHelp = () => fireEvent.click(screen.getByRole('button', { name: /install help/i }));
 
 describe('Install help (design system BottomSheet) in Settings', () => {
-  it('opens a dialog with the three iPhone steps', async () => {
+  it('opens the Install help dialog with the three iPhone steps', async () => {
     openHelp();
-    const dialog = await screen.findByRole('dialog', { name: /add pagenest to your iphone/i });
+    const dialog = await screen.findByRole('dialog', { name: 'Install help' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     const steps = within(dialog).getAllByRole('listitem').map((li) => li.textContent);
     expect(steps).toHaveLength(3);
@@ -79,7 +79,7 @@ describe('Install help (design system BottomSheet) in Settings', () => {
 
   it('closing in code leaves back going straight to the previous screen', async () => {
     openHelp();
-    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Got it' }));
+    fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Done' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await back();
     expect(await screen.findByRole('heading', { level: 1, name: 'Library' })).toBeInTheDocument();

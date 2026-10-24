@@ -10,12 +10,12 @@ import {
 } from './themes';
 
 describe('themes (adapter over the design system palette)', () => {
-  it('uses the blueprint colors for page, text and accent', () => {
+  it('uses the blueprint page and text colors and the warm paper teal accent', () => {
     const lower = (t: { page: string; text: string; accent: string }) => [t.page, t.text, t.accent].map((c) => c.toLowerCase());
-    expect(lower(THEMES.light)).toEqual(['#fafaf7', '#1c1b19', '#3e5bdb']);
-    expect(lower(THEMES.sepia)).toEqual(['#f4ecd8', '#3b2f23', '#a0522d']);
-    expect(lower(THEMES.dark)).toEqual(['#17181c', '#e4e2dc', '#8fa6ff']);
-    expect(lower(THEMES.black)).toEqual(['#000000', '#cfcdc7', '#8fa6ff']);
+    expect(lower(THEMES.light)).toEqual(['#fafaf7', '#1c1b19', '#2f6f6b']);
+    expect(lower(THEMES.sepia)).toEqual(['#f4ecd8', '#3b2f23', '#2f6f6b']);
+    expect(lower(THEMES.dark)).toEqual(['#17181c', '#e4e2dc', '#6fc2ba']);
+    expect(lower(THEMES.black)).toEqual(['#000000', '#cfcdc7', '#6fc2ba']);
   });
 
   it.each(THEME_LIST as readonly ThemeName[])('%s is read from the shared palette, not a second table', (name) => {
@@ -48,8 +48,8 @@ describe('themes (adapter over the design system palette)', () => {
     expect(() => contrastRatio('red', '#fff')).toThrow();
   });
 
-  it('offers system plus the four themes, each with a label', () => {
-    expect(THEME_PREFERENCES).toEqual(['system', 'light', 'sepia', 'dark', 'black']);
+  it('offers system, the four themes and custom, each with a label', () => {
+    expect(THEME_PREFERENCES).toEqual(['system', 'light', 'sepia', 'dark', 'black', 'custom']);
     for (const p of THEME_PREFERENCES) expect(THEME_LABELS[p].length).toBeGreaterThan(0);
   });
 

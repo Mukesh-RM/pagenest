@@ -73,6 +73,7 @@ decides, and the loser's files are removed).
 | `storage-full` | The device is out of space; nothing kept | "Not enough space on this device." |
 | `write-failed` | A file or database write failed; nothing kept | Offer retry. |
 | `not-found` | The book no longer exists | Refresh the list. |
+| `cleanup-not-allowed` | `cleanupOrphans()` was refused (see "Startup clean-up"); nothing deleted | Nothing. Log it and carry on. |
 
 ### The delete-with-undo flow
 
@@ -91,10 +92,27 @@ files are deleted, the new copy stays).
 
 ### Startup clean-up
 
-Call `cleanupOrphans()` once at start, **before** imports begin. It protects books that are
-trashed or being added by the same repository instance, but cannot know about an import running
-in another worker, which would look like an orphan. So: run it first, and don't run it again while
-an import is in flight.
+**`cleanupOrphans()` runs exactly once, at startup, before any import begins.** (Casey's decision.)
+A half-written import looks exactly like a leftover, so the repository refuses instead of guessing.
+It throws `BookRepositoryError` with code `cleanup-not-allowed` (and deletes nothing) when:
+
+* it already ran on this repository, or a first call is still running;
+* this repository has already started adding a book (an `add` that passed validation, even if it
+  ended as a duplicate; an `add` rejected as `invalid-input` does not count);
+* another worker or tab is adding a book right now. Every `add` holds a shared Web Lock
+  (`pagenest:book-files`) and the clean-up takes it exclusively, so this works across the data worker
+  and the import worker. Where Web Locks do not exist the guard covers one repository only, so
+  run the clean-up before the import worker is started.
+
+If the clean-up fails halfway (a file error) and nothing had been added, it may be called again.
+An `add` that arrives while the clean-up is running waits for it to finish, so a new book's files
+can never be taken. The error is caught and ignored by callers: it only means "not needed or not
+safe now", and leftovers are removed at the next start.
+
+```ts
+// App start, before the import worker or the first add:
+await data.books.cleanupOrphans().catch(() => undefined);
+```
 
 ## Covers and object URLs (`src/data/cover-url.ts`)
 
@@ -168,6 +186,9 @@ interface LibraryQuery {
   finished; `unfinished` is not finished; `favorites`; `finished`. Only `reading` and `listening`
   read the progress table (inside the worker, one row per book and mode); every other query reads
   progress for the returned page only.
+* **Fields searched**: title, author, narrator and series. There is **no tags field**: `BookRecord`
+  is unchanged and the schema is unchanged (Casey's decision). Adding tags later would be a schema
+  change and needs his approval first.
 * **Speed**: the service keeps a snapshot of the books in memory (about 300 bytes each, 1.5 MB for
   5,000), searches it directly, and builds progress only for the page returned. Measured with
   fake-indexeddb in the test suite on 20,000 books: a two-word search ≈ 12 ms and two sorted
@@ -178,8 +199,9 @@ interface LibraryQuery {
 
 ### Staying up to date
 
-The snapshot is marked stale by any write to `books` (by this connection or any other, through
-Dexie's `storagemutated` event) and rebuilt on the next query. Screens use two hooks from
+Any write to `books` (by this connection or any other, through Dexie's `storagemutated` event)
+is noticed, and the snapshot is patched with just the written books before the next query
+answers (details and measurements below). Screens use two hooks from
 `src/app/library-hooks.ts`:
 
 * `useLibraryPage(query)` → `{ page, error }`. Reruns when the query (compared by value) or the
@@ -188,11 +210,52 @@ Dexie's `storagemutated` event) and rebuilt on the next query. Screens use two h
 * `useLibraryRevision()` → a new object whenever books, shelves, shelf links or progress change
   (counts only, no data loaded). Use it to refresh anything else (for example the shelf list).
 
-Known cost: any change to `books` makes the next query re-read the whole table once (on a real
-device: tens of milliseconds at 5,000 books, **not measured in a real browser yet**). A bulk
-import of hundreds of books can cause one re-read per refresh of the screen. If profiling shows a
-problem, the fix is to patch the snapshot from Dexie table hooks instead of reloading (and for
-screens to debounce `useLibraryRevision`); the public API does not change.
+#### Cost of a change, measured (5,000 books)
+
+The first query after a single write used to read the whole `books` table again. Measured in headless
+Chrome 156 on the build machine (real IndexedDB, main thread, 100 runs each; the first number is the
+median and the second the 95th percentile, in ms):
+
+| First query after... | Before: re-read the table | After: patch the snapshot |
+| --- | --- | --- |
+| one metadata edit (default list) | 41.1 / 54.9 | 0.5 / 0.9 |
+| one metadata edit (title-sorted list) | 46.3 / 60.9 | 0.7 / 1.3 |
+| one metadata edit (search "silv lan") | 38.4 / 48.8 | 2.0 / 2.7 |
+| one import (`add`) | 38.9 / 47.2 | 0.7 / 0.9 |
+| opening a book (`markOpened`) | 38.5 / 44.6 | 0.7 / 1.1 |
+| a write from another connection (the import worker) | 37.4 / 43.6 | 0.7 / 1.1 |
+| (reference) a query with no write in between | 0.4 / 0.7 | 0.2 / 0.6 |
+
+Node with fake-indexeddb, same scenarios, before: 22–31 ms median, 27–60 ms p95; after: 0.5–1.8 ms
+median, 0.7–2.2 ms p95. Casey's bar was 30 ms. The old cost was over it in the real browser (about
+40 ms median on a desktop-class CPU, so more on a phone), so the snapshot is now **patched**:
+
+* The change event names the primary keys that were written or deleted. Only those books are read
+  again (`bulkGet`), re-indexed and put into the snapshot, and moved to their new place in every
+  sorted list that was already built (binary insertion), so nothing is re-sorted.
+* Writes by this connection and by any other (import worker, another tab) arrive the same way.
+* If a change cannot be named (the database was just opened, `clear()`, or more than 500 books
+  changed at once) the table is read once, as before.
+* The public API did not change.
+
+These runs are on a desktop-class CPU in headless Chrome, not a phone. A phone is slower (budget
+roughly 3 to 5 times), so the old path would have been well over 100 ms there and the new one is
+still around 10 ms or less. No run on a real phone has been made yet.
+
+**Reproduce:** `node scripts/bench-library.mjs` (add `--node` or `--browser`, `--books 5000`,
+`--runs 100`). It builds a throwaway bundle of the real `BookRepository` and `LibraryQueryService`, seeds
+the books and prints JSON. The browser run needs Chrome (`/usr/bin/google-chrome`) and uses a page
+served from memory by Playwright; nothing touches the network.
+
+**Guarding it:** timing on a shared CI machine is flaky, so the tests count what is read instead:
+`library-query-patch.test.ts` fails if one write at 5,000 books reads anything but that one row
+(`toArray` must not be called, `bulkGet` must get exactly the written id). The same file holds the
+correctness oracle: after every kind of write (add, update, markOpened, trash, restore, purge,
+remove, cover changes, writes from a second connection, overlapping queries and writes) the
+long-lived service must answer exactly like a brand-new one for twelve different queries.
+
+A bulk import of hundreds of books still means a few small reads per screen refresh, not a table
+read. Screens may debounce `useLibraryRevision` if a very fast import makes the grid flicker.
 
 ### Showing a grid of 5,000 books
 
@@ -202,12 +265,14 @@ Use `limit` and `offset` (or the Library's windowed list) rather than asking for
 
 ## Import jobs
 
-The blueprint's schema (section 13) has **no import-job store**, so none was added. The importer can
-report progress in memory (it already owns the job list) and call `add` per file, which is atomic,
-so an interrupted import leaves either a whole book or nothing (plus orphan files that
-`cleanupOrphans()` removes). If you need jobs to survive a restart (resume a half-done folder
-import), that is a **schema change** (new Dexie version, e.g. an `importJobs` store) and needs
-Casey's approval first; ask the Architect.
+There is **no import-job store** and no schema change (Casey's decision). The importer keeps job
+state in memory and calls `add` per file. `add` is atomic, so an interrupted import leaves either
+a whole book or nothing (plus orphan files that `cleanupOrphans()` removes at the next start).
+
+If the app is closed in the middle of an import, the person adds the folder again. Books that were
+already stored are recognised by their fingerprint, come back as `{ status: 'duplicate' }`, and are
+skipped without copying anything (`findByFingerprint` answers before any bytes are read or written),
+so re-adding the same folder only imports what is missing.
 
 ## What was changed in shared code
 
@@ -219,6 +284,10 @@ Casey's approval first; ask the Architect.
 * `src/data/data-service-methods.ts`: the method names, split out so the main thread knows them
   without importing the service.
 * `src/app/services-context.ts`: `AppServices.covers`.
+* `src/data/library-query.ts`: the snapshot is patched from change events (see "Cost of a change").
+* `src/data/books.ts`: `cleanupOrphans()` guard and `WriteLocks` (an optional fourth constructor
+  argument; it defaults to `navigator.locks`).
+* `scripts/bench-library.mjs` and `scripts/bench/library-bench-core.mjs`: the benchmark.
 
 ## Tests
 

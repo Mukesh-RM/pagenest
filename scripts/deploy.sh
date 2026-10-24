@@ -6,6 +6,10 @@
 #   scripts/deploy.sh --no-build   # deploy the existing dist/ as is
 #   BRANCH=preview scripts/deploy.sh   # deploy a preview of another branch
 #
+# Branch: an explicit BRANCH env var always wins. Otherwise the current git
+# branch is used; on a detached checkout (e.g. a clean checkout of a commit)
+# it defaults to the production branch, main.
+#
 # Credentials are NEVER stored in the repo. The script reads them from the
 # environment only:
 #   CLOUDFLARE_API_TOKEN   token with "Account > Cloudflare Pages > Edit"
@@ -33,7 +37,11 @@ if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
 fi
 
 if [ -z "${BRANCH:-}" ]; then
-  BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+  BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  if [ -z "$BRANCH" ] || [ "$BRANCH" = "HEAD" ]; then
+    BRANCH="$PRODUCTION_BRANCH"
+    echo "note: detached checkout; defaulting to production branch '$PRODUCTION_BRANCH'."
+  fi
 fi
 if [ "$BRANCH" != "$PRODUCTION_BRANCH" ]; then
   echo "note: deploying branch '$BRANCH' as a preview (production branch is '$PRODUCTION_BRANCH')."

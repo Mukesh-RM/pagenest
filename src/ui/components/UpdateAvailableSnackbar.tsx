@@ -9,6 +9,11 @@ export interface UpdateAvailableSnackbarProps {
   /** Hide the prompt; the update applies on the next launch. */
   onDismiss: () => void;
   message?: string;
+  /**
+   * Show the Refresh button. Set false while audio plays (the notice then says the update applies on the
+   * next launch), so a reload can never cut playback. Defaults to true.
+   */
+  showRefresh?: boolean;
   refreshLabel?: string;
   dismissLabel?: string;
 }
@@ -23,6 +28,7 @@ export function UpdateAvailableSnackbar({
   onRefresh,
   onDismiss,
   message = 'New version ready.',
+  showRefresh = true,
   refreshLabel = 'Refresh',
   dismissLabel = 'Dismiss',
 }: UpdateAvailableSnackbarProps) {
@@ -37,9 +43,11 @@ export function UpdateAvailableSnackbar({
         {open ? (
           <div className="pn-snackbar pn-update-snackbar">
             <p className="pn-snackbar__message">{message}</p>
-            <button type="button" className="pn-snackbar__action" onClick={onRefresh}>
-              {refreshLabel}
-            </button>
+            {showRefresh ? (
+              <button type="button" className="pn-snackbar__action" onClick={onRefresh}>
+                {refreshLabel}
+              </button>
+            ) : null}
             <button type="button" className="pn-snackbar__action pn-snackbar__action--icon" aria-label={dismissLabel} onClick={onDismiss}>
               <Icon name="close" size={20} />
             </button>

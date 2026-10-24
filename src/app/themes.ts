@@ -7,12 +7,12 @@
  * theme's colors as one object (used by the onboarding swatches).
  */
 import { THEME_PALETTE, THEME_SCHEME } from '@/ui/theme/palette';
-import { THEME_MODES, THEME_NAMES, isThemeMode, type ThemeMode, type ThemeName } from '@/ui/theme/themes';
+import { THEME_CHOICES, THEME_NAMES, isThemeChoice, type ThemeChoice, type ThemeMode, type ThemeName } from '@/ui/theme/themes';
 
 export type { ThemeMode, ThemeName };
 
 /** What the user picks in Settings. `system` follows the device. */
-export type ThemePreference = ThemeMode;
+export type ThemePreference = ThemeChoice;
 
 export interface ThemeTokens {
   readonly page: string;
@@ -48,6 +48,7 @@ export const THEMES: Readonly<Record<ThemeName, ThemeTokens>> = {
 
 /** Settings wording: short, warm and plain. */
 export const THEME_LABELS: Readonly<Record<ThemePreference, string>> = {
+  custom: 'Custom',
   system: 'Match my phone',
   light: 'Light',
   sepia: 'Sepia',
@@ -55,10 +56,10 @@ export const THEME_LABELS: Readonly<Record<ThemePreference, string>> = {
   black: 'Black',
 };
 
-export const THEME_PREFERENCES: readonly ThemePreference[] = THEME_MODES;
+export const THEME_PREFERENCES: readonly ThemePreference[] = THEME_CHOICES;
 export const THEME_LIST: readonly ThemeName[] = THEME_NAMES;
 
-export const isThemePreference = isThemeMode;
+export const isThemePreference = isThemeChoice;
 
 function channel(v: number): number {
   const c = v / 255;

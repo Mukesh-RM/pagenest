@@ -26,7 +26,7 @@ export const Chip = forwardRef<HTMLButtonElement, ChipProps>(function Chip(
       className={cx('pn-chip', selected && 'pn-chip--selected', className)}
       {...rest}
     >
-      {icon ? <Icon name={icon} size={18} /> : null}
+      {icon ? <Icon name={icon} size={18} /> : selected ? <Icon name="check" size={18} /> : null}
       {children}
     </button>
   );

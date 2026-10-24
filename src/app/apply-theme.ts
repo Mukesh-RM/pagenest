@@ -1,20 +1,19 @@
 import { FONT_SIZE_DEFAULT } from './font-size';
 
-/** Design-system text tokens (px at the default size). `--pn-text-*` in `src/ui/styles/tokens.css`. */
-const TEXT_TOKENS = { xs: 12, sm: 14, md: 16, lg: 20, xl: 28 } as const;
-
 /**
- * Apply the app text size (px) to the document root:
- * - `--pn-font-size`, which `html` uses so rem-based sizes scale;
- * - the design system's `--pn-text-*` tokens, scaled by size / 16, so components from
- *   `src/ui` follow the setting too. The smallest size (tab labels) grows at most 15 percent
- *   so four tabs still fit on a 360 px screen.
+ * Apply the app text size (px at the 100 % default of 16) to the document root.
+ *
+ * Only `--pn-font-size` is written. `html` uses it as its font size, and every design token
+ * (`--pn-text-xs` to `--pn-text-xl` in `src/ui/styles/tokens.css`) is in `rem`, so the whole app
+ * scales from this one value, up to 200 % (32 px). The app never writes px text tokens: a px
+ * override would stop the tokens following the setting and would fight the user's browser
+ * font-size preference.
  */
 export function applyFontSize(px: number, root: HTMLElement = document.documentElement): void {
-  const scale = px / FONT_SIZE_DEFAULT;
   root.style.setProperty('--pn-font-size', `${px}px`);
-  for (const [name, base] of Object.entries(TEXT_TOKENS)) {
-    const factor = name === 'xs' ? Math.min(scale, 1.15) : scale;
-    root.style.setProperty(`--pn-text-${name}`, `${Math.round(base * factor)}px`);
-  }
+}
+
+/** The text size as a percentage of the default, for labels ("125%"). */
+export function fontScalePercent(px: number): number {
+  return Math.round((px / FONT_SIZE_DEFAULT) * 100);
 }

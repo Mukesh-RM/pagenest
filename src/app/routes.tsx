@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { SnackbarProvider } from '@/ui';
 import { AppShell } from './AppShell';
 import { FirstRunGate } from './onboarding/FirstRunGate';
 import { RouteChrome } from './RouteChrome';
@@ -49,14 +50,8 @@ function AppScreens() {
           <Route path="stats" element={screen(<StatsScreen />)} />
           <Route path="settings" element={screen(<SettingsScreen />)} />
           {/* Book screens are immersive by default; a screen can override it with useRouteChrome (docs/ROUTE_CHROME.md). */}
-          <Route
-            path={READ_ROUTE}
-            element={<RouteChrome chrome="immersive">{screen(<ReadScreen />, <ImmersiveFallback />)}</RouteChrome>}
-          />
-          <Route
-            path={LISTEN_ROUTE}
-            element={<RouteChrome chrome="immersive">{screen(<ListenScreen />, <ImmersiveFallback />)}</RouteChrome>}
-          />
+          <Route path={READ_ROUTE} element={<RouteChrome chrome="immersive">{screen(<ReadScreen />, <ImmersiveFallback />)}</RouteChrome>} />
+          <Route path={LISTEN_ROUTE} element={<RouteChrome chrome="immersive">{screen(<ListenScreen />, <ImmersiveFallback />)}</RouteChrome>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
@@ -65,23 +60,25 @@ function AppScreens() {
 }
 
 /**
- * Route table. The four tabs sit behind first-run onboarding. `/ui-kit` (development only)
+ * Route table, inside the snackbar host ("Removed. Undo", "Added to your library"). The four tabs sit behind first-run onboarding. `/ui-kit` (development only)
  * is outside it, so the demo opens straight away.
  */
 export function AppRoutes() {
   return (
-    <Routes>
-      {UiKitDemo ? (
-        <Route
-          path="ui-kit"
-          element={
-            <Suspense fallback={null}>
-              <UiKitDemo />
-            </Suspense>
-          }
-        />
-      ) : null}
-      <Route path="*" element={<AppScreens />} />
-    </Routes>
+    <SnackbarProvider>
+      <Routes>
+        {UiKitDemo ? (
+          <Route
+            path="ui-kit"
+            element={
+              <Suspense fallback={null}>
+                <UiKitDemo />
+              </Suspense>
+            }
+          />
+        ) : null}
+        <Route path="*" element={<AppScreens />} />
+      </Routes>
+    </SnackbarProvider>
   );
 }

@@ -15,7 +15,12 @@ export function FirstRunGate({ children, onboarding }: { children: ReactNode; on
     if (loaded && !done) wasOnboarding.current = true;
     if (loaded && done && wasOnboarding.current) {
       wasOnboarding.current = false;
-      document.querySelector<HTMLElement>('main h1')?.focus();
+      // Design system screens render a plain h1; make it focusable (not tabbable) so focus can land on it.
+      const heading = document.querySelector<HTMLElement>('main h1');
+      if (heading) {
+        if (!heading.hasAttribute('tabindex')) heading.tabIndex = -1;
+        heading.focus();
+      }
     }
   }, [loaded, done]);
 

@@ -37,7 +37,7 @@ describe('first run', () => {
   it('shows the welcome card instead of the app, with focus on its heading', async () => {
     renderApp(services);
     const h = await heading('Your books, your voice, no account.');
-    expect(h).toHaveFocus();
+    await waitFor(() => expect(h).toHaveFocus());
     expect(screen.getByText(/no sign-in, no ads and no tracking/i)).toBeInTheDocument();
     expect(screen.getByText('Step 1 of 3')).toBeInTheDocument();
     expect(screen.queryByTestId('pn-tabbar')).not.toBeInTheDocument();
@@ -84,7 +84,7 @@ describe('first run', () => {
     const names = within(group)
       .getAllByRole('radio')
       .map((r) => r.closest('label')?.textContent);
-    expect(names).toEqual(['Light', 'Sepia', 'Dark', 'Black', 'Match my phone']);
+    expect(names).toEqual(['Light', 'Sepia', 'Dark', 'Black', 'Custom', 'Match my phone']);
     expect(within(group).getByRole('radio', { name: 'Match my phone' })).toBeChecked();
   });
 });
@@ -116,11 +116,12 @@ describe('persistence', () => {
     expect(slider).toHaveAttribute('min', String(FONT_SIZE_MIN));
     expect(slider).toHaveAttribute('max', String(FONT_SIZE_MAX));
     expect(slider).toHaveValue(String(FONT_SIZE_DEFAULT));
-    expect(screen.getByTestId('font-preview')).toHaveStyle({ fontSize: '16px' });
+    expect(document.documentElement.style.getPropertyValue('--pn-font-size')).toBe('16px');
 
     fireEvent.change(slider, { target: { value: '22' } });
     await waitFor(() => expect(document.documentElement.style.getPropertyValue('--pn-font-size')).toBe('22px'));
-    expect(screen.getByTestId('font-preview')).toHaveStyle({ fontSize: '22px' });
+    // The preview is 1rem, so it is exactly the app text size the slider just set.
+    expect(screen.getByTestId('font-preview').className).toContain('text-[length:1rem]');
     await waitFor(async () => expect(await getSetting(db, 'fontSizePx')).toBe(22));
   });
 
@@ -201,9 +202,10 @@ describe('keyboard and small screens', () => {
   it('reaches every control with Tab in a sensible order on the last card', async () => {
     renderApp(services);
     await goToLook();
-    const focusable = Array.from(document.querySelectorAll<HTMLElement>('button, input, [tabindex]:not([tabindex="-1"])'));
-    const labels = focusable.map((el) => (el as HTMLInputElement).labels?.[0]?.textContent ?? el.textContent);
-    expect(labels).toEqual(['Light', 'Sepia', 'Dark', 'Black', 'Match my phone', 'Text size16 px', 'Back', 'Done']);
+    // Only the chosen theme is in the tab order (arrow keys move inside the group), then the slider and the buttons.
+    const tabbable = Array.from(document.querySelectorAll<HTMLElement>('button, input, [tabindex]')).filter((el) => el.tabIndex >= 0 && !(el instanceof HTMLInputElement && el.type === 'radio' && !el.checked)); // browsers tab into a radio group once, at the chosen radio
+    const labels = tabbable.map((el) => el.getAttribute('aria-label') ?? (el as HTMLInputElement).labels?.[0]?.textContent ?? el.textContent);
+    expect(labels).toEqual(['Match my phone', 'Smaller text', 'Text size', 'Larger text', 'Back', 'Done']);
   });
 
   it('uses the design system buttons, which are 44 px tall at least', async () => {
@@ -218,7 +220,7 @@ describe('keyboard and small screens', () => {
     const main = screen.getByRole('main');
     expect(main.className).toContain('max-w-md');
     expect(main.className).toContain('w-full');
-    expect(main.className).toContain('px-4');
+    expect(main.className).toContain('px-[var(--pn-margin)]');
   });
 });
 

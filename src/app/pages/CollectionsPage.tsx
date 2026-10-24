@@ -1,14 +1,14 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { memo, useState, type FormEvent } from 'react';
 import { newId } from '@/data/db';
-import { Button, EmptyState } from '@/ui';
-import { PageHeader } from '../components/PageHeader';
+import { Button, EmptyState, Illustration } from '@/ui';
+import { PageHeader, Screen } from '../components/PageHeader';
 import { useServices } from '../services-context';
 
 const ShelfRow = memo(function ShelfRow({ name, count }: { name: string; count: number }) {
   return (
     <li className="flex min-h-touch items-center justify-between rounded-card bg-surface px-4 py-3">
-      <span className="font-medium">{name}</span>
+      <span className="font-semibold">{name}</span>
       <span className="text-sm text-muted">{count === 1 ? '1 book' : `${count} books`}</span>
     </li>
   );
@@ -56,12 +56,12 @@ export function CollectionsPage() {
   );
 
   return (
-    <>
+    <Screen>
       <PageHeader title="Collections" />
       {shelves === undefined ? null : shelves.length === 0 ? (
         <>
           <EmptyState
-            art="collections"
+            art={<Illustration name="shelf" />}
             title="No shelves yet"
             description="Shelves group your books, like Favorites or Summer reading. Make one to get started."
           />
@@ -77,6 +77,6 @@ export function CollectionsPage() {
           {form}
         </>
       )}
-    </>
+    </Screen>
   );
 }

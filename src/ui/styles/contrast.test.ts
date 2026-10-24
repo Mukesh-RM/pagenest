@@ -42,6 +42,8 @@ const PAIRS: Pair[] = [
   { name: 'button text on accent', fg: 'on-accent', bg: 'accent', min: TEXT },
   ...SURFACES.map((s) => ({ name: `link on ${s}`, fg: 'link', bg: s, min: TEXT })),
   ...SURFACES.map((s) => ({ name: `danger text on ${s}`, fg: 'danger', bg: s, min: TEXT })),
+  { name: 'secondary button and selected chip text on the soft accent fill', fg: 'accent-ink', bg: 'accent-soft', min: TEXT },
+  { name: 'filled destructive button text (confirmation dialogs only)', fg: 'on-danger', bg: 'danger', min: TEXT },
   { name: 'snackbar text', fg: 'inverse-text', bg: 'inverse-surface', min: TEXT },
   { name: 'snackbar Undo action', fg: 'inverse-accent', bg: 'inverse-surface', min: TEXT },
   ...SURFACES.map((s) => ({ name: `focus ring on ${s}`, fg: 'focus-ring', bg: s, min: UI })),
@@ -67,12 +69,13 @@ describe('theme tokens', () => {
     }
   });
 
-  it('uses the page, text and accent colors from blueprint 5.2', () => {
+  it('uses the blueprint 5.2 page and text colors and the "warm paper" teal accent', () => {
+    // Redesign: deep teal #2F6F6B in Light and Sepia, a lighter teal in Dark and Black.
     const expected: Record<ThemeName, [string, string, string]> = {
-      light: ['#fafaf7', '#1c1b19', '#3e5bdb'],
-      sepia: ['#f4ecd8', '#3b2f23', '#a0522d'],
-      dark: ['#17181c', '#e4e2dc', '#8fa6ff'],
-      black: ['#000000', '#cfcdc7', '#8fa6ff'],
+      light: ['#fafaf7', '#1c1b19', '#2f6f6b'],
+      sepia: ['#f4ecd8', '#3b2f23', '#2f6f6b'],
+      dark: ['#17181c', '#e4e2dc', '#6fc2ba'],
+      black: ['#000000', '#cfcdc7', '#6fc2ba'],
     };
     for (const theme of THEME_NAMES) {
       const t = themeTokens(theme);

@@ -28,8 +28,8 @@ async function launch(extra: Partial<AppServices> = {}): Promise<AppServices> {
 }
 
 const scope = (container: HTMLElement): HTMLElement => {
-  const el = container.querySelector<HTMLElement>('.pn-chrome-scope');
-  if (!el) throw new Error('no chrome scope');
+  const el = container.querySelector<HTMLElement>('.pn-shell');
+  if (!el) throw new Error('no app frame');
   return el;
 };
 
@@ -47,7 +47,7 @@ describe('app frame per route', () => {
     await screen.findByRole('heading', { level: 1 });
     expect(scope(container)).toHaveAttribute('data-chrome', 'full');
     expect(screen.getByTestId('pn-tabbar')).toBeInTheDocument();
-    expect(screen.getByTestId('pn-rail')).toBeInTheDocument();
+    expect(screen.queryByTestId('pn-rail')).toBeNull(); // phone width: only the tab bar is in the DOM
   });
 
   it('/read/:id is immersive as soon as the frame exists, before the book has loaded', async () => {
@@ -84,17 +84,17 @@ describe('app frame per route', () => {
     const { container } = renderApp(services, { path: '/read/b1' });
     await screen.findByRole('heading', { level: 1, name: 'Title b1' });
     const frame = container.querySelector('.pn-shell');
-    fireEvent.click(screen.getByRole('link', { name: 'Back to Library' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to library' }));
     await screen.findByRole('heading', { level: 1, name: 'Library' });
     expect(container.querySelector('.pn-shell')).toBe(frame);
     expect(scope(container)).toHaveAttribute('data-chrome', 'full');
   });
 
-  it('tab routes keep their padding and are not affected by the immersive rule', async () => {
+  it('tab routes sit in the design system page frame (its own margins) and are not affected by the immersive chrome', async () => {
     await launch();
     const { container } = renderApp(services, { path: '/stats' });
     await screen.findByRole('heading', { level: 1, name: 'Stats' });
-    expect(container.querySelector('main > div')?.className).toContain('px-[var(--pn-margin)]');
+    expect(container.querySelector('main .pn-screen')).not.toBeNull();
   });
 });
 
@@ -136,7 +136,7 @@ describe('mini-player slot', () => {
     await services.db.books.add(book('b1'));
     renderApp(services, { path: '/read/b1' });
     await screen.findByRole('heading', { level: 1, name: 'Title b1' });
-    fireEvent.click(screen.getByRole('link', { name: 'Back to Library' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to library' }));
     expect(await screen.findByTestId('mini-player-slot')).toBeInTheDocument();
   });
 

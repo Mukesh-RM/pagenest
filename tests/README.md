@@ -14,14 +14,21 @@ Owner: QA (`/tests` only). Everything here is self-contained: it has its own `pa
 ## Run
 
 ```bash
+npm ci                                     # repo root: the app and Playwright
 cd tests
-npm install
+npm ci
 npx playwright install chromium webkit     # first time only (on Linux: sudo npx playwright install-deps webkit)
 
 npm test                                   # builds the real app from the repo root, runs `vite preview`, runs all projects
 npm run test:unit                          # contrast maths only, needs no app
 PAGENEST_BASE_URL=https://xyz.pages.dev/ npm test   # test a deployed or already running build instead
 npm run test:fixture                       # run the suite against the reference fixture (harness self-check)
+
+npm run test:excellence                    # product excellence gates per screen (themes, text size, viewports, CLS, motion, offline, console)
+npm run test:perf                          # performance gates only (Chromium mobile, one worker: steadiest numbers)
+npm run qa                                 # everything: Playwright, performance gates, Lighthouse; non-zero exit if ANY gate fails (always strict, ignores QA_GATES_ENFORCED)
+npm run qa:stable                          # what CI blocks on: e2e projects (unit, Chromium desktop, Chromium phone) + Lighthouse
+npm run qa:gates                           # what CI only reports until enforced: tests/excellence, then tests/perf (writes qa-reports/*.json)
 
 npm run lighthouse                         # audits ../dist (run `npm run build` at the repo root first)
 node lighthouse/run.mjs --url https://xyz.pages.dev/ --threshold 90
@@ -30,6 +37,13 @@ node lighthouse/run.mjs --url https://xyz.pages.dev/ --threshold 90
 Environment variables: `PAGENEST_BASE_URL`, `PAGENEST_TARGET=fixture`, `PAGENEST_NO_SERVER=1` (start no server; `npm run test:unit` sets it), `PAGENEST_PORT` (default 4173), `PAGENEST_PHASE` (default 0; set to 1 to also enforce the Share Target manifest check), `PAGENEST_LAUNCH_BUDGET_MS` (default 1000, the offline launch budget from blueprint section 20), `CHROME_PATH` for Lighthouse.
 
 Service workers only run in production builds, so the suite always uses `vite preview` on a built app, never `vite dev`.
+
+### Who builds the app (never twice)
+
+- **Locally** (`CI` unset): Playwright's `webServer` runs `npm run build` and then `vite preview`. You do not need to build first.
+- **In CI** (`CI=true`): the workflow's own "Build" step already ran, so the `webServer` runs only `vite preview` and fails fast with a clear message if `dist/index.html` is missing.
+- Override with `PAGENEST_SKIP_BUILD=1` (never build) or `PAGENEST_SKIP_BUILD=0` (always build).
+- `webkit-iphone` is left out of the project list in CI unless `PAGENEST_WEBKIT=1`, because the CI job installs Chromium only.
 
 ## What the app must provide (selector contract)
 
@@ -59,3 +73,72 @@ If a name differs (for example the sheet trigger), change it in `e2e/support/app
 - WebKit in Playwright is a proxy for Safari on iPhone. It does not replace `real-device/phase-0.md`.
 - `npm audit` reports advisories (`cookie`, `zod`) in Lighthouse's own dev-only dependency tree. They are never part of the app and only run against local builds. `basic-ftp` is overridden to a fixed release.
 - Licences: Playwright (Apache-2.0), Lighthouse (Apache-2.0), chrome-launcher (Apache-2.0), `@axe-core/playwright` (MPL-2.0). All are dev-only and none is bundled into the app.
+
+
+## Performance gates ("no lag, ever")
+
+All thresholds live in one file, `perf/budgets.ts`. Change a number there and nowhere else. A build that misses any gate fails QA: `npm run qa` (and each Playwright project, and `npm run lighthouse`) exits non-zero.
+
+| Gate | Threshold | Where measured | Source |
+|---|---|---|---|
+| Lighthouse Performance score | 90 or more | `lighthouse/run.mjs` (mobile preset, simulated slow 4G) | brief; blueprint 3 and 16 |
+| Lighthouse PWA and Accessibility scores | 90 or more each | `lighthouse/run.mjs` | blueprint 19 |
+| First-load JavaScript | at most 200 KiB gzip (level 9), all scripts of a cold load, service worker blocked | `perf/js-budget.spec.ts` | QA choice (blueprint 16 allows 3 MB for the whole shell) |
+| Tap response | p95 at most 100 ms, pointerdown to the first painted frame showing the change; 24 samples for tabs and themes, 10 for the sheet | `perf/interaction.spec.ts` | blueprint 3: every action within 100 ms |
+| CPU for all perf tests | 4x slowdown (mid-range phone) | `throttleCpu` in `e2e/support/perf.ts` | blueprint 16 |
+| Long tasks (PerformanceObserver) | none over 100 ms during load, tab use, library open and scroll | `perf/*.spec.ts` | QA choice |
+| Scroll jank, 5,000 books | fling 3000 px/s for 2.5 s: p95 frame at most 33.4 ms, dropped frames (over 33.4 ms) at most 5 %, no frame over 100 ms | `perf/library.spec.ts` | blueprint 16: 60 fps scrolling |
+| Library open, 1,000 books | at most 2000 ms from reload to the first card (wall clock, so it includes about 50 ms of test overhead) | `perf/library.spec.ts` | blueprint 16 (later launches under 1 s) plus QA headroom for 1,000 books |
+| Library search, 1,000 books | at most 100 ms from the last keystroke to the narrowed list | `perf/library.spec.ts` | blueprint 3 |
+| Library filter chip (Favorites), 1,000 books | at most 100 ms from tap to the filtered list | `perf/library.spec.ts` | blueprint 3 |
+
+How the tests work, and what they cannot see:
+
+- They run only in the `perf-chromium-mobile` project (Pixel 7 profile). `npm run test:perf` uses one worker, because parallel browsers would disturb each other's timings. Under `npm test` all projects run together, so timing gates can be noisier; use `npm run qa` for the official result.
+- Seeding: `e2e/support/library.ts` writes books straight into IndexedDB database `pagenest`, store `books`, with the blueprint 13 `BookRecord` fields (`src/data/schema.ts`), then reloads. This stands in for the Library import path, which has not landed. When Library ships an import or seed API, swap `seedLibrary` and keep the tests.
+- Search and filter tests find the field by role `searchbox` (or a textbox named Search) and the chip by name (`Favorites`, as a button, tab, radio or checkbox). They fail, not skip, while the Library screen lacks them. Owner: Library, with UI/UX.
+- Emulated CPU throttling and headless Chromium are a proxy. The real-device checklist in `real-device/` still decides.
+
+
+## Product excellence gates (per screen)
+
+From Mukeshh's bar (`/workspace/pagenest-excellence-bar.txt`). Thresholds are in `perf/budgets.ts` under `excellence`; the tests are in `excellence/screens.spec.ts` (project `excellence-chromium-mobile`; layout shift needs Chromium) plus `e2e/` for the rest.
+
+| Gate | Threshold | Test |
+|---|---|---|
+| Lighthouse per screen (Library, Collections, Stats, Settings) | Performance, Accessibility and PWA each 90 or more | `lighthouse/run.mjs` audits every screen in `excellence.screens`, after skipping onboarding in the Chrome profile |
+| AA contrast, five themes | 4.5:1; Light, Sepia, Dark, Black, **Custom** (blueprint 5.2). The app must offer all five | `e2e/a11y.spec.ts` (four themes, every screen, axe), `excellence/` (five themes offered; Custom contrast) |
+| 200% text size | every screen and the sheet: no horizontal overflow or clipped text, controls reachable and not covered, navigation in view, axe clean | `excellence/` (`applyTextScale` doubles `--pn-font-size` and `--pn-text-*`, which is what an OS text scale does to the app's px text) |
+| In-app text size reaches 200% | largest setting at least 2x the default | `excellence/` |
+| Phone widths 360 and 430 px | no horizontal overflow; all targets 44 px or more (a radio's whole label counts); tab bar pinned to the bottom with content padding; CLS under 0.1 | `excellence/` |
+| Laptop widths 1280x800 and 1440x900 | no horizontal overflow; rail beside the content, not overlapping; content at least 60 % of the width; rail stays in view while the page scrolls; CLS under 0.1 | `excellence/` |
+| Layout shift | CLS under 0.1 after load and after walking through every tab, at all four viewports | `excellence/` |
+| Reduced motion | `prefers-reduced-motion: reduce`: no transition or animation over 50 ms (computed styles and running animations), on every screen, a theme change and the sheet | `excellence/` |
+| Offline | every screen reloads offline and shows its heading | `e2e/offline.spec.ts`, `excellence/` |
+| Zero console problems | no console error or warning, page error, failed request or HTTP 4xx/5xx on every screen and theme | `excellence/`, `e2e/smoke.spec.ts` |
+| Taps and scrolling | see "Performance gates" | `perf/` |
+
+First launch shows onboarding. `launch()` in `e2e/support/app.ts` clicks Skip (which stores `onboardingDone`) so every test starts on the Library; only `e2e/onboarding.spec.ts` looks at onboarding itself (`launchFresh`).
+
+Local runs share the machine with other tools, so use your own port: `PAGENEST_PORT=4391 npm run qa`. The real-app server is never reused (a stale one could serve an old build) and is started with `node .../vite.js preview`.
+
+## CI (`.github/workflows/ci.yml`)
+
+Two jobs, one build. The app is built once, in `verify`; `dist/` is uploaded as an artifact and reused by every later step and by `quality-gates` (nothing builds twice). With `CI=true` Playwright's webServer only runs `vite preview` on that `dist/`.
+
+| Job | Blocks the build? | What it runs |
+|---|---|---|
+| `verify` | **Yes, always** | `npm run lint`, `tsc -b` (typecheck, in the build), root unit tests, `npm audit --omit=dev --audit-level=high`, `npm run audit` (licences, privacy, models, secrets), build **and the bundle size budget** (`scripts/check-bundle.mjs`), then `npm run qa:stable` in `tests/`: e2e on the real app (unit, Chromium desktop, Chromium phone) and Lighthouse >= 90 (performance, accessibility, PWA) on every screen |
+| `quality-gates` | **No**, until `QA_GATES_ENFORCED=1` | `npm run qa:gates`: `tests/excellence` (themes, 200 % text, viewports, CLS, reduced motion, offline, console, Library edge cases) and `tests/perf` (JS size, tap p95, long tasks and jank, 1,000 and 5,000-book Library). Writes a table of failures to the run's Summary and uploads the HTML report, traces, screenshots, `qa-reports/*.json` and `tests/artifacts` (14 days) |
+
+`quality-gates` has `continue-on-error: ${{ vars.QA_GATES_ENFORCED != '1' }}`. Until the repository variable is `1`, a failing gate shows as an annotation and a red step but the workflow stays green; the Summary says **REPORT-ONLY**. To enforce: Settings > Secrets and variables > Actions > Variables > New repository variable `QA_GATES_ENFORCED` = `1`. From then on a gate failure fails the build (the Summary says **ENFORCED**). No workflow edit is needed.
+
+- Chromium only is installed. WebKit runs only when the repository variable `PAGENEST_WEBKIT` is `1` (then it is installed and `webkit-iphone` joins the e2e projects).
+- Failed e2e runs upload `tests/playwright-report` and `tests/test-results`.
+- `npm run qa` stays strict locally; `QA_GATES_ENFORCED` only affects the CI job.
+- Gates never retry (`--retries=0`): a timing gate that passes on a second attempt is flaky, not green. Reports go to `tests/qa-reports/` because Playwright empties `test-results/` at the start of each run.
+- Moving a gate into the blocking set: when a test in `excellence/` or `perf/` is stable and green, set `QA_GATES_ENFORCED=1` (all of them), or move the file to `e2e/` (that one only).
+
+## Library edge cases (design review)
+
+`sampleEdgeCases` in `e2e/support/library.ts` (no cover, very long title, a title with one unbreakable word, a two-line author, 0 %, 100 % and an audiobook at 50 %) is always part of `seedLibrary`. `e2e/library-edge-cases.spec.ts` renders the Library with them and writes a screenshot per project to `tests/artifacts/` (ignored by git, uploaded by CI; `docs/screens` is left alone). The test that fails on a real defect (a word that does not wrap is cut mid-letter) is `excellence/library-edge-cases.spec.ts`, so it reports without blocking.

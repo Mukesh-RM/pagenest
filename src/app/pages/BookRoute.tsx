@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { loadBookPosition, type ResumeInfo } from '@/data/resume';
 import type { BookRecord } from '@/data/schema';
 import { EmptyState } from '@/ui';
+import { Screen } from '../components/PageHeader';
 import { ImmersiveFallback } from '../ScreenFallback';
 import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
@@ -10,10 +11,7 @@ import { useServices } from '../services-context';
 const ReaderScreen = lazy(() => import('./ReaderScreen'));
 const PlayerScreen = lazy(() => import('./PlayerScreen'));
 
-type Loaded =
-  | { status: 'loading' }
-  | { status: 'missing' }
-  | { status: 'ready'; book: BookRecord; position: ResumeInfo | undefined };
+type Loaded = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; book: BookRecord; position: ResumeInfo | undefined };
 
 /**
  * Shared by `/read/:id` and `/listen/:id`: loads the book by id from the database, shows a real
@@ -50,14 +48,14 @@ function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
   if (loaded.status === 'loading') return <ImmersiveFallback />;
   if (loaded.status === 'missing') {
     return (
-      <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
+      <Screen>
         <EmptyState
           art="bookOpen"
           title="We can't find that book"
           description="It may have been removed from this device. Your library still has everything else."
           action={{ label: 'Go to Library', onClick: () => navigate('/', { replace: true }) }}
         />
-      </div>
+      </Screen>
     );
   }
   const { book, position } = loaded;
