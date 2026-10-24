@@ -18,7 +18,9 @@
     "test:e2e": "playwright test --project=chromium-desktop --project=chromium-mobile --project=webkit-iphone",
     "qa": "node run-qa.mjs",
     "lighthouse": "node --import tsx lighthouse/run.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "qa:stable": "node run-qa.mjs stable",
+    "qa:gates": "node run-qa.mjs gates"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

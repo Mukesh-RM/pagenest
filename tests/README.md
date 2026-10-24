@@ -26,7 +26,9 @@ npm run test:fixture                       # run the suite against the reference
 
 npm run test:excellence                    # product excellence gates per screen (themes, text size, viewports, CLS, motion, offline, console)
 npm run test:perf                          # performance gates only (Chromium mobile, one worker: steadiest numbers)
-npm run qa                                 # everything: Playwright, performance gates, Lighthouse; non-zero exit if ANY gate fails
+npm run qa                                 # everything: Playwright, performance gates, Lighthouse; non-zero exit if ANY gate fails (always strict, ignores QA_GATES_ENFORCED)
+npm run qa:stable                          # what CI blocks on: e2e projects (unit, Chromium desktop, Chromium phone) + Lighthouse
+npm run qa:gates                           # what CI only reports until enforced: tests/excellence, then tests/perf (writes qa-reports/*.json)
 
 npm run lighthouse                         # audits ../dist (run `npm run build` at the repo root first)
 node lighthouse/run.mjs --url https://xyz.pages.dev/ --threshold 90
@@ -119,3 +121,24 @@ From Mukeshh's bar (`/workspace/pagenest-excellence-bar.txt`). Thresholds are in
 First launch shows onboarding. `launch()` in `e2e/support/app.ts` clicks Skip (which stores `onboardingDone`) so every test starts on the Library; only `e2e/onboarding.spec.ts` looks at onboarding itself (`launchFresh`).
 
 Local runs share the machine with other tools, so use your own port: `PAGENEST_PORT=4391 npm run qa`. The real-app server is never reused (a stale one could serve an old build) and is started with `node .../vite.js preview`.
+
+## CI (`.github/workflows/ci.yml`)
+
+Two jobs, one build. The app is built once, in `verify`; `dist/` is uploaded as an artifact and reused by every later step and by `quality-gates` (nothing builds twice). With `CI=true` Playwright's webServer only runs `vite preview` on that `dist/`.
+
+| Job | Blocks the build? | What it runs |
+|---|---|---|
+| `verify` | **Yes, always** | `npm run lint`, `tsc -b` (typecheck, in the build), root unit tests, `npm audit --omit=dev --audit-level=high`, `npm run audit` (licences, privacy, models, secrets), build **and the bundle size budget** (`scripts/check-bundle.mjs`), then `npm run qa:stable` in `tests/`: e2e on the real app (unit, Chromium desktop, Chromium phone) and Lighthouse >= 90 (performance, accessibility, PWA) on every screen |
+| `quality-gates` | **No**, until `QA_GATES_ENFORCED=1` | `npm run qa:gates`: `tests/excellence` (themes, 200 % text, viewports, CLS, reduced motion, offline, console, Library edge cases) and `tests/perf` (JS size, tap p95, long tasks and jank, 1,000 and 5,000-book Library). Writes a table of failures to the run's Summary and uploads the HTML report, traces, screenshots, `qa-reports/*.json` and `tests/artifacts` (14 days) |
+
+`quality-gates` has `continue-on-error: ${{ vars.QA_GATES_ENFORCED != '1' }}`. Until the repository variable is `1`, a failing gate shows as an annotation and a red step but the workflow stays green; the Summary says **REPORT-ONLY**. To enforce: Settings > Secrets and variables > Actions > Variables > New repository variable `QA_GATES_ENFORCED` = `1`. From then on a gate failure fails the build (the Summary says **ENFORCED**). No workflow edit is needed.
+
+- Chromium only is installed. WebKit runs only when the repository variable `PAGENEST_WEBKIT` is `1` (then it is installed and `webkit-iphone` joins the e2e projects).
+- Failed e2e runs upload `tests/playwright-report` and `tests/test-results`.
+- `npm run qa` stays strict locally; `QA_GATES_ENFORCED` only affects the CI job.
+- Gates never retry (`--retries=0`): a timing gate that passes on a second attempt is flaky, not green. Reports go to `tests/qa-reports/` because Playwright empties `test-results/` at the start of each run.
+- Moving a gate into the blocking set: when a test in `excellence/` or `perf/` is stable and green, set `QA_GATES_ENFORCED=1` (all of them), or move the file to `e2e/` (that one only).
+
+## Library edge cases (design review)
+
+`sampleEdgeCases` in `e2e/support/library.ts` (no cover, very long title, a title with one unbreakable word, a two-line author, 0 %, 100 % and an audiobook at 50 %) is always part of `seedLibrary`. `e2e/library-edge-cases.spec.ts` renders the Library with them and writes a screenshot per project to `tests/artifacts/` (ignored by git, uploaded by CI; `docs/screens` is left alone). The test that fails on a real defect (a word that does not wrap is cut mid-letter) is `excellence/library-edge-cases.spec.ts`, so it reports without blocking.

@@ -1,21 +1,36 @@
 name: CI
 
 # Runs on every pull request and every push. Free-tier friendly:
-# one Ubuntu job, npm and Playwright browser caches, cancel superseded runs,
-# Chromium + WebKit only, short timeout.
+# npm and Playwright browser caches, cancel superseded runs, Chromium only
+# (WebKit only when PAGENEST_WEBKIT=1), short timeouts.
 #
 # The product (repo root) and the QA suite (tests/, its own package) each have
-# their own package.json and lockfile. The QA suite builds the app itself
-# through Playwright's webServer (npm run build && vite preview on port 4173)
-# and Lighthouse audits the root dist/ folder produced by the build step.
+# their own package.json and lockfile.
+#
+# The app is built ONCE per run: the `verify` job's Build step (which also runs the
+# bundle size budget, scripts/check-bundle.mjs) produces dist/, uploads it as an
+# artifact, and every later step or job reuses it. With CI=true Playwright's webServer
+# only runs `vite preview` on that dist/ and fails fast if it is missing; Lighthouse
+# audits the same dist/.
+#
+# Two jobs:
+#   verify         BLOCKING. lint, typecheck, unit tests, npm audit, repo audits, build + bundle budget,
+#                  e2e on the real app (unit, Chromium desktop and phone), Lighthouse >= 90 on every screen.
+#   quality-gates  REPORT-ONLY until the repository variable QA_GATES_ENFORCED is set to 1 (Settings >
+#                  Secrets and variables > Actions > Variables). Runs the product excellence and performance
+#                  gates (tests/excellence, tests/perf), writes a summary and uploads reports. With
+#                  QA_GATES_ENFORCED=1 any gate failure fails the build. Details: tests/README.md, "CI".
 
 on:
   push:
   pull_request:
 
+# Superseded runs of a branch or PR are cancelled to save free-tier minutes.
+# Every push to main gets its own group (the commit SHA) so a quick follow-up
+# merge never cancels the run that validates the previous main commit.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
@@ -27,9 +42,11 @@ env:
 
 jobs:
   verify:
-    name: Install, lint, test, build, e2e, lighthouse
+    name: Blocking checks (lint, types, unit, audit, build, e2e, Lighthouse)
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    outputs:
+      built: ${{ steps.built.outputs.built }}
     steps:
       - name: Check out
         uses: actions/checkout@v4
@@ -97,14 +114,50 @@ jobs:
         if: steps.detect.outputs.has_app == 'true'
         run: npm test --if-present
 
-      - name: Build
+      - name: Dependency audit (production dependencies, high and critical)
+        if: steps.detect.outputs.has_app == 'true'
+        # Dev-only tooling advisories (for example vitest's tinypool) are tracked separately and do not ship to users.
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Repository audits (licenses, privacy, models, secrets)
+        if: steps.detect.outputs.has_app == 'true'
+        run: npm run audit --if-present
+
+      - name: Build (includes the bundle size budget)
         if: steps.detect.outputs.has_build == 'true'
+        # `npm run build` ends with scripts/check-bundle.mjs: the build fails when the first load grows past its budget.
         run: npm run build
+
+      - name: Upload the production build for the other job
+        if: steps.detect.outputs.has_build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Mark build as available
+        id: built
+        if: steps.detect.outputs.has_build == 'true'
+        run: echo "built=true" >> "$GITHUB_OUTPUT"
 
       - name: Install QA suite dependencies
         if: steps.detect.outputs.has_e2e == 'true'
         working-directory: tests
         run: npm ci
+
+      - name: Choose Playwright browsers
+        if: steps.detect.outputs.has_e2e == 'true'
+        id: browsers
+        run: |
+          if [ "${PAGENEST_WEBKIT:-}" = "1" ]; then
+            echo "list=chromium webkit" >> "$GITHUB_OUTPUT"
+          else
+            echo "list=chromium" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          PAGENEST_WEBKIT: ${{ vars.PAGENEST_WEBKIT }}
 
       - name: Cache Playwright browsers
         if: steps.detect.outputs.has_e2e == 'true'
@@ -112,30 +165,27 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-chromium-webkit-${{ hashFiles('tests/package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.browsers.outputs.list }}-${{ hashFiles('package-lock.json') }}
 
-      - name: Install Playwright browsers (Chromium and WebKit)
+      - name: Install Playwright browsers
         if: steps.detect.outputs.has_e2e == 'true'
-        working-directory: tests
         run: |
           if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
             # Browsers came from the cache; only the OS libraries are missing.
-            npx playwright install-deps chromium webkit
+            npx playwright install-deps ${{ steps.browsers.outputs.list }}
           else
-            npx playwright install --with-deps chromium webkit
+            npx playwright install --with-deps ${{ steps.browsers.outputs.list }}
           fi
 
-      - name: Playwright tests (smoke, PWA, offline, accessibility)
+      - name: Stable QA gates (unit, e2e on the real app, Lighthouse on every screen)
         if: steps.detect.outputs.has_e2e == 'true'
         working-directory: tests
-        run: npm test
+        # Runs the e2e projects, then Lighthouse (PWA, Accessibility, Performance >= 90 per screen); fails if either fails.
+        run: npm run qa:stable
+        env:
+          PAGENEST_WEBKIT: ${{ vars.PAGENEST_WEBKIT }}
 
-      - name: Lighthouse gate (PWA and Accessibility >= 90) on the production build
-        if: steps.detect.outputs.has_e2e == 'true'
-        working-directory: tests
-        run: npm run lighthouse
-
-      - name: Upload Playwright and Lighthouse reports on failure
+      - name: Upload e2e and Lighthouse reports on failure
         if: failure() && steps.detect.outputs.has_e2e == 'true'
         uses: actions/upload-artifact@v4
         with:
@@ -143,6 +193,84 @@ jobs:
           path: |
             tests/playwright-report/
             tests/test-results/
+            tests/artifacts/
             tests/lighthouse/reports/
           if-no-files-found: ignore
           retention-days: 7
+
+  quality-gates:
+    name: Quality gates (excellence and performance; blocking only when QA_GATES_ENFORCED=1)
+    needs: verify
+    # Run even when `verify` failed later than its Build step, as long as a build exists to test.
+    if: ${{ always() && needs.verify.outputs.built == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Report-only until Casey sets the repository variable QA_GATES_ENFORCED to 1: a failing gate then does not fail
+    # the workflow. With QA_GATES_ENFORCED=1 this is false and any gate failure fails the build.
+    continue-on-error: ${{ vars.QA_GATES_ENFORCED != '1' }}
+    env:
+      QA_GATES_ENFORCED: ${{ vars.QA_GATES_ENFORCED }}
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            tests/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download the production build from the verify job
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install QA suite dependencies
+        working-directory: tests
+        run: npm ci
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-chromium-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium
+        run: |
+          if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
+            npx playwright install-deps chromium
+          else
+            npx playwright install --with-deps chromium
+          fi
+
+      - name: Run the excellence and performance gates
+        id: gates
+        working-directory: tests
+        # Strict: exits non-zero on any failure. Whether that fails the build is decided by `continue-on-error` above.
+        run: npm run qa:gates
+
+      - name: Summarise the gates
+        if: always()
+        working-directory: tests
+        run: node gates-summary.mjs >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload gate reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-gates-reports
+          path: |
+            tests/playwright-report/
+            tests/test-results/
+            tests/qa-reports/
+            tests/artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
