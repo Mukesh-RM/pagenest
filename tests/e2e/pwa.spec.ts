@@ -60,7 +60,7 @@ test.describe('pwa installability', () => {
   test('iPhone and browser chrome tags are present (blueprint 14)', async ({ page }) => {
     await launch(page);
     await expect(page.locator('meta[name="viewport"]')).toHaveAttribute('content', /viewport-fit=cover/);
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', /^#[0-9a-f]{6}$/i);
+    await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', /^#[0-9a-f]{6}$/i);
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
     const capable = await page
       .locator('meta[name="apple-mobile-web-app-capable"], meta[name="mobile-web-app-capable"]')
