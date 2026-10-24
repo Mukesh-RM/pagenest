@@ -6,7 +6,10 @@ import { cleanLanguage, cleanText, type ParsedMeta } from '../types';
  * worker (`audio-metadata.worker.ts`) because the library is large. Reads through `Blob.slice`.
  */
 export async function parseAudio(file: Blob): Promise<ParsedMeta> {
-  const meta = await parseBlob(file, { duration: false, skipCovers: false, includeChapters: true });
+  // Read what the file is from its bytes. A File carries the type the browser guessed from its name (an M4B
+  // called talk.mp3 arrives as audio/mpeg) and music-metadata would trust it and read the file as MP3.
+  const untyped = file.type === '' ? file : file.slice(0, file.size, '');
+  const meta = await parseBlob(untyped, { duration: false, skipCovers: false, includeChapters: true });
   const { common, format } = meta;
   const out: ParsedMeta = {};
   const title = cleanText(common.album) ?? cleanText(common.title);

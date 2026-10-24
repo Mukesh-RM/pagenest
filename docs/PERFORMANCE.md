@@ -201,3 +201,21 @@ These were noticed, not changed, because the files belong to other roles.
 
 Everything under "Risks to watch" for `src/ui`, `src/sw`, the Library feature and QA is for those
 owners and was not touched.
+
+## integrate-2: first launch, Library layout shift, startup, taps
+
+Measured on the production build (`vite preview`), Pixel 7 profile, 4x CPU throttle, Lighthouse 11.7.1 mobile (simulated slow 4G).
+
+| | Before | After |
+| --- | --- | --- |
+| First launch, Lighthouse Performance | 75-77 | 93-95 (3 runs; FCP 1.7-1.9 s, LCP 2.9-3.1 s, TBT 30-70 ms, CLS 0) |
+| Library after onboarding, 300 books and a resume card, CLS | 0.20 | 0 (Performance 94-96) |
+| Initial JS / CSS, gzip | 116.05 / 9.3 kB | 116.85 / 9.32 kB (budget 120 / 12) |
+| Entry evaluation at 4x CPU (long tasks over 50 ms, first launch, 6 runs) | 5 of 6 runs, 57-72 ms | 2 of 6 runs, 54-58 ms (react-dom, dexie and the router are now chunks of their own) |
+| Tab switch p95 / open-book sheet p95 at 4x | 91-211 ms (shared box, noisy) / 77-148 ms | 79-96 ms / 78-80 ms in the quiet runs |
+
+What changed, in short: a static boot screen in `index.html` (the first paint no longer waits for JavaScript), the first screen's chunk is
+fetched by a device hint (`pn.onboarded` in localStorage; the database stays the source of truth), the other tabs are fetched 2 s after
+the first paint, the Library is drawn only once the resume query has answered (the card is already in the header slot, so nothing moves),
+a position at 0 % is never offered, and the vendor chunks are split. Lighthouse is limited by the ~117 kB gzip entry (react-dom, router,
+Dexie); going lower needs a smaller entry, not more deferral.
