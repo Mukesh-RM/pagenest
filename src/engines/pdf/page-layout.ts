@@ -194,9 +194,15 @@ export class PageLayout {
   anchorAt(y: number): PageAnchor {
     if (this.pageCount === 0) return { page: 1, offset: 0 };
     const r = this.#rowAt(Math.max(0, y));
-    const page = r * this.#columns + 1;
-    const box = this.boxOf(page);
-    const offset = (y - box.y) / box.height;
+    let page = r * this.#columns + 1;
+    let box = this.boxOf(page);
+    let offset = (y - box.y) / box.height;
+    // In the gap under a row, the next row is what is coming into view: report its top, not "the end of the page above".
+    if (offset > 1 && page + this.#columns <= this.pageCount) {
+      page += this.#columns;
+      box = this.boxOf(page);
+      offset = 0;
+    }
     return { page, offset: Math.min(1, Math.max(0, offset)) };
   }
 

@@ -141,3 +141,55 @@ export async function pictureDiff(page, a, b) {
     [a.toString('base64'), b.toString('base64')],
   );
 }
+
+/** Wait until the app has created its IndexedDB (Dexie opens it on first use). */
+async function dbReady(page) {
+  await page.waitForFunction(async () => (await indexedDB.databases()).some((d) => d.name === 'pagenest'), null, { timeout: 15000 });
+}
+
+/**
+ * Put a fixture into the app the way the Library does: bytes into OPFS under books/<id>/<storedName>, and a row in
+ * the `books` store with the stored format and kind.
+ */
+export async function seedBook(page, book, id = crypto.randomUUID()) {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip' }).click({ timeout: 4000 }).catch(() => undefined); // first-run welcome
+  await dbReady(page);
+  await page.evaluate(
+    async ({ id, book }) => {
+      const root = await navigator.storage.getDirectory();
+      let dir = root;
+      for (const part of ['books', id]) dir = await dir.getDirectoryHandle(part, { create: true });
+      const handle = await dir.getFileHandle(book.storedName, { create: true });
+      const writable = await handle.createWritable();
+      const res = await fetch(`/__fixture/${encodeURIComponent(book.fixture)}`);
+      await res.body.pipeTo(writable);
+      const db = await new Promise((resolve, reject) => {
+        const req = indexedDB.open('pagenest');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction('books', 'readwrite');
+        tx.objectStore('books').put({
+          id,
+          fingerprint: `e2e:${id}`,
+          kind: book.kind,
+          format: book.format,
+          title: book.title,
+          author: 'Lewis Carroll',
+          fileRef: `books/${id}/${book.storedName}`,
+          addedAt: Date.now(),
+          favorite: false,
+          finished: false,
+        });
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+      db.close();
+    },
+    { id, book },
+  );
+
+  return id;
+}

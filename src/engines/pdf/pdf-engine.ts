@@ -8,6 +8,7 @@ import type { ReaderEngineExt } from '@/features/reader/core/ext-types';
 import { PDF_FORMATS } from './formats';
 import type { PageAnchor } from './page-layout';
 import { PdfReaderDocument } from './pdf-document';
+import './pdf.css';
 import { loadPdfjs } from './pdfjs';
 import { createBlobRangeTransport, looksLikePdf } from './range-transport';
 

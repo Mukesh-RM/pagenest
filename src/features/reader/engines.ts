@@ -1,4 +1,5 @@
 import { FOLIATE_FORMATS } from '@/engines/epub/formats';
+import { PDF_FORMATS } from '@/engines/pdf/formats';
 import { ReaderRegistry } from './core/registry';
 
 /**
@@ -7,9 +8,15 @@ import { ReaderRegistry } from './core/registry';
  * name, extension or MIME type. A new format is a new entry here; the reader screen never changes.
  */
 export function createDefaultRegistry(): ReaderRegistry {
-  return new ReaderRegistry().register({
-    id: 'foliate',
-    formats: FOLIATE_FORMATS,
-    load: async () => new (await import('@/engines/epub/epub-engine')).FoliateEngine(),
-  });
+  return new ReaderRegistry()
+    .register({
+      id: 'pdfjs',
+      formats: PDF_FORMATS,
+      load: async () => new (await import('@/engines/pdf/pdf-engine')).PdfEngine(),
+    })
+    .register({
+      id: 'foliate',
+      formats: FOLIATE_FORMATS,
+      load: async () => new (await import('@/engines/epub/epub-engine')).FoliateEngine(),
+    });
 }
