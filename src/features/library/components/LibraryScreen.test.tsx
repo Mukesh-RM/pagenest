@@ -33,6 +33,15 @@ const userEvent = {
   }),
 };
 
+function streamOf(blob: Blob): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      controller.enqueue(new Uint8Array(await blob.arrayBuffer()));
+      controller.close();
+    },
+  });
+}
+
 let services: AppServices;
 let backend: ReturnType<typeof inProcessBackend>;
 
@@ -48,15 +57,8 @@ beforeAll(() => {
     });
   };
   proto['stream'] ??= function (this: Blob) {
-    const blob = this;
-    return new ReadableStream<Uint8Array>({
-      async start(controller) {
-        controller.enqueue(new Uint8Array(await blob.arrayBuffer()));
-        controller.close();
-      },
-    });
+    return streamOf(this);
   };
-  // jsdom has no layout: give the list a phone-sized width.
   Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 360 });
 });
 beforeEach(() => {
