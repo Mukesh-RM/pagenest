@@ -13,9 +13,12 @@ on:
   push:
   pull_request:
 
+# Superseded runs of a branch or PR are cancelled to save free-tier minutes.
+# Every push to main gets its own group (the commit SHA) so a quick follow-up
+# merge never cancels the run that validates the previous main commit.
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.sha || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 permissions:
   contents: read
