@@ -79,7 +79,8 @@ test.describe('phase 0 smoke', () => {
     await launch(page);
     await openSheet(page);
     await expect(sheet(page)).toBeVisible();
-    await sheet(page).getByRole('button', { name: /close|done/i }).click();
+    // the sheet may offer both a header Close and a footer Done; either closes it (the first one is the header Close)
+    await sheet(page).getByRole('button', { name: /close|done/i }).first().click();
     await expect(sheet(page)).toBeHidden();
     await expect(installHelpButton(page)).toBeFocused();
   });

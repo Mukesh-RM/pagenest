@@ -19,7 +19,17 @@ export default defineConfig({
         rollupFormat: 'iife', // classic worker: works on every iOS and Firefox version that supports workers
         // App shell, icons and ONLY the Inter and Literata fonts (Decision 3). Other fonts are cached on first use.
         globPatterns: ['**/*.{js,css,html,png,svg,ico,webmanifest}', '**/*[Ii]nter*.woff2', '**/*[Ll]iterata*.woff2'],
-        globIgnores: ['**/_headers', '**/*.wasm', '**/*.map'],
+        // Decision 15: the Reader's lazy engines are NOT precached (they are large). The service worker caches them at runtime, cache
+        // first, the first time a book of that format opens (docs/DEPLOY.md). The import worker and the import parsers stay precached.
+        globIgnores: [
+          '**/_headers',
+          '**/*.wasm',
+          '**/*.map',
+          '**/assets/engine-*.js',
+          '**/assets/docx-core-*.js',
+          '**/assets/docx.worker-*.js',
+          '**/assets/pdf.worker*.mjs',
+        ],
         maximumFileSizeToCacheInBytes: 1024 * 1024,
       },
       devOptions: { enabled: false },
@@ -33,6 +43,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id: string) {
+          // Lazy engines get names the bundle check and the precache rules can recognise (Decision 15).
+          if (id.includes('node_modules/pdfjs-dist')) return 'engine-pdf';
+          if (id.includes('node_modules/foliate-js')) return 'engine-foliate';
           if (id.includes('node_modules/react-dom')) return 'react-dom';
           if (id.includes('node_modules/dexie')) return 'dexie';
           if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) return 'router';

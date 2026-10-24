@@ -107,4 +107,44 @@ describe('bundle budget script', () => {
     expect(out).toContain('missing files');
     expect(code).toBe(1);
   });
+
+  describe('Decision 15: lazy engine chunks have their own explicit budgets', () => {
+    const files = (extra: Record<string, number>) => makeDist({ 'index-abc.js': 50_000, 'index-abc.css': 1_000, ...extra }, page());
+
+    it('lets the pdf.js engine chunk be up to 125 kB, the docx chunk and worker up to 100 kB, and the epub engine up to 60 kB', () => {
+      const { code, out } = run(
+        files({ 'engine-pdf-aa.js': 120_000, 'docx-core-aa.js': 95_000, 'docx.worker-aa.js': 95_000, 'engine-foliate-aa.js': 55_000 }),
+      );
+      expect(out).toMatch(/ok {3}engine chunk \(pdf\.js\) engine-pdf-aa\.js/);
+      expect(out).toMatch(/ok {3}engine worker \(docx\) docx\.worker-aa\.js/);
+      expect(code).toBe(0);
+    });
+
+    it.each([
+      ['engine-pdf-aa.js', 130_000],
+      ['docx-core-aa.js', 105_000],
+      ['docx.worker-aa.js', 105_000],
+      ['engine-foliate-aa.js', 65_000],
+    ])('still fails %s above its own limit', (name, bytes) => {
+      const { code, out } = run(files({ [name]: bytes }));
+      expect(out).toContain(`FAIL`);
+      expect(out).toContain(name);
+      expect(code).toBe(1);
+    });
+
+    it('does not widen the budget of other chunks: a 60 kB screen chunk and a 60 kB ordinary worker still fail', () => {
+      expect(run(files({ 'Library-aa.js': 60_000 })).code).toBe(1);
+      expect(run(files({ 'import.worker-aa.js': 60_000 })).code).toBe(1);
+    });
+
+    it('never excuses the first load: an engine-named chunk that index.html preloads counts toward the 120 kB', () => {
+      const dist = makeDist(
+        { 'index-abc.js': 60_000, 'engine-pdf-aa.js': 70_000, 'index-abc.css': 1_000 },
+        page('<link rel="modulepreload" crossorigin href="/assets/engine-pdf-aa.js">'),
+      );
+      const { code, out } = run(dist);
+      expect(out).toMatch(/FAIL initial JS/);
+      expect(code).toBe(1);
+    });
+  });
 });

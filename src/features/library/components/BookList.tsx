@@ -1,6 +1,5 @@
 import type { BookSummary } from '@/data/library-query';
-import { VirtualList, type RectLike } from '@/ui';
-import { useLibraryGrid } from '@/ui/screens/libraryGrid';
+import { VirtualList, useLibraryGrid, type RectLike } from '@/ui';
 import type { ViewMode } from '../model';
 import { BookItem } from './BookItem';
 

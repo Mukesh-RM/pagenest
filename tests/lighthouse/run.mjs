@@ -5,6 +5,8 @@
 //   node lighthouse/run.mjs                      serve ../dist (run `npm run build` at the repo root first) and audit it
 //   node lighthouse/run.mjs --url http://host/   audit an already running or deployed build
 //   node lighthouse/run.mjs --dir fixtures/reference-app   serve and audit another folder
+//   Besides every screen it audits two scenarios (--scenarios none: screens only; --scenarios only: just the scenarios): a mid-size library (BUDGETS.lighthouse.scenarios.libraryBooks
+//   books seeded into IndexedDB) and a first launch in a fresh profile (onboarding visible). Each needs Performance >= 90 and CLS < BUDGETS.lighthouse.maxCls.
 //   flags: --route /settings (one screen only; default is every screen in perf/budgets.ts)  --threshold 90 (one minimum for every category; default is perf/budgets.ts)  --preset mobile|desktop  --port 4174  --spa
 //
 // Run it with `node --import tsx lighthouse/run.mjs` (npm run lighthouse does) so it can read the TypeScript budgets.
@@ -18,6 +20,7 @@ import { chromium } from '@playwright/test';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { BUDGETS } from '../perf/budgets.ts';
+import { seedLibrary } from '../e2e/support/library.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const testsRoot = resolve(here, '..');
@@ -87,62 +90,100 @@ async function skipOnboardingInProfile(port) {
   }
 }
 
-let chrome;
+const maxCls = BUDGETS.lighthouse.maxCls;
+const reportsDir = resolve(here, 'reports');
 let exitCode = 0;
-try {
-  chrome = await chromeLauncher.launch({
-    chromePath,
-    chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-  });
-  await skipOnboardingInProfile(chrome.port);
-  const config = args.preset === 'desktop'
-    ? (await import('lighthouse/core/config/desktop-config.js')).default
-    : undefined;
-  const dir = resolve(here, 'reports');
-  await mkdir(dir, { recursive: true });
+const chromeFlags = ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'];
 
-  console.log(`\nLighthouse ${args.preset}, minimum scores ${JSON.stringify(minScore)}, per screen`);
-  for (const screen of screens) {
-    const target = new URL(screen.path.replace(/^\//, ''), base).toString();
-    const flags = {
-      port: chrome.port, output: ['json', 'html'], logLevel: 'error', onlyCategories: categories,
-      disableStorageReset: true, // keep the "onboarding skipped" setting
-    };
-    const result = await lighthouse(target, flags, config);
-    if (!result?.lhr) throw new Error(`Lighthouse returned no result for ${target}`);
-    const { lhr } = result;
-    if (lhr.runtimeError) throw new Error(`${lhr.runtimeError.code}: ${lhr.runtimeError.message}`);
-    const slug = screen.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-    const [json, html] = result.report;
-    await writeFile(resolve(dir, `lighthouse-${slug}.json`), json);
-    await writeFile(resolve(dir, `lighthouse-${slug}.html`), html);
+/** Runs Lighthouse on one URL and prints/enforces the three category minimums plus CLS. `slug` names the report files. */
+async function auditTarget(chrome, config, { title, target, slug, storageReset }) {
+  const flags = {
+    port: chrome.port, output: ['json', 'html'], logLevel: 'error', onlyCategories: categories,
+    disableStorageReset: !storageReset, // keep the "onboarding skipped" setting and the seeded books unless a scenario wants a clean profile
+  };
+  const result = await lighthouse(target, flags, config);
+  if (!result?.lhr) throw new Error(`Lighthouse returned no result for ${target}`);
+  const { lhr } = result;
+  if (lhr.runtimeError) throw new Error(`${lhr.runtimeError.code}: ${lhr.runtimeError.message}`);
+  const [json, html] = result.report;
+  await writeFile(resolve(reportsDir, `lighthouse-${slug}.json`), json);
+  await writeFile(resolve(reportsDir, `lighthouse-${slug}.html`), html);
 
-    const landed = new URL(lhr.finalDisplayedUrl).pathname;
-    console.log(`\n${screen.name} (${lhr.finalDisplayedUrl})${landed !== new URL(target).pathname ? `  NOTE: landed on ${landed}` : ''}`);
-    for (const id of categories) {
-      const cat = lhr.categories[id];
-      const score = Math.round((cat.score ?? 0) * 100);
-      const pass = score >= minScore[id];
-      if (!pass) exitCode = 1;
-      console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${cat.title}: ${score} (minimum ${minScore[id]})`);
-      if (!pass) {
-        for (const ref of cat.auditRefs) {
-          const audit = lhr.audits[ref.id];
-          if (ref.weight > 0 && audit.score !== null && audit.score < 1) {
-            console.log(`        - ${audit.id}: ${audit.title}${audit.displayValue ? ` (${audit.displayValue})` : ''}`);
-          }
+  const landed = new URL(lhr.finalDisplayedUrl).pathname;
+  console.log(`\n${title} (${lhr.finalDisplayedUrl})${landed !== new URL(target).pathname ? `  NOTE: landed on ${landed}` : ''}`);
+  for (const id of categories) {
+    const cat = lhr.categories[id];
+    const score = Math.round((cat.score ?? 0) * 100);
+    const pass = score >= minScore[id];
+    if (!pass) exitCode = 1;
+    console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${cat.title}: ${score} (minimum ${minScore[id]})`);
+    if (!pass) {
+      for (const ref of cat.auditRefs) {
+        const audit = lhr.audits[ref.id];
+        if (ref.weight > 0 && audit.score !== null && audit.score < 1) {
+          console.log(`        - ${audit.id}: ${audit.title}${audit.displayValue ? ` (${audit.displayValue})` : ''}`);
         }
       }
     }
-    const m = (id) => lhr.audits[id]?.displayValue ?? 'n/a';
-    console.log(`  metrics: FCP ${m('first-contentful-paint')}, LCP ${m('largest-contentful-paint')}, TBT ${m('total-blocking-time')}, CLS ${m('cumulative-layout-shift')}, TTI ${m('interactive')}`);
   }
-  console.log(`\nReports: ${dir}/lighthouse-<screen>.html and .json`);
+  const cls = lhr.audits['cumulative-layout-shift']?.numericValue ?? Number.NaN;
+  const clsPass = cls < maxCls;
+  if (!clsPass) exitCode = 1;
+  console.log(`  ${clsPass ? 'PASS' : 'FAIL'}  Cumulative layout shift: ${Number.isFinite(cls) ? cls.toFixed(3) : 'n/a'} (maximum ${maxCls})`);
+  const m = (id) => lhr.audits[id]?.displayValue ?? 'n/a';
+  console.log(`  metrics: FCP ${m('first-contentful-paint')}, LCP ${m('largest-contentful-paint')}, TBT ${m('total-blocking-time')}, CLS ${m('cumulative-layout-shift')}, TTI ${m('interactive')}`);
+}
+
+let chrome;
+let fresh;
+try {
+  await mkdir(reportsDir, { recursive: true });
+  const config = args.preset === 'desktop'
+    ? (await import('lighthouse/core/config/desktop-config.js')).default
+    : undefined;
+  console.log(`\nLighthouse ${args.preset}, minimum scores ${JSON.stringify(minScore)}, CLS under ${maxCls}, per screen`);
+
+  chrome = await chromeLauncher.launch({ chromePath, chromeFlags });
+  await skipOnboardingInProfile(chrome.port);
+  for (const screen of args.scenarios === 'only' ? [] : screens) {
+    await auditTarget(chrome, config, {
+      title: screen.name, target: new URL(screen.path.replace(/^\//, ''), base).toString(),
+      slug: screen.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), storageReset: false,
+    });
+  }
+
+  if (!args.route && args.scenarios !== 'none') {
+    // Scenario 1: a mid-size library. The books are written to IndexedDB through the storage contract, in the same profile.
+    const books = BUDGETS.lighthouse.scenarios.libraryBooks;
+    const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
+    try {
+      const page = await (browser.contexts()[0] ?? (await browser.newContext())).newPage();
+      await page.goto(base);
+      await page.getByRole('navigation').first().waitFor({ timeout: 15000 });
+      await seedLibrary(page, { count: books }); // throws if the books did not land in IndexedDB; reloads the page
+      await page.locator('main li').first().waitFor({ timeout: 15000 });
+      await page.close();
+    } finally { await browser.close(); }
+    await auditTarget(chrome, config, { title: `Library with ${books}+ books`, target: base, slug: 'library-seeded', storageReset: false });
+
+    // Scenario 2: first launch. A fresh Chrome profile, onboarding NOT skipped; checked to be on screen before auditing.
+    fresh = await chromeLauncher.launch({ chromePath, chromeFlags });
+    const b2 = await chromium.connectOverCDP(`http://127.0.0.1:${fresh.port}`);
+    try {
+      const page = await (b2.contexts()[0] ?? (await b2.newContext())).newPage();
+      await page.goto(base);
+      await page.getByRole('button', { name: /^skip$/i }).waitFor({ timeout: 15000 }); // onboarding is what a new user sees
+      await page.close();
+    } finally { await b2.close(); }
+    await auditTarget(fresh, config, { title: 'First launch (fresh profile, onboarding visible)', target: base, slug: 'first-launch', storageReset: true });
+  }
+  console.log(`\nReports: ${reportsDir}/lighthouse-<screen>.html and .json`);
 } catch (e) {
   console.error(`Lighthouse could not run: ${e.message}`);
   exitCode = 2;
 } finally {
   if (chrome) await chrome.kill();
+  if (fresh) await fresh.kill();
   if (server) server.kill();
 }
 process.exit(exitCode);

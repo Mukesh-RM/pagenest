@@ -24,9 +24,14 @@ export async function overflowProblems(page: Page): Promise<Problem[]> {
         while (scroller) { const o = getComputedStyle(scroller).overflowX; if ((o === 'auto' || o === 'scroll') && scroller.scrollWidth > scroller.clientWidth) { inside = true; break; } scroller = scroller.parentElement; }
         if (!inside) out.push({ what: 'element extends past the right edge', where: `${describe(el)} right=${Math.round(r.right)} viewport=${de.clientWidth}` });
       }
+      // aria-hidden text is a decorative duplicate (for example a generated cover repeating the title shown in the card body)
+      if (el.closest('[aria-hidden="true"]')) continue;
       const hasOwnText = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim());
       const clips = cs.overflowX === 'hidden' || cs.overflowX === 'clip';
-      const lineClamped = cs.getPropertyValue('-webkit-line-clamp') !== 'none' && cs.getPropertyValue('-webkit-line-clamp') !== '';
+      // line-clamp (ellipsis) is deliberate truncation, not clipping. Current Chromium reports it as `line-clamp` or on the legacy
+      // -webkit-box layout, not always under -webkit-line-clamp, so accept all three forms.
+      const clampValue = (n: string) => { const v = cs.getPropertyValue(n); return v !== '' && v !== 'none' && v !== 'auto'; };
+      const lineClamped = clampValue('-webkit-line-clamp') || clampValue('line-clamp') || (cs.display === '-webkit-box' && cs.overflowY !== 'visible');
       if (hasOwnText && clips && !lineClamped && el.scrollWidth > el.clientWidth + 1 && cs.textOverflow !== 'ellipsis') {
         out.push({ what: 'text clipped horizontally', where: `${describe(el)} scrollWidth ${el.scrollWidth} > ${el.clientWidth}` });
       }
@@ -55,7 +60,7 @@ export async function smallTargets(page: Page, minPx: number): Promise<Problem[]
       let r = el.getBoundingClientRect();
       // Native radios and checkboxes: the whole label is the tap target, so measure the label when it is larger than the input.
       const label = (el as HTMLInputElement).labels?.[0];
-      if (label && (el as HTMLInputElement).type !== 'text') { const lr = label.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
+      if (label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type)) { const lr = label.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
       if (r.width === 0 && r.height === 0) continue;
       if (el.tagName === 'A' && el.closest('p, li > span, dd')) { const p = el.closest('p'); if (p && (p.textContent ?? '').trim() !== (el.textContent ?? '').trim()) continue; }
       if (r.width < minPx - 0.5 || r.height < minPx - 0.5) {
@@ -76,12 +81,14 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
   return page.evaluate(() => {
     const out: { what: string; where: string }[] = [];
     const sel = 'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="radio"], [role="tab"], [role="switch"], [role="checkbox"]';
-    for (const el of document.querySelectorAll(sel)) {
+    // With a modal dialog open, everything behind it is meant to be covered by the scrim: judge only the controls inside the dialog.
+    const modal = [...document.querySelectorAll('[role="dialog"][aria-modal="true"], dialog[open]')].find((d) => !d.closest('[aria-hidden="true"]') && d.getAttribute('aria-hidden') !== 'true' && d.getBoundingClientRect().height > 0);
+    for (const el of (modal ?? document).querySelectorAll(sel)) {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') continue;
       const label = (el as HTMLInputElement).labels?.[0];
       if (!label && (el.getBoundingClientRect().width === 0 || el.getBoundingClientRect().height === 0)) continue; // not rendered (for example the tablet rail on a phone)
-      const probe: Element = label && (el as HTMLInputElement).type !== 'text' ? label : el;
+      const probe: Element = label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type) ? label : el;
       probe.scrollIntoView({ block: 'center', inline: 'center' });
       const r = probe.getBoundingClientRect();
       const x = r.left + r.width / 2; const y = r.top + r.height / 2;
@@ -190,18 +197,94 @@ export async function expectUsableLayout(
   }
 }
 
+export interface TextScaleResult {
+  /** Root (html) font size in px before and after, and the body font size before and after. */
+  baseRootPx: number; rootPx: number; baseBodyPx: number; bodyPx: number;
+  /** Font-size tokens (custom properties holding a px, rem or em length) and how each one ended up scaled. */
+  tokens: { name: string; beforePx: number; afterPx: number; how: 'follows root font size (rem/em)' | 'overridden (px)' }[];
+  /** Visible text elements whose rendered font size did NOT grow with the scale: text that ignores the user's text size. */
+  unscaledText: string[];
+  sampled: number;
+}
+
 /**
- * Emulates a 200% system text size for apps whose root size is driven by CSS variables set in px (PageNest sets
- * --pn-font-size and --pn-text-*): every such px variable on the root is multiplied by `scale`, exactly what an OS text
- * scale does to px text. Returns the resulting body font size.
+ * Emulates a system text size of `scale` (2 = 200%) for any app, whatever unit it uses:
+ *  1. the root font size is scaled (inline `font-size ... !important` on <html>, which is what an OS or browser text size
+ *     does to rem/em text);
+ *  2. every font-size custom property (name contains "font" or "text", value is a px/rem/em length, found by walking the
+ *     style sheets) is measured through a probe element before and after. A token that already grew with the root (rem, em)
+ *     is left alone; a token that did not (fixed px) is overridden to before x scale, because that is what an OS text
+ *     scale does to px text;
+ *  3. every visible text element's font size is compared before and after, so text that ignores the setting is reported
+ *     (`unscaledText`) instead of passing silently.
+ * Nothing is hard-coded to PageNest's token names or to a unit.
  */
-export async function applyTextScale(page: Page, scale: number): Promise<number> {
+export async function applyTextScale(page: Page, scale: number): Promise<TextScaleResult> {
   return page.evaluate((scale) => {
     const root = document.documentElement;
-    const names = ['--pn-font-size', '--pn-text-xs', '--pn-text-sm', '--pn-text-md', '--pn-text-lg', '--pn-text-xl'];
-    const cs = getComputedStyle(root);
-    const bases = names.map((n) => parseFloat(cs.getPropertyValue(n)));
-    names.forEach((n, i) => { if (Number.isFinite(bases[i])) root.style.setProperty(n, `${bases[i]! * scale}px`); });
-    return parseFloat(getComputedStyle(document.body).fontSize);
+    const rootStyle = getComputedStyle(root);
+    const baseRootPx = parseFloat(rootStyle.fontSize);
+    const baseBodyPx = parseFloat(getComputedStyle(document.body).fontSize);
+    // 1. discover the length-valued font tokens
+    const names = new Set<string>();
+    const collect = (style: CSSStyleDeclaration) => { for (let i = 0; i < style.length; i++) { const n = style[i]!; if (n.startsWith('--') && /font|text/i.test(n)) names.add(n); } };
+    const walk = (rules: CSSRuleList) => {
+      for (const rule of Array.from(rules)) {
+        if ('style' in rule && (rule as CSSStyleRule).style) collect((rule as CSSStyleRule).style);
+        if ('cssRules' in rule && (rule as CSSGroupingRule).cssRules) walk((rule as CSSGroupingRule).cssRules);
+      }
+    };
+    for (const sheet of Array.from(document.styleSheets)) { try { walk(sheet.cssRules); } catch { /* cross-origin sheet */ } }
+    collect(root.style);
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;height:0;overflow:hidden;padding:0;border:0';
+    root.appendChild(probe);
+    const lengthTokens = [...names].filter((n) => /^-?[\d.]+(px|rem|em)$/.test(rootStyle.getPropertyValue(n).trim()) || /(calc|clamp|min|max)\(.*(px|rem|em)/.test(rootStyle.getPropertyValue(n).trim()));
+    const measure = (n: string) => { probe.style.width = `var(${n})`; return parseFloat(getComputedStyle(probe).width); };
+    const before = new Map(lengthTokens.map((n) => [n, measure(n)]));
+    // text elements before
+    const texts: { el: Element; px: number }[] = [];
+    for (const el of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+      const r = el.getBoundingClientRect();
+      if (r.width <= 2 || r.height <= 2) continue;
+      if (![...el.childNodes].some((c) => c.nodeType === 3 && (c.textContent ?? '').trim())) continue;
+      texts.push({ el, px: parseFloat(cs.fontSize) });
+    }
+    // 2. scale the root, then fix whatever px tokens did not follow
+    root.style.setProperty('font-size', `${baseRootPx * scale}px`, 'important');
+    const tokens: TextScaleResult['tokens'] = [];
+    for (const n of lengthTokens) {
+      const b = before.get(n)!; let a = measure(n);
+      let how: TextScaleResult['tokens'][number]['how'] = 'follows root font size (rem/em)';
+      if (!(a >= b * scale * 0.97)) { root.style.setProperty(n, `${b * scale}px`); a = measure(n); how = 'overridden (px)'; }
+      tokens.push({ name: n, beforePx: Math.round(b * 100) / 100, afterPx: Math.round(a * 100) / 100, how });
+    }
+    probe.remove();
+    // 3. did the text actually grow?
+    const need = 1 + (scale - 1) * 0.9;
+    const unscaledText = texts.filter(({ el, px }) => !(parseFloat(getComputedStyle(el).fontSize) >= px * need))
+      .map(({ el, px }) => `${el.tagName.toLowerCase()} "${(el.textContent ?? '').trim().slice(0, 30)}" ${px}px -> ${parseFloat(getComputedStyle(el).fontSize)}px`);
+    return {
+      baseRootPx, rootPx: parseFloat(getComputedStyle(root).fontSize), baseBodyPx, bodyPx: parseFloat(getComputedStyle(document.body).fontSize),
+      tokens, unscaledText, sampled: texts.length,
+    };
   }, scale);
+}
+
+/**
+ * The text-size gate on the current page: the scale really took effect (so the checks below are not run on an unscaled
+ * page), then nothing overflows or is clipped and every control is reachable. Throws (via expect) on any problem.
+ */
+export async function expectTextScaleOk(page: Page, label: string, scale: number): Promise<TextScaleResult> {
+  const r = await applyTextScale(page, scale);
+  expect(r.rootPx / r.baseRootPx, `${label}: root font size did not scale (${r.baseRootPx} -> ${r.rootPx} px); the gate would test nothing`).toBeGreaterThanOrEqual(scale * 0.99);
+  expect(r.bodyPx / r.baseBodyPx, `${label}: body text did not scale (${r.baseBodyPx} -> ${r.bodyPx} px); the gate would test nothing`).toBeGreaterThanOrEqual(scale * 0.97);
+  expect(r.sampled, `${label}: no visible text found to scale`).toBeGreaterThan(0);
+  // soft: report it, but keep running the overflow and reachability checks below so one run shows everything that is wrong
+  expect.soft(r.unscaledText.length / r.sampled, `${label}: text that ignores the text size (${r.unscaledText.length} of ${r.sampled}):\n${r.unscaledText.slice(0, 8).map((t) => `  - ${t}`).join('\n')}`).toBeLessThanOrEqual(0.1);
+  await expectNoOverflow(page, label);
+  await expectControlsReachable(page, label);
+  return r;
 }
