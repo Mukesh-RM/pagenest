@@ -35,7 +35,7 @@ There are exactly two places where a screen plugs in, both in `src/app/pages/Boo
 
 | Route | Lazy mount in `BookRoute.tsx` | Props | Who owns the screen |
 | --- | --- | --- | --- |
-| `/read/:id` | `const ReaderScreen = lazy(() => import('./ReaderScreen'))` | `{ book, position }` (`BookScreenProps`) | Reader bot; today a summary placeholder in `src/app/pages/ReaderScreen.tsx` |
+| `/read/:id` | `const ReaderScreen = lazy(() => import('./ReaderScreen'))` | `{ book, position }` (`BookScreenProps`) | Reader bot: `BookRoute.tsx` lazy-imports `@/features/reader/live/LiveReader` (the placeholder `pages/ReaderScreen.tsx` is no longer mounted) |
 | `/listen/:id` | `const PlayerScreen = lazy(() => import('./PlayerScreen'))` | `{ book, position }` (`BookScreenProps`) | Audio bot; today a summary placeholder in `src/app/pages/PlayerScreen.tsx` |
 
 Both are **default exports** in lazy chunks, so they cost nothing on first load (`perf-rules.test.ts` fails if either is imported
