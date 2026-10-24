@@ -108,7 +108,7 @@ From Mukeshh's bar (`/workspace/pagenest-excellence-bar.txt`). Thresholds are in
 |---|---|---|
 | Lighthouse per screen (Library, Collections, Stats, Settings) | Performance, Accessibility and PWA each 90 or more | `lighthouse/run.mjs` audits every screen in `excellence.screens`, after skipping onboarding in the Chrome profile |
 | AA contrast, five themes | 4.5:1; Light, Sepia, Dark, Black, **Custom** (blueprint 5.2). The app must offer all five | `e2e/a11y.spec.ts` (four themes, every screen, axe), `excellence/` (five themes offered; Custom contrast) |
-| 200% text size | every screen and the sheet: no horizontal overflow or clipped text, controls reachable and not covered, navigation in view, axe clean | `excellence/` (`applyTextScale` doubles `--pn-font-size` and `--pn-text-*`, which is what an OS text scale does to the app's px text) |
+| 200% text size | every screen and the sheet: no horizontal overflow or clipped text, controls reachable and not covered, navigation in view, axe clean; and the scale must really take effect | `excellence/` using `expectTextScaleOk` (see "How the 200% gate works") |
 | In-app text size reaches 200% | largest setting at least 2x the default | `excellence/` |
 | Phone widths 360 and 430 px | no horizontal overflow; all targets 44 px or more (a radio's whole label counts); tab bar pinned to the bottom with content padding; CLS under 0.1 | `excellence/` |
 | Laptop widths 1280x800 and 1440x900 | no horizontal overflow; rail beside the content, not overlapping; content at least 60 % of the width; rail stays in view while the page scrolls; CLS under 0.1 | `excellence/` |
@@ -142,3 +142,23 @@ Two jobs, one build. The app is built once, in `verify`; `dist/` is uploaded as 
 ## Library edge cases (design review)
 
 `sampleEdgeCases` in `e2e/support/library.ts` (no cover, very long title, a title with one unbreakable word, a two-line author, 0 %, 100 % and an audiobook at 50 %) is always part of `seedLibrary`. `e2e/library-edge-cases.spec.ts` renders the Library with them and writes a screenshot per project to `tests/artifacts/` (ignored by git, uploaded by CI; `docs/screens` is left alone). The test that fails on a real defect (a word that does not wrap is cut mid-letter) is `excellence/library-edge-cases.spec.ts`, so it reports without blocking.
+
+## How the 200% text gate works, and the proof it has teeth
+
+`applyTextScale(page, 2)` in `e2e/support/layout.ts` works whichever unit the app uses, and reads everything at runtime:
+
+1. It scales the root font size (inline `font-size ... !important` on `<html>`), which is what an OS or browser text size does to rem/em text.
+2. It walks the style sheets for custom properties whose name contains `font` or `text` and whose value is a px, rem or em length (PageNest: `--pn-font-size`, `--pn-text-xs` to `-xl`), measures each through a probe element before and after, and overrides only the ones that did **not** grow with the root (fixed px tokens) to before x scale. rem and em tokens follow the root by themselves.
+3. It compares the rendered font size of every visible text element before and after (`unscaledText`).
+
+`expectTextScaleOk` then fails the gate if the root or body did not actually grow (so a gate can never "pass" on an unscaled page), if more than 10 % of the text ignores the setting, or if anything overflows, is clipped or is unreachable.
+
+**Harness self-check** (`e2e/text-scale-harness.spec.ts`, runs in the blocking e2e projects, needs no app): fixture pages in `fixtures/text-scale/pages.ts` in px, rem and mixed units. A sane layout must pass; each deliberately broken one must fail with the right message: fixed-width toolbar (`page scrolls horizontally`), fixed pixel height (`text clipped vertically`), fixed pixel width (`text clipped horizontally`), and text pinned in px (`body text did not scale`). The same broken pages are shown to be fine at 100 %, so the failure comes from the text size. A last test switches the real app's `--pn-text-*` tokens from px to rem at runtime and checks they are still scaled.
+
+## Tap gates and a busy machine
+
+The three tap gates (tab, theme, Install sheet) discard the first 4 taps (`tap.warmup`), take p95 over the next 30 (`tap.samples`, so one stray frame cannot fail the gate), and keep the 100 ms threshold. If p95 is over budget **and** the machine was busy (1-minute load average per core at or above `tap.busyLoadPerCore`, 0.5, before or after the run), the gate measures once more after a 3 s pause. A failure on a quiet machine, or a second failure, fails the gate. Both attempts and the load are in the failure message and in the attached `tap-*.txt`.
+
+Evidence for "noise, not jank" came from `perf/tap-diagnostics.spec.ts` (opt-in, `TAP_DIAG=1`, not a gate): it splits each tap into input delay, the app's own handler time and presentation time from the Event Timing API, next to the machine load. On a quiet box the app's handler takes about 1 ms and the p95 is 59 to 63 ms; samples of 95 to 180 ms appear only while other processes load the box, and then input delay and presentation time grow, not the handler.
+
+Mutation switch: `PAGENEST_QA_SLOW_TAP_MS=150` makes every pointerdown block the main thread for that long; the tap gates must fail with it (they do, p95 about 190 to 260 ms).
