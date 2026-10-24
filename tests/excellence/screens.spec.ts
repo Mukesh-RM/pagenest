@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { TABS, chooseTheme, gotoTab, launch, openSheet, primaryNav, sheet, tab, themeOption, themeRadio, waitForServiceWorkerControl, type TabName } from '../e2e/support/app';
 import { expectNoA11yViolations, expectNoContrastViolations } from '../e2e/support/axe';
 import {
-  expectControlsReachable, expectNoOverflow, expectTargetsBigEnough, longestMotion, readCls, recordLayoutShift,
+  expectControlsReachable, expectNoOverflow, expectUsableLayout, expectTargetsBigEnough, longestMotion, readCls, recordLayoutShift,
 } from '../e2e/support/layout';
 import { BUDGETS } from '../perf/budgets';
 
@@ -90,20 +90,24 @@ test.describe('200% text size', () => {
   });
 });
 
-test.describe('phone widths', () => {
-  for (const width of X.viewportWidths) {
-    test.describe(`${width}px wide`, () => {
-      test.use({ viewport: { width, height: X.viewportHeight } });
+test.describe('viewports (phones and laptops)', () => {
+  for (const vp of X.viewports) {
+    test.describe(vp.name, () => {
+      test.use({
+        viewport: { width: vp.width, height: vp.height },
+        ...(vp.phone ? {} : { isMobile: false, hasTouch: false, deviceScaleFactor: 1 }),
+      });
 
       for (const name of TABS) {
-        test(`${name}: no horizontal overflow, ${X.minTargetPx} px targets, layout shift under ${X.maxCls}`, async ({ page }) => {
+        test(`${name}: no horizontal overflow, usable layout, layout shift under ${X.maxCls}${vp.phone ? `, ${X.minTargetPx} px targets` : ''}`, async ({ page }) => {
           await recordLayoutShift(page);
           await launch(page);
           await gotoTab(page, name as TabName);
           await page.waitForTimeout(1000); // let late content (fonts, storage figures) settle before judging shifts
-          const label = `${name} at ${width}px`;
+          const label = `${name} at ${vp.name} (${vp.width}x${vp.height})`;
           await expectNoOverflow(page, label);
-          await expectTargetsBigEnough(page, X.minTargetPx, label);
+          if (vp.phone) await expectTargetsBigEnough(page, X.minTargetPx, label);
+          await expectUsableLayout(page, vp, label, X.minContentShareOfWidth);
           const { cls, shifts } = await readCls(page);
           expect(cls, `${label}: CLS ${cls.toFixed(3)} (limit ${X.maxCls}); shifts ${JSON.stringify(shifts)}`).toBeLessThan(X.maxCls);
         });
@@ -115,7 +119,7 @@ test.describe('phone widths', () => {
         for (const name of [...TABS, ...TABS]) await gotoTab(page, name);
         await page.waitForTimeout(500);
         const { cls, shifts } = await readCls(page);
-        expect(cls, `CLS ${cls.toFixed(3)} (limit ${X.maxCls}); shifts ${JSON.stringify(shifts)}`).toBeLessThan(X.maxCls);
+        expect(cls, `${vp.name}: CLS ${cls.toFixed(3)} (limit ${X.maxCls}); shifts ${JSON.stringify(shifts)}`).toBeLessThan(X.maxCls);
       });
     });
   }

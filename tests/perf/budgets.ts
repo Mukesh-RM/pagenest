@@ -66,9 +66,15 @@ export const BUDGETS = {
     minContrast: 4.5,
     /** "Works at 200% text size": the root font size is set to this percentage (what the browser font-size setting does). */
     textScalePercent: 200,
-    /** Phone widths: small Android and large iPhone. */
-    viewportWidths: [360, 430],
-    viewportHeight: 800,
+    /** Viewports every screen is checked at: small Android, large iPhone, laptop and large laptop. */
+    viewports: [
+      { name: 'phone 360', width: 360, height: 800, phone: true },
+      { name: 'phone 430', width: 430, height: 932, phone: true },
+      { name: 'laptop 1280', width: 1280, height: 800, phone: false },
+      { name: 'laptop 1440', width: 1440, height: 900, phone: false },
+    ],
+    /** Laptop layout: the content area must use at least this share of the width left of or right of the navigation. */
+    minContentShareOfWidth: 0.6,
     /** Smallest touch target, in CSS px (blueprint 5.8; the bar says 44). */
     minTargetPx: 44,
     /** Cumulative Layout Shift ("no layout shift"), Google's "good" limit. */

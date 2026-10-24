@@ -144,3 +144,34 @@ export async function longestMotion(page: Page): Promise<{ ms: number; where: st
     return best;
   });
 }
+
+/**
+ * "Usable layout": navigation and content are both visible, do not overlap, and fit in the viewport.
+ * Phones: navigation is a bar under the content (blueprint 5.5). Laptops: a rail beside the content, and the content
+ * area takes at least `minContentShare` (budgets.ts minContentShareOfWidth) of the screen so the page is not a thin strip.
+ */
+export async function expectUsableLayout(
+  page: Page, vp: { width: number; height: number; phone: boolean }, label: string, minContentShare: number,
+): Promise<void> {
+  const boxes = await page.evaluate(() => {
+    const rect = (el: Element | null) => { const r = el?.getBoundingClientRect(); return r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null; };
+    return { nav: rect(document.querySelector('nav')), main: rect(document.querySelector('main')) };
+  });
+  expect(boxes.nav, `${label}: navigation missing`).not.toBeNull();
+  expect(boxes.main, `${label}: main content missing`).not.toBeNull();
+  const nav = boxes.nav!; const main = boxes.main!;
+  const overlap = nav.x < main.x + main.w - 1 && nav.x + nav.w > main.x + 1 && nav.y < main.y + main.h - 1 && nav.y + nav.h > main.y + 1;
+  expect(overlap, `${label}: navigation overlaps content (nav ${JSON.stringify(nav)}, main ${JSON.stringify(main)})`).toBe(false);
+  for (const [name, b] of [['navigation', nav], ['content', main]] as const) {
+    expect(b.x, `${label}: ${name} starts left of the screen`).toBeGreaterThanOrEqual(-1);
+    expect(b.x + b.w, `${label}: ${name} ends right of the screen`).toBeLessThanOrEqual(vp.width + 1);
+    expect(b.y + b.h, `${label}: ${name} ends below the screen`).toBeLessThanOrEqual(vp.height + 1);
+  }
+  if (vp.phone) {
+    expect(nav.y, `${label}: phone navigation should sit below the content`).toBeGreaterThanOrEqual(main.y + main.h - 2);
+    expect(main.w, `${label}: content should use the full phone width`).toBeGreaterThanOrEqual(vp.width * 0.95);
+  } else {
+    expect(nav.h, `${label}: laptop navigation should be a side rail, not a bar`).toBeGreaterThan(nav.w);
+    expect(main.w, `${label}: content area is only ${Math.round(main.w)} px of ${vp.width}`).toBeGreaterThanOrEqual(vp.width * minContentShare);
+  }
+}
