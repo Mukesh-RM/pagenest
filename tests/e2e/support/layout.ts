@@ -78,6 +78,18 @@ export async function expectTargetsBigEnough(page: Page, minPx: number, label: s
 
 /** Every visible control can be scrolled into view and is not covered by something else at its centre. */
 export async function unreachableControls(page: Page): Promise<Problem[]> {
+  // A sheet that is still sliding in has its footer below the fold for a moment: wait until the dialog stops moving.
+  await page.evaluate(async () => {
+    const dlg = () => document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]');
+    let last = '';
+    for (let i = 0; i < 120; i++) {
+      const r = dlg()?.getBoundingClientRect();
+      const now = r ? `${Math.round(r.top)},${Math.round(r.height)}` : '';
+      if (now === last) return;
+      last = now;
+      await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
+    }
+  });
   return page.evaluate(() => {
     const out: { what: string; where: string }[] = [];
     const sel = 'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="radio"], [role="tab"], [role="switch"], [role="checkbox"]';
@@ -89,7 +101,20 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
       const label = (el as HTMLInputElement).labels?.[0];
       if (!label && (el.getBoundingClientRect().width === 0 || el.getBoundingClientRect().height === 0)) continue; // not rendered (for example the tablet rail on a phone)
       const probe: Element = label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type) ? label : el;
-      probe.scrollIntoView({ block: 'center', inline: 'center' });
+      // A control already on screen and not covered stays where it is: centering it would also scroll overflow:hidden ancestors
+      // (a sheet with a fixed footer button would be pushed off screen by the check itself).
+      const hit = (q: Element) => { const b = q.getBoundingClientRect(); const px = b.left + b.width / 2; const py = b.top + b.height / 2; const t = px >= 0 && py >= 0 && px <= innerWidth && py <= innerHeight ? document.elementFromPoint(px, py) : null; return !!t && (q === t || q.contains(t) || t.contains(q)); };
+      if (!hit(probe)) {
+        // Scroll the way a user can: the scrollable (auto/scroll) ancestors, then the page. scrollIntoView would also move
+        // overflow:hidden ancestors (the dialog itself), which no user can do, and push other controls off screen.
+        for (let p: Element | null = probe.parentElement; p; p = p.parentElement) {
+          const oy = getComputedStyle(p).overflowY;
+          if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight && p !== document.documentElement && p !== document.body) {
+            p.scrollTop += (probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2) - (p.getBoundingClientRect().top + p.getBoundingClientRect().height / 2);
+          }
+        }
+        window.scrollBy(0, probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2 - innerHeight / 2);
+      }
       const r = probe.getBoundingClientRect();
       const x = r.left + r.width / 2; const y = r.top + r.height / 2;
       const name = `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}"`;
@@ -107,28 +132,49 @@ export async function expectControlsReachable(page: Page, label: string): Promis
   expect(problems, `${label}\n${fmt(problems)}`).toEqual([]);
 }
 
-/** Layout-shift recorder, installed before navigation. CLS is the sum of shifts without recent input. */
+export interface Shift { value: number; at: number; sources: string[] }
+
+/**
+ * Layout-shift recorder, installed before navigation (survives reloads). CLS is the sum of shifts without recent input.
+ * Each shift names the elements that moved ("tag.class "text"" with the box before -> after), described when the shift
+ * happens because the node may be gone by the time the test reads it.
+ */
 export async function recordLayoutShift(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    const w = window as unknown as { __cls?: number; __shifts?: { value: number; sources: string[] }[] };
+    const w = window as unknown as { __cls?: number; __shifts?: Shift[] };
+    interface Shift { value: number; at: number; sources: string[] }
     w.__cls = 0; w.__shifts = [];
+    const describe = (n: Node | null | undefined) => {
+      const el = n instanceof Element ? n : n?.parentElement;
+      if (!el) return '?';
+      const cls = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
+      return `${el.tagName.toLowerCase()}${cls ? `.${cls}` : ''} "${(el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 28)}"`;
+    };
+    const box = (r: DOMRectReadOnly) => `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
     try {
       new PerformanceObserver((list) => {
-        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean; sources?: { node?: Node }[] }[]) {
+        for (const e of list.getEntries() as unknown as { value: number; startTime: number; hadRecentInput: boolean; sources?: { node?: Node; previousRect: DOMRectReadOnly; currentRect: DOMRectReadOnly }[] }[]) {
           if (e.hadRecentInput) continue;
           w.__cls! += e.value;
-          w.__shifts!.push({ value: e.value, sources: (e.sources ?? []).map((s) => (s.node as Element | undefined)?.nodeName ?? '?') });
+          w.__shifts!.push({ value: e.value, at: Math.round(e.startTime), sources: (e.sources ?? []).map((s) => `${describe(s.node)} ${box(s.previousRect)} -> ${box(s.currentRect)}`) });
         }
       }).observe({ type: 'layout-shift', buffered: true });
     } catch { /* Chromium only */ }
   });
 }
 
-export function readCls(page: Page): Promise<{ cls: number; shifts: { value: number; sources: string[] }[] }> {
+export function readCls(page: Page): Promise<{ cls: number; shifts: Shift[] }> {
   return page.evaluate(() => {
-    const w = window as unknown as { __cls?: number; __shifts?: { value: number; sources: string[] }[] };
+    const w = window as unknown as { __cls?: number; __shifts?: Shift[] };
+    interface Shift { value: number; at: number; sources: string[] }
     return { cls: w.__cls ?? 0, shifts: w.__shifts ?? [] };
   });
+}
+
+/** The shifts that made CLS what it is, worst first, for a failure message. */
+export function describeShifts(shifts: Shift[], top = 5): string {
+  return [...shifts].sort((a, b) => b.value - a.value).slice(0, top)
+    .map((s) => `  - ${s.value.toFixed(3)} at ${s.at} ms: ${s.sources.length ? s.sources.join('; ') : 'no source reported'}`).join('\n') || '  (no shifts)';
 }
 
 /** Longest transition or animation currently defined or running, in ms, with the element responsible. */

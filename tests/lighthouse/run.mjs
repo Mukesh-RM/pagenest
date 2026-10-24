@@ -21,6 +21,7 @@ import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import { BUDGETS } from '../perf/budgets.ts';
 import { seedLibrary } from '../e2e/support/library.ts';
+import { RESUME_BOOK, seedResumeBook } from '../e2e/support/resume.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const testsRoot = resolve(here, '..');
@@ -98,7 +99,7 @@ const chromeFlags = ['--headless=new', '--no-sandbox', '--disable-gpu', '--disab
 /** Runs Lighthouse on one URL and prints/enforces the three category minimums plus CLS. `slug` names the report files. */
 async function auditTarget(chrome, config, { title, target, slug, storageReset }) {
   const flags = {
-    port: chrome.port, output: ['json', 'html'], logLevel: 'error', onlyCategories: categories,
+    port: chrome.port, output: ['json', 'html'], logLevel: 'error', onlyCategories: [...categories, 'best-practices'],
     disableStorageReset: !storageReset, // keep the "onboarding skipped" setting and the seeded books unless a scenario wants a clean profile
   };
   const result = await lighthouse(target, flags, config);
@@ -124,6 +125,17 @@ async function auditTarget(chrome, config, { title, target, slug, storageReset }
           console.log(`        - ${audit.id}: ${audit.title}${audit.displayValue ? ` (${audit.displayValue})` : ''}`);
         }
       }
+    }
+  }
+  // Best practices are reported, not enforced (the enforced checks are the three categories and CLS); the elements behind each
+  // failing audit are printed so the owner can fix them. label-content-name-mismatch is enforced by excellence/label-in-name.spec.ts.
+  const bp = lhr.categories['best-practices'];
+  if (bp) {
+    console.log(`  info  Best practices: ${Math.round((bp.score ?? 0) * 100)}`);
+    const failing = Object.values(lhr.audits).filter((a) => a.score !== null && a.score < 1 && a.scoreDisplayMode !== 'manual' && a.scoreDisplayMode !== 'notApplicable' && (bp.auditRefs.some((r) => r.id === a.id && r.weight > 0) || a.id === 'label-content-name-mismatch'));
+    for (const a of failing) {
+      console.log(`        - ${a.id}: ${a.title}`);
+      for (const item of (a.details?.items ?? []).slice(0, 4)) console.log(`            ${item.node?.selector ?? item.source?.url ?? ''} ${(item.node?.snippet ?? '').slice(0, 140)}`);
     }
   }
   const cls = lhr.audits['cumulative-layout-shift']?.numericValue ?? Number.NaN;
@@ -161,10 +173,26 @@ try {
       await page.goto(base);
       await page.getByRole('navigation').first().waitFor({ timeout: 15000 });
       await seedLibrary(page, { count: books }); // throws if the books did not land in IndexedDB; reloads the page
-      await page.locator('main li').first().waitFor({ timeout: 15000 });
+      await page.getByRole('main').getByText(/Book 0000\d/).first().waitFor({ timeout: 15000 }).catch(async (e) => {
+        throw new Error(`no seeded book on screen after seeding: ${e.message.split('\n')[0]}; main says: "${(await page.getByRole('main').innerText().catch(() => '')).replace(/\s+/g, ' ').slice(0, 200)}"`);
+      });
       await page.close();
     } finally { await browser.close(); }
     await auditTarget(chrome, config, { title: `Library with ${books}+ books`, target: base, slug: 'library-seeded', storageReset: false });
+
+    // Scenario 1b: the same library with a "Welcome back" resume card (a book read to RESUME_BOOK.percent %, saved just now).
+    {
+      const b1 = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
+      try {
+        const page = await (b1.contexts()[0] ?? (await b1.newContext())).newPage();
+        await page.goto(base);
+        await page.getByRole('navigation').first().waitFor({ timeout: 15000 });
+        await seedResumeBook(page); // writes the book and a newest progress row, reloads
+        await page.getByRole('main').getByText(/welcome back/i).first().waitFor({ timeout: 15000 }).catch(() => { throw new Error(`the resume card did not render for "${RESUME_BOOK.title}"; the scenario would measure the wrong page`); });
+        await page.close();
+      } finally { await b1.close(); }
+      await auditTarget(chrome, config, { title: `Library with ${books}+ books and the resume card`, target: base, slug: 'library-resume-card', storageReset: false });
+    }
 
     // Scenario 2: first launch. A fresh Chrome profile, onboarding NOT skipped; checked to be on screen before auditing.
     fresh = await chromeLauncher.launch({ chromePath, chromeFlags });

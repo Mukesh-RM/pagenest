@@ -15,8 +15,8 @@ test('the sample book opens on real text, not a placeholder', async ({ page }) =
   // the Library may open the book itself; otherwise open it from the shelf
   const opened = await page.waitForURL(/\/(read|listen)\//, { timeout: 15_000 }).then(() => true, () => false);
   if (!opened) {
-    await expect(page.locator('main li').first(), 'the sample book did not appear in the Library after adding it').toBeVisible({ timeout: 10_000 });
-    await page.locator('main li').first().click();
+    await expect(page.locator('main li, main [role=listitem]').first(), 'the sample book did not appear in the Library after adding it').toBeVisible({ timeout: 10_000 });
+    await page.locator('main li, main [role=listitem]').first().click();
     const detail = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
     if (await detail.isVisible().catch(() => false)) await detail.click();
     await page.waitForURL(/\/(read|listen)\//, { timeout: 15_000 });
