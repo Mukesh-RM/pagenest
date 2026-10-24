@@ -26,7 +26,10 @@ export async function overflowProblems(page: Page): Promise<Problem[]> {
       }
       const hasOwnText = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim());
       const clips = cs.overflowX === 'hidden' || cs.overflowX === 'clip';
-      const lineClamped = cs.getPropertyValue('-webkit-line-clamp') !== 'none' && cs.getPropertyValue('-webkit-line-clamp') !== '';
+      // line-clamp (ellipsis) is deliberate truncation, not clipping. Current Chromium reports it as `line-clamp` or on the legacy
+      // -webkit-box layout, not always under -webkit-line-clamp, so accept all three forms.
+      const clampValue = (n: string) => { const v = cs.getPropertyValue(n); return v !== '' && v !== 'none' && v !== 'auto'; };
+      const lineClamped = clampValue('-webkit-line-clamp') || clampValue('line-clamp') || (cs.display === '-webkit-box' && cs.overflowY !== 'visible');
       if (hasOwnText && clips && !lineClamped && el.scrollWidth > el.clientWidth + 1 && cs.textOverflow !== 'ellipsis') {
         out.push({ what: 'text clipped horizontally', where: `${describe(el)} scrollWidth ${el.scrollWidth} > ${el.clientWidth}` });
       }
