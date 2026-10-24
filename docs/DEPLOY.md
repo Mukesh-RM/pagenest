@@ -57,3 +57,31 @@ Secrets live in GitHub, never in the repo, workflow files or logs.
    it, do not use `set -x`, and do not expose secrets to pull requests from forks.
 
 No deploy job exists yet; deploys are manual until Casey asks for automation.
+
+## Offline cache of the Reader engines (Decision 15)
+
+The service worker's precache holds the app shell, the import worker and the import parsers. The Reader's large lazy engines are not in it:
+`assets/engine-pdf-*.js`, `assets/engine-foliate-*.js`, `assets/docx-core-*.js`, `assets/docx.worker-*.js` and `assets/pdf.worker*.mjs` are excluded with
+`globIgnores` in `vite.config.ts` (a test fails if the import worker, a parser or any `.js` as a whole is ignored by accident, and the 1 MB
+file cap in `vite.config.ts` is unchanged). They are cached at runtime, cache first, so a format works offline after it has opened once.
+
+This needs one rule in `src/sw/sw.ts` (owner: Shell and PWA), after the precache route and the font rule:
+
+```ts
+// Decision 15: lazy engines, the pdf.js worker and the sample book are cached the first time they load, then served from the cache.
+registerRoute(
+  ({ request, sameOrigin, url }) =>
+    sameOrigin &&
+    (request.destination === 'script' || request.destination === 'worker' || /\.(mjs|epub)$/.test(url.pathname)) &&
+    url.pathname.startsWith('/assets/'),
+  ({ request }) => cacheFirst(request, self.caches, 'pn-engines-v1'),
+);
+```
+
+(`cacheFirst` in `src/sw/font-cache.ts` needs an optional cache name argument; a build's hashed names make old entries unreachable, so the worker should
+delete `pn-engines-*` entries that are not in the current precache manifest's lazy list on activate, or cap the cache by count.) Precached files are
+answered by the precache route registered first, so this rule only sees files that are not precached.
+
+The app warms the cache so the first sample book or first PDF works offline too: `src/app/offline-warm.ts` runs 5 s after the Library is drawn,
+when the browser is idle, only when a service worker controls the page, the device is online and has not asked to save data, once per page load.
+`src/app/offline-assets.ts` lists what is warmed (the sample book today; add the engines as they ship).
