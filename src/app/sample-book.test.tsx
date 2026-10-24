@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import type { BookFormat, BookKind, ImportResult, SampleBookProvider } from '@/app/contracts';
@@ -7,6 +7,9 @@ import { SampleBookCard } from './components/SampleBookCard';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 import { setSetting } from '@/data/settings';
 import type { AppServices } from './services-context';
+
+// jsdom cannot run the real reader; see fake-reader.tsx.
+vi.mock('@/features/reader/ReaderScreen', async () => ({ ReaderScreen: (await import('./fake-reader')).FakeReader }));
 
 function fakeProvider(overrides: Partial<SampleBookProvider> = {}): SampleBookProvider & { importSample: ReturnType<typeof vi.fn> } {
   return {
@@ -162,7 +165,7 @@ describe('sample card in the empty Library', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add the sample book' }));
     expect(provider.importSample).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('heading', { level: 1, name: 'Pride and Prejudice' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('note')).toHaveTextContent('The reader arrives in a later release'));
+    expect(await screen.findByTestId('reader-screen')).toHaveAttribute('data-book', 'sample-1');
     services.db.close();
   });
 

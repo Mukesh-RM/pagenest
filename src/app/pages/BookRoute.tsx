@@ -9,7 +9,9 @@ import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
 import '../screen-styles';
 
-const ReaderScreen = lazy(() => import('./ReaderScreen'));
+// The reader (Reader bot, src/features/reader) loads the book, its saved position and its engine itself, from the book id. The engines
+// (pdf.js, foliate-js, mammoth) are chunks of their own, fetched the first time a book of that format opens.
+const ReaderScreen = lazy(() => import('@/features/reader/ReaderScreen').then((m) => ({ default: m.ReaderScreen })));
 const PlayerScreen = lazy(() => import('./PlayerScreen'));
 
 type Loaded = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; book: BookRecord; position: ResumeInfo | undefined };
@@ -65,7 +67,7 @@ function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
   if (wrongKind) return <Navigate to={rightPath} replace />;
   return (
     <Suspense fallback={<ImmersiveFallback />}>
-      {expected === 'listen' ? <PlayerScreen book={book} position={position} /> : <ReaderScreen book={book} position={position} />}
+      {expected === 'listen' ? <PlayerScreen book={book} position={position} /> : <ReaderScreen key={book.id} bookId={book.id} />}
     </Suspense>
   );
 }

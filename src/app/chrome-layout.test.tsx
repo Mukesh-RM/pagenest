@@ -1,11 +1,14 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MiniPlayerSlot } from '@/app/contracts';
 import type { BookRecord } from '@/data/schema';
 import { setSetting } from '@/data/settings';
 import { resetRouteChromeForTests } from './route-chrome';
 import type { AppServices } from './services-context';
 import { makeServices, renderApp, resetSettings } from './test-utils';
+
+// jsdom cannot run the real reader; see fake-reader.tsx.
+vi.mock('@/features/reader/ReaderScreen', async () => ({ ReaderScreen: (await import('./fake-reader')).FakeReader }));
 
 const book = (id: string, rest: Partial<BookRecord> = {}): BookRecord => ({
   id,

@@ -26,11 +26,16 @@ describe('service worker precache configuration (vite.config.ts)', () => {
   });
 
   it('never lists an EPUB (or any book file) for precaching', () => {
-    for (const pattern of list('globPatterns')) expect(pattern).not.toMatch(/epub|pdf|mp3|m4b/i);
+    // The pdf.js worker is code, not a book, so its own pattern is the one allowed mention of "pdf".
+    for (const pattern of list('globPatterns').filter((p) => p !== '**/pdf.worker*.mjs')) expect(pattern).not.toMatch(/epub|pdf|mp3|m4b/i);
   });
 
-  it('keeps big files out through the size cap as well (1 MB), so a stray asset cannot sneak in', () => {
-    expect(config).toMatch(/maximumFileSizeToCacheInBytes:\s*1024\s*\*\s*1024/);
+  it('keeps big files out through the size cap as well (2 MB: the pdf.js worker is about 1.2 MB), so a stray asset cannot sneak in', () => {
+    expect(config).toMatch(/maximumFileSizeToCacheInBytes:\s*2\s*\*\s*1024\s*\*\s*1024/);
+  });
+
+  it('precaches the pdf.js worker (a .mjs file), so a PDF opens offline', () => {
+    expect(config).toMatch(/globPatterns:[^\]]*'\*\*\/pdf\.worker\*\.mjs'/);
   });
 
   it('builds ES-module workers (the Library workers use dynamic import and nested workers)', () => {

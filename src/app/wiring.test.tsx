@@ -9,6 +9,9 @@ import { FONT_SIZE_DEFAULT, FONT_SIZE_MAX, FONT_SIZE_MIN } from './font-size';
 import type { AppServices } from './services-context';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 
+// jsdom cannot run the real reader; see fake-reader.tsx.
+vi.mock('@/features/reader/ReaderScreen', async () => ({ ReaderScreen: (await import('./fake-reader')).FakeReader }));
+
 const root = process.cwd();
 const read = (...parts: string[]): string => readFileSync(join(root, ...parts), 'utf8');
 
@@ -53,8 +56,7 @@ describe('text size (apply-theme)', () => {
       if (/--pn-text-[a-z]+`?\s*,\s*`?\d+px/.test(text) || /setProperty\(`--pn-text/.test(text)) offenders.push(`${file}: px text token`);
       if (/font-family\s*:/.test(text) || /fontFamily/.test(text)) offenders.push(`${file}: font-family`);
     }
-    // The reader's own font list is data for the reader (it names the design tokens or device fonts); it is not CSS here.
-    expect(offenders.filter((o) => !o.includes('reader-settings.ts'))).toEqual([]);
+    expect(offenders).toEqual([]);
   });
 
   it('maps a changed slider to the root size at 200 % in the running app', async () => {
@@ -117,7 +119,7 @@ describe('page titles use the design system (serif) type', () => {
     expect(screen.getByRole('group', { name: 'Theme' })).toHaveClass('pn-themes');
   });
 
-  it('the book routes use the design system too: the reader chrome and the page frame', async () => {
+  it('the book routes use the design system too: the player page frame (the reader brings its own chrome)', async () => {
     await services.db.books.add({
       id: 'b1',
       fingerprint: 'f',
@@ -139,7 +141,7 @@ describe('page titles use the design system (serif) type', () => {
       finished: false,
     });
     const reader = renderApp(services, { path: '/read/b1' });
-    expect((await screen.findByRole('heading', { level: 1, name: 'T' })).className).toContain('pn-reader__title');
+    expect(await screen.findByTestId('reader-screen')).toHaveAttribute('data-book', 'b1');
     reader.unmount();
     renderApp(services, { path: '/listen/a1' });
     expect((await screen.findByRole('heading', { level: 1, name: 'A' })).className).toContain('pn-screen__title');
