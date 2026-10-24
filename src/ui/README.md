@@ -75,7 +75,7 @@ A test fails if they differ from `tokens.css`.
 | `Card`, `ProgressBar` | `onPress` makes it a button card; `onLongPress` (500 ms, right-click, context-menu key) for multi-select |
 | `BottomSheet` | slides up 250 ms; **closes on system back** (popstate) first, then Esc, scrim, swipe down, close button; focus trap, `aria-modal`, scroll lock, focus restore. Centered dialog from 768 px. See "BottomSheet history contract" |
 | `TabBar` / `Rail` / `AppShell` | phone bottom bar below 768 px, left rail from 768 px; **only one of the two is in the DOM** (`useMinWidth`, no flash); `href` items render real links. See "AppShell" |
-| `BookCover`, `BookCard` | cover or generated title card (8 AA color pairs, stable per title), title (2 lines), author (2 lines), progress bar, headphone badge for audio, check badge at 100 % |
+| `BookCover`, `BookCard` | cover image (**shown whole**: `object-fit: contain` on a neutral tile, the 2:3 box never changes; `fit="cover"` opts into filling and cropping), else a **monogram** on cards (one letter, see below) or the generated title card (8 AA color pairs, stable per title) in the detail sheet, title (2 lines), author (2 lines), progress bar, headphone badge for audio, check badge at 100 % |
 | `ConfirmDialog` | question, consequence in plain words, Cancel (focused first) and Confirm; `destructive` makes Confirm the one filled red button |
 | `ErrorNotice` | `role="alert"`, plain-word messages (`PLAIN_ERRORS`: drm, damaged, unsupported, storage, offline, voice, generic), one next step |
 | `ResumeCard` | the quiet "Welcome back" card: where you were, one button, "Not now" |
@@ -122,6 +122,35 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
 * `ReaderScreen`: optional `minutesLeftInChapter` ("8 min left in chapter" above the book progress, always visible).
 * `BookDetailSheet`: `onRemove` now appears as "Remove from library" inside a "More options" (⋯) menu, never as a loose red button.
 * `ErrorNotice`: DRM, damaged and unsupported files never show "Try again" (`canRetry(kind)`); they add one plain help line.
+
+### Library needs (`feature/ui-library-needs`)
+
+* **`useLibraryGrid(view)`** is exported from `@/ui` (with `libraryGridSpec`, `libraryColumns`, `LibraryGridSpec`). It returns
+  `{ spec, columns }` for `VirtualList`: `gap={grid.spec.gap}`, `rowGap={grid.spec.rowGap}`, `columns={grid.columns}`.
+  It follows the same breakpoints and minimum card widths as the CSS grid (9/10/11/12 rem; list view one column, two from
+  1024 px), re-renders on a breakpoint change, and reads the root font size on every call, so 200% text gives fewer, wider columns.
+* **Monogram covers**: `BookCover monogram` (and every `BookCard`) draws one capital letter (first letter or digit of the title,
+  any script) on a flat tile, with no author text. The tile is one of `MONOGRAM_COLORS` (12 pairs, white or near-black text,
+  every pair 7:1 or better, so AA in all four themes and in high contrast), chosen from the title (`monogramIndex`), so a book
+  keeps its colour. The letter is centred and sized in container units; badges stay in the corners (audio top-right,
+  favorite bottom-left, finished bottom-right), so nothing collides. In high contrast the cover gets a real 2 px edge so a dark
+  tile on a black page still reads as an object. A broken image falls back to the monogram. A title with no letter falls back to
+  the title card. `BookDetailSheet` keeps its big title card (it has room for the title and author).
+* **Covers show whole**: `.pn-cover__img` is `object-fit: contain` by default. A picture that is not 2:3 is letterboxed on
+  the neutral tile; the box stays 2:3, so there is no layout shift.
+* **`BookDetailSheet onEdit?(book)`**: adds "Edit details" (pencil) to the ⋯ menu, before "Remove from library". Without
+  `onEdit` the menu is unchanged; without both, there is no menu. Esc inside the open menu closes only the menu (focus returns to
+  ⋯); the next Esc closes the sheet (`BottomSheet` now leaves Esc to an open `role="menu"`).
+* **Design Review 2**: onboarding is a picture panel plus a content column (side by side from 768 px, vertically balanced; on
+  a phone the picture panel takes the spare height), so no card ends in an empty lower half; every step has a picture and step 2
+  keeps the visual sample-book card. Settings sections are separate cards (Appearance, Reading, Install help, Storage used,
+  About). The Install help intro says "offline" once ("…open full screen and work offline." or "…open full screen. Ready to
+  use offline.").
+* Gallery: `?screen=covers` (monograms with every badge, and square/wide/tall pictures shown whole); `detail*` screens now show the ⋯ menu with both rows.
+* Library wiring after this branch (read-only check on integrate-2; `virtual.ts` and `icons.tsx` are already gone there):
+  1. `src/features/library/components/BookList.tsx`: `import { VirtualList, useLibraryGrid, type RectLike } from '@/ui'` (drop the `@/ui/screens/libraryGrid` deep import).
+  2. `src/features/library/library.css`: delete the two last blocks, "Real covers are shown whole" (`.pn-bookcard .pn-cover__img`) and "Generated covers in library cards" (every `.pn-bookcard .pn-cover--generated …` rule). `BookCard` now draws the monogram and the whole cover itself, so nothing else changes in `BookItem`.
+  3. `src/features/library/components/LibraryScreen.tsx` (the lazy `BookDetailSheet`): pass `onEdit={(book) => …}` to get "Edit details" before "Remove from library"; leave it out until the edit sheet exists.
 
 ### Collections and Stats (wire-ready, presentational)
 
@@ -209,7 +238,7 @@ the app. `TEXT_TOKEN_PX` is gone. The tab bar caps its labels in CSS so four tab
 | Screen | What the app passes |
 |---|---|
 | `LibraryScreen` | `books: BookSummary[]` (already filtered), `loading`, `filter` + `onFilterChange`, `query` + `onQueryChange`, `onOpenBook(book, coverRect)`, `onAdd?`, `emptyActions?`, `starter?`, slots `resume`, `hint`, `notice` |
-| `BookDetailSheet` | `open`, `book: BookDetail`, `onClose`, `originRect` (the cover grows out of its card), `onRead`, `onListen`, `onRemove` (the app answers with a `ConfirmDialog`). Tinted from the cover. Bottom sheet on phones, two panes from 1024 px |
+| `BookDetailSheet` | `open`, `book: BookDetail`, `onClose`, `originRect` (the cover grows out of its card), `onRead`, `onListen`, `onEdit?` (adds "Edit details" to the ⋯ menu), `onRemove` (the app answers with a `ConfirmDialog`). Tinted from the cover. Bottom sheet on phones, two panes from 1024 px |
 | `ReaderScreen` + `ReaderSettingsSheet` | title, chapter, progress, `settings: ReaderSettings`, `fonts`, `onSettingsChange`, `settingsOpen` (the "Aa" sheet: size, font, page color, line spacing, margins, with a live sample), children = the page |
 | `AudioPlayerScreen` | `book`, then either `controller` or `playing`, `position`, `duration`, `speed`, `sleepLabel`, handlers. Time left is shown at the chosen speed ("4 h 28 min left at 1.25×"). Tinted from the cover |
 | `VoiceStudioScreen` | `voices: VoiceOption[]`, `selectedId`, `onSelect`, `onPreview`, `onNext` (step 1 of 3, Next pinned to the bottom) |

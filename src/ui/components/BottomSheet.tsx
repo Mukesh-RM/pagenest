@@ -147,6 +147,8 @@ export function BottomSheet({
     const onKeyDown = (event: KeyboardEvent) => {
       if (!isTopSheet(entry)) return;
       if (event.key === 'Escape') {
+        // An open ⋯ menu inside the sheet takes the first Esc (it closes itself and returns focus); the next Esc closes the sheet.
+        if (event.target instanceof Element && event.target.closest('[role="menu"]')) return;
         event.stopPropagation();
         onCloseRef.current('escape');
         return;

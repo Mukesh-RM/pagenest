@@ -430,10 +430,30 @@
   padding: var(--pn-space-6) 0;
 }
 
+.pn-onb__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-4);
+  min-width: 0;
+}
+
+/* The picture takes the room that is left, so no card ends in an empty lower half; its size is capped so it stays a picture */
 .pn-onb__hero {
   display: flex;
+  flex: 1 1 144px;
+  align-items: center;
   justify-content: center;
-  padding: var(--pn-space-4) 0 var(--pn-space-2);
+  min-height: 144px;
+  max-height: 352px;
+  padding: var(--pn-space-4);
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface));
+}
+
+/* Picture sizes are px on purpose: larger text must not make the picture crowd the words out of the screen */
+.pn-onb__hero .pn-ill {
+  width: min(100%, 176px);
 }
 
 .pn-onb__hero .pn-appmark {
@@ -534,11 +554,33 @@
 
 @media (min-width: 768px) {
   .pn-onb {
+    max-width: 960px;
     padding-top: var(--pn-space-8);
   }
 
+  /* Picture left, words right, both as tall as the card: nothing hangs below the content */
   .pn-onb__card {
-    justify-content: flex-start;
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--pn-space-8);
+  }
+
+  /* A 4:3 picture panel with a large picture, centered with the words beside it: balanced, no empty lower half */
+  .pn-onb__hero {
+    flex: 5 1 0;
+    align-self: center;
+    max-height: none;
+    aspect-ratio: 4 / 3;
+    padding: var(--pn-space-8);
+  }
+
+  .pn-onb__hero .pn-ill {
+    width: min(100%, 352px);
+  }
+
+  .pn-onb__content {
+    flex: 6 1 0;
+    justify-content: center;
   }
 }
 

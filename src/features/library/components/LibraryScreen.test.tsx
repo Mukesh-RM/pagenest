@@ -196,6 +196,24 @@ describe('the library list', () => {
     expect(screen.getByTestId('where').textContent).toBe('/listen/a2');
   });
 
+  it('"Edit details" in the detail sheet\'s menu closes it and opens the edit form, and saving renames the book', async () => {
+    await services.db.books.put(bookRecord('a1', { title: 'Reader Book', author: 'A. Writer' }));
+    renderLibrary();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: /Reader Book/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Reader Book' });
+    await user.click(within(sheet).getByRole('button', { name: 'More options' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit details' }));
+    const form = await screen.findByRole('dialog', { name: 'Book details' });
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Reader Book' })).toBeNull()); // the book sheet is gone
+    const title = within(form).getByLabelText('Title');
+    expect((title as HTMLInputElement).value).toBe('Reader Book');
+    await user.clear(title);
+    await user.type(title, 'Renamed Book');
+    await user.click(within(form).getByRole('button', { name: /save/i }));
+    await waitFor(async () => expect((await services.db.books.get('a1'))?.title).toBe('Renamed Book'));
+  });
+
   it('removes a book from the detail sheet\'s menu after a question, with Undo', async () => {
     await services.db.books.put(bookRecord('a1', { title: 'Reader Book', fingerprint: 'fp-a1' }));
     renderLibrary();

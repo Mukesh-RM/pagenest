@@ -62,7 +62,7 @@ interface Detail {
 }
 
 /** The design system's book sheet for the tapped book: Read or Listen, progress, and Remove in the ⋯ menu. */
-function DetailHost({ detail, onClose, onOpenBook, onRemove }: { detail: Detail; onClose: (reason: SheetCloseReason) => void; onOpenBook: (book: BookSummary) => void; onRemove: (book: BookSummary) => void }) {
+function DetailHost({ detail, onClose, onOpenBook, onRemove, onEdit }: { detail: Detail; onClose: (reason: SheetCloseReason) => void; onOpenBook: (book: BookSummary) => void; onRemove: (book: BookSummary) => void; onEdit: (book: BookSummary) => void }) {
   const { book } = detail;
   const coverUrl = useCoverUrl(book.id, book.coverRef !== undefined);
   const shown = useMemo<BookDetail>(
@@ -84,6 +84,7 @@ function DetailHost({ detail, onClose, onOpenBook, onRemove }: { detail: Detail;
       {...(detail.rect ? { originRect: detail.rect } : {})}
       {...(listen ? { onListen: () => onOpenBook(book) } : { onRead: () => onOpenBook(book) })}
       onRemove={() => onRemove(book)}
+      onEdit={() => onEdit(book)}
     />
   );
 }
@@ -265,6 +266,12 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
     setRemoving(book);
   }, []);
 
+  /** "Edit details" in the book sheet: that sheet closes and the edit form opens. */
+  const editFromDetail = useCallback((book: BookSummary) => {
+    setDetail(undefined);
+    setEditing(book);
+  }, []);
+
   const saveDetails = useCallback(
     async (id: string, details: { title: string; author: string }): Promise<string | undefined> => {
       const title = details.title.trim().replace(/\s+/g, ' ');
@@ -381,7 +388,7 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
 
       {detail ? (
         <Suspense fallback={null}>
-          <DetailHost detail={detail} onClose={closeDetail} onOpenBook={goToBook} onRemove={askRemove} />
+          <DetailHost detail={detail} onClose={closeDetail} onOpenBook={goToBook} onRemove={askRemove} onEdit={editFromDetail} />
         </Suspense>
       ) : null}
       <ConfirmDialog

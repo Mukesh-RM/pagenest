@@ -52,7 +52,7 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
       onLongPress={onSelect ? () => onSelect(book) : undefined}
     >
       <span ref={coverRef} className="pn-bookcard__cover">
-        <BookCover title={book.title} author={book.author} src={book.coverUrl} eager={eager} />
+        <BookCover title={book.title} author={book.author} src={book.coverUrl} eager={eager} monogram />
         {book.audio ? (
           <span className="pn-bookcard__badge" aria-hidden="true">
             <Icon name="headphones" size={16} />

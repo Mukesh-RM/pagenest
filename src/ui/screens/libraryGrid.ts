@@ -34,7 +34,16 @@ function rootRemPx(): number {
   return Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
 }
 
-/** The grid spec for the current viewport width, following the same breakpoints as the CSS. */
+/**
+ * Grid sizes for a Library list, for `VirtualList`: `useLibraryGrid(view)` returns `{ spec, columns }`.
+ * `spec.gap` and `spec.rowGap` (px) go to `VirtualList`'s `gap` and `rowGap`; `columns` (a function of the list width in px)
+ * goes to its `columns`. They follow the same breakpoints and minimum card widths as `.pn-library__grid` in the CSS
+ * (9, 10, 11, 12 rem; the list view is one column, two from 1024 px), re-render on a breakpoint change, and read the
+ * root font size on every call, so 200% text size gives fewer, wider columns exactly like the CSS grid.
+ *
+ *     const grid = useLibraryGrid(view);
+ *     <VirtualList items={books} columns={grid.columns} gap={grid.spec.gap} rowGap={grid.spec.rowGap} ... />
+ */
 export function useLibraryGrid(view: LibraryView): { spec: LibraryGridSpec; columns: (width: number) => number } {
   const tablet = useMediaQuery(`(min-width: ${BREAKPOINTS.tablet}px)`);
   const laptop = useMediaQuery(`(min-width: ${BREAKPOINTS.laptop}px)`);
