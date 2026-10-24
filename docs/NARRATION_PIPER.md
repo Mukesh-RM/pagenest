@@ -132,6 +132,8 @@ Aligned to Piper `phoneme_type: "espeak"` maps in voice JSON (e.g. `en_US-librit
 
 See `tests/manual/narration/README.md`. Run: `npm run smoke:narration` (not CI). Model under `.models/narration/` (git-ignored).
 
+**VM run (2026-10-24):** `en_US-amy-low` in Chromium — `durationSec≈2.83`, `inferSec≈0.87`, **RTF≈0.31**, `peak≈0.44`, finite audio ✓.
+
 ---
 
 ## Open items for other owners

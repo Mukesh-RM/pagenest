@@ -36,3 +36,4 @@ Thumbs.db
 tests/lighthouse/reports/
 tests/playwright-report/
 tests/test-results/
+tests/manual/narration/dist/
