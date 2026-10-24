@@ -1,10 +1,16 @@
 import { parseBlob } from 'music-metadata';
 import { cleanLanguage, cleanText, type ParsedMeta } from '../types';
 
-function chapterStartSec(raw: number): number {
-  if (!Number.isFinite(raw) || raw <= 0) return 0;
-  if (raw >= 1_000_000) return raw / 10_000_000;
-  return raw / 1000;
+/**
+ * A chapter's start in seconds. music-metadata gives `start / timeScale` seconds; v12 passes the time scale (100 ns units for
+ * MP4 chapters), older builds gave milliseconds and no time scale. Going by the time scale, not by how big the number is,
+ * keeps a chapter at 0.05 s (500 000 units) and a chapter at 90 minutes (in milliseconds) both right.
+ */
+function chapterStartSec(chapter: { start?: number; timeScale?: number }): number {
+  const start = chapter.start ?? 0;
+  if (!Number.isFinite(start) || start <= 0) return 0;
+  const scale = typeof chapter.timeScale === 'number' && chapter.timeScale > 0 ? chapter.timeScale : 1000;
+  return start / scale;
 }
 
 /**
@@ -33,8 +39,7 @@ export async function parseAudio(file: Blob): Promise<ParsedMeta> {
     // Only QuickTime chapter tracks arrive here; `chpl` chapters are read by parseMp4Chapters.
     out.chapters = format.chapters.map((c, i) => ({
       title: cleanText(c.title) ?? `Chapter ${i + 1}`,
-      // music-metadata v12+ uses 100 ns units for MP4 chapter tracks; older builds used ms.
-      startSec: Math.max(0, chapterStartSec(c.start ?? 0)),
+      startSec: chapterStartSec(c),
     }));
   }
   const picture = common.picture?.[0];

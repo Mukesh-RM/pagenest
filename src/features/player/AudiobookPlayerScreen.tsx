@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { EmptyState } from '@/ui';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
+import { useServices } from '@/app/services-context';
 import { getAudioController } from './PlayerProvider';
 import { preloadPlayerEngine, waitForAudioController } from './lazy-runtime';
 import { loadAudiobookForBook } from './load-audiobook';
@@ -21,6 +22,7 @@ export default function AudiobookPlayerScreen({ book, position }: AudiobookPlaye
   const [error, setError] = useState<string | undefined>();
   const [welcome, setWelcome] = useState<ResumeInfo | undefined>(position);
   const [devFixture, setDevFixture] = useState(false);
+  const { data } = useServices();
 
   useEffect(() => {
     preloadPlayerEngine();
@@ -35,7 +37,7 @@ export default function AudiobookPlayerScreen({ book, position }: AudiobookPlaye
           setLoading(false);
           return;
         }
-        return loadAudiobookForBook(controller, book, position).then((result) => {
+        return loadAudiobookForBook(controller, book, position, data).then((result) => {
           if (cancelled) return;
           if (result.ok) {
             setWelcome(result.welcome ?? position);
@@ -56,7 +58,7 @@ export default function AudiobookPlayerScreen({ book, position }: AudiobookPlaye
     return () => {
       cancelled = true;
     };
-  }, [book, position]);
+  }, [book, position, data]);
 
   if (loading) {
     return <p className="px-[var(--pn-margin)] pt-[calc(1rem+var(--pn-safe-top))] text-muted">Loading player…</p>;
