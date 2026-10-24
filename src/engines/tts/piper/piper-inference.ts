@@ -44,8 +44,8 @@ export function createScalesTensor(scales: [number, number, number]): OrtTensor 
   return { dims: [3], data: Float32Array.from(scales) };
 }
 
-export function createSpeakerTensor(speakerId: number): OrtTensor {
-  const data = new BigInt64Array([BigInt(speakerId)]);
+export function createSidTensor(sid: number): OrtTensor {
+  const data = new BigInt64Array([BigInt(sid)]);
   return { dims: [1], data };
 }
 
@@ -69,7 +69,7 @@ export async function runPiperInference(
   };
 
   if (input.speakerId !== undefined && config.num_speakers > 1) {
-    feeds.sid = createSpeakerTensor(input.speakerId);
+    feeds.sid = createSidTensor(input.speakerId);
   }
 
   const outputs = await session.run(feeds, ['output']);

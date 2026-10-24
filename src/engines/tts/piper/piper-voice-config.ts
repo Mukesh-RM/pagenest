@@ -10,7 +10,7 @@ export interface PiperVoiceConfig {
     readonly length_scale: number;
     readonly noise_w: number;
   };
-  readonly phoneme_type: 'espeak' | 'text';
+  readonly phoneme_type: 'espeak' | 'text'; // audit-ignore: Piper onnx.json schema literal, not espeak-ng in the bundle
   readonly phoneme_id_map: Readonly<Record<string, readonly number[]>>;
   readonly num_symbols: number;
   readonly num_speakers: number;
