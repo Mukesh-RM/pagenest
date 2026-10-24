@@ -1,14 +1,14 @@
 import { useCallback, useEffect, type ReactNode } from 'react';
 import { ThemeProvider as DesignThemeProvider } from '@/ui/theme/ThemeProvider';
-import { applyFontSize } from './apply-theme';
+import { applyTextSize } from '@/ui/utils/textSize';
 import { useServices } from './services-context';
 import { useSettings } from './settings-store';
 
 /**
  * Loads saved settings, then applies them: the design system's `ThemeProvider`
  * writes `data-theme` on `<html>` (colors come from `src/ui/styles/tokens.css`,
- * "Match my phone" follows the device), and the text size is written to the
- * `--pn-font-size` and `--pn-text-*` variables. Changes are saved by the settings store.
+ * "Match my phone" follows the device), and the text size is written with the
+ * design system's `applyTextSize` (the one `--pn-font-size` variable; the rem tokens follow). Changes are saved by the settings store.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { db } = useServices();
@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [db, load]);
 
   useEffect(() => {
-    applyFontSize(fontSizePx);
+    applyTextSize(fontSizePx);
   }, [fontSizePx]);
 
   const onModeChange = useCallback((mode: typeof preference) => void setPreference(db, mode), [db, setPreference]);
