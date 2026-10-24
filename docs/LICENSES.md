@@ -1001,8 +1001,8 @@ Blueprint 9.3 and 10: the license of the model WEIGHTS is checked per model befo
 | Piper engine, rhasspy/piper | archived | MIT | https://github.com/rhasspy/piper | OK (see note) | Archived; development moved to OHF-Voice/piper1-gpl (GPL). The MIT repo still depends on piper-phonemize / espeak-ng for phonemes, see espeak-ng row. |
 | Piper engine, OHF-Voice/piper1-gpl (piper-tts 1.3+) | 1.3+ | GPL-3.0-or-later | https://github.com/OHF-Voice/piper1-gpl | NOT OK | GPL since v1.3.0 (espeak-ng embedded). Do not bundle or link into the MIT web app. Allowed only as a separate tool the user runs (for example the training script), never shipped inside the PWA. |
 | espeak-ng (phonemizer inside Piper and Kokoro WASM stacks) | any | GPL-3.0-or-later | https://github.com/espeak-ng/espeak-ng | NOT OK | OPEN RISK. Browser Piper builds and the 'phonemizer' npm package (declared Apache-2.0) embed eSpeak NG compiled to WASM. Shipping it in the PWA means distributing GPL-3.0 code. Needs an owner decision: non-GPL phonemizer (dictionary/rule based), or accept GPL for that component with corresponding source and notices. audit-licenses.mjs flags the known packages even though they declare a permissive license. |
-| Piper voice models (each voice) | per voice | per voice, see MODEL_CARD | https://huggingface.co/rhasspy/piper-voices | VERIFY before use | License is per voice and records the training DATASET only; whether weights inherit it is not settled. Check the MODEL_CARD of every voice before adding it and record voice, dataset and license here. Reject en_US-lessac (Blizzard 2013, research use only, no commercial or product use) and any NC/ND/SA dataset. Prefer voices trained on libritts_r, CC0 or CC-BY-4.0 data. |
-| Piper voice en_US-lessac (low/medium/high) | n/a | Blizzard 2013 (research only) | https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html | NOT OK | Dataset license excludes commercial use and voice synthesis products. Voices derived from it are also in doubt. Do not add. |
+| Piper voice models (each voice) | per voice | per voice, see MODEL_CARD | https://huggingface.co/rhasspy/piper-voices | VERIFY before use | License is per voice and records the training DATASET only; whether weights inherit it is not settled upstream. Most voices are fine-tuned from en_US-lessac (research-only) or en_US-ryan (CC BY-NC-SA) and are treated as NOT OK. See docs/MODEL_VETTING.md and scripts/audit-models.json for the verdict of each of 178 voices; only voices marked OK there may be added. |
+| Piper voice en_US-lessac (low/medium/high) | n/a | Blizzard 2013 (research only) | https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html | NOT OK | Dataset license excludes commercial use and voice synthesis products. About 78 other voices are fine-tuned from it and are NOT OK too (docs/MODEL_VETTING.md). Do not add. |
 | ONNX Runtime WASM binaries | match onnxruntime-web | MIT | https://github.com/microsoft/onnxruntime | OK | Self-host the .wasm files. |
 | Kokoro-82M weights (onnx-community/Kokoro-82M-v1.0-ONNX) | v1.0 | Apache-2.0 | https://huggingface.co/hexgrad/Kokoro-82M | OK (see note) | Apache-2.0 weights. ONNX export by onnx-community inherits it; re-check the HF license tag at download time. Voice style files (voices/*.bin) ship with the model. |
 | kokoro-js | 1.2.x | Apache-2.0 | https://github.com/hexgrad/kokoro | OK (see note) | Apache-2.0 itself, but depends on 'phonemizer' which embeds GPL eSpeak NG (see espeak-ng row). |
@@ -1010,13 +1010,37 @@ Blueprint 9.3 and 10: the license of the model WEIGHTS is checked per model befo
 | Orpheus TTS 3B (Voice Helper, Tier 3) | 0.1 | Apache-2.0 (declared) on Llama-3.2-3B | https://github.com/canopyai/Orpheus-TTS | VERIFY before use | Built on Llama 3.2, so Meta's Llama 3.2 Community License also applies (Built with Llama notice, acceptable-use policy, 'Llama' model-name rule). Not an OSI open license; prefer a different model unless the owner accepts it. |
 | Voice Helper training script / Colab notebook (My Voice Pack) | planned | to be chosen | to be created | VERIFY before use | Must itself use permissive dependencies only (check Piper training stack: piper1-gpl training is GPL). Audit its requirements file with audit-licenses.mjs --root before release. |
 
+## Voice and model registry
+
+Source: `scripts/audit-models.json`, procedure and per-voice evidence in `docs/MODEL_VETTING.md`. `node scripts/audit-models.mjs` fails the build when code names a voice, model file or Hugging Face repo that is not OK in this registry.
+
+- Piper voices reviewed: 178 (OK 11, NOT OK 131, VERIFY 36); English: 8 of 38 OK
+- OK voices: `de_DE-mls-medium`, `en_GB-cori-high`, `en_GB-cori-medium`, `en_US-john-medium`, `en_US-kristin-medium`, `en_US-libritts-high`, `en_US-ljspeech-high`, `en_US-ljspeech-medium`, `en_US-norman-medium`, `fr_FR-mls-medium`, `nl_NL-mls-medium`
+
+| Component | License | Verdict |
+|---|---|---|
+| rhasspy/piper (archived) | MIT | OK |
+| OHF-Voice/piper1-gpl (piper-tts 1.3+) | GPL-3.0-or-later | NOT OK |
+| rhasspy/piper-phonemize | MIT own code (LICENSE.md), links GPL espeak-ng | NOT OK |
+| espeak-ng (code, data and WASM builds) | GPL-3.0-or-later | NOT OK |
+| phonemizer (npm, xenova/phonemizer.js) | Apache-2.0 declared, embeds GPL espeak-ng | NOT OK |
+| kokoro-js (npm) | Apache-2.0 | NOT OK |
+| onnxruntime-web | MIT | OK |
+| @huggingface/transformers (transformers.js) | Apache-2.0 | OK |
+| k2-fsa/sherpa-onnx | Apache-2.0 | VERIFY |
+| diffusionstudio/piper-wasm and similar browser ports | none stated; build script compiles rhasspy/espeak-ng | NOT OK |
+| Kokoro-82M weights (hexgrad/Kokoro-82M, onnx-community/Kokoro-82M-v1.0-ONNX) | Apache-2.0 | OK |
+| Chatterbox (ResembleAI/chatterbox) | MIT | OK |
+| Orpheus TTS 3B (canopylabs/orpheus-3b-0.1-ft) | apache-2.0 tag on a Llama 3.2 base | NOT OK |
+| CMU Pronouncing Dictionary (cmusphinx/cmudict) | BSD-2-Clause style (CMU) | OK |
+
 ## Speech engine licensing
 
 Summary of DECISIONS.md, Decision 8 (Oct 24, 2026). Nothing GPL is in the repository today; the rows above marked NOT OK are planned risks only.
 
 - **The problem:** eSpeak NG (GPL-3.0-or-later) is embedded by browser Piper stacks and by the `phonemizer` package used by `kokoro-js`. Piper itself has been GPL-3.0 since v1.3 (the archived `rhasspy/piper` is MIT). PageNest is MIT, so shipping GPL code needs a deliberate choice.
 - **The plan:** Phase 4 starts with a spike on a non-GPL phonemizer and a non-GPL engine path. If none gives acceptable quality, the fallback is to relicense the PageNest repository to GPL-3.0 (still free and open, still consistent with the product rules) and flag it to Mukeshh. Nothing GPL is added to `main` before that decision is recorded in DECISIONS.md.
-- **Voice rule:** every Piper voice is checked per voice. `en_US-lessac` (Blizzard 2013, research only) is NOT allowed; prefer `libritts_r` voices. Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) need the Hugging Face weight license tag checked before use.
+- **Voice rule:** every Piper voice is checked per voice. `en_US-lessac` (Blizzard 2013, research only) is NOT allowed; prefer `en_US-libritts-high` (trained from scratch, CC BY 4.0). `en_US-libritts_r-medium` is fine-tuned from lessac and is NOT OK (docs/MODEL_VETTING.md). Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) need the Hugging Face weight license tag checked before use.
 - **Enforcement:** `audit-licenses.mjs` fails when an installed package is `phonemizer`, `espeak*`, `piper-wasm`, `piper-phonemize*` or similar, even if it declares a permissive license, unless a reviewed entry is added to `scripts/audit-license-overrides.json` after the decision is recorded.
 - **Related, Decision 9 (dev-only licenses):** MPL-2.0 dev-only tools (`axe-core`, `@axe-core/playwright`) are accepted. LGPL libvips binaries shipped with `sharp` are accepted only as dev-only and never bundled; the audit flags them if shipped.
 
@@ -1026,4 +1050,5 @@ Summary of DECISIONS.md, Decision 8 (Oct 24, 2026). Nothing GPL is in the reposi
 node scripts/audit-licenses.mjs           # audit installed dependencies
 node scripts/audit-licenses.mjs --write   # regenerate this file
 node scripts/audit-licenses.mjs --check   # CI: fail if this file is stale
+node scripts/audit-models.mjs             # voices, models and model hosts referenced in the code must be OK in the registry
 ```
