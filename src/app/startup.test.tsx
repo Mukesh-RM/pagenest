@@ -4,7 +4,7 @@ import type { DataClient } from '@/data/data-client';
 import { setSetting } from '@/data/settings';
 import { CLEANUP_IDLE_TIMEOUT_MS, scheduleStartupCleanup, startupCleanupDone, type StartupLog } from './startup';
 import type { AppServices } from './services-context';
-import { makeServices, renderApp, resetSettings } from './test-utils';
+import { makeServices, resetSettings } from './test-utils';
 
 type Idle = { requestIdleCallback: (cb: () => void, o?: { timeout: number }) => number } & Window;
 
