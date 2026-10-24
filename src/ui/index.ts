@@ -62,6 +62,19 @@ export {
   type ThemeName,
   type ThemeProviderProps,
   type ThemeScopeProps,
+  CUSTOM_THEME_ID,
+  DEFAULT_CUSTOM_THEME,
+  THEME_CHOICES,
+  customContrastPairs,
+  customThemeStyle,
+  isThemeChoice,
+  normalizeHex,
+  parseCustomTheme,
+  resolveCustomTheme,
+  useThemePalette,
+  type CustomThemeInput,
+  type ResolvedCustomTheme,
+  type ThemeChoice,
 } from './theme';
 export { prefersReducedMotion, useReducedMotion } from './utils/motion';
 export { cx } from './utils/cx';
@@ -78,20 +91,6 @@ export { FinishedMoment, type FinishedMomentProps } from './components/FinishedM
 export { GestureHint, memoryHintStore, type GestureHintProps } from './components/GestureHint';
 export { Illustration, type IllustrationName, type IllustrationProps } from './components/Illustration';
 
-/* Redesign: presentational screens (props and callbacks only, no data layer) */
-export { LibraryScreen, DEFAULT_LIBRARY_FILTERS, type LibraryFilterOption, type LibraryScreenProps } from './screens/LibraryScreen';
-export { BookDetailSheet, type BookDetailSheetProps } from './screens/BookDetailSheet';
-export { ReaderScreen, type ReaderScreenProps } from './screens/ReaderScreen';
-export {
-  ReaderSettingsSheet,
-  LINE_HEIGHT,
-  MARGIN_PX,
-  READER_MAX_FONT,
-  READER_MIN_FONT,
-  type ReaderSettingsSheetProps,
-} from './screens/ReaderSettingsSheet';
-export { AudioPlayerScreen, type AudioPlayerScreenProps } from './screens/AudioPlayerScreen';
-export { VoiceStudioScreen, type VoiceStudioScreenProps } from './screens/VoiceStudioScreen';
 export type {
   BookDetail,
   BookSummary,
@@ -126,3 +125,15 @@ export { extractCoverColor } from './utils/coverColor';
 export { formatClock, formatDuration, formatSpeed, timeLeftLabel } from './utils/time';
 export { flipTransform, measure, playFlip, type RectLike } from './utils/flip';
 export { preloadCriticalFonts, CRITICAL_FONT_URLS } from './fonts/preload';
+
+/* Second design pass: pure helpers. The screens and their CSS live in './screens' (see README, "Entries"). */
+export {
+  TEXT_SIZE_DEFAULT,
+  TEXT_SIZE_MAX,
+  TEXT_SIZE_MIN,
+  TEXT_SIZE_STEP,
+  TEXT_TOKEN_PX,
+  applyTextSize,
+  clampTextSize,
+  textSizePercent,
+} from './utils/textSize';

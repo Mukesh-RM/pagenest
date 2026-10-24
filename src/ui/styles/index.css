@@ -2,5 +2,4 @@
 @import "./tokens.css";
 @import "./base.css";
 @import "./components.css";
-@import "./screens.css";
-@import "./surfaces.css";
+@import "./shell.css";

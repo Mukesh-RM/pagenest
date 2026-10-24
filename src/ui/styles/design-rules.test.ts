@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { listUiFiles, readUiFile } from '../test/css';
 
-const cssFiles = ['styles/components.css', 'styles/screens.css', 'styles/base.css', 'styles/surfaces.css'];
+const cssFiles = ['styles/components.css', 'styles/screens.css', 'styles/base.css', 'styles/surfaces.css', 'styles/shell.css'];
 const css = (file: string) => readUiFile(file).replace(/\/\*[\s\S]*?\*\//g, '');
 
 describe('design rules: grid, type and weights', () => {

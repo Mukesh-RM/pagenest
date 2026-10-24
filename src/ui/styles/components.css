@@ -971,7 +971,7 @@
 .pn-cover--generated {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding: var(--pn-space-4) var(--pn-space-3) var(--pn-space-3);
   background: var(--pn-cover-bg);
   color: var(--pn-cover-fg);
@@ -985,9 +985,12 @@
   opacity: 0.7;
 }
 
+/* Title and author are cut on whole lines with a short fade, never with an ellipsis: a clamped title could leave a
+   lone "..." on its last line and a long author name used to be clipped mid-word ("IMANI..."). */
 .pn-cover__title {
-  display: -webkit-box;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: calc(4 * 1.25em);
   margin-top: var(--pn-space-3);
   overflow: hidden;
   font-family: var(--pn-font-serif);
@@ -995,19 +998,21 @@
   font-weight: var(--pn-weight-heading);
   line-height: var(--pn-leading-tight);
   overflow-wrap: anywhere;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 0.5em), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 0.5em), transparent);
 }
 
 .pn-cover__author {
-  display: -webkit-box;
+  flex: none;
+  margin-top: auto;
+  padding-top: var(--pn-space-2);
+  max-height: calc(2 * 1.25em + var(--pn-space-2));
   overflow: hidden;
   font-size: var(--pn-text-xs);
   font-weight: var(--pn-weight-semibold);
   line-height: var(--pn-leading-tight);
   letter-spacing: 0.02em;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Book card ---------- */
