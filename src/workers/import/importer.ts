@@ -1,5 +1,6 @@
 import type { BookFormat } from '@/app/contracts';
-import { BookRepository, BookRepositoryError, type NewChapter, type NewTrack } from '@/data/books';
+import type { BookRepository} from '@/data/books';
+import { BookRepositoryError, type NewChapter, type NewTrack } from '@/data/books';
 import { computeFingerprint } from '@/data/fingerprint';
 import { naturalCompare, readRange } from './bytes';
 import { folderOf, lastFolderName, titleFromFileName } from './names';

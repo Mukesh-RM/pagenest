@@ -396,6 +396,7 @@ function sniffText(head: Uint8Array): SniffResult {
     // Valid UTF-8 or a legacy 8-bit encoding (Windows-1251 and friends): both are plain text.
     text = isValidUtf8(head) ? decodeText(head) : ascii(head, 0, head.length);
   }
+  // eslint-disable-next-line no-control-regex -- detecting binary control bytes is the point
   if (text === undefined || /[\u0000-\u0008\u000e-\u001a\u001c-\u001f]/.test(text)) return no('unsupported-type');
 
   const lead = text.replace(/^\ufeff/, '').trimStart().slice(0, 4096);

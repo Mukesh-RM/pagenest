@@ -19,7 +19,7 @@ export interface BookItemProps {
 const COVER_DELAY_MS = 90;
 
 /** A cover is asked for only after its card stayed on screen a moment, so a fast scroll decodes nothing. */
-function Cover({ book }: { book: BookSummary }) {
+function Cover({ book, children }: { book: BookSummary; children?: React.ReactNode }) {
   const [settled, setSettled] = useState(false);
   useEffect(() => {
     const timer = setTimeout(() => setSettled(true), COVER_DELAY_MS);
@@ -33,6 +33,7 @@ function Cover({ book }: { book: BookSummary }) {
       ) : (
         <TitleCard title={book.title} author={book.author} seed={`${book.title}\u0000${book.author ?? ''}`} />
       )}
+      {children}
     </span>
   );
 }
@@ -79,16 +80,17 @@ export const BookItem = memo(function BookItem({ book, selected, selecting, view
   }
   return (
     <Card flush onPress={press} onLongPress={longPress} selected={selecting ? selected : undefined} aria-label={label} className="pn-lib-card">
-      <Cover book={book} />
+      <Cover book={book}>
+        {shown > 0 ? (
+          <span className="pn-lib-progress" aria-hidden="true">
+            <span className="pn-lib-progress__fill" style={{ width: `${shown}%` }} />
+          </span>
+        ) : null}
+      </Cover>
       <span className="pn-lib-tagpill" aria-hidden="true">
         {formatTag(book)}
       </span>
       <Badges book={book} />
-      {shown > 0 ? (
-        <span className="pn-lib-progress" aria-hidden="true">
-          <span className="pn-lib-progress__fill" style={{ width: `${shown}%` }} />
-        </span>
-      ) : null}
       <span className="pn-lib-meta">
         <span className="pn-lib-title">{book.title}</span>
         {book.author ? <span className="pn-lib-author">{book.author}</span> : null}
