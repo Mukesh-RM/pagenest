@@ -3,7 +3,9 @@ import type { ProgressService } from '@/app/contracts';
 import { createAudioController, createAudioElement } from '@/engines/audio';
 import type { AudioController } from '@/engines/audio/types';
 import { useServices } from '@/app/services-context';
-import { usePlayerStore } from './audio-store';
+import { useChromePlayerStore } from './chrome-store';
+import { useEnginePlayerStore } from './engine-store';
+import { chromeSnapshotFromAudioState, resetChromeCoverCacheForTests } from './sync-chrome-from-engine';
 import { attachPlayerKeyboard } from './keyboard-shortcuts';
 
 const AudioControllerContext = createContext<AudioController | undefined>(undefined);
@@ -19,6 +21,8 @@ export function getAudioController(): AudioController | undefined {
 export function resetAudioForTests(): void {
   sharedController = undefined;
   sharedAudio = undefined;
+  useChromePlayerStore.getState().clear();
+  resetChromeCoverCacheForTests();
 }
 
 function ensureController(progress: ProgressService): AudioController {
@@ -39,9 +43,18 @@ export function useAudioController(): AudioController {
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const { progress } = useServices();
   const controller = useMemo(() => ensureController(progress), [progress]);
-  const setState = usePlayerStore((s) => s.setState);
+  const setEngineState = useEnginePlayerStore((s) => s.setState);
+  const setChrome = useChromePlayerStore((s) => s.setChrome);
 
-  useEffect(() => controller.subscribe((state) => setState(state)), [controller, setState]);
+  useEffect(
+    () =>
+      controller.subscribe((state) => {
+        setEngineState(state);
+        const { chrome, sessionActive } = chromeSnapshotFromAudioState(state);
+        setChrome(chrome, sessionActive);
+      }),
+    [controller, setEngineState, setChrome],
+  );
 
   useEffect(() => {
     const detach = attachPlayerKeyboard(controller);
@@ -50,8 +63,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let lock: WakeLockSentinel | undefined;
-    const unsub = usePlayerStore.subscribe((s) => {
-      if (s.isPlaying && 'wakeLock' in navigator) {
+    const unsub = useChromePlayerStore.subscribe((s) => {
+      if (s.chrome.playing && 'wakeLock' in navigator) {
         void navigator.wakeLock.request('screen').then((sentinel) => {
           lock = sentinel;
         }).catch(() => undefined);

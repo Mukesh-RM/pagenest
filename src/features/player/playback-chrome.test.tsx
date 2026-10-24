@@ -21,7 +21,9 @@ import { IntegratedPlayerView } from './integrated-player-view';
 import { AudioMiniPlayer } from './AudioMiniPlayer';
 import { PlayerProvider, getAudioController, resetAudioForTests } from './PlayerProvider';
 import { snapshotFromState, snapshotsEqual } from './playback-snapshot';
+import { useChromePlayerStore } from './chrome-store';
 import { usePlayerStore } from './audio-store';
+import { chromeSnapshotFromAudioState } from './sync-chrome-from-engine';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -44,6 +46,8 @@ function syncStoreFromController(): void {
   if (!controller) return;
   const s = controller.getState();
   usePlayerStore.getState().setState(s);
+  const snap = chromeSnapshotFromAudioState(s);
+  useChromePlayerStore.getState().setChrome(snap.chrome, snap.sessionActive);
 }
 
 describe('playback survives chrome unmount', () => {

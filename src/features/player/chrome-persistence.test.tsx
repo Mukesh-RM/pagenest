@@ -6,6 +6,8 @@ import { getDb } from '@/data/db';
 import { createMockAudioElement } from '@/engines/audio/test/mock-audio';
 import { snapshotFromState } from './playback-snapshot';
 import { selectIsPlaying, usePlayerStore } from './audio-store';
+import { useChromePlayerStore } from './chrome-store';
+import { chromeSnapshotFromAudioState } from './sync-chrome-from-engine';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -28,8 +30,11 @@ describe('chrome unmount safety', () => {
     controller.setSleepTimer({ kind: 'endOfChapter' });
     controller.goToChapter(0);
     await controller.play();
-    usePlayerStore.getState().setState(controller.getState());
-    const before = snapshotFromState(controller.getState(), selectIsPlaying());
+    const engineState = controller.getState();
+    usePlayerStore.getState().setState(engineState);
+    const snap = chromeSnapshotFromAudioState(engineState);
+    useChromePlayerStore.getState().setChrome(snap.chrome, snap.sessionActive);
+    const before = snapshotFromState(engineState, selectIsPlaying());
     // Simulate mini-player unmount: controller is not torn down.
     expect(before.isPlaying).toBe(true);
     expect(before.speed).toBe(2);

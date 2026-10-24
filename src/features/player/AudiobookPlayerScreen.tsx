@@ -3,6 +3,7 @@ import { EmptyState } from '@/ui';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
 import { getAudioController } from './PlayerProvider';
+import { preloadPlayerEngine, waitForAudioController } from './lazy-runtime';
 import { loadAudiobookForBook } from './load-audiobook';
 import { loadDevAudioFixture } from './dev/fixtures';
 import { IntegratedPlayerView } from './integrated-player-view';
@@ -22,29 +23,39 @@ export default function AudiobookPlayerScreen({ book, position }: AudiobookPlaye
   const [devFixture, setDevFixture] = useState(false);
 
   useEffect(() => {
-    const controller = getAudioController();
-    if (!controller) {
-      setError('Audio is not ready yet.');
-      setLoading(false);
-      return;
-    }
-    const loaded = controller.getState().item;
-    if (loaded?.bookId === book.id && controller.getState().status !== 'idle') {
-      setWelcome(position);
-      setError(undefined);
-      setLoading(false);
-      return;
-    }
-    void loadAudiobookForBook(controller, book, position).then((result) => {
-      if (result.ok) {
-        setWelcome(result.welcome ?? position);
-        setError(undefined);
-      } else {
-        setError(result.message);
-        setDevFixture(result.devFixtureAvailable);
-      }
-      setLoading(false);
-    });
+    preloadPlayerEngine();
+    let cancelled = false;
+    void waitForAudioController()
+      .then((controller) => {
+        if (cancelled) return;
+        const loaded = controller.getState().item;
+        if (loaded?.bookId === book.id && controller.getState().status !== 'idle') {
+          setWelcome(position);
+          setError(undefined);
+          setLoading(false);
+          return;
+        }
+        return loadAudiobookForBook(controller, book, position).then((result) => {
+          if (cancelled) return;
+          if (result.ok) {
+            setWelcome(result.welcome ?? position);
+            setError(undefined);
+          } else {
+            setError(result.message);
+            setDevFixture(result.devFixtureAvailable);
+          }
+          setLoading(false);
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Audio is not ready yet.');
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [book, position]);
 
   if (loading) {

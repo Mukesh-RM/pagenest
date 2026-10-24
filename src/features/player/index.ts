@@ -2,7 +2,7 @@ export { PlayerProvider, getAudioController, useAudioController } from './Player
 export { default as AudiobookPlayerScreen } from './AudiobookPlayerScreen';
 export { DEV_FIXTURE_BOOK_ID } from './dev/fixtures';
 export type { AudiobookPlayerScreenProps } from './AudiobookPlayerScreen';
-export { miniPlayerSlot, useMiniPlayerActive } from './mini-player-slot';
+export { miniPlayerSlot, useMiniPlayerActive, LazyPlayerRoot, preloadPlayerEngine } from './player-chrome';
 export { AudioMiniPlayer } from './AudioMiniPlayer';
 export { FullPlayerView } from './FullPlayerView';
 export { useIsPlaying, usePlayerStore, selectIsPlaying, selectMiniPlayerActive } from './audio-store';

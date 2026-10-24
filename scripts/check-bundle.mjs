@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 /** Budgets in kilobytes (1 kB = 1000 bytes), gzip. Change them only together with docs/PERFORMANCE.md. */
 export const BUDGETS_KB = {
-  initialJs: 128,
+  initialJs: 120,
   initialCss: 12,
   lazyChunk: 48,
   // Web Workers carry their own copy of Dexie (about 30 kB), so they get more room than a screen does.

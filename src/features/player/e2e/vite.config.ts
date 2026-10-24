@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const workspaceRoot = fileURLToPath(new URL('../../../../', import.meta.url));
+const here = fileURLToPath(new URL('.', import.meta.url));
 const entryHtml = fileURLToPath(new URL('./index.html', import.meta.url));
 
 /** Player Playwright harness: uses the repo Tailwind/PostCSS setup. */

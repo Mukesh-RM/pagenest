@@ -6,7 +6,7 @@ import { createDataClient } from '@/data/data-client';
 import { PageNestDB } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
 import { DEFAULT_CUSTOM_THEME } from '@/ui/theme/custom';
-import { PlayerProvider } from '@/features/player';
+import { LazyPlayerRoot } from '@/features/player/LazyPlayerRoot';
 import { AppRoutes } from './routes';
 import { ServicesProvider } from './services';
 import type { AppServices } from './services-context';
@@ -48,9 +48,9 @@ export function renderApp(
       <ServicesProvider services={services}>
         <ThemeProvider>
           <Router {...routerProps}>
-            <PlayerProvider>
+            <LazyPlayerRoot>
               <AppRoutes />
-            </PlayerProvider>
+            </LazyPlayerRoot>
           </Router>
         </ThemeProvider>
       </ServicesProvider>,

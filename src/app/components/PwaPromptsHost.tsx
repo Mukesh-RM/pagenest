@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { PwaPrompts } from '@/ui';
-import { useIsPlaying } from '@/features/player';
+import { useIsPlaying } from '@/features/player/chrome-store';
 import { localHintStore } from '../hint-store';
 import { useServices } from '../services-context';
 
