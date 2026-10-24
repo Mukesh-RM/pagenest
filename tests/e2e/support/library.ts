@@ -134,7 +134,12 @@ export async function findCard(page: Page, text: string | RegExp): Promise<Locat
   const card = bookCards(page).filter({ hasText: text });
   await page.evaluate(() => window.scrollTo(0, 0));
   for (let i = 0; i < 60; i++) {
-    if (await card.count()) { await card.first().scrollIntoViewIfNeeded(); return card.first(); }
+    if (await card.count()) {
+      // a windowed list re-renders while it scrolls, so the node can be replaced between count() and the scroll: retry
+      for (let k = 0; k < 5; k++) {
+        try { await card.first().scrollIntoViewIfNeeded({ timeout: 2000 }); return card.first(); } catch { await page.waitForTimeout(100); }
+      }
+    }
     const moved = await page.evaluate(() => { const before = scrollY; window.scrollBy(0, Math.max(200, innerHeight * 0.7)); return scrollY - before; });
     await page.waitForTimeout(80);
     if (moved <= 0) break;
