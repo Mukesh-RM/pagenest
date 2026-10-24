@@ -17,7 +17,7 @@ async function openSeededLibrary(page: Page, count: number): Promise<void> {
 
 const FIRST_CARDS = 30;
 const allCardsMatch = (pattern: string) =>
-  `(() => { const c = [...document.querySelectorAll('main li')].slice(0, ${FIRST_CARDS}); return c.length > 0 && c.every((e) => /${pattern}/.test(e.textContent ?? '')); })()`;
+  `(() => { const c = [...document.querySelectorAll('main li, main [role=listitem]')].slice(0, ${FIRST_CARDS}); return c.length > 0 && c.every((e) => /${pattern}/.test(e.textContent ?? '')); })()`;
 
 test(`a ${BUDGETS.library.sizeForOpenAndSearch}-book library opens in ${BUDGETS.library.openMs} ms without a long task`, async ({ page }) => {
   await openSeededLibrary(page, BUDGETS.library.sizeForOpenAndSearch);
