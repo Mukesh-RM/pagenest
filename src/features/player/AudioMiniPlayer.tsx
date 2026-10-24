@@ -1,13 +1,17 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { listenPath } from '@/app/route-paths';
 import { MiniPlayer } from '@/ui';
-import type { AudioController } from '@/engines/audio/types';
 import { chapterSubtitle } from '@/engines/audio/media-session';
+import { useAudioController } from './PlayerProvider';
 import { usePlayerStore } from './audio-store';
 
-export function MiniPlayerHost({ controller }: { controller: AudioController }) {
+/**
+ * Tab-bar mini-player (visual only). Playback state lives in {@link useAudioController}, not here.
+ */
+export function AudioMiniPlayer() {
+  const controller = useAudioController();
   const state = usePlayerStore((s) => s.state);
-  const setFullPlayerOpen = usePlayerStore((s) => s.setFullPlayerOpen);
   const navigate = useNavigate();
 
   const coverUrl = useMemo(() => {
@@ -18,8 +22,7 @@ export function MiniPlayerHost({ controller }: { controller: AudioController }) 
 
   if (!state.item || state.status === 'idle') return null;
 
-  const progress =
-    state.durationSec > 0 ? state.positionSec / state.durationSec : 0;
+  const progress = state.durationSec > 0 ? state.positionSec / state.durationSec : 0;
 
   return (
     <MiniPlayer
@@ -31,10 +34,7 @@ export function MiniPlayerHost({ controller }: { controller: AudioController }) 
       skipBackSeconds={state.options.skipBackSec}
       onTogglePlay={() => void controller.toggle()}
       onSkipBack={() => controller.skip(-state.options.skipBackSec)}
-      onExpand={() => {
-        setFullPlayerOpen(true);
-        if (state.item) navigate(`/listen/${state.item.bookId}`);
-      }}
+      onExpand={() => navigate(listenPath(state.item!.bookId))}
     />
   );
 }

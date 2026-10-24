@@ -27,7 +27,7 @@ export function useAudioController(): AudioController {
 }
 
 /**
- * Owns the single audio element and Zustand sync. Render {@link PlayerChrome} inside a Router.
+ * Owns the single audio element and Zustand sync. Register {@link miniPlayerSlot} in AppServices.
  */
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const { progress } = useServices();

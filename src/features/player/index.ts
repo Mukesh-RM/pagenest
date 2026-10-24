@@ -1,6 +1,10 @@
 export { PlayerProvider, getAudioController, useAudioController } from './PlayerProvider';
-export { PlayerChrome } from './PlayerChrome';
-export { ListenRoute } from './ListenRoute';
-export { useIsPlaying, usePlayerStore, selectIsPlaying } from './audio-store';
-export { attachPlayerKeyboard } from './keyboard-shortcuts';
+export { default as AudiobookPlayerScreen } from './AudiobookPlayerScreen';
 export { DEV_FIXTURE_BOOK_ID } from './dev/fixtures';
+export type { AudiobookPlayerScreenProps } from './AudiobookPlayerScreen';
+export { miniPlayerSlot, useMiniPlayerActive } from './mini-player-slot';
+export { AudioMiniPlayer } from './AudioMiniPlayer';
+export { FullPlayerView } from './FullPlayerView';
+export { useIsPlaying, usePlayerStore, selectIsPlaying, selectMiniPlayerActive } from './audio-store';
+export { attachPlayerKeyboard } from './keyboard-shortcuts';
+export { loadAudiobookForBook } from './load-audiobook';

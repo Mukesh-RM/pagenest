@@ -16,17 +16,13 @@ const idleState: AudioState = {
 export interface PlayerStore {
   readonly state: AudioState;
   readonly isPlaying: boolean;
-  readonly fullPlayerOpen: boolean;
   setState(state: AudioState): void;
-  setFullPlayerOpen(open: boolean): void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
   state: idleState,
   isPlaying: false,
-  fullPlayerOpen: false,
   setState: (state) => set({ state, isPlaying: state.status === 'playing' }),
-  setFullPlayerOpen: (open) => set({ fullPlayerOpen: open }),
 }));
 
 /** For the PWA update prompt and any screen that must not interrupt playback. */
@@ -36,4 +32,10 @@ export function useIsPlaying(): boolean {
 
 export function selectIsPlaying(): boolean {
   return usePlayerStore.getState().isPlaying;
+}
+
+/** Selector for mini-player slot activity (book loaded, not idle). */
+export function selectMiniPlayerActive(): boolean {
+  const { state } = usePlayerStore.getState();
+  return state.item !== undefined && state.status !== 'idle';
 }

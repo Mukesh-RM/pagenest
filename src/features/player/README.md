@@ -1,10 +1,17 @@
 # features/player
 
-Owner: **Audio** bot. `PlayerProvider` (single audio element), mini-player host, full-player sheet, `/listen/:id` route component, Zustand `useIsPlaying`, dev fixture loader, keyboard shortcuts, and Playwright harness under `e2e/`.
+Owner: **Audio** bot.
 
-Wire-up for Architect (not owned here):
+- `PlayerProvider` — single `HTMLAudioElement`, controller sync, keyboard shortcuts, optional wake lock.
+- `miniPlayerSlot` — register on `AppServices.miniPlayerSlot` (`Component` + `useActive`); see `docs/ROUTE_CHROME.md`.
+- `AudiobookPlayerScreen` — immersive `/listen/:id` UI (replace `src/app/pages/PlayerScreen.tsx`).
+- `useIsPlaying()` — for PWA update prompt.
 
-- Wrap the app in `<BrowserRouter>`, then `<PlayerProvider>`, routes, and `<PlayerChrome />` (mini + full player; needs the router).
-- Pass floating mini-player UI into `AppShell` via `miniPlayer={<PlayerChrome />}` or mount chrome globally above the tab bar.
-- Register `<Route path="listen/:id" element={<ListenRoute />} />`.
-- Pass `useIsPlaying()` into `useUpdatePrompt` from `@/sw/hooks`.
+## Casey wiring (`src/app`)
+
+1. `services.tsx`: `miniPlayerSlot` from `@/features/player`, wrap app in `<PlayerProvider>`.
+2. `pages/PlayerScreen.tsx`: re-export `AudiobookPlayerScreen` (routes already use `BookRoute` → `PlayerScreen`).
+3. `useUpdatePrompt(useIsPlaying())` where the update snackbar lives.
+4. Library: build `AudioItem` from OPFS/`tracks` and call `loadAudiobookForBook` / `controller.load`.
+
+Playback state must never live in the mini-player component; it unmounts on immersive routes.
