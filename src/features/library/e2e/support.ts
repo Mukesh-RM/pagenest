@@ -14,9 +14,13 @@ export async function recordLongTasks(page: Page): Promise<void> {
   await page.addInitScript(() => {
     const w = window as unknown as { __longTasks: number[] };
     w.__longTasks = [];
+    (w as unknown as { __longLog: [number, number][] }).__longLog = [];
     try {
       new PerformanceObserver((list) => {
-        for (const e of list.getEntries()) w.__longTasks.push(e.duration);
+        for (const e of list.getEntries()) {
+          w.__longTasks.push(e.duration);
+          (w as unknown as { __longLog: [number, number][] }).__longLog.push([Math.round(e.startTime), Math.round(e.duration)]);
+        }
       }).observe({ type: 'longtask', buffered: true });
     } catch {
       /* longtask is Chromium only */
