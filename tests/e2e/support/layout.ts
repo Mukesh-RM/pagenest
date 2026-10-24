@@ -107,28 +107,49 @@ export async function expectControlsReachable(page: Page, label: string): Promis
   expect(problems, `${label}\n${fmt(problems)}`).toEqual([]);
 }
 
-/** Layout-shift recorder, installed before navigation. CLS is the sum of shifts without recent input. */
+export interface Shift { value: number; at: number; sources: string[] }
+
+/**
+ * Layout-shift recorder, installed before navigation (survives reloads). CLS is the sum of shifts without recent input.
+ * Each shift names the elements that moved ("tag.class "text"" with the box before -> after), described when the shift
+ * happens because the node may be gone by the time the test reads it.
+ */
 export async function recordLayoutShift(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    const w = window as unknown as { __cls?: number; __shifts?: { value: number; sources: string[] }[] };
+    const w = window as unknown as { __cls?: number; __shifts?: Shift[] };
+    interface Shift { value: number; at: number; sources: string[] }
     w.__cls = 0; w.__shifts = [];
+    const describe = (n: Node | null | undefined) => {
+      const el = n instanceof Element ? n : n?.parentElement;
+      if (!el) return '?';
+      const cls = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
+      return `${el.tagName.toLowerCase()}${cls ? `.${cls}` : ''} "${(el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 28)}"`;
+    };
+    const box = (r: DOMRectReadOnly) => `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
     try {
       new PerformanceObserver((list) => {
-        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean; sources?: { node?: Node }[] }[]) {
+        for (const e of list.getEntries() as unknown as { value: number; startTime: number; hadRecentInput: boolean; sources?: { node?: Node; previousRect: DOMRectReadOnly; currentRect: DOMRectReadOnly }[] }[]) {
           if (e.hadRecentInput) continue;
           w.__cls! += e.value;
-          w.__shifts!.push({ value: e.value, sources: (e.sources ?? []).map((s) => (s.node as Element | undefined)?.nodeName ?? '?') });
+          w.__shifts!.push({ value: e.value, at: Math.round(e.startTime), sources: (e.sources ?? []).map((s) => `${describe(s.node)} ${box(s.previousRect)} -> ${box(s.currentRect)}`) });
         }
       }).observe({ type: 'layout-shift', buffered: true });
     } catch { /* Chromium only */ }
   });
 }
 
-export function readCls(page: Page): Promise<{ cls: number; shifts: { value: number; sources: string[] }[] }> {
+export function readCls(page: Page): Promise<{ cls: number; shifts: Shift[] }> {
   return page.evaluate(() => {
-    const w = window as unknown as { __cls?: number; __shifts?: { value: number; sources: string[] }[] };
+    const w = window as unknown as { __cls?: number; __shifts?: Shift[] };
+    interface Shift { value: number; at: number; sources: string[] }
     return { cls: w.__cls ?? 0, shifts: w.__shifts ?? [] };
   });
+}
+
+/** The shifts that made CLS what it is, worst first, for a failure message. */
+export function describeShifts(shifts: Shift[], top = 5): string {
+  return [...shifts].sort((a, b) => b.value - a.value).slice(0, top)
+    .map((s) => `  - ${s.value.toFixed(3)} at ${s.at} ms: ${s.sources.length ? s.sources.join('; ') : 'no source reported'}`).join('\n') || '  (no shifts)';
 }
 
 /** Longest transition or animation currently defined or running, in ms, with the element responsible. */
