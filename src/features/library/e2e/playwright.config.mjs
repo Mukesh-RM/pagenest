@@ -10,6 +10,8 @@ const port = Number(process.env.PAGENEST_LIBRARY_PORT ?? 4393);
 export default defineConfig({
   testDir: '.',
   testMatch: '*.spec.ts',
+  // audio-playback.spec.ts runs against the whole app: see playwright-app.config.mjs
+  testIgnore: 'audio-playback.spec.ts',
   outputDir: resolve(root, 'test-results', 'library'),
   timeout: 120_000,
   workers: 1,
