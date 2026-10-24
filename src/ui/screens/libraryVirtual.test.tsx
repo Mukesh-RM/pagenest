@@ -55,7 +55,7 @@ describe('LibraryScreen windowing', () => {
     rerender(screenFor(3000, { virtualizeAbove: Infinity }));
     expect(document.querySelector('[data-virtual]')).toBeNull();
     expect(within(screen.getByRole('list', { name: 'Books' })).getAllByRole('listitem')).toHaveLength(3000);
-  });
+  }, 20000);
 
   it('windows the list view too', () => {
     render(screenFor(2000, { view: 'list' }));

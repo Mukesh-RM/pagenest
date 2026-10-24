@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { BookCover } from '../components/BookCover';
 import { BottomSheet, type SheetCloseReason } from '../components/BottomSheet';
 import { Button } from '../components/Button';
-import { OverflowMenu } from '../components/OverflowMenu';
+import { OverflowMenu, type OverflowMenuItem } from '../components/OverflowMenu';
 import { ProgressBar } from '../components/ProgressBar';
 import { progressWords } from '../components/BookCard';
 import { useCoverTint } from '../hooks';
@@ -23,13 +23,15 @@ export interface BookDetailSheetProps {
   onListen?: (book: BookDetail) => void;
   /** "Remove from library" in the ⋯ menu beside the main actions. The app answers with a ConfirmDialog; nothing is deleted here. */
   onRemove?: (book: BookDetail) => void;
+  /** "Edit details" in the ⋯ menu, placed before Remove. Without it the item is not offered. The app opens its own editor. */
+  onEdit?: (book: BookDetail) => void;
 }
 
 /**
  * Book detail (blueprint 5.6): bottom sheet on phones, a two-pane dialog from 1024 px (cover and facts on the left,
  * description and actions on the right). The background takes a tint from the cover, clamped so text stays AA.
  */
-export function BookDetailSheet({ open, book, onClose, originRect, onRead, onListen, onRemove }: BookDetailSheetProps) {
+export function BookDetailSheet({ open, book, onClose, originRect, onRead, onListen, onRemove, onEdit }: BookDetailSheetProps) {
   const tint = useCoverTint(book?.coverUrl);
   const coverRef = useRef<HTMLDivElement>(null);
 
@@ -50,6 +52,9 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
   ].filter(Boolean);
   const started = book.progress > 0 && book.progress < 1;
   const audioOnly = isAudioOnly(book);
+  const menuItems: OverflowMenuItem[] = [];
+  if (onEdit) menuItems.push({ label: 'Edit details', icon: 'pencil', onSelect: () => onEdit(book) });
+  if (onRemove) menuItems.push({ label: 'Remove from library', icon: 'trash', danger: true, onSelect: () => onRemove(book) });
   return (
     <BottomSheet
       open={open}
@@ -80,12 +85,7 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
               ) : null}
             </>
           )}
-          {onRemove ? (
-            <OverflowMenu
-              label="More options"
-              items={[{ label: 'Remove from library', icon: 'trash', danger: true, onSelect: () => onRemove(book) }]}
-            />
-          ) : null}
+          {menuItems.length > 0 ? <OverflowMenu label="More options" items={menuItems} /> : null}
         </div>
       }
     >

@@ -995,11 +995,44 @@
   pointer-events: none;
 }
 
+/* High contrast: the cover edge is a real 2 px border, so a dark tile on a black page still reads as an object */
+[data-contrast="high"] .pn-cover::after {
+  box-shadow: inset 0 0 0 var(--pn-border-width) rgb(var(--pn-border-strong));
+}
+
+@media (prefers-contrast: more) {
+  :root:not([data-contrast]) .pn-cover::after {
+    box-shadow: inset 0 0 0 var(--pn-border-width) rgb(var(--pn-border-strong));
+  }
+}
+
 .pn-cover__img {
   display: block;
   width: 100%;
   height: 100%;
+  /* The whole cover shows; a differently shaped image is letterboxed on the neutral tile (no layout shift: the box is 2:3) */
+  object-fit: contain;
+}
+
+.pn-cover__img--fill {
   object-fit: cover;
+}
+
+/* Monogram: one letter on a flat color. The corners stay free for the audio, favorite and finished badges. */
+.pn-cover--monogram {
+  display: grid;
+  place-items: center;
+  background: var(--pn-cover-bg);
+  color: var(--pn-cover-fg);
+  container-type: inline-size;
+}
+
+.pn-cover__letter {
+  font-family: var(--pn-font-serif);
+  font-size: 46cqw;
+  font-weight: var(--pn-weight-heading);
+  line-height: 1;
+  user-select: none;
 }
 
 .pn-cover--generated {

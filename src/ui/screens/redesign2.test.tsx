@@ -143,9 +143,20 @@ describe('SettingsScreen', () => {
   it('has grouped, labelled sections', () => {
     render(<SettingsHarness />);
     expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
-    for (const name of ['Appearance', 'Install help', 'Storage used', 'About']) {
+    for (const name of ['Appearance', 'Reading', 'Install help', 'Storage used', 'About']) {
       expect(screen.getByRole('region', { name })).toBeInTheDocument();
     }
+  });
+
+  it('every section is its own card, text size and its live sample sit together in Reading', () => {
+    const { container } = render(<SettingsHarness />);
+    const cards = container.querySelectorAll('section.pn-set-card');
+    expect(cards.length).toBeGreaterThanOrEqual(5);
+    for (const card of cards) expect(card.querySelector('h2.pn-set-card__title')).not.toBeNull();
+    const reading = screen.getByRole('region', { name: 'Reading' });
+    expect(within(reading).getByRole('slider', { name: 'Text size' })).toBeInTheDocument();
+    expect(within(reading).getByTestId('text-sample')).toBeInTheDocument();
+    expect(within(screen.getByRole('region', { name: 'Appearance' })).queryByRole('slider')).toBeNull();
   });
 
   it('hides Install help when no install control is given and Storage when null', () => {
