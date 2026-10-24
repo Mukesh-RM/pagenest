@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { MiniPlayerSlot, ProgressService, SampleBookProvider } from '@/app/contracts';
+import type { CoverUrlCache } from '@/data/cover-url';
 import type { DataClient } from '@/data/data-client';
 import type { PageNestDB } from '@/data/db';
 
@@ -9,6 +10,11 @@ export interface AppServices {
   readonly progress: ProgressService;
   /** Heavy work (file I/O, hashing, stats) that runs in a Web Worker. */
   readonly data: DataClient;
+  /**
+   * Cover images as `blob:` URLs with the clean-up done (see `CoverUrlCache`). Screens normally use
+   * `useCoverUrl`; call `covers.invalidate(bookId)` after `data.books.setCover` or `removeCover`.
+   */
+  readonly covers: CoverUrlCache;
   /**
    * Optional "try a sample book" source, implemented by the Library. Without it the Library shows
    * no sample card at all (see `SampleBookProvider`).

@@ -1,4 +1,7 @@
+import { BookRepository } from './books';
+import { CollectionRepository } from './collections';
 import { computeFingerprint } from './fingerprint';
+import { LibraryQueryService } from './library-query';
 import type { PageNestDB } from './db';
 import type { FileData, FileEntry, FileStore } from './opfs';
 import { computeStats, type StatsSummary } from './stats';
@@ -23,21 +26,47 @@ export interface DataService {
   fingerprint(file: Blob): Promise<string>;
   /** Everything the Stats screen shows. `now` is epoch ms. */
   stats(now: number): Promise<StatsSummary>;
+  /** Books, their files and covers; see `BookRepository`. */
+  books: BookApi;
+  /** Shelves; see `CollectionRepository`. */
+  collections: CollectionApi;
+  /** Search, filter, sort and page the library; see `LibraryQueryService`. */
+  library: LibraryApi;
 }
 
-/** Names of every {@link DataService} method, for building the RPC client. */
-export const DATA_SERVICE_METHODS = [
-  'fileStoreInfo',
-  'writeFile',
-  'openFile',
-  'fileExists',
-  'fileSize',
-  'removeFile',
-  'listFiles',
-  'fileUsage',
-  'fingerprint',
-  'stats',
-] as const satisfies readonly (keyof DataService)[];
+/** The `BookRepository` methods that are available through the worker. */
+export type BookApi = Pick<
+  BookRepository,
+  | 'get'
+  | 'getMany'
+  | 'findByFingerprint'
+  | 'count'
+  | 'getTracks'
+  | 'getChapters'
+  | 'add'
+  | 'update'
+  | 'markOpened'
+  | 'setChapters'
+  | 'setCover'
+  | 'removeCover'
+  | 'getCover'
+  | 'trash'
+  | 'restore'
+  | 'purge'
+  | 'purgeAll'
+  | 'remove'
+  | 'cleanupOrphans'
+>;
+
+export type CollectionApi = Pick<
+  CollectionRepository,
+  'list' | 'get' | 'create' | 'rename' | 'remove' | 'reorder' | 'addBooks' | 'removeBooks' | 'reorderBooks' | 'booksIn' | 'shelvesOf'
+>;
+
+export type LibraryApi = Pick<LibraryQueryService, 'query' | 'count'>;
+
+export { DATA_SERVICE_METHODS } from './data-service-methods';
+
 
 export interface DataServiceDeps {
   readonly db: PageNestDB;
@@ -45,8 +74,15 @@ export interface DataServiceDeps {
   readonly files: FileStore | Promise<FileStore>;
 }
 
-export function createDataService({ db, files }: DataServiceDeps): DataService {
+/** A {@link DataService} plus `dispose`, which is deliberately not callable through the worker. */
+export interface DisposableDataService extends DataService {
+  /** Stop listening to database changes. */
+  dispose(): void;
+}
+
+export function createDataService({ db, files }: DataServiceDeps): DisposableDataService {
   const store = (): Promise<FileStore> => Promise.resolve(files);
+  const library = new LibraryQueryService(db);
   return {
     fileStoreInfo: async () => {
       const s = await store();
@@ -61,5 +97,9 @@ export function createDataService({ db, files }: DataServiceDeps): DataService {
     fileUsage: async (path) => (await store()).usage(path),
     fingerprint: (file) => computeFingerprint(file),
     stats: (now) => computeStats(db, now),
+    books: new BookRepository(db, files),
+    collections: new CollectionRepository(db),
+    library,
+    dispose: () => library.close(),
   };
 }

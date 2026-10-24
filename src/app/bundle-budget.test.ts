@@ -74,6 +74,17 @@ describe('bundle budget script', () => {
     expect(code).toBe(1);
   });
 
+  it('gives a Web Worker chunk more room than a screen (it carries its own Dexie), but not unlimited', () => {
+    const fits = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'data.worker-1.js': 48_000 }, page());
+    const ok = run(fits);
+    expect(ok.out).toContain('ok   worker chunk data.worker-1.js');
+    expect(ok.code).toBe(0);
+    const tooBig = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'data.worker-1.js': 60_000 }, page());
+    const bad = run(tooBig);
+    expect(bad.out).toMatch(/FAIL worker chunk data\.worker-1\.js/);
+    expect(bad.code).toBe(1);
+  });
+
   it('fails clearly when there is no build', () => {
     const dist = mkdtempSync(join(tmpdir(), 'pn-empty-'));
     dirs.push(dist);

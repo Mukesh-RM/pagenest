@@ -1,5 +1,6 @@
 import { getDb, type PageNestDB } from './db';
-import { createDataService, DATA_SERVICE_METHODS, type DataService } from './data-service';
+import type { DataService, DisposableDataService } from './data-service';
+import { DATA_SERVICE_METHODS } from './data-service-methods';
 import { createFileStore, type FileData, type FileEntry, type FileStore } from './opfs';
 import { createRpcClient, type Remote, type RpcPort } from './rpc';
 
@@ -56,12 +57,27 @@ export function createDataClient(options: DataClientOptions = {}): DataClient {
         },
       };
     } else {
-      const local = createDataService({ db: options.db ?? getDb(), files: options.files ?? createFileStore() });
+      // The service is loaded on demand, so a browser that has Workers never downloads this copy of it.
+      const local: Promise<DisposableDataService> = import('./data-service').then((m) =>
+        m.createDataService({ db: options.db ?? getDb(), files: options.files ?? createFileStore() }),
+      );
       const api: Record<string, unknown> = {};
-      for (const name of DATA_SERVICE_METHODS) {
-        api[name] = async (...args: unknown[]) => (local[name] as (...a: unknown[]) => unknown)(...args);
+      for (const method of DATA_SERVICE_METHODS) {
+        const path = method.split('.');
+        const name = path.pop() ?? method;
+        let target = api;
+        for (const part of path) target = (target[part] ??= {}) as Record<string, unknown>;
+        target[name] = async (...args: unknown[]) => {
+          let owner = (await local) as unknown as Record<string, unknown>;
+          for (const part of path) owner = owner[part] as Record<string, unknown>;
+          return (owner[name] as (...a: unknown[]) => unknown).apply(owner, args);
+        };
       }
-      connection = { api: api as Remote<DataService>, stop: () => undefined, worker: false };
+      connection = {
+        api: api as Remote<DataService>,
+        stop: () => void local.then((l) => l.dispose(), () => undefined),
+        worker: false,
+      };
     }
     return connection;
   }
@@ -73,8 +89,16 @@ export function createDataClient(options: DataClientOptions = {}): DataClient {
     },
   };
   Object.defineProperty(client, 'usesWorker', { get: () => connect().worker });
-  for (const name of DATA_SERVICE_METHODS) {
-    client[name] = (...args: unknown[]) => (connect().api[name] as (...a: unknown[]) => Promise<unknown>)(...args);
+  for (const method of DATA_SERVICE_METHODS) {
+    const path = method.split('.');
+    const name = path.pop() ?? method;
+    let target = client;
+    for (const part of path) target = (target[part] ??= {}) as Record<string, unknown>;
+    target[name] = (...args: unknown[]) => {
+      let owner = connect().api as unknown as Record<string, unknown>;
+      for (const part of path) owner = owner[part] as Record<string, unknown>;
+      return (owner[name] as (...a: unknown[]) => Promise<unknown>).apply(owner, args);
+    };
   }
   return client as DataClient;
 }
