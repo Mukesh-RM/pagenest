@@ -4,6 +4,7 @@
  */
 
 /* ---------- Button ---------- */
+/* One height (44 px), one radius, one type size for every variant; only color changes. */
 .pn-btn {
   display: inline-flex;
   align-items: center;
@@ -12,8 +13,8 @@
   min-height: var(--pn-touch);
   min-width: var(--pn-touch);
   padding: 0 var(--pn-space-5);
-  border: 2px solid transparent;
-  border-radius: var(--pn-radius-pill);
+  border: 0;
+  border-radius: var(--pn-radius-button);
   background: transparent;
   color: rgb(var(--pn-text));
   font: inherit;
@@ -24,44 +25,40 @@
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color var(--pn-duration-fast) var(--pn-ease-out),
-    border-color var(--pn-duration-fast) var(--pn-ease-out),
-    transform var(--pn-duration-fast) var(--pn-ease-out);
+  transition: transform var(--pn-duration-fast) var(--pn-ease-out);
 }
 
+/* Primary: filled teal */
 .pn-btn--primary {
   background: rgb(var(--pn-accent));
   color: rgb(var(--pn-on-accent));
 }
 
+/* Secondary: soft tinted fill, no outline */
 .pn-btn--secondary {
-  border-color: rgb(var(--pn-border-strong));
-  color: rgb(var(--pn-text));
+  background: rgb(var(--pn-accent-soft));
+  color: rgb(var(--pn-accent-ink));
 }
 
 .pn-btn--ghost {
   color: rgb(var(--pn-link));
 }
 
+/* Destructive: quiet red text. A filled red button exists only inside ConfirmDialog (danger-solid). */
 .pn-btn--danger {
-  border-color: rgb(var(--pn-border-strong));
   color: rgb(var(--pn-danger));
 }
 
-.pn-btn--lg {
-  min-height: calc(var(--pn-touch) + var(--pn-space-2));
-  padding: 0 var(--pn-space-6);
+.pn-btn--danger-solid {
+  background: rgb(var(--pn-danger));
+  color: rgb(var(--pn-on-danger));
 }
 
 .pn-btn--icon {
   width: var(--pn-touch);
   padding: 0;
-}
-
-.pn-btn--icon.pn-btn--lg {
-  width: calc(var(--pn-touch) + var(--pn-space-2));
 }
 
 .pn-btn--block {
@@ -73,12 +70,27 @@
   transform: scale(0.97);
 }
 
+/* Hover and press tint sits on an overlay so only opacity animates */
+.pn-btn {
+  position: relative;
+  isolation: isolate;
+}
+
+.pn-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--pn-duration-fast) var(--pn-ease-out);
+}
+
 @media (hover: hover) {
-  .pn-btn:hover:not(:disabled) {
-    background-image: linear-gradient(
-      color-mix(in srgb, currentColor 10%, transparent),
-      color-mix(in srgb, currentColor 10%, transparent)
-    );
+  .pn-btn:hover:not(:disabled)::after {
+    opacity: 0.08;
   }
 }
 
@@ -90,6 +102,8 @@
 
 /* ---------- Chip ---------- */
 .pn-chip {
+  position: relative;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -97,29 +111,43 @@
   min-height: var(--pn-touch);
   min-width: var(--pn-touch);
   padding: 0 var(--pn-space-4);
-  border: 1px solid rgb(var(--pn-border-strong));
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
   border-radius: var(--pn-radius-pill);
   background: transparent;
   color: rgb(var(--pn-text));
   font: inherit;
   font-size: var(--pn-text-sm);
-  font-weight: var(--pn-weight-medium);
+  font-weight: var(--pn-weight-semibold);
   line-height: var(--pn-leading-tight);
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background-color var(--pn-duration-fast) var(--pn-ease-out),
-    border-color var(--pn-duration-fast) var(--pn-ease-out),
-    color var(--pn-duration-fast) var(--pn-ease-out);
+}
+
+/* Selected: soft tinted fill (on an overlay, so the change is an opacity fade), no hard border */
+.pn-chip::before {
+  content: "";
+  position: absolute;
+  inset: calc(var(--pn-border-width, 1px) * -1);
+  z-index: -1;
+  border-radius: inherit;
+  background: rgb(var(--pn-accent-soft));
+  opacity: 0;
+  transition: opacity var(--pn-duration-fast) var(--pn-ease-out);
 }
 
 .pn-chip[aria-pressed="true"],
 .pn-chip--selected {
-  border-color: rgb(var(--pn-accent));
-  background: rgb(var(--pn-accent));
-  color: rgb(var(--pn-on-accent));
+  border-color: transparent;
+  color: rgb(var(--pn-accent-ink));
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-chip[aria-pressed="true"]::before,
+.pn-chip--selected::before {
+  opacity: 1;
 }
 
 .pn-chip:disabled {
@@ -193,10 +221,11 @@
 }
 
 .pn-card__title {
+  font-family: var(--pn-font-serif);
   display: block;
   margin: 0;
   font-size: var(--pn-text-md);
-  font-weight: var(--pn-weight-semibold);
+  font-weight: var(--pn-weight-heading);
   line-height: var(--pn-leading-tight);
 }
 
@@ -310,9 +339,10 @@
 }
 
 .pn-sheet__title {
+  font-family: var(--pn-font-serif);
   margin: 0;
   font-size: var(--pn-text-lg);
-  font-weight: var(--pn-weight-semibold);
+  font-weight: var(--pn-weight-heading);
   line-height: var(--pn-leading-tight);
 }
 
@@ -352,7 +382,7 @@
   color: rgb(var(--pn-muted));
   font: inherit;
   font-size: var(--pn-text-xs);
-  font-weight: var(--pn-weight-medium);
+  font-weight: var(--pn-weight-semibold);
   line-height: var(--pn-leading-tight);
   text-decoration: none;
   cursor: pointer;
@@ -530,8 +560,9 @@
 }
 
 .pn-miniplayer__title {
+  font-family: var(--pn-font-serif);
   font-size: var(--pn-text-sm);
-  font-weight: var(--pn-weight-semibold);
+  font-weight: var(--pn-weight-heading);
 }
 
 .pn-miniplayer__subtitle {
@@ -693,9 +724,10 @@
 }
 
 .pn-empty__title {
+  font-family: var(--pn-font-serif);
   margin: 0;
   font-size: var(--pn-text-lg);
-  font-weight: var(--pn-weight-semibold);
+  font-weight: var(--pn-weight-heading);
   line-height: var(--pn-leading-tight);
 }
 
@@ -752,9 +784,10 @@
 }
 
 .pn-install-banner__title {
+  font-family: var(--pn-font-serif);
   margin: 0;
   font-size: var(--pn-text-md);
-  font-weight: var(--pn-weight-semibold);
+  font-weight: var(--pn-weight-heading);
   line-height: var(--pn-leading-tight);
 }
 

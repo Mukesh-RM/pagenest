@@ -2,11 +2,15 @@ import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Icon, type IconName } from '../icons';
 import { cx } from '../utils/cx';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+/**
+ * primary: filled teal. secondary: soft tinted fill, no outline. ghost: text only.
+ * danger: quiet red text. danger-solid: filled red, reserved for the confirm button inside ConfirmDialog.
+ */
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-solid';
 
 interface ButtonBaseProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   variant?: ButtonVariant;
-  /** "lg" is 52 px tall (still on the 4 px grid); the default is 44 px. */
+  /** Deprecated and ignored: every button shares one height (44 px), radius and type size. Kept so existing calls compile. */
   size?: 'md' | 'lg';
   block?: boolean;
   /** Icon shown before the label. */
@@ -30,7 +34,7 @@ export type ButtonProps = LabelButtonProps | IconButtonProps;
 
 /** Pill button. Minimum 44 x 44 px, visible focus ring, three emphasis levels plus danger. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(props, ref) {
-  const { variant = 'primary', size = 'md', block, icon, iconOnly, className, type = 'button', children, ...rest } = props;
+  const { variant = 'primary', size: _size, block, icon, iconOnly, className, type = 'button', children, ...rest } = props;
   return (
     <button
       ref={ref}
@@ -38,7 +42,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       className={cx(
         'pn-btn',
         `pn-btn--${variant}`,
-        size === 'lg' && 'pn-btn--lg',
         iconOnly && 'pn-btn--icon',
         block && 'pn-btn--block',
         className,

@@ -167,7 +167,7 @@ function DemoBody({ mode, theme, onModeChange }: { mode: ThemeMode; theme: Theme
           <Button variant="danger" icon="close">
             Danger
           </Button>
-          <Button size="lg">Large</Button>
+          <Button>Same size</Button>
           <Button iconOnly icon="plus" aria-label="Add a book" />
           <Button disabled>Disabled</Button>
         </div>
