@@ -123,8 +123,15 @@ export function resolveCustomTheme(input: Partial<CustomThemeInput> | undefined 
   const accentOk = (c: string): boolean => cr(c, page) >= 4.5 && cr(c, raised) >= 4.5 && cr(c, surface) >= 4.5;
   const accent = nudge(wantAccent, text.color, accentOk);
   const onAccent = bestOn(accent.color);
-  const accentSoft = mixHex(page, accent.color, scheme === 'dark' ? 0.2 : 0.14);
-  const accentInk = nudge(accent.color, text.color, (c) => cr(c, accentSoft) >= 4.5 && cr(c, page) >= 4.5).color;
+  // accent-soft is the tint behind chips; shrink it until accent-ink (accent nudged toward the extreme) reads on it.
+  let softAmount = scheme === 'dark' ? 0.2 : 0.14;
+  let accentSoft = mixHex(page, accent.color, softAmount);
+  let accentInk = nudge(accent.color, extreme, (c) => cr(c, accentSoft) >= 4.5 && cr(c, page) >= 4.5).color;
+  while (softAmount > 0 && (cr(accentInk, accentSoft) < 4.5 || cr(accentInk, page) < 4.5)) {
+    softAmount = Math.max(0, softAmount - 0.02);
+    accentSoft = mixHex(page, accent.color, softAmount);
+    accentInk = nudge(accent.color, extreme, (c) => cr(c, accentSoft) >= 4.5 && cr(c, page) >= 4.5).color;
+  }
 
   const borderStrong = nudge(mixHex(page, text.color, 0.35), text.color, (c) => cr(c, page) >= 3 && cr(c, raised) >= 3).color;
   const danger = nudge(scheme === 'dark' ? '#ff8f86' : '#b3261e', text.color, (c) => cr(c, page) >= 4.5 && cr(c, raised) >= 4.5 && cr(c, accentSoft) >= 4.5).color;
