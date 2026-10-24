@@ -60,9 +60,9 @@ describe('performance rules for src/app', () => {
     expect(importers.sort()).toEqual([...routes].sort());
   });
 
-  it("registers the Library through '@/features/library/provider' (no screens, no CSS); only the lazy route imports the screens barrel", () => {
+  it("registers the Library through '@/features/library/provider' (no screens, no CSS); only the lazy routes (and the lazy Settings panels) import the screens barrel", () => {
     const barrel = /from '@\/features\/library';/;
-    const offenders = files.filter((f) => barrel.test(f.text) && !f.name.endsWith('pages/LibraryRoute.tsx')).map((f) => f.name);
+    const offenders = files.filter((f) => barrel.test(f.text) && !/(pages\/LibraryRoute|pages\/CollectionsPage|components\/LibrarySettingsPanels)\.tsx$/.test(f.name)).map((f) => f.name);
     expect(offenders).toEqual([]);
     const services = files.find((f) => f.name.endsWith('src/app/services.tsx'))?.text ?? '';
     expect(services).toContain("from '@/features/library/provider'");

@@ -111,13 +111,15 @@ describe('first launch to the sample book on the real Library provider (in-proce
     services.db.close();
   });
 
-  it('one tap on the welcome card imports the real EPUB and opens it in the reader', async () => {
+  it('Next, then Open a sample book imports the real EPUB and opens it in the reader', async () => {
     const fetchFn = vi.fn(async () => new Response(new Blob([new Uint8Array(epub)])));
     const library = createLibraryProvider({ fetchFn, canRun: () => true });
     renderApp({ ...services, importer: library, sampleBook: library });
     await screen.findByRole('heading', { level: 1, name: /Your books, your voice/ });
     expect(fetchFn).not.toHaveBeenCalled(); // nothing is downloaded until the tap
-    fireEvent.click(await screen.findByRole('button', { name: 'Add the sample book' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('heading', { level: 1, name: 'A home for your books' });
+    fireEvent.click(screen.getByRole('button', { name: 'Open a sample book' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'The Tale of Peter Rabbit' }, { timeout: 15000 })).toBeInTheDocument();
     expect(fetchFn).toHaveBeenCalledTimes(1);
     const rows = await services.db.books.toArray();

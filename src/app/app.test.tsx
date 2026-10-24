@@ -40,7 +40,7 @@ describe('app shell', () => {
 
   it.each([
     ['/', 'Library', 'Your shelf is waiting'],
-    ['/collections', 'Collections', 'No shelves yet'],
+    ['/collections', 'Collections', 'No collections yet'],
     ['/stats', 'Stats', 'Nothing to count yet'],
   ])('%s shows its heading and a plain empty state', async (path, heading, empty) => {
     renderAt(path);
@@ -89,15 +89,20 @@ describe('app shell', () => {
   });
 });
 
-describe('collections', () => {
-  it('creates a shelf that persists', async () => {
+describe('collections (the Library CollectionsScreen on /collections)', () => {
+  it('creates a collection that persists, from the empty state to the saved row', async () => {
     renderAt('/collections');
-    const input = await screen.findByLabelText('Shelf name');
-    fireEvent.change(input, { target: { value: '  Summer reading ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add shelf' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Make a collection' }));
+    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: '  Summer reading ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Summer reading')).toBeInTheDocument();
-    expect(await screen.findByText('0 books')).toBeInTheDocument();
-    expect((await db.collections.toArray()).map((c) => c.name)).toEqual(['Summer reading']);
+    await waitFor(async () => expect((await db.collections.toArray()).map((c) => c.name)).toEqual(['Summer reading']));
+  });
+
+  it('shows the saved collections of the database on arrival', async () => {
+    await db.collections.add({ id: 'c1', name: 'Bedtime stories', order: 0 });
+    renderAt('/collections');
+    expect(await screen.findByText('Bedtime stories')).toBeInTheDocument();
   });
 });
 

@@ -1,82 +1,84 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { formatBytes, getStorageStatus, requestPersistentStorage, type StorageStatus } from '@/data/storage';
-import { Button, InstallHelp } from '@/ui';
-import { FontSizeControl } from '../components/FontSizeControl';
-import { PageHeader, Screen, SectionHeading } from '../components/PageHeader';
-import { ThemeSwatches } from '../components/ThemeSwatches';
+import { InstallHelp } from '@/ui';
+import { SettingsScreen, type SettingsStorage } from '@/ui/screens';
+import type { CustomThemeInput } from '@/ui/theme/custom';
+import { clampFontSize } from '../font-size';
+import { useServices } from '../services-context';
+import { useSettings } from '../settings-store';
+import type { ThemePreference } from '../themes';
 import '../screen-styles';
 
-/** Settings: Appearance, Install help and Storage today; the other groups from blueprint 5.6 arrive with their features. */
+// Backup, restore and the storage breakdown come from the Library; they are loaded with the screen, not with the app shell.
+const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
+
+/**
+ * Height kept for the Library's two groups while their code loads (in `rem`, so it follows the text
+ * size), so the About group below does not move.
+ */
+const PANELS_RESERVE_REM = 26;
+
+function usageText(storage: StorageStatus): string {
+  if (storage.usageBytes === undefined) return 'Your browser does not say how much space PageNest uses.';
+  const used = `PageNest uses ${formatBytes(storage.usageBytes)}`;
+  return storage.quotaBytes === undefined ? `${used}.` : `${used} of about ${formatBytes(storage.quotaBytes)} available.`;
+}
+
+/**
+ * Settings: the design system's `SettingsScreen` (Appearance with theme cards, Custom colors and text
+ * size to 200 %, Install help, Storage used, About) bound to the saved settings, plus the Library's
+ * Backup and restore and Storage on this device groups between Storage and About.
+ */
 export function SettingsPage() {
-  const [storage, setStorage] = useState<StorageStatus | undefined>();
+  const { db } = useServices();
+  const theme = useSettings((s) => s.themePreference);
+  const customTheme = useSettings((s) => s.customTheme);
+  const textSize = useSettings((s) => s.fontSizePx);
+  const setTheme = useSettings((s) => s.setThemePreference);
+  const setCustom = useSettings((s) => s.setCustomTheme);
+  const setSize = useSettings((s) => s.setFontSizePx);
+  const [status, setStatus] = useState<StorageStatus | undefined>();
 
   useEffect(() => {
     let active = true;
     void getStorageStatus().then((s) => {
-      if (active) setStorage(s);
+      if (active) setStatus(s);
     });
     return () => {
       active = false;
     };
   }, []);
 
-  async function keepMyData(): Promise<void> {
+  const keepMyData = useCallback(async () => {
     await requestPersistentStorage();
-    setStorage(await getStorageStatus());
-  }
+    setStatus(await getStorageStatus());
+  }, []);
+
+  const storage: SettingsStorage | undefined =
+    status === undefined
+      ? undefined
+      : {
+          usageText: usageText(status),
+          ...(status.persisted === undefined ? {} : { persisted: status.persisted }),
+          onKeepData: () => void keepMyData(),
+        };
 
   return (
-    <Screen>
-      <PageHeader title="Settings" />
-
-      <section aria-labelledby="appearance" className="flex flex-col gap-3">
-        <SectionHeading id="appearance">Appearance</SectionHeading>
-        <ThemeSwatches />
-        <div className="max-w-sm">
-          <FontSizeControl />
-        </div>
-      </section>
-
-      <section aria-labelledby="install" className="flex flex-col gap-3">
-        <SectionHeading id="install">Install help</SectionHeading>
-        <p className="text-muted">
-          Put PageNest on your home screen so it opens like an app. On Android, open the browser menu and choose Install
-          app, or Add to Home screen.
-        </p>
-        <InstallHelp />
-      </section>
-
-      <section aria-labelledby="storage" className="flex flex-col gap-3">
-        <SectionHeading id="storage">Storage used</SectionHeading>
-        {storage === undefined ? (
-          <p className="text-muted">Checking…</p>
-        ) : (
-          <>
-            <p>
-              {storage.usageBytes === undefined
-                ? 'Your browser does not say how much space PageNest uses.'
-                : `PageNest uses ${formatBytes(storage.usageBytes)}${
-                    storage.quotaBytes === undefined ? '.' : ` of about ${formatBytes(storage.quotaBytes)} available.`
-                  }`}
-            </p>
-            {storage.persisted === true ? (
-              <p className="text-muted">Your browser will keep your books and progress.</p>
-            ) : storage.persisted === false ? (
-              <>
-                <p className="text-muted">Your browser may clear your books if space runs low. Asking it to keep them helps.</p>
-                <Button onClick={() => void keepMyData()}>Keep my data</Button>
-              </>
-            ) : null}
-          </>
-        )}
-      </section>
-
-      <section aria-labelledby="about" className="flex flex-col gap-3">
-        <SectionHeading id="about">About</SectionHeading>
-        <p className="text-muted">
-          PageNest collects nothing. Your books, notes and settings stay on this device. There is no account, no ads and no tracking.
-        </p>
-      </section>
-    </Screen>
+    <SettingsScreen
+      theme={theme}
+      onThemeChange={(value: ThemePreference) => void setTheme(db, value)}
+      customTheme={customTheme}
+      onCustomThemeChange={(colors: CustomThemeInput) => void setCustom(db, colors)}
+      textSize={textSize}
+      onTextSizeChange={(px) => void setSize(db, clampFontSize(px))}
+      install={<InstallHelp />}
+      storage={storage}
+    >
+      <div style={{ minHeight: `${PANELS_RESERVE_REM}rem` }}>
+        <Suspense fallback={null}>
+          <LibrarySettingsPanels />
+        </Suspense>
+      </div>
+    </SettingsScreen>
   );
 }

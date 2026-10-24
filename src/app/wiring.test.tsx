@@ -112,7 +112,7 @@ describe('page titles use the design system (serif) type', () => {
       level: 2,
       name: 'Appearance',
     });
-    expect(heading).toHaveClass('font-serif');
+    expect(heading).toHaveClass('pn-set-card__title'); // the design system's Settings group title (serif from the tokens)
     expect(read('tailwind.config.ts')).toMatch(/serif:\s*\['var\(--pn-font-serif\)'\]/);
     expect(screen.getByRole('group', { name: 'Theme' })).toHaveClass('pn-themes');
   });
@@ -193,12 +193,14 @@ describe('first launch to the sample book', () => {
     services.db.close();
   });
 
-  it('is one tap from the welcome card: the sample opens the reader and onboarding never shows again', async () => {
+  it('is two taps from first launch (Next, then Open a sample book): the sample opens the reader and onboarding never shows again', async () => {
     const provider = memoryProvider();
     services = { ...makeServices('wiring-first-run'), sampleBook: provider };
     renderApp(services);
     await screen.findByRole('heading', { level: 1, name: /no account/i });
-    fireEvent.click(screen.getByRole('button', { name: 'Add the sample book' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('heading', { level: 1, name: 'A home for your books' });
+    fireEvent.click(screen.getByRole('button', { name: 'Open a sample book' }));
     expect(
       await screen.findByRole('heading', {
         level: 1,
