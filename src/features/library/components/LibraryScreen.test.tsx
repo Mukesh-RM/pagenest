@@ -9,7 +9,6 @@ import { makeEpub, makeMp3, makePdf } from '@/workers/import/testing/fixtures';
 import { resetImportController, setImportBackend } from '../registry';
 import { inProcessBackend } from '../testing/in-process-backend';
 import { LibraryScreen } from './LibraryScreen';
-import { CollectionsScreen } from './CollectionsScreen';
 
 /** Small stand-in for user-event (not a dependency of this project). */
 const userEvent = {
@@ -403,42 +402,6 @@ describe('the sample book card', () => {
     renderLibrary({ sampleBook: provider({ available: () => false }) });
     await screen.findByRole('heading', { name: 'Your library is empty' });
     expect(screen.queryByRole('button', { name: /sample/i })).toBeNull();
-  });
-});
-
-describe('collections screen', () => {
-  it('makes, renames, reorders and deletes a collection, with Undo for the delete', async () => {
-    const user = userEvent.setup();
-    render(
-      <ServicesContext.Provider value={services}>
-        <MemoryRouter>
-          <CollectionsScreen />
-        </MemoryRouter>
-      </ServicesContext.Provider>,
-    );
-    expect(await screen.findByRole('heading', { name: 'No collections yet' })).toBeTruthy();
-    for (const name of ['Alpha', 'Beta']) {
-      await user.click(screen.getAllByRole('button', { name: /^(New|Make a collection)$/ })[0] as HTMLElement);
-      await user.type(await screen.findByLabelText('Name'), name);
-      await user.click(screen.getByRole('button', { name: 'Save' }));
-      await screen.findByText(name);
-    }
-    await user.click(screen.getByRole('button', { name: 'Move Beta up' }));
-    await waitFor(async () => expect((await services.db.collections.orderBy('order').toArray()).map((c) => c.name)).toEqual(['Beta', 'Alpha']));
-    await user.click(screen.getByRole('button', { name: 'Rename Alpha' }));
-    const field = await screen.findByLabelText('Name');
-    await user.clear(field);
-    await user.type(field, 'Beta');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect((await screen.findByRole('alert')).textContent).toMatch(/already/i);
-    await user.clear(field);
-    await user.type(field, 'Gamma');
-    await user.click(screen.getByRole('button', { name: 'Save' }));
-    await screen.findByText('Gamma');
-    await user.click(screen.getByRole('button', { name: 'Delete Gamma' }));
-    await waitFor(async () => expect(await services.db.collections.count()).toBe(1));
-    await user.click(await screen.findByRole('button', { name: 'Undo' }));
-    await waitFor(async () => expect(await services.db.collections.count()).toBe(2));
   });
 });
 

@@ -9,10 +9,9 @@ import { getImportClient, resetImportController, setImportBackend } from '../reg
 import { inProcessBackend } from '../testing/in-process-backend';
 import { BackupRestorePanel } from './BackupRestorePanel';
 import { StoragePanel } from './StoragePanel';
-import { CollectionsScreen } from './CollectionsScreen';
 
-// The three pieces the app wires in: Settings shows BackupRestorePanel and StoragePanel (src/app/components/
-// LibrarySettingsPanels.tsx), and the Library's CollectionsScreen is the shelves screen. Each is rendered here the
+// The two pieces the app wires into Settings: BackupRestorePanel and StoragePanel (src/app/components/
+// LibrarySettingsPanels.tsx). Each is rendered here the
 // way the app renders it, on the real import service and a real database, with only the browser's download
 // and file picker stood in for.
 
@@ -127,19 +126,5 @@ describe('Settings: Backup and restore', () => {
     const alert = await screen.findByRole('alert');
     expect(alert.textContent).toMatch(/not look like a PageNest backup|not a PageNest backup|damaged/);
     expect((screen.getByRole('button', { name: 'Save a backup' }) as HTMLButtonElement).disabled).toBe(false);
-  });
-});
-
-describe('Library CollectionsScreen', () => {
-  it('shows the empty state, then a shelf the person makes, with its book count', async () => {
-    render(wrap(<CollectionsScreen />));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Collections' })).toBeTruthy();
-    expect(await screen.findByText(/No shelves yet|No collections yet/i)).toBeTruthy();
-    fireEvent.click(screen.getAllByRole('button', { name: /New|Make a collection|Make a shelf/i })[0] as HTMLElement);
-    const name = await screen.findByRole('textbox');
-    fireEvent.change(name, { target: { value: 'Summer reading' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByText('Summer reading')).toBeTruthy();
-    expect(await services.db.collections.count()).toBe(1);
   });
 });

@@ -7,7 +7,7 @@ import { createDataClient } from '@/data/data-client';
 import { getDb } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
 import { ThemeProvider } from '@/ui';
-import { BackupRestorePanel, CollectionsScreen, LibraryScreen, StoragePanel, createSampleBookProvider } from '../index';
+import { BackupRestorePanel, LibraryScreen, StoragePanel, createSampleBookProvider } from '../index';
 
 /**
  * Test page for the Library: the real screens with the real data worker, import worker, OPFS and
@@ -47,7 +47,7 @@ function Page() {
           </>
         ) : (
           <Routes>
-            <Route path="/" element={path === 'collections' ? <CollectionsScreen /> : <LibraryScreen />} />
+            <Route path="/" element={<LibraryScreen />} />
             <Route path="*" element={<Where />} />
           </Routes>
         )}
