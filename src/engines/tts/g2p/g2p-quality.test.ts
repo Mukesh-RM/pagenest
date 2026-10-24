@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { parseCmudict } from './cmu-dict';
 import { englishTextToPhonemeIds, g2pMappingCoverage } from './english-g2p';
 import { G2P_EVAL_SENTENCES } from './g2p-eval-sentences';
+import { huggingFaceOnnxJsonUrl, NARRATION_SMOKE_VOICE_ID } from '../piper/approved-voices';
 import { parsePiperVoiceConfig } from '../piper/piper-voice-config';
 
 let voiceConfig: ReturnType<typeof parsePiperVoiceConfig>;
@@ -10,9 +11,7 @@ let dict: ReturnType<typeof parseCmudict>;
 
 beforeAll(async () => {
   const [cfgResp, dictResp] = await Promise.all([
-    fetch(
-      'https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx.json',
-    ),
+    fetch(huggingFaceOnnxJsonUrl(NARRATION_SMOKE_VOICE_ID)),
     fetch('https://raw.githubusercontent.com/cmusphinx/cmudict/master/cmudict.dict'),
   ]);
   voiceConfig = parsePiperVoiceConfig(await cfgResp.text());

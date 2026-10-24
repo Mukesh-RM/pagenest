@@ -8,8 +8,8 @@
 
 **Workable with limits.**
 
-- **Piper inference from phoneme ids only** is implemented (worker + ORT Web load at runtime). Verified **outside the repo** with Python `onnxruntime` on `en_US-amy-low` (LibriVox-derived Piper voice, MIT per Piper voice policy — Auditor must confirm card before ship).
-- **English G2P** uses **CMUdict + normalizer + ARPAbet→espeak-style IPA + spell fallback**. On 50 evaluation sentences: **OOV word rate 3.81%** (13/341 tokens), **phoneme_id_map coverage 100%**, **0 unknown IPA symbols** vs `en_US-libritts_r-medium` config.
+- **Piper inference from phoneme ids only** is implemented (worker + ORT Web load at runtime). Verified **outside the repo** with Python `onnxruntime` on **`en_US-ljspeech-medium`** (LJ Speech, public domain, vetted **OK** — `docs/MODEL_VETTING.md`). Do **not** use `en_US-amy-low` or `en_US-libritts_r` (blocked lineages).
+- **English G2P** uses **CMUdict + normalizer + ARPAbet→espeak-style IPA + spell fallback**. On 50 evaluation sentences: **OOV word rate 3.81%** (13/341 tokens), **phoneme_id_map coverage 100%**, **0 unknown IPA symbols** vs `en_US-ljspeech-medium` config.
 - **Limits:** CMUdict does not cover names/brands/foreign words (spell fallback sounds robotic). G2P is **not** identical to eSpeak (no eSpeak in repo for A/B). Multi-language needs other dictionaries/rules. Quality tuning (heteronyms, `read`/`lead`) is future work.
 
 ---
@@ -37,7 +37,7 @@
 
 Run on the cloud agent VM with `pip install onnxruntime` (not a project dependency):
 
-- Model: [en_US-amy-low.onnx](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/amy/low) (~60 MB download).
+- Model: [en_US-ljspeech-medium.onnx](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/ljspeech/medium) (~63.5 MB download; sha256 `6f52a751e234…`).
 - Phoneme string `həlˈoʊ` encoded with the voice `phoneme_id_map`.
 - Result: **6656 samples @ 22050 Hz (~0.42 s)**, all finite, peak ~0.40 — plausible speech-length audio.
 
@@ -62,8 +62,9 @@ This confirms the **phoneme-id contract** matches Piper ONNX; browser ORT Web pa
 | Data | License | Link | Verified |
 |---|---|---|---|
 | CMUdict | Unrestricted use; **attribution requested** (not BSD, but permissive for redistribution) | [cmudict README](https://raw.githubusercontent.com/cmusphinx/cmudict/master/README) | HTTP 200 |
-| Piper voice config / weights | **Per voice** on Hugging Face | [libritts_r medium](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts_r/medium) | HTTP 200 |
-| en_US-amy-low (sanity ONNX) | Piper / LibriVox lineage — **Auditor VERIFY** | [amy/low](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/amy/low) | HTTP 200 |
+| Piper voice config / weights | **Per voice / per dataset** — HF repo `license: mit` ≠ data licence | [ljspeech medium](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/ljspeech/medium) (OK) | HTTP 200 |
+| en_US-libritts-high (multi-speaker OK) | LibriTTS CC BY 4.0, trained from scratch | [libritts/high](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts/high) | HTTP 200 |
+| **Forbidden examples** | lessac / libritts_r / amy / ryan | `en_US-lessac*`, `en_US-libritts_r*`, `en_US-amy*` | **NOT OK** per vetting |
 
 **Not in the app bundle:** full CMUdict is loaded **on demand** (OPFS or user download); tests fetch from GitHub at runtime.
 
@@ -78,7 +79,7 @@ This confirms the **phoneme-id contract** matches Piper ONNX; browser ORT Web pa
 
 ### Phoneme symbol set
 
-Aligned to Piper `phoneme_type: "espeak"` maps in voice JSON (e.g. `en_US-libritts_r-medium.onnx.json` on [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices)). Encoder wraps with `_`, `^`, …, `$`, `_` per `encodePhonemeString`.
+Aligned to Piper `phoneme_type: "espeak"` maps in voice JSON (e.g. `en_US-ljspeech-medium.onnx.json` on [rhasspy/piper-voices](https://huggingface.co/rhasspy/piper-voices)). Encoder wraps with `_`, `^`, …, `$`, `_` per `encodePhonemeString`.
 
 ---
 
@@ -106,7 +107,7 @@ Aligned to Piper `phoneme_type: "espeak"` maps in voice JSON (e.g. `en_US-librit
 |---|---|---|
 | onnxruntime-web 1.22.0 | MIT | [LICENSE](https://raw.githubusercontent.com/microsoft/onnxruntime/main/LICENSE) |
 | CMUdict | Unrestricted (+ attribution request) | [README](https://raw.githubusercontent.com/cmusphinx/cmudict/master/README) |
-| rhasspy/piper-voices (per voice) | MIT / CC / dataset-specific | [HF repo](https://huggingface.co/rhasspy/piper-voices) |
+| rhasspy/piper-voices (per voice) | **Per MODEL_CARD / dataset** (not blanket MIT) | [HF repo](https://huggingface.co/rhasspy/piper-voices) + `docs/MODEL_VETTING.md` |
 
 ---
 
@@ -127,4 +128,4 @@ Aligned to Piper `phoneme_type: "espeak"` maps in voice JSON (e.g. `en_US-librit
 1. **Shell/PWA:** self-host ORT `.wasm` + approved model CDN in `connect-src`.
 2. **Library:** optional reuse of `FileStore` instead of parallel OPFS helper (avoid duplication).
 3. **Architect:** wire `piper-synth.worker` + download worker into services; `VoiceEngine` implementation for Piper.
-4. **Auditor:** sign off `en_US-libritts_r` / `amy-low` cards and CMUdict attribution on licenses screen.
+4. **Auditor:** registry rows for shipped voices (`en_US-ljspeech-medium`, etc.) and CMUdict attribution on licenses screen.
