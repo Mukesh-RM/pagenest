@@ -62,6 +62,19 @@ export {
   type ThemeName,
   type ThemeProviderProps,
   type ThemeScopeProps,
+  CUSTOM_THEME_ID,
+  DEFAULT_CUSTOM_THEME,
+  THEME_CHOICES,
+  customContrastPairs,
+  customThemeStyle,
+  isThemeChoice,
+  normalizeHex,
+  parseCustomTheme,
+  resolveCustomTheme,
+  useThemePalette,
+  type CustomThemeInput,
+  type ResolvedCustomTheme,
+  type ThemeChoice,
 } from './theme';
 export { prefersReducedMotion, useReducedMotion } from './utils/motion';
 export { cx } from './utils/cx';
@@ -72,26 +85,12 @@ export { BookCard, progressWords, type BookCardProps } from './components/BookCa
 export { ChoiceGroup, type ChoiceGroupProps, type ChoiceOption } from './components/ChoiceGroup';
 export { Range, type RangeProps } from './components/Range';
 export { ConfirmDialog, type ConfirmDialogProps } from './components/ConfirmDialog';
-export { ErrorNotice, PLAIN_ERRORS, type ErrorNoticeProps, type PlainErrorKind } from './components/ErrorNotice';
+export { ErrorNotice, PLAIN_ERRORS, canRetry, type ErrorNoticeProps, type PlainErrorKind } from './components/ErrorNotice';
 export { ResumeCard, type ResumeCardProps } from './components/ResumeCard';
 export { FinishedMoment, type FinishedMomentProps } from './components/FinishedMoment';
 export { GestureHint, memoryHintStore, type GestureHintProps } from './components/GestureHint';
 export { Illustration, type IllustrationName, type IllustrationProps } from './components/Illustration';
 
-/* Redesign: presentational screens (props and callbacks only, no data layer) */
-export { LibraryScreen, DEFAULT_LIBRARY_FILTERS, type LibraryFilterOption, type LibraryScreenProps } from './screens/LibraryScreen';
-export { BookDetailSheet, type BookDetailSheetProps } from './screens/BookDetailSheet';
-export { ReaderScreen, type ReaderScreenProps } from './screens/ReaderScreen';
-export {
-  ReaderSettingsSheet,
-  LINE_HEIGHT,
-  MARGIN_PX,
-  READER_MAX_FONT,
-  READER_MIN_FONT,
-  type ReaderSettingsSheetProps,
-} from './screens/ReaderSettingsSheet';
-export { AudioPlayerScreen, type AudioPlayerScreenProps } from './screens/AudioPlayerScreen';
-export { VoiceStudioScreen, type VoiceStudioScreenProps } from './screens/VoiceStudioScreen';
 export type {
   BookDetail,
   BookSummary,
@@ -126,3 +125,36 @@ export { extractCoverColor } from './utils/coverColor';
 export { formatClock, formatDuration, formatSpeed, timeLeftLabel } from './utils/time';
 export { flipTransform, measure, playFlip, type RectLike } from './utils/flip';
 export { preloadCriticalFonts, CRITICAL_FONT_URLS } from './fonts/preload';
+
+/* Second design pass: pure helpers. The screens and their CSS live in './screens' (see README, "Entries"). */
+export {
+  TEXT_SIZE_DEFAULT,
+  TEXT_SIZE_MAX,
+  TEXT_SIZE_MIN,
+  TEXT_SIZE_STEP,
+  applyTextSize,
+  clampTextSize,
+  textSizePercent,
+} from './utils/textSize';
+
+/*
+ * Screens are NOT exported at runtime from this barrel: they and their CSS load from '@/ui/screens' (or one module
+ * each, for React.lazy: '@/ui/screens/OnboardingScreen', with a default export). Only their prop TYPES are here,
+ * and types are erased, so importing this barrel in the app shell never pulls a screen into the first load.
+ */
+export type {
+  AudioPlayerController,
+  AudioPlayerScreenProps,
+  BookDetailSheetProps,
+  LibraryScreenProps,
+  OnboardingScreenProps,
+  ReaderScreenProps,
+  ReaderSettingsSheetProps,
+  SettingsScreenProps,
+  SettingsStorage,
+  VoiceStudioScreenProps,
+  StarterBookOffer,
+  ThemePickerProps,
+  TextSizeControlProps,
+} from './screens';
+export { OverflowMenu, type OverflowMenuItem, type OverflowMenuProps } from './components/OverflowMenu';

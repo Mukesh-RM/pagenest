@@ -3,11 +3,16 @@ import { BookCard } from '../components/BookCard';
 import { Button } from '../components/Button';
 import { Chip, ChipGroup } from '../components/Chip';
 import { EmptyState } from '../components/EmptyState';
+import { FirstRunBooks } from '../components/FirstRunBooks';
 import { Illustration } from '../components/Illustration';
+import type { StarterBookOffer } from '../components/StarterBookCard';
 import { Icon } from '../icons';
 import { SkeletonCard, SkeletonGroup } from '../components/Skeleton';
 import type { BookSummary } from '../types';
+import { cx } from '../utils/cx';
 import type { RectLike } from '../utils/flip';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 
 export interface LibraryFilterOption {
   id: string;
@@ -19,6 +24,20 @@ export const DEFAULT_LIBRARY_FILTERS: readonly LibraryFilterOption[] = [
   { id: 'reading', label: 'Reading' },
   { id: 'listening', label: 'Listening' },
   { id: 'finished', label: 'Finished' },
+];
+
+export type LibraryView = 'grid' | 'list';
+
+export interface LibrarySortOption {
+  id: string;
+  label: string;
+}
+
+export const DEFAULT_LIBRARY_SORTS: readonly LibrarySortOption[] = [
+  { id: 'recent', label: 'Recently opened' },
+  { id: 'added', label: 'Recently added' },
+  { id: 'title', label: 'Title' },
+  { id: 'author', label: 'Author' },
 ];
 
 export interface LibraryScreenProps {
@@ -42,9 +61,21 @@ export interface LibraryScreenProps {
   onOpenBook: (book: BookSummary, coverRect: RectLike | undefined) => void;
   onSelectBook?: (book: BookSummary) => void;
   selectedIds?: readonly string[];
-  onAdd: () => void;
+  /** Opens the file picker. Optional: without it there is no Add button anywhere on the screen. */
+  onAdd?: () => void;
+  /** An extra action in the empty state, next to (or instead of) Add, for example "Open a sample book". */
+  emptyActions?: ReactNode;
   /** Number of skeleton cards while loading. */
   skeletonCount?: number;
+  /** Sort order id. The data layer sorts; this screen only shows the control. Leave out to hide the control. */
+  sort?: string;
+  sorts?: readonly LibrarySortOption[];
+  onSortChange?: (id: string) => void;
+  /** Grid of covers or a compact list. Leave `onViewChange` out to hide the switch. */
+  view?: LibraryView;
+  onViewChange?: (view: LibraryView) => void;
+  /** A real bundled public-domain book for the first-run path. Leave out when the app has none. */
+  starter?: StarterBookOffer;
 }
 
 /**
@@ -67,18 +98,28 @@ export function LibraryScreen({
   onSelectBook,
   selectedIds = [],
   onAdd,
+  emptyActions,
   skeletonCount = 8,
+  sort,
+  sorts = DEFAULT_LIBRARY_SORTS,
+  onSortChange,
+  view = 'grid',
+  onViewChange,
+  starter,
 }: LibraryScreenProps) {
   const searchId = useId();
+  const sortId = useId();
   const empty = !loading && books.length === 0;
   const emptyKind = query ? 'search' : filter !== 'all' ? 'filter' : 'library';
   return (
     <div className="pn-screen pn-library">
       <header className="pn-screen__header">
         <h1 className="pn-screen__title">Library</h1>
-        <Button icon="plus" onClick={onAdd}>
-          Add books
-        </Button>
+        {onAdd ? (
+          <Button icon="plus" onClick={onAdd}>
+            Add books
+          </Button>
+        ) : null}
       </header>
 
       <div className="pn-library__tools">
@@ -94,20 +135,57 @@ export function LibraryScreen({
             ref={searchRef}
             type="search"
             className="pn-search__input"
-            placeholder="Search titles and authors"
+            placeholder="Search books"
             value={query}
             autoComplete="off"
             enterKeyHint="search"
             onChange={(event) => onQueryChange(event.target.value)}
           />
         </div>
-        <ChipGroup label="Filter library" scroll>
-          {filters.map((f) => (
-            <Chip key={f.id} selected={filter === f.id} onClick={() => onFilterChange(f.id)}>
-              {f.label}
-            </Chip>
-          ))}
-        </ChipGroup>
+        <div className="pn-library__filters">
+          <ChipGroup label="Filter library" scroll>
+            {filters.map((f) => (
+              <Chip key={f.id} selected={filter === f.id} onClick={() => onFilterChange(f.id)}>
+                {f.label}
+              </Chip>
+            ))}
+          </ChipGroup>
+        </div>
+        {sort !== undefined && onSortChange || onViewChange ? (
+          <div className="pn-library__options">
+            {sort !== undefined && onSortChange ? (
+              <div className="pn-sort">
+                <label htmlFor={sortId} className="pn-sort__label">
+                  Sort by
+                </label>
+                <span className="pn-sort__field">
+                  <select id={sortId} className="pn-sort__select" value={sort} onChange={(event) => onSortChange(event.target.value)}>
+                    {sorts.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="pn-sort__chevron" aria-hidden="true">
+                    <Icon name="chevronDown" size={18} />
+                  </span>
+                </span>
+              </div>
+            ) : (
+              <span />
+            )}
+            {onViewChange ? (
+              <div role="group" aria-label="Library layout" className="pn-viewswitch">
+                <button type="button" className="pn-viewswitch__btn" aria-pressed={view === 'grid'} aria-label="Grid of covers" onClick={() => onViewChange('grid')}>
+                  <Icon name="layoutGrid" size={20} />
+                </button>
+                <button type="button" className="pn-viewswitch__btn" aria-pressed={view === 'list'} aria-label="List" onClick={() => onViewChange('list')}>
+                  <Icon name="list" size={20} />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       {notice}
@@ -115,11 +193,13 @@ export function LibraryScreen({
       {hint}
 
       {loading ? (
-        <SkeletonGroup label="Loading your library" className="pn-library__grid">
+        <SkeletonGroup label="Loading your library" className={cx('pn-library__grid', view === 'list' && 'pn-library__grid--list')}>
           {Array.from({ length: skeletonCount }, (_, i) => (
             <SkeletonCard key={i} />
           ))}
         </SkeletonGroup>
+      ) : empty && emptyKind === 'library' && starter ? (
+        <FirstRunBooks onAdd={onAdd} starter={starter} extra={emptyActions} />
       ) : empty ? (
         <EmptyState
           art={<Illustration name={emptyKind === 'library' ? 'books' : 'search'} />}
@@ -129,15 +209,17 @@ export function LibraryScreen({
               ? 'Add an EPUB, PDF or audiobook from your device. Everything stays on this device.'
               : 'Try a different word, or clear the filter.'
           }
-          action={emptyKind === 'library' ? { label: 'Add books', icon: 'plus', onClick: onAdd } : undefined}
+          action={emptyKind === 'library' && onAdd ? { label: 'Add books', icon: 'plus', onClick: onAdd } : undefined}
+          extra={emptyKind === 'library' ? emptyActions : undefined}
         />
       ) : (
-        <ul className="pn-library__grid" aria-label="Books">
+        <ul className={cx('pn-library__grid', view === 'list' && 'pn-library__grid--list')} aria-label="Books">
           {books.map((book, index) => (
             <li key={book.id} className="pn-library__item">
               <BookCard
                 book={book}
                 eager={index < 6}
+                layout={view}
                 selected={selectedIds.length ? selectedIds.includes(book.id) : undefined}
                 onOpen={onOpenBook}
                 onSelect={onSelectBook}
@@ -149,3 +231,5 @@ export function LibraryScreen({
     </div>
   );
 }
+
+export default LibraryScreen;

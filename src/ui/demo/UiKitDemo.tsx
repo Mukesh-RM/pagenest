@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import '../styles/index.css';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 import { AppShell } from '../components/AppShell';
 import { BottomSheet } from '../components/BottomSheet';
 import { Button } from '../components/Button';

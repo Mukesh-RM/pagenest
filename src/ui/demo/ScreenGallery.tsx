@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import '../styles/index.css';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 import './gallery.css';
 import { AppShell } from '../components/AppShell';
 import { ConfirmDialog } from '../components/ConfirmDialog';

@@ -19,6 +19,8 @@ export interface EmptyStateProps {
   art?: IconName | ReactNode;
   /** The one clear next step (blueprint 5.1: no dead ends). */
   action?: EmptyStateAction;
+  /** Extra content under the action (more buttons). */
+  extra?: ReactNode;
   /** Heading level of the title. Default 2. */
   headingLevel?: 2 | 3 | 4;
   className?: string;
@@ -30,6 +32,7 @@ export function EmptyState({
   description,
   art = 'bookOpen',
   action,
+  extra,
   headingLevel = 2,
   className,
 }: EmptyStateProps) {
@@ -49,6 +52,7 @@ export function EmptyState({
           {action.label}
         </Button>
       ) : null}
+      {extra}
     </section>
   );
 }

@@ -79,10 +79,25 @@ describe('custom theme: AA contrast', () => {
     for (const [page, text, accent] of hostile) expect(fails({ page: page!, text: text!, accent: accent! }), `${page} ${text} ${accent}`).toEqual([]);
   });
 
-  it('holds for 4000 random colors', () => {
-    const next = rng(7);
+  // Fixed seeds, so a failure reproduces on every machine; the seed is part of the failure message.
+  for (const seed of [7, 1234, 987654321]) {
+    it(`holds for 3000 random colors (seed ${seed})`, () => {
+      const next = rng(seed);
+      const all: string[] = [];
+      for (let i = 0; i < 3000; i += 1) all.push(...fails({ page: hex(next()), text: hex(next()), accent: hex(next()) }));
+      expect(all.slice(0, 5), `seed ${seed}`).toEqual([]);
+    });
+  }
+
+  it('holds for every gray page against grays and saturated colors (exhaustive over steps of 5)', () => {
     const all: string[] = [];
-    for (let i = 0; i < 4000; i += 1) all.push(...fails({ page: hex(next()), text: hex(next()), accent: hex(next()) }));
+    for (let v = 0; v <= 255; v += 5) {
+      const g = '#' + v.toString(16).padStart(2, '0').repeat(3);
+      for (let t = 0; t <= 255; t += 51) {
+        const text = '#' + t.toString(16).padStart(2, '0').repeat(3);
+        for (const accent of ['#808080', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff', g]) all.push(...fails({ page: g, text, accent }));
+      }
+    }
     expect(all.slice(0, 5)).toEqual([]);
   });
 

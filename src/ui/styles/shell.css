@@ -1,0 +1,156 @@
+/*
+ * Shell styles that the app needs in its first load: the laptop rail, the docked mini-player, centered dialogs for
+ * sheets, hover overlays for chips and navigation, and the shortcuts help. Split out of screens.css so that file
+ * (about a third of the design CSS) can ship with the lazy routes (see screens/index.ts).
+ */
+
+/* Laptop: expanded rail, docked mini-player, sheets as centered dialogs */
+@media (min-width: 1024px) {
+  :root {
+    --pn-rail-width: 232px;
+    --pn-miniplayer-height: 72px;
+  }
+
+  /* Rail: icon and label side by side */
+  .pn-rail {
+    align-items: stretch;
+    padding: var(--pn-space-6) var(--pn-space-4);
+  }
+
+  .pn-rail .pn-nav__item {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--pn-space-3);
+    min-height: var(--pn-touch);
+    padding: 0 var(--pn-space-4);
+    font-size: var(--pn-text-md);
+  }
+
+  .pn-rail .pn-nav__item[aria-current="page"] {
+    background: rgb(var(--pn-accent-soft));
+    color: rgb(var(--pn-accent-ink));
+  }
+
+  /* Mini-player becomes a bar docked to the bottom of the content area */
+  .pn-miniplayer {
+    margin: 0;
+    padding: var(--pn-space-2) var(--pn-margin);
+    border-width: var(--pn-border-width, 1px) 0 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .pn-miniplayer__progress {
+    top: 0;
+    bottom: auto;
+  }
+
+  .pn-miniplayer__expand {
+    max-width: 480px;
+  }
+
+  /* Sheets become centered dialogs; the detail sheet is two panes */
+  .pn-sheet-root {
+    align-items: center;
+  }
+
+  .pn-sheet {
+    max-width: 560px;
+    max-height: min(86vh, 86dvh);
+    border-radius: var(--pn-radius-sheet);
+    opacity: 0;
+    transform: translateY(var(--pn-space-6));
+    box-shadow: 0 16px 48px rgb(0 0 0 / 0.24);
+  }
+
+  .pn-sheet-root[data-state="open"] .pn-sheet {
+    opacity: 1;
+  }
+
+  .pn-sheet__handle {
+    display: none;
+  }
+
+  .pn-sheet__drag {
+    cursor: auto;
+  }
+
+  .pn-sheet__header {
+    padding-top: var(--pn-space-4);
+  }
+}
+
+/* Hover states (pointer devices only). Colors never animate; an overlay fades in with opacity. */
+@media (hover: hover) {
+  .pn-chip::after,
+  .pn-nav__item::after,
+  .pn-hint__dismiss::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--pn-duration-fast) var(--pn-ease-out);
+  }
+
+  .pn-chip:hover:not(:disabled)::after,
+  .pn-nav__item:hover::after,
+  .pn-hint__dismiss:hover::after,
+  .pn-player__skip:hover::after,
+  .pn-player__play:hover::after {
+    opacity: 0.08;
+  }
+}
+
+.pn-nav__item,
+.pn-hint__dismiss {
+  position: relative;
+  isolation: isolate;
+}
+
+/* ---------- Keyboard shortcuts help ---------- */
+.pn-shortcuts__list {
+  display: grid;
+  gap: var(--pn-space-3);
+  margin: 0;
+  padding: 0 var(--pn-space-5) var(--pn-space-5);
+}
+
+.pn-shortcuts__row {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--pn-space-4);
+}
+
+.pn-shortcuts__keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pn-space-1);
+  margin: 0;
+}
+
+.pn-shortcuts__desc {
+  margin: 0;
+  font-size: var(--pn-text-sm);
+  color: rgb(var(--pn-text));
+}
+
+.pn-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--pn-space-8);
+  padding: 0 var(--pn-space-2);
+  height: var(--pn-space-8);
+  border: 1px solid rgb(var(--pn-line));
+  border-radius: var(--pn-space-2);
+  background: rgb(var(--pn-surface));
+  color: rgb(var(--pn-text));
+  font-family: var(--pn-font-sans);
+  font-size: var(--pn-text-sm);
+  font-weight: var(--pn-weight-semibold);
+}

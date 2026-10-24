@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Icon } from '../icons';
 import { cx } from '../utils/cx';
-import { measure, type RectLike } from '../utils/flip';
+import { measure, rememberFlipOrigin, type RectLike } from '../utils/flip';
 import type { BookSummary } from '../types';
 import { BookCover } from './BookCover';
 import { Card } from './Card';
@@ -14,6 +14,8 @@ export interface BookCardProps {
   /** Long press, right click or the context-menu key: start multi-select. */
   onSelect?: (book: BookSummary) => void;
   selected?: boolean;
+  /** `list`: a compact row (small cover, title, author, progress words). Default `grid`. */
+  layout?: 'grid' | 'list';
   /** First screen of covers load eagerly. */
   eager?: boolean;
   className?: string;
@@ -31,17 +33,21 @@ export function progressWords(book: Pick<BookSummary, 'progress' | 'audio'>): st
  * Library card: cover (or generated title card), title, author, progress bar, headphone badge for audio.
  * A single 44 px+ button, named "Title, Author. Progress".
  */
-export function BookCard({ book, onOpen, onSelect, selected, eager, className }: BookCardProps) {
+export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'grid', className }: BookCardProps) {
   const coverRef = useRef<HTMLSpanElement>(null);
   const words = progressWords(book);
   const label = [book.title, book.author].filter(Boolean).join(', ') + `. ${words}${book.audio ? '. Has audio' : ''}`;
   return (
     <Card
       flush
-      className={cx('pn-bookcard', className)}
+      className={cx('pn-bookcard', layout === 'list' && 'pn-bookcard--list', className)}
       aria-label={label}
       selected={selected}
-      onPress={() => onOpen(book, measure(coverRef.current))}
+      onPress={() => {
+        const rect = measure(coverRef.current);
+        rememberFlipOrigin(rect);
+        onOpen(book, rect);
+      }}
       onLongPress={onSelect ? () => onSelect(book) : undefined}
     >
       <span ref={coverRef} className="pn-bookcard__cover">
@@ -63,6 +69,7 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, className }:
         <span className="pn-bookcard__progress">
           <ProgressBar value={book.progress} label={words} />
         </span>
+        {layout === 'list' ? <span className="pn-bookcard__words">{words}</span> : null}
       </span>
     </Card>
   );

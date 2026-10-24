@@ -47,3 +47,21 @@ export function measure(element: Element | null | undefined): RectLike | undefin
   const { left, top, width, height } = element.getBoundingClientRect();
   return { left, top, width, height };
 }
+
+/*
+ * Hand-off between screens: a card or the mini-player remembers where its cover was when it was tapped, and the player
+ * that opens next picks it up and grows its cover out of that box. Nothing is stored in the router or in React state,
+ * and a stale box (older than `maxAgeMs`, for example after a reload) is ignored.
+ */
+let pendingOrigin: { rect: RectLike; at: number } | undefined;
+
+export function rememberFlipOrigin(rect: RectLike | undefined): void {
+  pendingOrigin = rect ? { rect, at: Date.now() } : undefined;
+}
+
+/** The remembered box, once. Returns undefined when there is none or it is older than `maxAgeMs`. */
+export function takeFlipOrigin(maxAgeMs = 2000): RectLike | undefined {
+  const origin = pendingOrigin;
+  pendingOrigin = undefined;
+  return origin && Date.now() - origin.at <= maxAgeMs ? origin.rect : undefined;
+}

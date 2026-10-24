@@ -1,7 +1,8 @@
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { Icon } from '../icons';
 import { cx } from '../utils/cx';
-import { Button } from './Button';
+import { measure, rememberFlipOrigin, type RectLike } from '../utils/flip';
+import { PlayPauseGlyph, SkipGlyph } from './PlayGlyphs';
 import { ProgressBar } from './ProgressBar';
 
 export interface MiniPlayerProps {
@@ -18,8 +19,11 @@ export interface MiniPlayerProps {
   progress?: number;
   onTogglePlay: () => void;
   onSkipBack: () => void;
-  /** Tap on the cover or title, Enter, or a swipe up. */
-  onExpand: () => void;
+  /**
+   * Tap on the cover or title, Enter, or a swipe up. Receives the box of the mini cover; the full player also picks it
+   * up on its own (see `rememberFlipOrigin`), so the cover grows out of the mini-player.
+   */
+  onExpand: (coverRect?: RectLike) => void;
   skipBackSeconds?: number;
   className?: string;
 }
@@ -44,6 +48,12 @@ export function MiniPlayer({
   className,
 }: MiniPlayerProps) {
   const start = useRef<{ y: number } | null>(null);
+  const coverRef = useRef<HTMLSpanElement>(null);
+  const expand = () => {
+    const rect = measure(coverRef.current);
+    rememberFlipOrigin(rect);
+    onExpand(rect);
+  };
 
   const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     start.current = { y: event.clientY };
@@ -51,7 +61,7 @@ export function MiniPlayer({
   const onPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
     const s = start.current;
     start.current = null;
-    if (s && s.y - event.clientY > SWIPE_UP_PX) onExpand();
+    if (s && s.y - event.clientY > SWIPE_UP_PX) expand();
   };
 
   return (
@@ -64,8 +74,8 @@ export function MiniPlayer({
         start.current = null;
       }}
     >
-      <button type="button" className="pn-miniplayer__expand" onClick={onExpand} aria-label={`Open player: ${title}`}>
-        <span className="pn-miniplayer__cover" aria-hidden="true">
+      <button type="button" className="pn-miniplayer__expand" onClick={expand} aria-label={`Open player: ${title}`}>
+        <span ref={coverRef} className="pn-miniplayer__cover" aria-hidden="true">
           {cover ?? (coverUrl ? <img src={coverUrl} alt="" /> : <Icon name="headphones" />)}
         </span>
         <span className="pn-miniplayer__text">
@@ -73,20 +83,12 @@ export function MiniPlayer({
           {subtitle ? <span className="pn-miniplayer__subtitle">{subtitle}</span> : null}
         </span>
       </button>
-      <Button
-        iconOnly
-        variant="ghost"
-        icon="skipBack"
-        aria-label={`Back ${skipBackSeconds} seconds`}
-        onClick={onSkipBack}
-      />
-      <Button
-        iconOnly
-        variant="primary"
-        icon={playing ? 'pause' : 'play'}
-        aria-label={playing ? 'Pause' : 'Play'}
-        onClick={onTogglePlay}
-      />
+      <button type="button" className="pn-miniplayer__skip" aria-label={`Back ${skipBackSeconds} seconds`} onClick={onSkipBack}>
+        <SkipGlyph direction="back" seconds={skipBackSeconds} size={36} />
+      </button>
+      <button type="button" className="pn-miniplayer__play" aria-label={playing ? 'Pause' : 'Play'} onClick={onTogglePlay}>
+        <PlayPauseGlyph playing={playing} size={24} />
+      </button>
       <ProgressBar value={progress} label="Playback position" className="pn-miniplayer__progress" />
     </section>
   );

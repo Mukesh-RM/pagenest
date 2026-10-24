@@ -5,6 +5,8 @@ import { Range } from '../components/Range';
 import { THEME_PALETTE } from '../theme/palette';
 import { THEME_LABELS, THEME_NAMES, type ThemeName } from '../theme/themes';
 import type { LineSpacing, MarginSize, ReaderFontOption, ReaderSettings } from '../types';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 
 export const READER_MIN_FONT = 14;
 export const READER_MAX_FONT = 32;
@@ -122,9 +124,9 @@ export function ReaderSettingsSheet({ open, onClose, settings, fonts, onChange }
           />
         </section>
 
-        <section className="pn-aa__group" aria-labelledby="pn-aa-spacing">
-          <h3 id="pn-aa-spacing" className="pn-aa__heading">
-            Spacing
+        <section className="pn-aa__group" aria-labelledby="pn-aa-leading">
+          <h3 id="pn-aa-leading" className="pn-aa__heading">
+            Line spacing
           </h3>
           <ChoiceGroup
             label="Line spacing"
@@ -136,6 +138,12 @@ export function ReaderSettingsSheet({ open, onClose, settings, fonts, onChange }
             ]}
             onChange={(lineSpacing) => set({ lineSpacing })}
           />
+        </section>
+
+        <section className="pn-aa__group" aria-labelledby="pn-aa-margins">
+          <h3 id="pn-aa-margins" className="pn-aa__heading">
+            Margins
+          </h3>
           <ChoiceGroup
             label="Margins"
             value={settings.margins}
@@ -151,3 +159,5 @@ export function ReaderSettingsSheet({ open, onClose, settings, fonts, onChange }
     </BottomSheet>
   );
 }
+
+export default ReaderSettingsSheet;
