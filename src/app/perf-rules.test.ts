@@ -39,6 +39,27 @@ describe('performance rules for src/app', () => {
     }
   });
 
+  it("loads the screens' stylesheets with every lazy route, and never from first-paint code", () => {
+    const routes = [
+      'pages/LibraryRoute',
+      'pages/CollectionsPage',
+      'pages/StatsPage',
+      'pages/SettingsPage',
+      'pages/ReaderScreen',
+      'pages/PlayerScreen',
+      'pages/BookRoute',
+      'onboarding/Onboarding',
+    ];
+    for (const route of routes) {
+      const file = files.find((f) => f.name.endsWith(`${route}.tsx`));
+      expect(file?.text, route).toMatch(/^import '\.\.\/screen-styles';$/m);
+    }
+    const importers = files
+      .filter((f) => /^import '(\.\.?\/)+screen-styles';$/m.test(f.text))
+      .map((f) => f.name.replace(/^src\/app\//, '').replace(/\.tsx$/, ''));
+    expect(importers.sort()).toEqual([...routes].sort());
+  });
+
   it('keeps overlays (PWA prompts) out of the first-paint chunk: only dynamic imports', () => {
     const lazyWrappers = /Lazy(PwaPrompts)\.tsx$/;
     const offenders = files

@@ -8,6 +8,7 @@ import { ThemeSwatches } from '../components/ThemeSwatches';
 import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
 import { useSettings } from '../settings-store';
+import '../screen-styles';
 
 /** Number of onboarding cards (blueprint 5.6: three cards, skippable). */
 export const ONBOARDING_STEPS = 3;

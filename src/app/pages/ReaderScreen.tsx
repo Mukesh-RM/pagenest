@@ -5,6 +5,7 @@ import { ReaderScreen as DesignReaderScreen } from '@/ui/screens';
 import type { BookScreenProps } from '../components/BookSummary';
 import { DEFAULT_READER_SETTINGS, loadReaderSettings, READER_FONTS, saveReaderSettings } from '../reader-settings';
 import { useServices } from '../services-context';
+import '../screen-styles';
 
 function chapterLine(position: BookScreenProps['position']): string {
   if (!position) return 'Not started yet';

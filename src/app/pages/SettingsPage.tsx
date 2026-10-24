@@ -4,6 +4,7 @@ import { Button, InstallHelp } from '@/ui';
 import { FontSizeControl } from '../components/FontSizeControl';
 import { PageHeader, Screen, SectionHeading } from '../components/PageHeader';
 import { ThemeSwatches } from '../components/ThemeSwatches';
+import '../screen-styles';
 
 /** Settings: Appearance, Install help and Storage today; the other groups from blueprint 5.6 arrive with their features. */
 export function SettingsPage() {

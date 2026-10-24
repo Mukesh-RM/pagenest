@@ -7,6 +7,7 @@ import { Screen } from '../components/PageHeader';
 import { ImmersiveFallback } from '../ScreenFallback';
 import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
+import '../screen-styles';
 
 const ReaderScreen = lazy(() => import('./ReaderScreen'));
 const PlayerScreen = lazy(() => import('./PlayerScreen'));

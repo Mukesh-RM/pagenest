@@ -3,6 +3,7 @@ import { DAY_MS, type StatsSummary } from '@/data/stats';
 import { EmptyState, Illustration } from '@/ui';
 import { PageHeader, Screen } from '../components/PageHeader';
 import { useServices } from '../services-context';
+import '../screen-styles';
 
 /** Reading and listening time. Simple bars, no clutter (blueprint 5.6). */
 export function StatsPage() {

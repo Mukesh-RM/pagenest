@@ -4,6 +4,7 @@ import { newId } from '@/data/db';
 import { Button, EmptyState, Illustration } from '@/ui';
 import { PageHeader, Screen } from '../components/PageHeader';
 import { useServices } from '../services-context';
+import '../screen-styles';
 
 const ShelfRow = memo(function ShelfRow({ name, count }: { name: string; count: number }) {
   return (

@@ -8,6 +8,7 @@ import { Screen } from '../components/PageHeader';
 import { hadResumeCard, rememberResumeCard } from '../resume-hint';
 import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
+import '../screen-styles';
 
 /**
  * The "Welcome back" card for the last saved position (design system `ResumeCard`). It reserves its
