@@ -28,11 +28,35 @@ export async function gotoTab(page: Page, name: TabName): Promise<void> {
   await expect(screenHeading(page, name)).toBeVisible();
 }
 
-/** Opens the app at its start URL and waits for the library screen (the home tab). */
+/** The first-run onboarding (src/app/onboarding): three cards, "Skip" on the first two, "Done" on the last. */
+export function onboardingSkip(page: Page): Locator {
+  return page.getByRole('button', { name: /^skip$/i });
+}
+
+/**
+ * Gets past first-run onboarding if it is showing: clicks Skip, which stores `onboardingDone` in IndexedDB so it never
+ * returns on this browser profile. Works whether or not the app has onboarding (the reference fixture has none).
+ */
+export async function skipOnboarding(page: Page): Promise<void> {
+  const skip = onboardingSkip(page);
+  await expect(skip.or(primaryNav(page)).first()).toBeVisible();
+  if (await skip.isVisible()) {
+    await skip.click();
+    await expect(primaryNav(page)).toBeVisible();
+  }
+}
+
+/** Opens the app at its start URL, skips onboarding, and waits for the library screen (the home tab). */
 export async function launch(page: Page): Promise<void> {
   await page.goto('./');
+  await skipOnboarding(page);
   await expect(primaryNav(page)).toBeVisible();
   await expect(screenHeading(page, 'Library')).toBeVisible();
+}
+
+/** Opens the app WITHOUT skipping onboarding. Only the dedicated onboarding tests use this. */
+export async function launchFresh(page: Page): Promise<void> {
+  await page.goto('./');
 }
 
 export function currentTheme(page: Page): Promise<string | undefined> {

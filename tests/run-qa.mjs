@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// The whole QA gate in one command: Playwright (unit, e2e, accessibility, offline, performance) then Lighthouse.
+// The whole QA gate in one command: Playwright (unit, e2e, accessibility, offline, excellence, performance) then Lighthouse.
 // Every step always runs so one report shows all failures; the exit code is non-zero if ANY step failed.
 //   npm run qa            from /tests (builds the app once through Playwright's webServer unless CI=true)
 // In CI run `npm run build` at the repo root first (the webServer then skips its own build) and use this as the QA step.
@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 
 const steps = [
   ['Playwright: unit, e2e, accessibility, offline', ['npx', 'playwright', 'test', '--project=unit', '--project=chromium-desktop', '--project=chromium-mobile', ...(process.env.CI && process.env.PAGENEST_WEBKIT !== '1' ? [] : ['--project=webkit-iphone'])]],
+  ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile']],
   ['Playwright: performance gates (one worker)', ['npx', 'playwright', 'test', '--project=perf-chromium-mobile', '--workers=1']],
   ['Lighthouse: PWA, accessibility, performance', ['npm', 'run', '--silent', 'lighthouse']],
 ];
