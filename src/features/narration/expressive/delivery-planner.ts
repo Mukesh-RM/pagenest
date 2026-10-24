@@ -1,4 +1,5 @@
 import type { DeliveryPlan, Emotion } from '@/engines/tts/types';
+import { piperVoiceSupportsSpeakerId } from '@/engines/tts/piper/approved-voices';
 import type { EmotionTag } from './emotion-tagger';
 import type { SegmentKind } from './dialogue-segmenter';
 import { planPauseAfterSentence } from './pause-planner';
@@ -93,7 +94,11 @@ export function planExpressiveDelivery(
   if (speakerHint && defaults.castVoiceBySpeaker?.[speakerHint]) {
     voiceId = defaults.castVoiceBySpeaker[speakerHint];
   }
-  if (speakerHint && defaults.castSpeakerIdBySpeaker?.[speakerHint] !== undefined) {
+  if (
+    speakerHint &&
+    defaults.castSpeakerIdBySpeaker?.[speakerHint] !== undefined &&
+    piperVoiceSupportsSpeakerId(voiceId)
+  ) {
     speakerId = defaults.castSpeakerIdBySpeaker[speakerHint];
   }
 

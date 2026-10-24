@@ -5,15 +5,16 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const modelDir = path.resolve(here, '../../../.models/narration/en_US-amy-low');
+const smokeVoiceId = 'en_US-ljspeech-medium';
+const modelDir = path.resolve(here, `../../../.models/narration/${smokeVoiceId}`);
 const distDir = path.resolve(here, 'dist');
 const ortWasmDir = path.resolve(here, '../../../node_modules/onnxruntime-web/dist');
 
 test.describe.configure({ mode: 'serial' });
 
 test('MANUAL-RUN Piper browser smoke', async ({ page }) => {
-  const modelPath = path.join(modelDir, 'en_US-amy-low.onnx');
-  const configPath = path.join(modelDir, 'en_US-amy-low.onnx.json');
+  const modelPath = path.join(modelDir, `${smokeVoiceId}.onnx`);
+  const configPath = path.join(modelDir, `${smokeVoiceId}.onnx.json`);
   let modelBytes: Buffer;
   let configBytes: Buffer;
   try {

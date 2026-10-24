@@ -9,7 +9,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const modelOnnx = path.join(root, '.models/narration/en_US-amy-low/en_US-amy-low.onnx');
+const smokeVoiceId = 'en_US-ljspeech-medium';
+const modelOnnx = path.join(root, `.models/narration/${smokeVoiceId}/${smokeVoiceId}.onnx`);
 
 if (!existsSync(modelOnnx)) {
   console.error(

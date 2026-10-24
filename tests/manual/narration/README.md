@@ -5,27 +5,29 @@ Not part of CI or `npm test`. Run after Phase 4 model hosting is approved locall
 ## Prerequisites
 
 - Chromium (Playwright): `npx playwright install chromium`
-- ~60 MB disk for one English voice
+- ~64 MB disk for the default English voice (`en_US-ljspeech-medium`)
 
 ## Download voice (git-ignored)
 
 ```bash
-mkdir -p .models/narration/en_US-amy-low
-curl -L -o .models/narration/en_US-amy-low/en_US-amy-low.onnx \
-  'https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/low/en_US-amy-low.onnx'
-curl -L -o .models/narration/en_US-amy-low/en_US-amy-low.onnx.json \
-  'https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/amy/low/en_US-amy-low.onnx.json'
+VOICE=en_US-ljspeech-medium
+mkdir -p ".models/narration/${VOICE}"
+curl -L -o ".models/narration/${VOICE}/${VOICE}.onnx" \
+  "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ljspeech/medium/${VOICE}.onnx"
+curl -L -o ".models/narration/${VOICE}/${VOICE}.onnx.json" \
+  "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_US/ljspeech/medium/${VOICE}.onnx.json"
 ```
 
-**License (VERIFY with Auditor):** Piper `en_US-amy-low` — LibriVox-derived / MIT Piper voice policy; see [HF card](https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/amy/low).
+**License:** LJ Speech dataset — public domain ([keithito.com](https://keithito.com/LJ-Speech-Dataset/)); voice vetted **OK** in `docs/MODEL_VETTING.md` (Auditor registry).
 
-**SHA-256:** after download, verify with:
+**Expected SHA-256 (`.onnx` LFS oid on Hugging Face):** `6f52a751e2349abe7a76735eb09dc1875298c77ea2342ffd2fef79ff81b87f22`  
+**Size:** 63 531 379 bytes (~60.6 MB).
 
 ```bash
-sha256sum .models/narration/en_US-amy-low/*
+sha256sum ".models/narration/${VOICE}/${VOICE}.onnx"
 ```
 
-Compare to hashes published on the voice card when available.
+**Do not use** `en_US-amy-low`, `en_US-lessac*`, `en_US-libritts_r*`, or other non-vetted Piper ids — see `src/engines/tts/piper/approved-voices.ts`.
 
 ## Run
 
