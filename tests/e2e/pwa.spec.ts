@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { launch, waitForServiceWorkerControl } from './support/app';
+import { THEMES } from './support/contrast';
 
 // Blueprint section 14 (PWA setup) and 5.6 (install and first launch).
 const PHASE = Number(process.env.PAGENEST_PHASE ?? 0);
@@ -11,7 +12,7 @@ type Manifest = {
   share_target?: { action?: string; method?: string; enctype?: string; params?: unknown };
 };
 
-async function loadManifest(page: import('@playwright/test').Page): Promise<{ url: string; manifest: Manifest }> {
+async function loadManifest(page: Page): Promise<{ url: string; manifest: Manifest }> {
   const href = await page.locator('link[rel="manifest"]').getAttribute('href');
   expect(href, 'index.html must link a web app manifest').toBeTruthy();
   const url = new URL(href!, page.url()).toString();
@@ -60,7 +61,20 @@ test.describe('pwa installability', () => {
   test('iPhone and browser chrome tags are present (blueprint 14)', async ({ page }) => {
     await launch(page);
     await expect(page.locator('meta[name="viewport"]')).toHaveAttribute('content', /viewport-fit=cover/);
-    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute('content', /^#[0-9a-f]{6}$/i);
+    // DECISIONS.md: manifest colours are the light default and index.html adds media-query variants for dark.
+    // Three tags: an unconditional default, a light variant and a dark variant, with the blueprint 5.2 page colours.
+    const tags = await page.locator('meta[name="theme-color"]').evaluateAll((els) =>
+      els.map((el) => ({ content: el.getAttribute('content') ?? '', media: el.getAttribute('media') ?? '' })),
+    );
+    expect(tags, `theme-color tags found: ${JSON.stringify(tags)}`).toHaveLength(3);
+    for (const t of tags) expect(t.content, `theme-color content ${JSON.stringify(t)}`).toMatch(/^#[0-9a-f]{6}$/i);
+    const byMedia = (media: string) => tags.filter((t) => t.media.replace(/\s+/g, '') === media.replace(/\s+/g, ''));
+    expect(byMedia(''), 'one unconditional default tag').toHaveLength(1);
+    expect(byMedia('')[0]!.content.toLowerCase(), 'default tag is the light page colour').toBe(THEMES.light.page.toLowerCase());
+    expect(byMedia('(prefers-color-scheme: light)'), 'one light-scheme tag').toHaveLength(1);
+    expect(byMedia('(prefers-color-scheme: light)')[0]!.content.toLowerCase()).toBe(THEMES.light.page.toLowerCase());
+    expect(byMedia('(prefers-color-scheme: dark)'), 'one dark-scheme tag').toHaveLength(1);
+    expect(byMedia('(prefers-color-scheme: dark)')[0]!.content.toLowerCase()).toBe(THEMES.dark.page.toLowerCase());
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
     const capable = await page
       .locator('meta[name="apple-mobile-web-app-capable"], meta[name="mobile-web-app-capable"]')

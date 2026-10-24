@@ -10,20 +10,22 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/check-bundle.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b",
     "test": "vitest run",
     "test:e2e": "playwright test --pass-with-no-tests",
+    "check:bundle": "node scripts/check-bundle.mjs",
     "icons": "node scripts/pwa/generate-icons.mjs",
     "validate:pwa": "node scripts/pwa/validate-pwa-assets.mjs",
-    "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs"
+    "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs",
+    "audit": "node scripts/audit-all.mjs",
+    "audit:licenses": "node scripts/audit-licenses.mjs --check"
   },
   "dependencies": {
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
-    "lucide-react": "^1.61.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.4",

@@ -1,37 +1,25 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach } from 'vitest';
-import { PageNestDB, newId } from '@/data/db';
-import { DexieProgressService } from '@/data/progress-service';
-import { AppRoutes } from './routes';
-import { ServicesProvider } from './services';
+import { newId, type PageNestDB } from '@/data/db';
 import type { AppServices } from './services-context';
 import { useSettings } from './settings-store';
-import { ThemeProvider } from './ThemeProvider';
-import { minutesPerDay } from './stats';
+import { minutesPerDay } from '@/data/stats';
+import { makeServices, renderApp, resetSettings } from './test-utils';
 
 
-let counter = 0;
 let db: PageNestDB;
 let services: AppServices;
 
 function renderAt(path: string) {
-  return render(
-    <ServicesProvider services={services}>
-      <ThemeProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AppRoutes />
-        </MemoryRouter>
-      </ThemeProvider>
-    </ServicesProvider>,
-  );
+  return renderApp(services, { path });
 }
 
-beforeEach(() => {
-  counter += 1;
-  db = new PageNestDB(`pagenest-app-test-${counter}`);
-  services = { db, progress: new DexieProgressService(db) };
-  useSettings.setState({ loaded: false, themePreference: 'system' });
+beforeEach(async () => {
+  services = makeServices('pagenest-app-test');
+  db = services.db;
+  resetSettings();
+  // Returning user: onboarding is covered in onboarding.test.tsx.
+  await db.settings.put({ key: 'onboardingDone', value: true });
 });
 
 afterEach(() => {
@@ -42,9 +30,12 @@ afterEach(() => {
 describe('app shell', () => {
   it('shows the four tabs in order', async () => {
     renderAt('/');
-    const nav = screen.getByRole('navigation', { name: 'Main' });
-    const labels = Array.from(nav.querySelectorAll('a')).map((a) => a.textContent);
+    const bar = await screen.findByTestId('pn-tabbar');
+    expect(bar).toHaveAccessibleName('Main navigation');
+    const labels = Array.from(bar.querySelectorAll('a')).map((a) => a.textContent);
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
+    expect(screen.getByTestId('pn-rail')).toBeInTheDocument();
+    expect(within(bar).getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
     await screen.findByText('Your shelf is waiting');
   });
 
@@ -54,14 +45,14 @@ describe('app shell', () => {
     ['/stats', 'Stats', 'Nothing to count yet'],
   ])('%s shows its heading and a plain empty state', async (path, heading, empty) => {
     renderAt(path);
-    expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     expect(await screen.findByText(empty)).toBeInTheDocument();
   });
 
   it('settings shows appearance, storage and privacy', async () => {
     renderAt('/settings');
-    expect(screen.getByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
-    expect(screen.getByRole('radiogroup', { name: 'App theme' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
     expect(await screen.findByText(/does not say how much space|PageNest uses/)).toBeInTheDocument();
     expect(screen.getByText(/collects nothing/)).toBeInTheDocument();
   });
@@ -86,7 +77,8 @@ describe('app shell', () => {
     });
     await db.progress.put({ bookId: id, mode: 'read', locator: { kind: 'reflow', section: 0, textOffset: 0 }, percent: 40, updatedAt: 1 });
     renderAt('/');
-    expect(await screen.findByText('Persuasion')).toBeInTheDocument();
+    expect((await screen.findAllByText('Persuasion')).length).toBeGreaterThan(0);
+    expect(screen.getByText('Welcome back')).toBeInTheDocument();
     expect(screen.getByText('Jane Austen')).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByRole('progressbar', { name: 'Progress for Persuasion' })).toHaveAttribute('aria-valuenow', '40'),
@@ -111,12 +103,11 @@ describe('theme', () => {
     await db.settings.put({ key: 'appTheme', value: 'sepia' });
     renderAt('/settings');
     await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('sepia'));
-    expect(document.documentElement.style.getPropertyValue('--pn-page')).toBe('244 236 216');
 
     fireEvent.click(screen.getByRole('radio', { name: 'Black' }));
     await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('black'));
     await waitFor(async () => expect((await db.settings.get('appTheme'))?.value).toBe('black'));
-    expect(screen.getByRole('radio', { name: 'Black' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Black' })).toBeChecked();
   });
 
   it('ignores an invalid saved value', async () => {

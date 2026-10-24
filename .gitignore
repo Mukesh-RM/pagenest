@@ -31,3 +31,7 @@ models/
 Thumbs.db
 .idea/
 .vscode/
+
+tests/lighthouse/reports/
+tests/playwright-report/
+tests/test-results/

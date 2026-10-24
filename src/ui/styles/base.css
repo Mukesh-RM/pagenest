@@ -1,0 +1,67 @@
+/*
+ * Base styles. Deliberately NOT global: the app owns html, body and the reset (Tailwind
+ * preflight); this file only styles design-system classes, so importing src/ui never restyles
+ * the page behind it. Everything reads tokens from tokens.css.
+ */
+
+/* A themed subtree (for example the reader theme inside a dark app) */
+.pn-theme-scope,
+.pn-portal {
+  background: rgb(var(--pn-page));
+  color: rgb(var(--pn-text));
+  font-family: var(--pn-font-sans);
+  font-size: var(--pn-text-md);
+  line-height: var(--pn-leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Design-system components size themselves with border-box, with or without a CSS reset */
+[class^="pn-"],
+[class*=" pn-"] {
+  box-sizing: border-box;
+}
+
+/* Portals only carry the theme tokens; they must not paint a page over the app */
+.pn-portal {
+  background: transparent;
+}
+
+.pn-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible keyboard focus on every interactive PageNest control */
+.pn-btn:focus-visible,
+.pn-chip:focus-visible,
+.pn-card--interactive:focus-visible,
+.pn-nav__item:focus-visible,
+.pn-miniplayer__expand:focus-visible,
+.pn-snackbar__action:focus-visible,
+.pn-sheet:focus-visible,
+.pn-focus-target:focus-visible {
+  outline: 2px solid rgb(var(--pn-focus-ring));
+  outline-offset: 2px;
+}
+
+.pn-sheet:focus-visible {
+  outline-offset: -2px;
+}
+
+/* Windows high contrast mode: keep borders and focus visible */
+@media (forced-colors: active) {
+  .pn-btn,
+  .pn-chip,
+  .pn-card,
+  .pn-sheet,
+  .pn-snackbar {
+    border: 1px solid CanvasText;
+  }
+}

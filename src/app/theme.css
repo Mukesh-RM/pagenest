@@ -1,19 +1,18 @@
-/* Light theme values are the defaults so the first paint is never unstyled.
-   ThemeProvider overwrites these variables on <html> for the active theme. */
+/* Colors, spacing and type come from the design system (src/ui/styles/tokens.css).
+   Only the safe-area helpers the app layout uses live here. */
 :root {
-  --pn-page: 250 250 247;
-  --pn-surface: 255 255 255;
-  --pn-text: 28 27 25;
-  --pn-muted: 92 90 85;
-  --pn-accent: 62 91 219;
-  --pn-on-accent: 255 255 255;
-  --pn-line: 227 225 218;
   --pn-safe-top: env(safe-area-inset-top, 0px);
   --pn-safe-bottom: env(safe-area-inset-bottom, 0px);
-  color-scheme: light;
 }
 
-html[data-theme='dark'],
-html[data-theme='black'] {
-  color-scheme: dark;
+/* Route chrome (docs/ROUTE_CHROME.md). The frame from the design system is always rendered so a
+   screen is never remounted; on immersive routes its rail and bottom bar (tab bar, mini-player)
+   are taken out of the layout. `display: contents` keeps this wrapper from affecting layout. */
+.pn-chrome-scope {
+  display: contents;
+}
+
+.pn-chrome-scope[data-chrome='immersive'] .pn-rail,
+.pn-chrome-scope[data-chrome='immersive'] .pn-shell__bottom {
+  display: none;
 }

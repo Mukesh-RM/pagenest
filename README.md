@@ -8,11 +8,11 @@ A free, installable, offline-first web app (PWA) for reading e-books and PDFs an
 
 The full specification is [docs/BLUEPRINT.md](docs/BLUEPRINT.md). Progress is tracked in [STATUS.md](STATUS.md) and design decisions in [DECISIONS.md](DECISIONS.md).
 
-> Status: setup complete, Phase 0 (Foundation) not started yet. There is no app to run yet; the steps below describe the planned workflow.
+> Status: Phase 0 (Foundation) is in progress. The app is live at <https://pagenest-42f.pages.dev>, hosted on the Cloudflare Pages free plan (project `pagenest`, free `*.pages.dev` address). See [STATUS.md](STATUS.md) for progress and [docs/DEPLOY.md](docs/DEPLOY.md) for how it is deployed.
 
 ## Install (as a user)
 
-1. Open the PageNest link in your phone or desktop browser (a free `*.pages.dev` address once deployed).
+1. Open <https://pagenest-42f.pages.dev> in your phone or desktop browser.
 2. Android / Chrome: tap **Install**. iPhone / Safari: Share, then **Add to Home Screen**.
 3. Launch it from your home screen. After the first load it works offline.
 
@@ -23,7 +23,7 @@ Requirements: Node.js 20+, npm 10+, git.
 ```bash
 git clone https://github.com/Mukesh-RM/pagenest.git
 cd pagenest
-npm install        # available once Phase 0 lands
+npm install
 npm run dev        # start the Vite dev server
 npm run build      # production build into dist/
 npm test           # unit tests (Vitest)
