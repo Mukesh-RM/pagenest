@@ -2,12 +2,15 @@ import { useEffect, useRef } from 'react';
 import { BookCover } from '../components/BookCover';
 import { BottomSheet, type SheetCloseReason } from '../components/BottomSheet';
 import { Button } from '../components/Button';
+import { OverflowMenu } from '../components/OverflowMenu';
 import { ProgressBar } from '../components/ProgressBar';
 import { progressWords } from '../components/BookCard';
 import { useCoverTint } from '../hooks';
 import type { BookDetail } from '../types';
 import { formatDuration } from '../utils/time';
 import { playFlip, type RectLike } from '../utils/flip';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 
 export interface BookDetailSheetProps {
   open: boolean;
@@ -17,7 +20,7 @@ export interface BookDetailSheetProps {
   originRect?: RectLike;
   onRead?: (book: BookDetail) => void;
   onListen?: (book: BookDetail) => void;
-  /** Quiet destructive row. The app answers with a ConfirmDialog; nothing is deleted here. */
+  /** "Remove from library" in the ⋯ menu beside the main actions. The app answers with a ConfirmDialog; nothing is deleted here. */
   onRemove?: (book: BookDetail) => void;
 }
 
@@ -64,6 +67,12 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
               {started ? 'Keep listening' : 'Listen'}
             </Button>
           ) : null}
+          {onRemove ? (
+            <OverflowMenu
+              label="More options"
+              items={[{ label: 'Remove from library', icon: 'trash', danger: true, onSelect: () => onRemove(book) }]}
+            />
+          ) : null}
         </div>
       }
     >
@@ -84,13 +93,10 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
             <p className="pn-detail__line">{progressWords(book)}</p>
           </div>
           {book.description ? <p className="pn-detail__description">{book.description}</p> : null}
-          {onRemove ? (
-            <Button variant="danger" icon="trash" onClick={() => onRemove(book)}>
-              Remove from library
-            </Button>
-          ) : null}
         </div>
       </div>
     </BottomSheet>
   );
 }
+
+export default BookDetailSheet;

@@ -21,12 +21,13 @@ export {
   READER_MIN_FONT,
   type ReaderSettingsSheetProps,
 } from './ReaderSettingsSheet';
-export { AudioPlayerScreen, type AudioPlayerScreenProps } from './AudioPlayerScreen';
+export { AudioPlayerScreen, type AudioPlayerController, type AudioPlayerScreenProps } from './AudioPlayerScreen';
 export { VoiceStudioScreen, type VoiceStudioScreenProps } from './VoiceStudioScreen';
 
 export { AppMark, type AppMarkProps } from '../components/AppMark';
 export { StarterBookCard, type StarterBookOffer, type StarterBookCardProps } from '../components/StarterBookCard';
 export { FirstRunBooks, type FirstRunBooksProps } from '../components/FirstRunBooks';
 export { OnboardingScreen, ONBOARDING_STEP_COUNT, type OnboardingScreenProps } from './OnboardingScreen';
+export { SettingsScreen, type SettingsScreenProps, type SettingsStorage } from './SettingsScreen';
 export { ThemePicker, type ThemePickerProps } from '../components/ThemePicker';
 export { TextSizeControl, type TextSizeControlProps } from '../components/TextSizeControl';

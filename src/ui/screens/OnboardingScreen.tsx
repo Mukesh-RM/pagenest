@@ -5,6 +5,8 @@ import { Illustration } from '../components/Illustration';
 import { StarterBookCard, type StarterBookOffer } from '../components/StarterBookCard';
 import { Icon, type IconName } from '../icons';
 import { cx } from '../utils/cx';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 
 export const ONBOARDING_STEP_COUNT = 3;
 
@@ -146,3 +148,5 @@ export function OnboardingScreen({ step, onNext, onBack, onSkip, onDone, starter
     </main>
   );
 }
+
+export default OnboardingScreen;

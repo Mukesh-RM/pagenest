@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Icon } from '../icons';
 import { cx } from '../utils/cx';
-import { measure, type RectLike } from '../utils/flip';
+import { measure, rememberFlipOrigin, type RectLike } from '../utils/flip';
 import type { BookSummary } from '../types';
 import { BookCover } from './BookCover';
 import { Card } from './Card';
@@ -43,7 +43,11 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
       className={cx('pn-bookcard', layout === 'list' && 'pn-bookcard--list', className)}
       aria-label={label}
       selected={selected}
-      onPress={() => onOpen(book, measure(coverRef.current))}
+      onPress={() => {
+        const rect = measure(coverRef.current);
+        rememberFlipOrigin(rect);
+        onOpen(book, rect);
+      }}
       onLongPress={onSelect ? () => onSelect(book) : undefined}
     >
       <span ref={coverRef} className="pn-bookcard__cover">

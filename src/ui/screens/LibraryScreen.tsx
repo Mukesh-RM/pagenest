@@ -11,6 +11,8 @@ import { SkeletonCard, SkeletonGroup } from '../components/Skeleton';
 import type { BookSummary } from '../types';
 import { cx } from '../utils/cx';
 import type { RectLike } from '../utils/flip';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 
 export interface LibraryFilterOption {
   id: string;
@@ -59,7 +61,10 @@ export interface LibraryScreenProps {
   onOpenBook: (book: BookSummary, coverRect: RectLike | undefined) => void;
   onSelectBook?: (book: BookSummary) => void;
   selectedIds?: readonly string[];
-  onAdd: () => void;
+  /** Opens the file picker. Optional: without it there is no Add button anywhere on the screen. */
+  onAdd?: () => void;
+  /** An extra action in the empty state, next to (or instead of) Add, for example "Open a sample book". */
+  emptyActions?: ReactNode;
   /** Number of skeleton cards while loading. */
   skeletonCount?: number;
   /** Sort order id. The data layer sorts; this screen only shows the control. Leave out to hide the control. */
@@ -93,6 +98,7 @@ export function LibraryScreen({
   onSelectBook,
   selectedIds = [],
   onAdd,
+  emptyActions,
   skeletonCount = 8,
   sort,
   sorts = DEFAULT_LIBRARY_SORTS,
@@ -109,9 +115,11 @@ export function LibraryScreen({
     <div className="pn-screen pn-library">
       <header className="pn-screen__header">
         <h1 className="pn-screen__title">Library</h1>
-        <Button icon="plus" onClick={onAdd}>
-          Add books
-        </Button>
+        {onAdd ? (
+          <Button icon="plus" onClick={onAdd}>
+            Add books
+          </Button>
+        ) : null}
       </header>
 
       <div className="pn-library__tools">
@@ -191,7 +199,7 @@ export function LibraryScreen({
           ))}
         </SkeletonGroup>
       ) : empty && emptyKind === 'library' && starter ? (
-        <FirstRunBooks onAdd={onAdd} starter={starter} />
+        <FirstRunBooks onAdd={onAdd} starter={starter} extra={emptyActions} />
       ) : empty ? (
         <EmptyState
           art={<Illustration name={emptyKind === 'library' ? 'books' : 'search'} />}
@@ -201,7 +209,8 @@ export function LibraryScreen({
               ? 'Add an EPUB, PDF or audiobook from your device. Everything stays on this device.'
               : 'Try a different word, or clear the filter.'
           }
-          action={emptyKind === 'library' ? { label: 'Add books', icon: 'plus', onClick: onAdd } : undefined}
+          action={emptyKind === 'library' && onAdd ? { label: 'Add books', icon: 'plus', onClick: onAdd } : undefined}
+          extra={emptyKind === 'library' ? emptyActions : undefined}
         />
       ) : (
         <ul className={cx('pn-library__grid', view === 'list' && 'pn-library__grid--list')} aria-label="Books">
@@ -222,3 +231,5 @@ export function LibraryScreen({
     </div>
   );
 }
+
+export default LibraryScreen;

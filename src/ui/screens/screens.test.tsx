@@ -118,9 +118,11 @@ describe('BookDetailSheet', () => {
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     fireEvent.click(within(dialog).getByRole('button', { name: /continue reading/i }));
     expect(onRead).toHaveBeenCalledTimes(1);
-    const remove = within(dialog).getByRole('button', { name: /remove from library/i });
-    expect(remove.className).toContain('pn-btn--danger');
-    expect(remove.className).not.toContain('danger-solid');
+    // Remove lives in the ⋯ menu, never as a loose red button next to Read.
+    expect(within(dialog).queryByRole('button', { name: /remove from library/i })).toBeNull();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'More options' }));
+    const remove = within(dialog).getByRole('menuitem', { name: /remove from library/i });
+    expect(remove.className).toContain('pn-overflow__item--danger');
     fireEvent.click(remove);
     expect(onRemove).toHaveBeenCalledTimes(1);
     expect(within(dialog).getByText(/Narrated by Eleanor Whitcombe/)).toBeInTheDocument();

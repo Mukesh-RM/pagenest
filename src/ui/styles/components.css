@@ -623,6 +623,40 @@
   font-size: var(--pn-text-xs);
 }
 
+.pn-miniplayer__skip,
+.pn-miniplayer__play {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pn-touch);
+  height: var(--pn-touch);
+  padding: 0;
+  border: 0;
+  border-radius: var(--pn-radius-pill);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pn-miniplayer__skip {
+  background: transparent;
+  color: rgb(var(--pn-text));
+}
+
+/* The same filled accent circle as the full player's play button, just smaller */
+.pn-miniplayer__play {
+  background: rgb(var(--pn-accent));
+  color: rgb(var(--pn-on-accent));
+}
+
+.pn-skip-glyph__n {
+  font-family: var(--pn-font-sans);
+  font-size: 8.5px;
+  font-weight: var(--pn-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
 .pn-miniplayer__progress {
   position: absolute;
   inset-inline: 0;
@@ -1213,8 +1247,49 @@
 
 .pn-finished__stage {
   position: relative;
-  width: 112px;
-  margin-bottom: var(--pn-space-2);
+  width: 160px;
+  margin-bottom: var(--pn-space-3);
+  animation: pn-finished-cover var(--pn-duration-slow) var(--pn-ease-out) both;
+}
+
+@keyframes pn-finished-cover {
+  from {
+    opacity: 0;
+    transform: translateY(var(--pn-space-4)) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.pn-finished__heading,
+.pn-finished__text,
+.pn-finished__actions {
+  animation: pn-finished-rise var(--pn-duration-slow) var(--pn-ease-out) both;
+}
+
+.pn-finished__heading {
+  animation-delay: 120ms;
+}
+
+.pn-finished__text {
+  animation-delay: 180ms;
+}
+
+.pn-finished__actions {
+  animation-delay: 240ms;
+}
+
+@keyframes pn-finished-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--pn-space-3));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .pn-finished__check {
@@ -1230,7 +1305,7 @@
   border-radius: var(--pn-radius-pill);
   background: rgb(var(--pn-accent));
   color: rgb(var(--pn-on-accent));
-  animation: pn-finished-in var(--pn-duration-slow) var(--pn-ease-out) both;
+  animation: pn-finished-in var(--pn-duration-slow) var(--pn-ease-out) 300ms both;
 }
 
 @keyframes pn-finished-in {

@@ -1,10 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Button } from '../components/Button';
 import { ProgressBar } from '../components/ProgressBar';
+import { chapterLeftLabel } from '../utils/time';
 import { ThemeScope } from '../theme/ThemeProvider';
 import type { ReaderFontOption, ReaderSettings } from '../types';
 import { LINE_HEIGHT, MARGIN_PX, ReaderSettingsSheet } from './ReaderSettingsSheet';
 import type { SheetCloseReason } from '../components/BottomSheet';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 
 export interface ReaderScreenProps {
   title: string;
@@ -19,6 +22,8 @@ export interface ReaderScreenProps {
   onSettingsOpenChange: (open: boolean, reason?: SheetCloseReason) => void;
   onBack: () => void;
   onOpenContents?: () => void;
+  /** Estimated minutes left in this chapter. Shown as a quiet line under the progress bar (`chapterLeftLabel`). */
+  minutesLeftInChapter?: number;
   /** The page content (the reader engine renders here). */
   children: ReactNode;
 }
@@ -39,6 +44,7 @@ export function ReaderScreen({
   onSettingsOpenChange,
   onBack,
   onOpenContents,
+  minutesLeftInChapter,
   children,
 }: ReaderScreenProps) {
   const font = fonts.find((f) => f.id === settings.fontId) ?? fonts[0];
@@ -67,7 +73,10 @@ export function ReaderScreen({
         </article>
         <footer className="pn-reader__footer">
           <ProgressBar value={progress} label="Progress through the book" />
-          <p className="pn-reader__percent">{Math.round(progress * 100)}% through the book</p>
+          <p className="pn-reader__percent">
+            {minutesLeftInChapter !== undefined ? <span className="pn-reader__left">{chapterLeftLabel(minutesLeftInChapter)}</span> : null}
+            <span>{Math.round(progress * 100)}% through the book</span>
+          </p>
         </footer>
       </div>
       <ReaderSettingsSheet
@@ -80,3 +89,5 @@ export function ReaderScreen({
     </ThemeScope>
   );
 }
+
+export default ReaderScreen;

@@ -12,12 +12,12 @@ describe('text size', () => {
     expect(textSizePercent(16)).toBe('100%');
   });
 
-  it('writes the root size and scaled tokens; the smallest token grows at most 15 percent', () => {
+  it('writes only --pn-font-size; the rem tokens follow from it', () => {
     const el = document.createElement('div');
     applyTextSize(32, el);
     expect(el.style.getPropertyValue('--pn-font-size')).toBe('32px');
-    expect(el.style.getPropertyValue('--pn-text-md')).toBe('32px');
-    expect(el.style.getPropertyValue('--pn-text-xl')).toBe('56px');
-    expect(el.style.getPropertyValue('--pn-text-xs')).toBe('14px');
+    expect(el.style.length).toBe(1);
+    applyTextSize(500, el);
+    expect(el.style.getPropertyValue('--pn-font-size')).toBe('32px');
   });
 });

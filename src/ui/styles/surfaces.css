@@ -679,3 +679,57 @@
 .pn-search__input {
   text-overflow: ellipsis;
 }
+
+/* ---------- Settings: grouped cards ---------- */
+.pn-settings {
+  max-width: 640px;
+  gap: var(--pn-space-4);
+}
+
+.pn-set-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--pn-space-4);
+  min-width: 0;
+  padding: var(--pn-space-5);
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface));
+}
+
+.pn-set-card > * {
+  max-width: 100%;
+}
+
+.pn-set-card > .pn-themes,
+.pn-set-card > .pn-textsize {
+  align-self: stretch;
+}
+
+.pn-set-card__title {
+  margin: 0;
+  font-family: var(--pn-font-serif);
+  font-size: var(--pn-text-lg);
+  font-weight: var(--pn-weight-heading);
+  line-height: var(--pn-leading-tight);
+}
+
+.pn-set-card__text {
+  margin: 0;
+  color: rgb(var(--pn-muted));
+}
+
+.pn-set-card__strong {
+  margin: 0;
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-set-card__sample {
+  align-self: stretch;
+  margin: 0;
+  padding: var(--pn-space-4);
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-page));
+  font-family: var(--pn-font-serif);
+}

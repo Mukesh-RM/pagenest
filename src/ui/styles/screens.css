@@ -794,3 +794,111 @@
   flex: none;
 }
 
+
+/* ---------- Overflow menu (⋯) ---------- */
+.pn-overflow {
+  position: relative;
+  flex: none;
+}
+
+.pn-overflow__menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + var(--pn-space-2));
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  min-width: 14rem;
+  padding: var(--pn-space-1);
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface-raised));
+  box-shadow: var(--pn-shadow-raised);
+}
+
+.pn-overflow__item {
+  display: flex;
+  align-items: center;
+  gap: var(--pn-space-3);
+  min-height: var(--pn-touch);
+  padding: 0 var(--pn-space-4);
+  border: 0;
+  border-radius: var(--pn-radius-card);
+  background: transparent;
+  color: rgb(var(--pn-text));
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.pn-overflow__item--danger {
+  color: rgb(var(--pn-danger));
+}
+
+.pn-overflow__item:focus-visible {
+  outline: var(--pn-focus-width, 2px) solid rgb(var(--pn-focus-ring));
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .pn-overflow__item:hover {
+    background: rgb(var(--pn-surface));
+  }
+}
+
+/* ---------- Reader: time left ---------- */
+.pn-reader__percent {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  column-gap: var(--pn-space-4);
+}
+
+.pn-reader__left {
+  color: rgb(var(--pn-text));
+  font-weight: var(--pn-weight-semibold);
+}
+
+/* ---------- Errors: next-step line ---------- */
+.pn-error__help {
+  margin: var(--pn-space-1) 0 0;
+}
+
+/* ---------- Voice: no mid-phrase wrapping, footer pinned, selected row keeps its play button ---------- */
+.pn-voice__meta {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: var(--pn-space-2);
+}
+
+.pn-voice__meta > span + span::before {
+  content: "·";
+  margin-right: var(--pn-space-2);
+}
+
+.pn-voice__meta > span {
+  white-space: nowrap;
+}
+
+.pn-voice__item--checked::before {
+  opacity: 0;
+}
+
+.pn-voice__item--checked {
+  border-width: 2px;
+  padding: calc(var(--pn-space-2) - 1px) calc(var(--pn-space-2) - 1px) calc(var(--pn-space-2) - 1px) calc(var(--pn-space-4) - 1px);
+}
+
+.pn-voice {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.pn-voice__footer {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: var(--pn-space-3) 0 calc(var(--pn-space-4) + env(safe-area-inset-bottom, 0px));
+  background: rgb(var(--pn-page));
+  border-top: 1px solid rgb(var(--pn-line));
+}

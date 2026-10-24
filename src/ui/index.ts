@@ -85,7 +85,7 @@ export { BookCard, progressWords, type BookCardProps } from './components/BookCa
 export { ChoiceGroup, type ChoiceGroupProps, type ChoiceOption } from './components/ChoiceGroup';
 export { Range, type RangeProps } from './components/Range';
 export { ConfirmDialog, type ConfirmDialogProps } from './components/ConfirmDialog';
-export { ErrorNotice, PLAIN_ERRORS, type ErrorNoticeProps, type PlainErrorKind } from './components/ErrorNotice';
+export { ErrorNotice, PLAIN_ERRORS, canRetry, type ErrorNoticeProps, type PlainErrorKind } from './components/ErrorNotice';
 export { ResumeCard, type ResumeCardProps } from './components/ResumeCard';
 export { FinishedMoment, type FinishedMomentProps } from './components/FinishedMoment';
 export { GestureHint, memoryHintStore, type GestureHintProps } from './components/GestureHint';
@@ -132,8 +132,29 @@ export {
   TEXT_SIZE_MAX,
   TEXT_SIZE_MIN,
   TEXT_SIZE_STEP,
-  TEXT_TOKEN_PX,
   applyTextSize,
   clampTextSize,
   textSizePercent,
 } from './utils/textSize';
+
+/*
+ * Screens are NOT exported at runtime from this barrel: they and their CSS load from '@/ui/screens' (or one module
+ * each, for React.lazy: '@/ui/screens/OnboardingScreen', with a default export). Only their prop TYPES are here,
+ * and types are erased, so importing this barrel in the app shell never pulls a screen into the first load.
+ */
+export type {
+  AudioPlayerController,
+  AudioPlayerScreenProps,
+  BookDetailSheetProps,
+  LibraryScreenProps,
+  OnboardingScreenProps,
+  ReaderScreenProps,
+  ReaderSettingsSheetProps,
+  SettingsScreenProps,
+  SettingsStorage,
+  VoiceStudioScreenProps,
+  StarterBookOffer,
+  ThemePickerProps,
+  TextSizeControlProps,
+} from './screens';
+export { OverflowMenu, type OverflowMenuItem, type OverflowMenuProps } from './components/OverflowMenu';

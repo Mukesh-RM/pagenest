@@ -3,6 +3,8 @@ import { useId } from 'react';
 import { cx } from '../utils/cx';
 import { Icon } from '../icons';
 import type { VoiceOption } from '../types';
+import '../styles/screens.css';
+import '../styles/surfaces.css';
 
 export interface VoiceStudioScreenProps {
   voices: readonly VoiceOption[];
@@ -61,8 +63,9 @@ export function VoiceStudioScreen({
               <span className="pn-voice__info">
                 <span className="pn-voice__name">{v.name}</span>
                 <span className="pn-voice__meta">
-                  {v.language} · {v.quality}
-                  {v.installed ? ' · Ready offline' : v.size ? ` · ${v.size} download` : ''}
+                  <span>{v.language}</span>
+                  <span>{v.quality}</span>
+                  {v.installed ? <span>Ready offline</span> : v.size ? <span>{v.size} download</span> : null}
                 </span>
               </span>
             </label>
@@ -89,3 +92,5 @@ export function VoiceStudioScreen({
     </div>
   );
 }
+
+export default VoiceStudioScreen;

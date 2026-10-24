@@ -33,3 +33,11 @@ export function timeLeftLabel(durationSeconds: number, positionSeconds: number, 
   if (remaining <= 0) return 'Finished';
   return `${formatDuration(remaining)} left at ${formatSpeed(rate)}`;
 }
+
+/** "8 min left in chapter": for the reader's footer. Plain words, never a raw number alone. */
+export function chapterLeftLabel(minutes: number): string {
+  if (!Number.isFinite(minutes) || minutes < 0) return '';
+  if (minutes < 1) return 'Less than a minute left in chapter';
+  const m = Math.round(minutes);
+  return m >= 60 ? `${formatDuration(m * 60)} left in chapter` : `${m} min left in chapter`;
+}
