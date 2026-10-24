@@ -55,7 +55,7 @@ const webServer = external || process.env.PAGENEST_NO_SERVER === '1'
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['e2e/**/*.spec.ts', 'unit/**/*.spec.ts'],
+  testMatch: ['e2e/**/*.spec.ts', 'unit/**/*.spec.ts', 'perf/**/*.spec.ts'],
   outputDir: 'test-results',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
@@ -78,6 +78,9 @@ export default defineConfig({
     { name: 'unit', testMatch: 'unit/**/*.spec.ts' },
     { name: 'chromium-desktop', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Desktop Chrome'] } },
     { name: 'chromium-mobile', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Pixel 7'] } },
+    // Performance gates (budgets in perf/budgets.ts): Chromium mobile profile, CPU slowed to a mid-range phone.
+    // Run alone for the steadiest numbers: `npm run test:perf` (one worker).
+    { name: 'perf-chromium-mobile', testMatch: 'perf/**/*.spec.ts', fullyParallel: false, use: { ...devices['Pixel 7'] } },
     // WebKit stands in for Safari on iPhone. It is a proxy, not a replacement for the real-device checklist.
     ...(includeWebkit
       ? [{ name: 'webkit-iphone', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['iPhone 14'] } }]

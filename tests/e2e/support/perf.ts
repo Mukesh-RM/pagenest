@@ -15,14 +15,16 @@ export function percentile(values: number[], p: number): number {
   return sorted[Math.max(0, idx)]!;
 }
 
-/** Starts recording long tasks in the page. Call before the action; read with `longTasks`. */
-export async function startLongTaskObserver(page: Page): Promise<void> {
-  await page.evaluate(() => {
+/** Records long tasks (over 50 ms) from the very start of every page load in this page. Call before `goto`. Read with `longTasks`. */
+export async function recordLongTasks(page: Page): Promise<void> {
+  await page.addInitScript(() => {
     const w = window as unknown as { __longTasks?: number[] };
     w.__longTasks = [];
-    new PerformanceObserver((list) => {
-      for (const e of list.getEntries()) w.__longTasks!.push(e.duration);
-    }).observe({ type: 'longtask', buffered: true });
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) w.__longTasks!.push(e.duration);
+      }).observe({ type: 'longtask', buffered: true });
+    } catch { /* longtask is Chromium only */ }
   });
 }
 
@@ -72,13 +74,15 @@ export async function flingScroll(
 }
 
 /**
- * Installs a pointerdown listener that remembers the event time, then resolves latency as: first painted frame in which
+ * Installs pointerdown and keydown listeners that remembers the event time, then resolves latency as: first painted frame in which
  * `isDone()` is true, minus the pointerdown time. Use `armTap` before tapping and `tapLatency` after.
  */
 export async function armTap(page: Page): Promise<void> {
   await page.evaluate(() => {
     const w = window as unknown as { __tapStart?: number };
-    window.addEventListener('pointerdown', (e) => { w.__tapStart = e.timeStamp; }, { capture: true });
+    for (const type of ['pointerdown', 'keydown'] as const) {
+      window.addEventListener(type, (e) => { w.__tapStart = e.timeStamp; }, { capture: true });
+    }
   });
 }
 
@@ -101,4 +105,13 @@ export async function tapLatency(page: Page, predicateSource: string, timeoutMs 
       }),
     { predicateSource, timeoutMs },
   );
+}
+
+/** Arms the listeners, runs `action` (the tap or typing), and returns ms from the input event to the painted result. */
+export async function measureInput(page: Page, predicateSource: string, action: () => Promise<unknown>, timeoutMs = 2000): Promise<number> {
+  await armTap(page);
+  const wait = tapLatency(page, predicateSource, timeoutMs);
+  wait.catch(() => {}); // if the action itself fails first, report that error rather than an unhandled rejection
+  await action();
+  return wait;
 }

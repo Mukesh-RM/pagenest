@@ -24,6 +24,9 @@ npm run test:unit                          # contrast maths only, needs no app
 PAGENEST_BASE_URL=https://xyz.pages.dev/ npm test   # test a deployed or already running build instead
 npm run test:fixture                       # run the suite against the reference fixture (harness self-check)
 
+npm run test:perf                          # performance gates only (Chromium mobile, one worker: steadiest numbers)
+npm run qa                                 # everything: Playwright, performance gates, Lighthouse; non-zero exit if ANY gate fails
+
 npm run lighthouse                         # audits ../dist (run `npm run build` at the repo root first)
 node lighthouse/run.mjs --url https://xyz.pages.dev/ --threshold 90
 ```
@@ -67,3 +70,28 @@ If a name differs (for example the sheet trigger), change it in `e2e/support/app
 - WebKit in Playwright is a proxy for Safari on iPhone. It does not replace `real-device/phase-0.md`.
 - `npm audit` reports advisories (`cookie`, `zod`) in Lighthouse's own dev-only dependency tree. They are never part of the app and only run against local builds. `basic-ftp` is overridden to a fixed release.
 - Licences: Playwright (Apache-2.0), Lighthouse (Apache-2.0), chrome-launcher (Apache-2.0), `@axe-core/playwright` (MPL-2.0). All are dev-only and none is bundled into the app.
+
+
+## Performance gates ("no lag, ever")
+
+All thresholds live in one file, `perf/budgets.ts`. Change a number there and nowhere else. A build that misses any gate fails QA: `npm run qa` (and each Playwright project, and `npm run lighthouse`) exits non-zero.
+
+| Gate | Threshold | Where measured | Source |
+|---|---|---|---|
+| Lighthouse Performance score | 90 or more | `lighthouse/run.mjs` (mobile preset, simulated slow 4G) | brief; blueprint 3 and 16 |
+| Lighthouse PWA and Accessibility scores | 90 or more each | `lighthouse/run.mjs` | blueprint 19 |
+| First-load JavaScript | at most 200 KiB gzip (level 9), all scripts of a cold load, service worker blocked | `perf/js-budget.spec.ts` | QA choice (blueprint 16 allows 3 MB for the whole shell) |
+| Tap response | p95 at most 100 ms, pointerdown to the first painted frame showing the change; 24 samples for tabs and themes, 10 for the sheet | `perf/interaction.spec.ts` | blueprint 3: every action within 100 ms |
+| CPU for all perf tests | 4x slowdown (mid-range phone) | `throttleCpu` in `e2e/support/perf.ts` | blueprint 16 |
+| Long tasks (PerformanceObserver) | none over 100 ms during load, tab use, library open and scroll | `perf/*.spec.ts` | QA choice |
+| Scroll jank, 5,000 books | fling 3000 px/s for 2.5 s: p95 frame at most 33.4 ms, dropped frames (over 33.4 ms) at most 5 %, no frame over 100 ms | `perf/library.spec.ts` | blueprint 16: 60 fps scrolling |
+| Library open, 1,000 books | at most 2000 ms from reload to the first card (wall clock, so it includes about 50 ms of test overhead) | `perf/library.spec.ts` | blueprint 16 (later launches under 1 s) plus QA headroom for 1,000 books |
+| Library search, 1,000 books | at most 100 ms from the last keystroke to the narrowed list | `perf/library.spec.ts` | blueprint 3 |
+| Library filter chip (Favorites), 1,000 books | at most 100 ms from tap to the filtered list | `perf/library.spec.ts` | blueprint 3 |
+
+How the tests work, and what they cannot see:
+
+- They run only in the `perf-chromium-mobile` project (Pixel 7 profile). `npm run test:perf` uses one worker, because parallel browsers would disturb each other's timings. Under `npm test` all projects run together, so timing gates can be noisier; use `npm run qa` for the official result.
+- Seeding: `e2e/support/library.ts` writes books straight into IndexedDB database `pagenest`, store `books`, with the blueprint 13 `BookRecord` fields (`src/data/schema.ts`), then reloads. This stands in for the Library import path, which has not landed. When Library ships an import or seed API, swap `seedLibrary` and keep the tests.
+- Search and filter tests find the field by role `searchbox` (or a textbox named Search) and the chip by name (`Favorites`, as a button, tab, radio or checkbox). They fail, not skip, while the Library screen lacks them. Owner: Library, with UI/UX.
+- Emulated CPU throttling and headless Chromium are a proxy. The real-device checklist in `real-device/` still decides.

@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-// Lighthouse quality gate (blueprint section 19): PWA and Accessibility scores must be 90 or more.
+// Lighthouse quality gate (blueprint section 19 plus the "no lag" rule): PWA, Accessibility and Performance scores
+// must meet the minimums in perf/budgets.ts (90 each today).
 //
 //   node lighthouse/run.mjs                      serve ../dist (run `npm run build` at the repo root first) and audit it
 //   node lighthouse/run.mjs --url http://host/   audit an already running or deployed build
 //   node lighthouse/run.mjs --dir fixtures/reference-app   serve and audit another folder
-//   flags: --threshold 90  --preset mobile|desktop  --port 4174  --spa
+//   flags: --threshold 90 (one minimum for every category; default is perf/budgets.ts)  --preset mobile|desktop  --port 4174  --spa
 //
+// Run it with `node --import tsx lighthouse/run.mjs` (npm run lighthouse does) so it can read the TypeScript budgets.
 // Lighthouse is pinned to 11.x because Lighthouse 12 removed the PWA category that blueprint 19 asks for.
 // Exit code 0 = all categories pass, 1 = a score is below the threshold, 2 = the audit could not run.
 import { spawn } from 'node:child_process';
@@ -15,18 +17,19 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
+import { BUDGETS } from '../perf/budgets.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const testsRoot = resolve(here, '..');
 
 function parseArgs(argv) {
-  const out = { threshold: 90, preset: 'mobile', port: 4174, spa: false };
+  const out = { threshold: undefined, preset: 'mobile', port: 4174, spa: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--spa') out.spa = true;
     else if (a.startsWith('--')) out[a.slice(2)] = argv[++i];
   }
-  out.threshold = Number(out.threshold);
+  if (out.threshold !== undefined) out.threshold = Number(out.threshold);
   out.port = Number(out.port);
   return out;
 }
@@ -61,7 +64,7 @@ try {
     chromePath,
     chromeFlags: ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
   });
-  const flags = { port: chrome.port, output: ['json', 'html'], logLevel: 'error', onlyCategories: ['pwa', 'accessibility'] };
+  const flags = { port: chrome.port, output: ['json', 'html'], logLevel: 'error', onlyCategories: ['pwa', 'accessibility', 'performance'] };
   const config = args.preset === 'desktop'
     ? (await import('lighthouse/core/config/desktop-config.js')).default
     : undefined;
@@ -76,13 +79,14 @@ try {
   await writeFile(resolve(dir, 'lighthouse.json'), json);
   await writeFile(resolve(dir, 'lighthouse.html'), html);
 
-  console.log(`\nLighthouse ${lhr.lighthouseVersion} on ${lhr.finalDisplayedUrl} (${args.preset}), threshold ${args.threshold}`);
-  for (const id of ['pwa', 'accessibility']) {
+  const minScore = args.threshold === undefined ? BUDGETS.lighthouse.minScore : { pwa: args.threshold, accessibility: args.threshold, performance: args.threshold };
+  console.log(`\nLighthouse ${lhr.lighthouseVersion} on ${lhr.finalDisplayedUrl} (${args.preset}), thresholds ${JSON.stringify(minScore)}`);
+  for (const id of ['pwa', 'accessibility', 'performance']) {
     const cat = lhr.categories[id];
     const score = Math.round((cat.score ?? 0) * 100);
-    const pass = score >= args.threshold;
+    const pass = score >= minScore[id];
     if (!pass) exitCode = 1;
-    console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${cat.title}: ${score}`);
+    console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${cat.title}: ${score} (minimum ${minScore[id]})`);
     if (!pass) {
       for (const ref of cat.auditRefs) {
         const audit = lhr.audits[ref.id];
@@ -92,6 +96,8 @@ try {
       }
     }
   }
+  const m = (id) => lhr.audits[id]?.displayValue ?? 'n/a';
+  console.log(`  metrics: FCP ${m('first-contentful-paint')}, LCP ${m('largest-contentful-paint')}, TBT ${m('total-blocking-time')}, CLS ${m('cumulative-layout-shift')}, TTI ${m('interactive')}`);
   console.log(`Reports: ${dir}/lighthouse.html and lighthouse.json`);
 } catch (e) {
   console.error(`Lighthouse could not run: ${e.message}`);
