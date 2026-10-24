@@ -141,6 +141,15 @@ export async function readZipEntry(blob: Blob, entry: ZipEntry, maxBytes = Infin
   throw new ZipError('This ZIP file uses a format PageNest cannot unpack.');
 }
 
+/** A stored (uncompressed) entry as a lazy `Blob` slice, without reading it. Throws for compressed entries. */
+export async function storedEntryBlob(blob: Blob, entry: ZipEntry): Promise<Blob> {
+  if (entry.method !== 0 || entry.encrypted) throw new ZipError('This ZIP entry is not stored plainly.');
+  const header = await readRange(blob, entry.localOffset, 30);
+  if (u32le(header, 0) !== LOCAL_SIG) throw new ZipError('This ZIP file has a damaged entry.');
+  const start = entry.localOffset + 30 + u16le(header, 26) + u16le(header, 28);
+  return blob.slice(start, start + entry.compressedSize);
+}
+
 /** Find an entry by exact name, then by case-insensitive name. */
 export function findEntry(entries: readonly ZipEntry[], name: string): ZipEntry | undefined {
   return entries.find((e) => e.name === name) ?? entries.find((e) => e.name.toLowerCase() === name.toLowerCase());

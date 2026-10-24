@@ -9,6 +9,7 @@ export type UnsupportedReason =
   | 'zipped-fb2'
   | 'unsupported-type'
   | 'storage-full'
+  | 'failed'
   | 'storage-unavailable';
 
 /** Plain words for people. Never codes or stack traces (blueprint 5.8). */
@@ -19,6 +20,7 @@ export const UNSUPPORTED_MESSAGES: Readonly<Record<UnsupportedReason, string>> =
   'zip-not-book': 'This is a ZIP archive with no book inside it.',
   'zipped-fb2': 'This is a zipped FB2 book. Unzip it first, then add the FB2 file.',
   'unsupported-type': 'PageNest cannot open this kind of file. It opens e-books, PDFs, documents, comics and audiobooks.',
+  failed: 'PageNest could not add this file. Try it again, or try another copy.',
   'storage-full': 'There is not enough space on this device. Free some space and try again.',
   'storage-unavailable': 'This browser cannot keep books here, for example in a private window. Open PageNest in a normal window.',
 };
