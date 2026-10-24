@@ -1,0 +1,152 @@
+import '../test/setup';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { declarationsFor, parseCss, readUiFile, tripletToHex } from '../test/css';
+import { contrastRatio, parseHex } from '../utils/wcag';
+import { COLOR_TOKENS } from './palette';
+import {
+  DEFAULT_CUSTOM_THEME,
+  customContrastPairs,
+  customThemeStyle,
+  normalizeHex,
+  parseCustomTheme,
+  resolveCustomTheme,
+} from './custom';
+import { ThemeProvider, ThemeScope, ThemedPortal, useTheme } from './ThemeProvider';
+
+/** Small seeded generator so a failure is reproducible. */
+function rng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 1664525 + 1013904223) % 4294967296;
+    return s / 4294967296;
+  };
+}
+const hex = (n: number) => '#' + Math.floor(n * 0xffffff).toString(16).padStart(6, '0');
+
+describe('custom theme: validation', () => {
+  it('normalizes short and upper-case hex and rejects the rest', () => {
+    expect(normalizeHex('#ABC', '#000000')).toBe('#aabbcc');
+    expect(normalizeHex('1E2230', '#000000')).toBe('#1e2230');
+    for (const bad of ['', 'red', '#12', '#12345', '#gggggg', 42, null, undefined, '#1e2230 ; x']) {
+      expect(normalizeHex(bad, '#fallback')).toBe('#fallback');
+    }
+  });
+
+  it('parseCustomTheme accepts a full object only', () => {
+    expect(parseCustomTheme({ page: '#fff', text: '#000', accent: '#f00' })).toEqual({ page: '#ffffff', text: '#000000', accent: '#ff0000' });
+    expect(parseCustomTheme({ page: '#fff' })).toBeUndefined();
+    expect(parseCustomTheme('x')).toBeUndefined();
+    expect(parseCustomTheme(null)).toBeUndefined();
+  });
+
+  it('invalid input falls back to the defaults and never throws', () => {
+    const r = resolveCustomTheme({ page: 'nope', text: 7 as unknown as string, accent: '' });
+    expect(r.input).toEqual(DEFAULT_CUSTOM_THEME);
+  });
+});
+
+describe('custom theme: AA contrast', () => {
+  const fails = (input: { page: string; text: string; accent: string }): string[] => {
+    const r = resolveCustomTheme(input);
+    return customContrastPairs(r)
+      .filter((p) => contrastRatio(p.fg, p.bg) < p.min - 0.001)
+      .map((p) => `${JSON.stringify(input)} ${p.name}: ${contrastRatio(p.fg, p.bg).toFixed(2)} < ${p.min}`);
+  };
+
+  it('the default is AA and untouched', () => {
+    expect(fails(DEFAULT_CUSTOM_THEME)).toEqual([]);
+    expect(resolveCustomTheme(DEFAULT_CUSTOM_THEME).adjusted).toEqual({ text: false, accent: false });
+  });
+
+  it('keeps text 7:1 on the page when the page color allows it', () => {
+    const r = resolveCustomTheme({ page: '#101820', text: '#556677', accent: '#ff00aa' });
+    expect(contrastRatio(r.palette.text, r.palette.page)).toBeGreaterThanOrEqual(7);
+    expect(r.adjusted.text).toBe(true);
+  });
+
+  it('every hostile pair is corrected: same colors, mid grays, neon on neon', () => {
+    const hostile = [
+      ['#808080', '#808080', '#808080'],
+      ['#777777', '#7a7a7a', '#7c7c7c'],
+      ['#ffffff', '#ffffff', '#ffffff'],
+      ['#000000', '#000000', '#000000'],
+      ['#ff00ff', '#00ff00', '#0000ff'],
+      ['#7f7f7f', '#000000', '#ffffff'],
+      ['#767676', '#767676', '#ff0000'],
+      ['#ffff00', '#ffff00', '#ffff00'],
+    ];
+    for (const [page, text, accent] of hostile) expect(fails({ page: page!, text: text!, accent: accent! }), `${page} ${text} ${accent}`).toEqual([]);
+  });
+
+  it('holds for 4000 random colors', () => {
+    const next = rng(7);
+    const all: string[] = [];
+    for (let i = 0; i < 4000; i += 1) all.push(...fails({ page: hex(next()), text: hex(next()), accent: hex(next()) }));
+    expect(all.slice(0, 5)).toEqual([]);
+  });
+
+  it('holds across a grid of mid-tone pages, the hardest case', () => {
+    const all: string[] = [];
+    for (let v = 0x60; v <= 0xa0; v += 8) {
+      const page = '#' + v.toString(16).repeat(3);
+      for (const text of ['#000000', '#ffffff', page, '#336699']) all.push(...fails({ page, text, accent: '#3366ff' }));
+    }
+    expect(all.slice(0, 5)).toEqual([]);
+  });
+});
+
+describe('custom theme: tokens', () => {
+  it('the data-theme="custom" block in tokens.css matches the resolved default', () => {
+    const decl = declarationsFor(parseCss(readUiFile('styles/tokens.css')), '[data-theme="custom"]');
+    const r = resolveCustomTheme(DEFAULT_CUSTOM_THEME);
+    for (const token of COLOR_TOKENS) expect(tripletToHex(decl[`--pn-${token}`]!), token).toBe(r.palette[token]);
+    expect(decl['color-scheme']).toBe(r.scheme);
+  });
+
+  it('writes every color token as an RGB triplet', () => {
+    const style = customThemeStyle(resolveCustomTheme(DEFAULT_CUSTOM_THEME)) as Record<string, string>;
+    for (const token of COLOR_TOKENS) expect(style[`--pn-${token}`]).toBe(parseHex(resolveCustomTheme(DEFAULT_CUSTOM_THEME).palette[token]).join(' '));
+  });
+});
+
+describe('custom theme: provider, scope and portal', () => {
+  function Probe() {
+    const { mode, theme, custom } = useTheme();
+    return <p data-testid="probe">{`${mode}/${theme}/${custom ? custom.palette.page : '-'}`}</p>;
+  }
+
+  it('applies data-theme="custom" and the inline colors on the root, and removes them again', () => {
+    const { rerender, unmount } = render(
+      <ThemeProvider mode="custom" customTheme={{ page: '#fafafa', text: '#111111', accent: '#7733cc' }}>
+        <Probe />
+      </ThemeProvider>,
+    );
+    const root = document.documentElement;
+    expect(root).toHaveAttribute('data-theme', 'custom');
+    expect(root.style.getPropertyValue('--pn-page')).toBe('250 250 250');
+    expect(root.style.getPropertyValue('color-scheme')).toBe('light');
+    expect(screen.getByTestId('probe')).toHaveTextContent('custom/light/#fafafa');
+    rerender(
+      <ThemeProvider mode="dark">
+        <Probe />
+      </ThemeProvider>,
+    );
+    expect(root).toHaveAttribute('data-theme', 'dark');
+    expect(root.style.getPropertyValue('--pn-page')).toBe('');
+    unmount();
+  });
+
+  it('a scope and its portals carry the custom colors', () => {
+    render(
+      <ThemeScope theme="custom" custom={{ page: '#101010', text: '#f0f0f0', accent: '#66ccff' }}>
+        <ThemedPortal>
+          <p>sheet</p>
+        </ThemedPortal>
+      </ThemeScope>,
+    );
+    const portal = screen.getByText('sheet').parentElement!;
+    expect(portal).toHaveAttribute('data-theme', 'custom');
+    expect(portal.style.getPropertyValue('--pn-page')).toBe('16 16 16');
+  });
+});
