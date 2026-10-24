@@ -29,12 +29,13 @@ beforeEach(async () => {
 afterEach(() => services.db.close());
 
 describe('/read/:id', () => {
-  it('shows the book, a not-started state and the honest note', async () => {
+  it('opens the live reader in the design chrome, with no placeholder, and says so plainly when a record has no file', async () => {
     await services.db.books.add(book('b1', { title: 'The Long Road' }));
     renderApp(services, { path: '/read/b1' });
     expect(await screen.findByRole('heading', { level: 1, name: 'The Long Road' })).toBeInTheDocument();
-    expect(screen.getByText('Not started yet')).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent('The reader arrives in a later release');
+    expect(await screen.findByRole('alert')).toHaveTextContent('This book has no file');
+    expect(screen.queryByText(/arrives in a later release/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('note')).not.toBeInTheDocument();
   });
 
   it('uses the design system reader chrome: serif title in the reader theme, with the chapter and a progress footer', async () => {
@@ -80,7 +81,8 @@ describe('/read/:id', () => {
     await services.db.books.add(book('b1'));
     renderApp(services, { path: '/read/b1' });
     await screen.findByRole('heading', { level: 1, name: 'Title b1' });
-    expect(screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Back to library', 'Reading settings']);
+    expect(screen.getByRole('button', { name: 'Back to library' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reading settings' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Back to library' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Library' })).toBeInTheDocument();
   });
@@ -117,7 +119,8 @@ describe('/listen/:id', () => {
     await services.db.books.add(book('b1', { title: 'Printed' }));
     renderApp(services, { path: '/listen/b1' });
     expect(await screen.findByRole('heading', { level: 1, name: 'Printed' })).toBeInTheDocument();
-    expect(screen.getByRole('note')).toHaveTextContent('The reader arrives in a later release');
+    expect(screen.getByRole('region', { name: 'Reading Printed' })).toBeInTheDocument();
+    expect(screen.queryByText(/arrives in a later release/)).not.toBeInTheDocument();
   });
 
   it('shows not found for an unknown id', async () => {

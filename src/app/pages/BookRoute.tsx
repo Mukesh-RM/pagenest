@@ -9,7 +9,7 @@ import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
 import '../screen-styles';
 
-const ReaderScreen = lazy(() => import('./ReaderScreen'));
+const ReaderScreen = lazy(() => import('@/features/reader/live/LiveReader'));
 const PlayerScreen = lazy(() => import('./PlayerScreen'));
 
 type Loaded = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; book: BookRecord; position: ResumeInfo | undefined };
