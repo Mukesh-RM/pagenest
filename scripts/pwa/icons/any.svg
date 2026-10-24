@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>PageNest icon</title>
+  <rect width="512" height="512" rx="112" fill="#3E5BDB"/>
+  <g fill="none" stroke="#FAFAF7" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M116 318V268a140 140 0 0 1 280 0v50"/>
+  </g>
+  <g fill="#FAFAF7">
+    <rect x="92" y="282" width="52" height="96" rx="22"/>
+    <rect x="368" y="282" width="52" height="96" rx="22"/>
+    <path d="M256 218c-26-18-62-24-92-14v134c30-10 66-4 92 14z"/>
+    <path d="M256 218c26-18 62-24 92-14v134c-30-10-66-4-92 14z"/>
+  </g>
+</svg>

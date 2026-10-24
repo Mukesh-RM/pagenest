@@ -2,9 +2,28 @@
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
+    <!-- viewport-fit=cover draws under the notch and home bar; src/app/theme.css adds the safe-area padding. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="description" content="PageNest: free, private reader and audiobook player. No account needed." />
     <title>PageNest</title>
+
+    <!-- Browser bar colour: the default is the Light page colour; the two media tags follow the system theme (blueprint 5.2). -->
+    <meta name="theme-color" content="#FAFAF7" />
+    <meta name="theme-color" content="#FAFAF7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#17181C" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+
+    <!-- iPhone and iPad: Add to Home Screen (blueprint 14) -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="PageNest" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
   </head>
   <body>
     <div id="root"></div>
