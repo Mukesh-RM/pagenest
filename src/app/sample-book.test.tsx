@@ -127,7 +127,7 @@ describe('sample card in the empty Library', () => {
   it('is hidden without a provider', async () => {
     const services = await launch();
     renderApp(services);
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByText('Try a sample book')).toBeNull();
     services.db.close();
   });
@@ -135,7 +135,7 @@ describe('sample card in the empty Library', () => {
   it('is hidden when the provider says it is not available', async () => {
     const services = await launch({ sampleBook: fakeProvider({ available: () => false }) });
     renderApp(services);
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByText('Try a sample book')).toBeNull();
     services.db.close();
   });

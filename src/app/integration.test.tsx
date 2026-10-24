@@ -72,8 +72,8 @@ describe('route / is the Library screen from @/features/library', () => {
     });
     renderApp(services);
     expect(await screen.findByRole('heading', { level: 1, name: 'Library' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'The Long Road, by Ann Lee, book' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^The Long Road, Ann Lee\./ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add books' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getAllByRole('status').some((s) => s.textContent === '1 book')).toBe(true));
   });
 
@@ -90,7 +90,7 @@ describe('route / is the Library screen from @/features/library', () => {
     expect(await screen.findByRole('region', { name: 'Try a sample book' })).toBeInTheDocument();
     first.unmount();
     renderApp({ ...services, sampleBook: { ...withSample.sampleBook!, available: () => false } });
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByRole('region', { name: 'Try a sample book' })).toBeNull();
   });
 });

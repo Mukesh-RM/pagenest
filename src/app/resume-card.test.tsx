@@ -99,7 +99,7 @@ describe('Library resume card', () => {
   it('is hidden when there is nothing to resume', async () => {
     const services = await launch();
     renderApp(services);
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByText(/Welcome back/)).toBeNull();
     services.db.close();
   });
@@ -170,7 +170,7 @@ describe('Library resume card', () => {
       </MemoryRouter>,
     );
     expect(container.querySelector('[aria-hidden="true"][style*="rem"]')).not.toBeNull();
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     services.db.close();
   });
 });

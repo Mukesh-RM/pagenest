@@ -35,11 +35,11 @@ describe('app shell', () => {
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
     expect(screen.queryByTestId('pn-rail')).toBeNull(); // phone width: only the tab bar is in the DOM
     expect(within(bar).getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
   });
 
   it.each([
-    ['/', 'Library', 'Your shelf is waiting'],
+    ['/', 'Library', 'Your library is empty'],
     ['/collections', 'Collections', 'No collections yet'],
     ['/stats', 'Stats', 'Nothing to count yet'],
   ])('%s shows its heading and a plain empty state', async (path, heading, empty) => {
@@ -58,7 +58,7 @@ describe('app shell', () => {
 
   it('sends unknown addresses to the library', async () => {
     renderAt('/nowhere/at/all');
-    expect(await screen.findByText('Your shelf is waiting')).toBeInTheDocument();
+    expect(await screen.findByText('Your library is empty')).toBeInTheDocument();
   });
 
   it('lists books from the database with progress', async () => {
@@ -85,7 +85,7 @@ describe('app shell', () => {
     expect((await screen.findAllByText('Persuasion')).length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(screen.getAllByText('Jane Austen').length).toBeGreaterThan(0);
-    expect(await screen.findByRole('button', { name: 'Persuasion, by Jane Austen, book, 40 percent done' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^Persuasion, Jane Austen\. 40% read/ })).toBeInTheDocument();
   });
 });
 

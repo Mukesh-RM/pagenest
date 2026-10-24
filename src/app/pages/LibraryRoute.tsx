@@ -38,16 +38,14 @@ function ResumeSlot() {
  * every book, importing, selecting, organizing, sample-book card) in the design system's page
  * frame, with the resume card on top.
  *
- * Header slot contract: this route owns the resume card (`ResumeSlot` reserves its own space, so
- * nothing moves when it arrives). `LibraryViewProps` has no header prop yet, so the card is rendered
- * above the Library's title. When the Library adds `header?: ReactNode` (shown under the title, above
- * the search field), change the one line below to `<LibraryScreen header={<ResumeSlot />} />`.
+ * Header slot contract: the route passes the resume card as `header` (the Library renders it under
+ * its title, above the search field). `ResumeSlot` reserves its own space, so nothing moves when the
+ * card arrives.
  */
 export function LibraryRoute() {
   return (
     <Screen>
-      <ResumeSlot />
-      <LibraryScreen />
+      <LibraryScreen header={<ResumeSlot />} />
     </Screen>
   );
 }

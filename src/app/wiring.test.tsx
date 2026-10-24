@@ -217,7 +217,7 @@ describe('first launch to the sample book', () => {
     services = { ...makeServices('wiring-skip'), sampleBook: provider };
     renderApp(services);
     fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
-    expect(await screen.findByText('Your shelf is waiting')).toBeInTheDocument();
+    expect(await screen.findByText('Your library is empty')).toBeInTheDocument();
     fireEvent.click(await screen.findByRole('button', { name: 'Add the sample book' }));
     expect(
       await screen.findByRole('heading', {
@@ -233,7 +233,7 @@ describe('first launch to the sample book', () => {
     await screen.findByRole('heading', { level: 1, name: /no account/i });
     expect(screen.queryByRole('button', { name: /sample/i })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByRole('button', { name: /sample/i })).toBeNull();
   });
 });
