@@ -70,3 +70,18 @@ export interface HintStore {
   hasSeen: (id: string) => boolean;
   markSeen: (id: string) => void;
 }
+
+/**
+ * One audio bookmark as the player lists it. Seconds are from the start of the whole book. Map from the data layer's
+ * `BookmarkRecord` ({ id, label, locator: { kind: 'audio', trackIndex, positionSec }, createdAt }) by adding the
+ * track's `startOffsetSec` to `locator.positionSec`; an empty `label` becomes `undefined`.
+ */
+export interface PlayerBookmark {
+  id: string;
+  /** Seconds from the start of the book. */
+  positionSec: number;
+  /** What the user typed, if anything. Shown next to the time. */
+  label?: string;
+  /** Chapter title at that position, if the app knows it. */
+  chapter?: string;
+}

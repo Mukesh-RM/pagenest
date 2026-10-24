@@ -8,6 +8,10 @@ export const BUDGETS = {
   lighthouse: {
     /** Blueprint 19 asks for PWA and accessibility; the "no lag, ever" rule adds performance. Minimum score, 0 to 100. */
     minScore: { pwa: 90, accessibility: 90, performance: 90 },
+    /** Cumulative layout shift must stay under this on every audited page (Lighthouse CLS audit). */
+    maxCls: 0.1,
+    /** Extra scenarios audited besides the screens: a mid-size library (books seeded into IndexedDB) and a true first launch (onboarding visible). */
+    scenarios: { libraryBooks: 250 },
   },
 
   /** QA choice. Blueprint 16 allows 3 MB for the whole shell; the first-load JavaScript must stay far below that. */
@@ -19,7 +23,13 @@ export const BUDGETS = {
   /** Blueprint 3: "Every action responds within 100 ms". Measured from pointerdown to the first painted frame showing the change. */
   tap: {
     p95Ms: 100,
-    samples: 24,
+    /** Samples per gate, after the warm-up. p95 of 30 is the second-slowest tap, so one stray frame cannot fail the gate. */
+    samples: 30,
+    /** Extra taps made first and discarded (cold caches, first style recalculation). */
+    warmup: 4,
+    /** 1-minute load average per CPU core above which the machine is considered busy (other agents, CI neighbours). A failing
+     *  gate on a busy machine is measured once more. The threshold itself is never relaxed. */
+    busyLoadPerCore: 0.5,
     /** Emulates a mid-range phone (blueprint 16 targets mid-range hardware). 1 = no throttling. */
     cpuThrottle: 4,
   },

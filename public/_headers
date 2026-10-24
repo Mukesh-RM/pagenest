@@ -5,7 +5,7 @@
 #   default-src 'self'            no third-party origin anywhere; fonts, icons and all code are self-hosted
 #   script-src 'self' 'wasm-unsafe-eval'   Vite bundles; WebAssembly (pdf.js, ONNX Runtime Web) must compile. No inline scripts, no eval.
 #   worker-src 'self' blob:       Comlink workers are bundled files; blob: covers libraries that spawn blob workers
-#   style-src 'self' 'unsafe-inline'  Radix and e-book iframes inject <style> elements; no external CSS
+#   style-src 'self' 'unsafe-inline' blob:  Radix and e-book iframes inject <style> elements; the e-book engine links blob: stylesheets; no external CSS
 #   img-src 'self' blob: data:    covers and book images are object URLs / data URIs from OPFS
 #   media-src 'self' blob:        the single <audio> element plays object URLs created from OPFS files
 #   font-src 'self'               Inter, Literata etc. are self-hosted woff2
@@ -16,7 +16,7 @@
 #   frame-ancestors 'none'        the app cannot be embedded
 
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data:; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data:; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Frame-Options: DENY

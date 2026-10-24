@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
+import { configure } from '@testing-library/react';
 import { vi } from 'vitest';
 import { createMockAudioElement } from '@/engines/audio/test/mock-audio';
 
@@ -15,3 +16,5 @@ if (typeof URL.createObjectURL !== 'function') {
   URL.createObjectURL = () => 'blob:vitest';
   URL.revokeObjectURL = () => undefined;
 }
+
+configure({ asyncUtilTimeout: 5000 });

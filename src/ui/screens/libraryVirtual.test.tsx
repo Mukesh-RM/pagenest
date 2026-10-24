@@ -52,10 +52,16 @@ describe('LibraryScreen windowing', () => {
   it('virtualizeAbove tunes or turns off the threshold', () => {
     const { rerender } = render(screenFor(30, { virtualizeAbove: 10 }));
     expect(document.querySelector('[data-virtual="true"]')).not.toBeNull();
-    rerender(screenFor(3000, { virtualizeAbove: Infinity }));
+    // A set above the default threshold (60) is windowed unless the threshold is switched off; 200 books show the
+    // difference without drawing thousands of cards (the cost of drawing them all is the point of windowing, not of this test).
+    const many = LIBRARY_VIRTUALIZE_ABOVE * 3 + 20;
+    rerender(screenFor(many));
+    expect(document.querySelector('[data-virtual="true"]')).not.toBeNull();
+    expect(within(screen.getByRole('list', { name: 'Books' })).getAllByRole('listitem').length).toBeLessThan(many);
+    rerender(screenFor(many, { virtualizeAbove: Infinity }));
     expect(document.querySelector('[data-virtual]')).toBeNull();
-    expect(within(screen.getByRole('list', { name: 'Books' })).getAllByRole('listitem')).toHaveLength(3000);
-  }, 20000);
+    expect(within(screen.getByRole('list', { name: 'Books' })).getAllByRole('listitem')).toHaveLength(many);
+  });
 
   it('windows the list view too', () => {
     render(screenFor(2000, { view: 'list' }));

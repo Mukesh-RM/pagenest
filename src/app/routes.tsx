@@ -19,10 +19,6 @@ import {
   preloadScreensWhenIdle,
 } from './screens';
 
-// Start the first screen's download now, in parallel with reading saved settings: the Library for a
-// device that finished onboarding before, onboarding for a new one (see first-run-hint.ts).
-preloadScreens([isReturningDevice() ? 'library' : 'onboarding']);
-
 /** How long after start the other tabs are fetched: past the first paint of the first screen. */
 const TAB_PRELOAD_DELAY_MS = 2000;
 
@@ -38,6 +34,10 @@ function screen(element: JSX.Element, fallback: JSX.Element = <ScreenFallback />
 }
 
 function AppScreens() {
+  // Start the first screen's download after mount (keeps Vite's preload helper out of the entry chunk).
+  useEffect(() => {
+    preloadScreens([isReturningDevice() ? 'library' : 'onboarding']);
+  }, []);
   // When the browser is idle, fetch the other tabs so switching is instant (and works offline).
   useEffect(() => preloadScreensWhenIdle(['library', 'collections', 'stats', 'settings', 'read', 'listen'], TAB_PRELOAD_DELAY_MS), []);
   return (

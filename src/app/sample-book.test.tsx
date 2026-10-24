@@ -162,7 +162,8 @@ describe('sample card in the empty Library', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add the sample book' }));
     expect(provider.importSample).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('heading', { level: 1, name: 'Pride and Prejudice' })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('note')).toHaveTextContent('The reader arrives in a later release'));
+    await waitFor(() => expect(screen.getByRole('region', { name: 'Reading Pride and Prejudice' })).toBeInTheDocument());
+    expect(screen.queryByText(/arrives in a later release/)).not.toBeInTheDocument();
     services.db.close();
   });
 

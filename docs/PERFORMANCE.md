@@ -219,3 +219,17 @@ fetched by a device hint (`pn.onboarded` in localStorage; the database stays the
 the first paint, the Library is drawn only once the resume query has answered (the card is already in the header slot, so nothing moves),
 a position at 0 % is never offered, and the vendor chunks are split. Lighthouse is limited by the ~117 kB gzip entry (react-dom, router,
 Dexie); going lower needs a smaller entry, not more deferral.
+
+## Lazy engine budgets and the runtime cache (Decision 15)
+
+| Chunk (lazy, never in the first load) | Budget, gzip |
+| --- | --- |
+| `engine-pdf-*` (pdf.js) | 125 kB |
+| `docx-core-*`, `docx.worker-*` | 100 kB each |
+| `engine-foliate-*` (foliate-js) | 60 kB |
+| every other lazy chunk / every other worker | 40 kB / 55 kB |
+| first-load JS / CSS | 120 kB / 12 kB (unchanged, hard) |
+
+The engines are not precached (`globIgnores` in `vite.config.ts`), so the precache stays small and the 1 MB per-file cap stays. The service
+worker caches them at runtime, cache first, after the first time that format opens; the app warms the sample book into that cache when idle
+after the first Library render (`src/app/offline-warm.ts`). See docs/DEPLOY.md for the service worker rule and DECISIONS.md, Decision 15.

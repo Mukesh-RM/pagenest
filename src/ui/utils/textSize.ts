@@ -22,7 +22,7 @@ export function textSizePercent(px: number): string {
 /**
  * Write the text size to the root: ONE property, `--pn-font-size`. The `--pn-text-*` tokens are rem-only in tokens.css
  * and `html` uses `font-size: var(--pn-font-size)`, so every size scales from that single value (87.5% to 200%) and
- * nothing else is written. The tab bar caps its own labels in CSS so four tabs still fit at 200%.
+ * nothing else is written. The tab bar shows its labels at the full size and switches to two rows when four do not fit.
  */
 export function applyTextSize(px: number, root: HTMLElement = document.documentElement): void {
   root.style.setProperty('--pn-font-size', `${clampTextSize(px)}px`);

@@ -21,6 +21,19 @@ export const BUDGETS_KB = {
   workerChunk: 55,
 };
 
+/**
+ * Decision 15: explicit per-chunk exceptions for the Reader's LAZY engines (they download the first time a book of that
+ * format opens and are never in the first load; the first-load budget above stays hard). Anything not named here keeps
+ * the lazy-chunk or worker budget. Names come from `manualChunks` in vite.config.ts (`engine-pdf`, `engine-foliate`) and from
+ * the engine modules themselves (`docx-core`, `docx.worker`).
+ */
+export const ENGINE_CHUNK_BUDGETS_KB = [
+  { pattern: /^engine-pdf-/, label: 'engine chunk (pdf.js)', budget: 125 },
+  { pattern: /^docx-core-/, label: 'engine chunk (docx)', budget: 100 },
+  { pattern: /^docx\.worker-/, label: 'engine worker (docx)', budget: 100 },
+  { pattern: /^engine-foliate-/, label: 'engine chunk (epub)', budget: 60 },
+];
+
 const kb = (bytes) => bytes / 1000;
 const gzipSize = (file) => gzipSync(readFileSync(file), { level: 9 }).length;
 
@@ -72,7 +85,14 @@ export function checkBundle(distDir, budgets = BUDGETS_KB) {
   const assetsDir = join(dist, 'assets');
   const initial = new Set(assets.js.map((h) => h.split('/').pop()));
   if (existsSync(assetsDir)) {
-    for (const name of readdirSync(assetsDir).filter((n) => n.endsWith('.js') && !initial.has(n)).sort()) {
+    for (const name of readdirSync(assetsDir)
+      .filter((n) => n.endsWith('.js') && !initial.has(n))
+      .sort()) {
+      const engine = ENGINE_CHUNK_BUDGETS_KB.find((e) => e.pattern.test(name));
+      if (engine) {
+        report(`${engine.label} ${name}`, kb(gzipSize(join(assetsDir, name))), engine.budget);
+        continue;
+      }
       const isWorker = /\.worker-/.test(name);
       const budget = isWorker ? (budgets.workerChunk ?? budgets.lazyChunk) : budgets.lazyChunk;
       report(`${isWorker ? 'worker chunk' : 'lazy chunk'} ${name}`, kb(gzipSize(join(assetsDir, name))), budget);

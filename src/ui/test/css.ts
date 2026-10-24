@@ -75,7 +75,7 @@ function parseDeclarations(body: string): Record<string, string> {
   return out;
 }
 
-/** Minimal CSS parser: flat rules and one level of at-rule nesting (@media, @keyframes skipped). */
+/** Minimal CSS parser: flat rules and one level of at-rule nesting (@media, @supports, @container; @keyframes skipped). */
 export function parseCss(source: string): CssRule[] {
   const css = stripComments(source);
   const rules: CssRule[] = [];
@@ -95,7 +95,7 @@ export function parseCss(source: string): CssRule[] {
       }
       const inner = text.slice(open + 1, j - 1);
       if (prelude.startsWith('@')) {
-        if (prelude.startsWith('@media') || prelude.startsWith('@supports')) walk(inner, prelude);
+        if (prelude.startsWith('@media') || prelude.startsWith('@supports') || prelude.startsWith('@container')) walk(inner, prelude);
         // @font-face and @keyframes are not selector rules; skip.
       } else if (prelude) {
         const declarations = parseDeclarations(inner);

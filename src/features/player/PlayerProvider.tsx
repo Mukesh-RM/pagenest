@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import type { ProgressService } from '@/app/contracts';
-import { createAudioController, createAudioElement } from '@/engines/audio';
 import type { AudioController } from '@/engines/audio/types';
 import { useServices } from '@/app/services-context';
+import { createDeferredAudioController } from './deferred-audio-controller';
 import { useChromePlayerStore } from './chrome-store';
 import { useEnginePlayerStore } from './engine-store';
 import { chromeSnapshotFromAudioState, resetChromeCoverCacheForTests } from './sync-chrome-from-engine';
@@ -17,18 +17,16 @@ export function getAudioController(): AudioController | undefined {
   return sharedController;
 }
 
+export function getSharedAudioElement(): HTMLAudioElement | undefined {
+  return sharedAudio;
+}
+
 /** Test-only: drop the singleton between cases. */
 export function resetAudioForTests(): void {
   sharedController = undefined;
   sharedAudio = undefined;
   useChromePlayerStore.getState().clear();
   resetChromeCoverCacheForTests();
-}
-
-function ensureController(progress: ProgressService): AudioController {
-  if (!sharedAudio) sharedAudio = createAudioElement();
-  if (!sharedController) sharedController = createAudioController({ audio: sharedAudio, progress });
-  return sharedController;
 }
 
 export function useAudioController(): AudioController {
@@ -42,7 +40,14 @@ export function useAudioController(): AudioController {
  */
 export function PlayerProvider({ children }: { children: ReactNode }) {
   const { progress } = useServices();
-  const controller = useMemo(() => ensureController(progress), [progress]);
+  const controller = useMemo(() => {
+    const deferred = createDeferredAudioController(progress, (audio, active) => {
+      sharedAudio = audio;
+      sharedController = active;
+    });
+    sharedController = deferred;
+    return deferred;
+  }, [progress]);
   const setEngineState = useEnginePlayerStore((s) => s.setState);
   const setChrome = useChromePlayerStore((s) => s.setChrome);
 

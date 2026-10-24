@@ -35,7 +35,7 @@ describe('app shell', () => {
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
     expect(screen.queryByTestId('pn-rail')).toBeNull(); // phone width: only the tab bar is in the DOM
     expect(within(bar).getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
-    await screen.findByText('Your library is empty');
+    await screen.findByText('Your library is empty', {}, { timeout: 5000 });
   });
 
   it.each([

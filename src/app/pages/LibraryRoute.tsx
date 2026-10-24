@@ -1,10 +1,11 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LibraryScreen } from '@/features/library';
 import { loadResume, type ResumeInfo } from '@/data/resume';
 import { LibraryResume } from '../components/LibraryResume';
 import { Screen } from '../components/PageHeader';
+import { scheduleOfflineWarm } from '../offline-warm';
 import { pathForBook } from '../route-paths';
 import { ScreenFallback } from '../ScreenFallback';
 import { useServices } from '../services-context';
@@ -42,6 +43,12 @@ function useResumeHeader(): { ready: boolean; header: ReactNode } {
  */
 export function LibraryRoute() {
   const { ready, header } = useResumeHeader();
+  const services = useServices();
+  // Once the Library is on screen: keep the sample book (and, when they ship, the Reader engines) for offline use. Draws nothing.
+  useEffect(() => {
+    if (!ready) return undefined;
+    return scheduleOfflineWarm(async () => (await import('../offline-assets')).offlineWarmTasks(services));
+  }, [ready, services]);
   if (!ready) return <ScreenFallback />;
   return (
     <Screen>

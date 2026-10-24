@@ -10,7 +10,8 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/check-bundle.mjs",
+    "build": "tsc -b && vite build && node scripts/check-bundle.mjs && node scripts/check-no-seed-in-dist.mjs",
+    "build:seed-audio": "VITE_PN_SEED_AUDIO=1 npm run build",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b",
@@ -22,13 +23,17 @@
     "test:e2e:library": "playwright test -c src/features/library/e2e/playwright.config.mjs",
     "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs",
     "audit": "node scripts/audit-all.mjs",
-    "audit:licenses": "node scripts/audit-licenses.mjs --check"
+    "audit:licenses": "node scripts/audit-licenses.mjs --check",
+    "test:e2e:reader": "playwright test -c src/features/reader/e2e/playwright.config.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
+    "foliate-js": "^1.0.1",
+    "mammoth": "^1.13.0",
     "mp4box": "^2.4.1",
     "music-metadata": "^12.2.3",
+    "pdfjs-dist": "^5.6.205",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.4",

@@ -33,7 +33,7 @@ import type { ThemeChoice } from '../theme/themes';
 import { ShortcutsProvider } from '../shortcuts';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import type { ThemeName } from '../theme/themes';
-import type { BookSummary, ReaderSettings } from '../types';
+import type { BookSummary, PlayerBookmark, ReaderSettings } from '../types';
 import { timeLeftLabel } from '../utils/time';
 import {
   SAMPLE_BOOKS,
@@ -273,12 +273,21 @@ function ReaderDemo({ aa, theme }: { aa?: boolean; theme: ThemeName }) {
 
 const SPEEDS = [1, 1.25, 1.5, 2, 0.75];
 
+/** Demo bookmarks for the gallery (the app reads the real ones from the data layer). */
+const DEMO_BOOKMARKS: readonly PlayerBookmark[] = [
+  { id: 'bm1', positionSec: 12 * 60 + 40, label: 'Ines arrives at the gate', chapter: 'Chapter 1: The long road' },
+  { id: 'bm2', positionSec: 2 * 3600 + 3 * 60 + 9, chapter: 'Chapter 4: What the trees remember' },
+  { id: 'bm3', positionSec: 3 * 3600 + 51 * 60 + 30, label: 'Recipe for the plum cake, read again before Sunday and copy it out for Mara', chapter: 'Chapter 6: Windfall' },
+];
+
 function PlayerDemo() {
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(4 * 3600 + 5 * 60 + 12);
   const [speedIndex, setSpeedIndex] = useState(1);
   const duration = SAMPLE_DETAIL.durationSeconds ?? 9 * 3600;
   const speed = SPEEDS[speedIndex]!;
+  const [bookmarks, setBookmarks] = useState<readonly PlayerBookmark[]>(DEMO_BOOKMARKS);
+  const [skip, setSkip] = useState({ back: 15, forward: 30 });
   return (
     <AudioPlayerScreen
       book={SAMPLE_DETAIL}
@@ -295,6 +304,12 @@ function PlayerDemo() {
       onSleepClick={noop}
       onChaptersClick={noop}
       onCollapse={noop}
+      skipBackSeconds={skip.back}
+      skipForwardSeconds={skip.forward}
+      onSkipIntervalChange={(direction, seconds) => setSkip((s) => ({ ...s, [direction]: seconds }))}
+      bookmarks={bookmarks}
+      onAddBookmark={(positionSec) => setBookmarks((list) => [...list, { id: `bm-${positionSec}-${list.length}`, positionSec }])}
+      onDeleteBookmark={(bookmark) => setBookmarks((list) => list.filter((b) => b.id !== bookmark.id))}
     />
   );
 }

@@ -4,7 +4,7 @@ import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
 import type { AudioItemSource } from '@/features/library/audio-item';
 import { DEV_FIXTURE_BOOK_ID, loadDevAudioFixture } from './dev/fixtures';
-import { loadReviewSeedAudiobook, SEED_AUDIO_BOOK_ID } from './seed/seed-audiobook';
+import { isSeedAudioBuildEnabled } from './seed/seed-build';
 
 export type LoadAudiobookResult =
   | { ok: true; welcome?: ResumeInfo }
@@ -19,9 +19,12 @@ export async function loadAudiobookForBook(
   position: ResumeInfo | undefined,
   data?: AudioItemSource,
 ): Promise<LoadAudiobookResult> {
-  if (book.id === SEED_AUDIO_BOOK_ID) {
-    await loadReviewSeedAudiobook(controller);
-    return { ok: true, welcome: position };
+  if (isSeedAudioBuildEnabled()) {
+    const seed = await import('./seed/seed-audiobook');
+    if (book.id === seed.SEED_AUDIO_BOOK_ID) {
+      await seed.loadReviewSeedAudiobook(controller);
+      return { ok: true, welcome: position };
+    }
   }
 
   if (import.meta.env.DEV && book.id === DEV_FIXTURE_BOOK_ID) {

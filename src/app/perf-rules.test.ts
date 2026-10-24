@@ -45,7 +45,6 @@ describe('performance rules for src/app', () => {
       'pages/CollectionsPage',
       'pages/StatsPage',
       'pages/SettingsPage',
-      'pages/ReaderScreen',
       'pages/PlayerScreen',
       'pages/BookRoute',
       'onboarding/Onboarding',
@@ -68,6 +67,19 @@ describe('performance rules for src/app', () => {
     expect(services).toContain("from '@/features/library/provider'");
   });
 
+  it('never imports the player feature barrel from shell services or PWA prompts', () => {
+    const barrel = /from '@\/features\/player'/;
+    const offenders = ['src/app/services.tsx', 'src/app/components/PwaPromptsHost.tsx'].filter((name) => {
+      const text = files.find((f) => f.name === name)?.text ?? '';
+      return barrel.test(text);
+    });
+    expect(offenders).toEqual([]);
+    const services = files.find((f) => f.name.endsWith('services.tsx'))?.text ?? '';
+    expect(services).toContain('./route-chrome');
+    const pwa = files.find((f) => f.name.endsWith('PwaPromptsHost.tsx'))?.text ?? '';
+    expect(pwa).toContain('../route-chrome');
+  });
+
   it('keeps overlays (PWA prompts) out of the first-paint chunk: only dynamic imports', () => {
     const lazyWrappers = /Lazy(PwaPrompts)\.tsx$/;
     const offenders = files
@@ -88,9 +100,14 @@ describe('performance rules for src/app', () => {
     expect(routes).toMatch(/import\.meta\.env\.DEV\s*\?\s*lazy\(/);
   });
 
-  it('does no network access', () => {
+  it('does no network access, except the one same-origin warm-up of our own assets (Decision 15)', () => {
     const offenders = files.filter((f) => /\bfetch\(|XMLHttpRequest|WebSocket|sendBeacon/.test(f.text)).map((f) => f.name);
-    expect(offenders).toEqual([]);
+    expect(offenders).toEqual(['src/app/offline-assets.ts']);
+    const warm = files.find((f) => f.name === 'src/app/offline-assets.ts')?.text ?? '';
+    expect(warm).toMatch(/fetch\(sampleUrl, \{ credentials: 'same-origin' \}\)/); // a bundled asset URL, never a literal address
+    expect(warm).not.toMatch(/https?:\/\//);
+    // and it is only ever loaded lazily, after the Library is drawn
+    expect(files.filter((f) => /from '\.\/offline-assets'|from '\.\.\/offline-assets'/.test(f.text)).map((f) => f.name)).toEqual([]);
   });
 
   it('animates only with transform or opacity in app-owned CSS', () => {

@@ -6,11 +6,11 @@ import { EmptyState } from '@/ui';
 import { Screen } from '../components/PageHeader';
 import { ImmersiveFallback } from '../ScreenFallback';
 import { pathForBook } from '../route-paths';
-import { ensureSeedAudiobookBookRecord, isSeedAudiobookRequest, SEED_AUDIO_BOOK_ID } from '@/features/player/seed/seed-audiobook';
+import { maybeEnsureSeedAudiobookOnRoute } from './book-route-seed';
 import { useServices } from '../services-context';
 import '../screen-styles';
 
-const ReaderScreen = lazy(() => import('./ReaderScreen'));
+const ReaderScreen = lazy(() => import('@/features/reader/live/LiveReader'));
 const PlayerScreen = lazy(() => import('./PlayerScreen'));
 
 type Loaded = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; book: BookRecord; position: ResumeInfo | undefined };
@@ -28,9 +28,9 @@ function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
   const [seedTick, setSeedTick] = useState(0);
 
   useEffect(() => {
-    if (id === SEED_AUDIO_BOOK_ID && isSeedAudiobookRequest()) {
-      void ensureSeedAudiobookBookRecord(db).then(() => setSeedTick((n) => n + 1));
-    }
+    void maybeEnsureSeedAudiobookOnRoute(db, id).then((seeded) => {
+      if (seeded) setSeedTick((n) => n + 1);
+    });
   }, [db, id]);
 
   useEffect(() => {

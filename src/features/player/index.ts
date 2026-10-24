@@ -8,4 +8,3 @@ export { FullPlayerView } from './FullPlayerView';
 export { useIsPlaying, usePlayerStore, selectIsPlaying, selectMiniPlayerActive } from './audio-store';
 export { attachPlayerKeyboard } from './keyboard-shortcuts';
 export { loadAudiobookForBook } from './load-audiobook';
-export { SEED_AUDIO_BOOK_ID, ensureSeedAudiobookBookRecord, isSeedAudiobookRequest } from './seed/seed-audiobook';
