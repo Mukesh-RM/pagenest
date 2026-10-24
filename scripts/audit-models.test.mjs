@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { auditProject, loadRegistry, renderDoc, renderLicensesSection, run, scanText, summarize, validateRegistry } from './audit-models.mjs';
+import { analyzeTemplateUrl, auditProject, loadRegistry, renderDoc, renderLicensesSection, run, scanText, summarize, validateRegistry } from './audit-models.mjs';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pn-mod-'));
 const write = (root, rel, content) => {
@@ -93,7 +93,7 @@ test('blocked components are flagged by name (espeak, phonemizer, orpheus)', () 
   assert.deepEqual(rules(scanText("const m = 'orpheus-3b';", 'src/a.ts', REG)), ['component-not-ok']);
 });
 
-test('model URLs built at run time give a warning', () => {
+test('model URLs built at run time with unregistered pieces give a warning', () => {
   const f = scanText('const u = `https://huggingface.co/rhasspy/piper-voices/resolve/main/${path}`;', 'src/a.ts', REG);
   assert.ok(f.some((x) => x.level === 'warn' && x.rule === 'dynamic-model-url'));
   assert.ok(!f.some((x) => x.level === 'fail'));
@@ -193,4 +193,45 @@ test('shipped registry: well formed, real findings pinned', () => {
   for (const v of reg.voices) if (v.reviewed === 'auto') assert.notEqual(v.verdict, 'OK', `${v.id}: auto-reviewed voices can never be OK`);
   assert.equal(reg.components.find((c) => c.id === 'phonemizer-npm').verdict, 'NOT-OK');
   assert.equal(reg.components.find((c) => c.id === 'orpheus-3b').verdict, 'NOT-OK');
+});
+
+const TEMPLATE = 'return `https://huggingface.co/rhasspy/piper-voices/resolve/main/${path}/${voiceId}.onnx.json`;';
+
+test('template URL on a fixed registered Piper repo is resolved when the file lists registry-OK voices', () => {
+  const file = ["const MAP = { 'en_US-good-medium': 'en/en_US/good/medium' };", TEMPLATE].join('\n');
+  assert.deepEqual(scanText(file, 'src/voices.ts', REG), []);
+  // path literals count as voice literals too
+  assert.deepEqual(scanText(["const P = 'en/en_US/good/medium';", TEMPLATE].join('\n'), 'src/voices.ts', REG), []);
+});
+
+test('template URL stays strict: no voice literal, or a blocked literal, or unresolvable pieces', () => {
+  // no voice ids in the file: cannot tell what is selected
+  const none = scanText(TEMPLATE, 'src/voices.ts', REG);
+  assert.deepEqual(none.map((f) => `${f.level}:${f.rule}`), ['warn:dynamic-model-url']);
+  // a NOT-OK or unknown voice literal in the same file fails, template or not
+  assert.ok(scanText(["const MAP = { 'en_US-lessac-medium': 'en/en_US/lessac/medium' };", TEMPLATE].join('\n'), 'src/v.ts', REG).some((f) => f.level === 'fail' && f.rule === 'voice-not-ok'));
+  assert.ok(scanText(["const MAP = { 'en_GB-nobody-high': 'x' };", TEMPLATE].join('\n'), 'src/v.ts', REG).some((f) => f.rule === 'voice-not-in-registry'));
+  // an audit-ignore deny-list line is not an approved literal and does not count
+  const denyOnly = "const DENY = ['en_US-lessac-medium']; // audit-ignore: deny-list\n" + TEMPLATE;
+  assert.deepEqual(scanText(denyOnly, 'src/v.ts', REG).map((f) => f.rule), ['dynamic-model-url']);
+});
+
+test('analyzeTemplateUrl: dynamic host/repo, unregistered or non-voice repo, expressions and dynamic revisions are unresolvable', () => {
+  const t = (u) => analyzeTemplateUrl(`return \`${u}\`;`, REG);
+  assert.equal(t('https://huggingface.co/rhasspy/piper-voices/resolve/main/${a}/${b}.onnx').resolvable, true);
+  assert.equal(t('https://huggingface.co/rhasspy/piper-voices/resolve/main/${v.path}/x.onnx').resolvable, true);
+  assert.match(t('https://huggingface.co/${org}/piper-voices/resolve/main/${a}').why, /repository part/);
+  assert.match(t('https://huggingface.co/rhasspy/${repo}/resolve/main/${a}').why, /repository part/);
+  assert.match(t('https://huggingface.co/someone/else/resolve/main/${a}').why, /not in the registry/);
+  assert.match(t('https://huggingface.co/hexgrad/Kokoro-82M/resolve/main/${a}').why, /not a Piper voice repo/);
+  assert.match(t('https://huggingface.co/rhasspy/piper-voices/resolve/${rev}/${a}').why, /fixed revision/);
+  assert.match(t('https://huggingface.co/rhasspy/piper-voices/resolve/main/${a + b}.onnx').why, /expression/);
+  assert.match(t('https://huggingface.co/rhasspy/piper-voices/resolve/main/${fn(a)}.onnx').why, /expression/);
+  assert.equal(analyzeTemplateUrl('const u = `https://huggingface.co/rhasspy/piper-voices/resolve/main/a.onnx`;', REG), null);
+  assert.equal(analyzeTemplateUrl('const u = 1;', REG), null);
+});
+
+test('unregistered repo in a template is a failure, not just a warning', () => {
+  const f = scanText(['const MAP = { \'en_US-good-medium\': 1 };', 'return `https://huggingface.co/someone/else/resolve/main/${a}.onnx`;'].join('\n'), 'src/v.ts', REG);
+  assert.ok(f.some((x) => x.level === 'fail' && x.rule === 'hf-repo-not-in-registry'));
 });

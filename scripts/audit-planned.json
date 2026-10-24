@@ -199,11 +199,11 @@
     },
     {
       "name": "music-metadata",
-      "version": "latest",
+      "version": "^11.16.1",
       "license": "MIT",
       "source": "https://www.npmjs.com/package/music-metadata",
       "status": "OK",
-      "note": "Browser build."
+      "note": "Prod dependency of the import worker (audio tags). Its runtime dependencies (@borewit/text-codec, @tokenizer/*, content-type, debug, file-type, ieee754, media-typer, ms, strtok3, token-types, uint8array-extras, win-guid) are all MIT or BSD-3-Clause."
     },
     {
       "name": "mp4box",
@@ -362,6 +362,17 @@
         "- **Voice rule:** every Piper voice is checked per voice. `en_US-lessac` (Blizzard 2013, research only) is NOT allowed; prefer `en_US-libritts-high` (trained from scratch, CC BY 4.0). `en_US-libritts_r-medium` is fine-tuned from lessac and is NOT OK (docs/MODEL_VETTING.md). Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) need the Hugging Face weight license tag checked before use.",
         "- **Enforcement:** `audit-licenses.mjs` fails when an installed package is `phonemizer`, `espeak*`, `piper-wasm`, `piper-phonemize*` or similar, even if it declares a permissive license, unless a reviewed entry is added to `scripts/audit-license-overrides.json` after the decision is recorded.",
         "- **Related, Decision 9 (dev-only licenses):** MPL-2.0 dev-only tools (`axe-core`, `@axe-core/playwright`) are accepted. LGPL libvips binaries shipped with `sharp` are accepted only as dev-only and never bundled; the audit flags them if shipped."
+      ]
+    },
+    {
+      "title": "Bundled content (sample book)",
+      "paragraphs": [
+        "- **The Tale of Peter Rabbit, by Beatrix Potter** (EPUB, 435 KB, `src/features/library/sample/peter-rabbit.epub`): Project Gutenberg ebook 14838, https://www.gutenberg.org/ebooks/14838 (checked against gutenberg.org on Oct 24, 2026: catalog entry \"Copyright: Public domain in the USA\", release date Jan 30, 2005, last update May 23, 2026, credits Robert Cicconetti, Ronald Holder and the PG Online Distributed Proofreading Team).",
+        "- **Copyright:** the text and the illustrations are by Beatrix Potter (1866-1943). The book was first published in 1902, so its United States copyright has expired. The copyright term of life + 70 years ended on Dec 31, 2013 in the UK and the EU. Some countries have a longer term, so \"public domain\" is not true everywhere; Project Gutenberg itself says people outside the United States must check their own law. Project Gutenberg claims no copyright in the markup or formatting of the EPUB.",
+        "- **Other trademarks:** copyright expiry does not remove trademarks. Frederick Warne & Co. (Penguin Random House) holds trademarks on the PETER RABBIT name and on some character designs (Frederick Warne & Co. v. Book Sales, Inc., 481 F. Supp. 1191, S.D.N.Y. 1979). The EPUB shows the original publisher's marks (\"F. Warne & Co.\" on the cover and title page) as part of the 1902 book. Use them only as the content of this one book; do not use the name or the artwork as PageNest branding (icon, store listing, marketing) or in a way that suggests Warne or Penguin back the app.",
+        "- **Project Gutenberg name and license:** the EPUB carries Project Gutenberg's header, the \"Project Gutenberg License\" and the trademark text. While those stay in the file, the Project Gutenberg License (https://www.gutenberg.org/policy/license.html, paragraphs 1.E.1 to 1.E.7) applies: the file must be a verbatim copy of the official file (a change of file format is allowed, a change of content is not), the license must stay attached, and nothing may be charged for access without following paragraph 1.E.8 (20% royalty) or getting permission. PageNest is free, so no royalty applies. The other way out is to remove every reference to Project Gutenberg from the file (header, license, footer, and the gutenberg.org identifier and source in the OPF metadata); then the trademark terms no longer apply, but the file is no longer the official file and the \"Project Gutenberg, ebook 14838\" line in the app is the only credit. Credits in the app (with a link, if possible) are fine either way: Project Gutenberg's permission page says crediting needs no permission.",
+        "- **Open item (found in this audit):** the file in the repository is not the official file. The official EPUB3 with images (https://www.gutenberg.org/ebooks/14838.epub3.images, 1,510,461 bytes, SHA-256 `fa91774a0e841557f4d33e63f13aab7f7dcfb8cf05ca4eb8733308eeb40e69c5`) has the same 40 files, and 12 of them are byte-identical (all text, license, metadata and CSS), but the 28 images (cover and 27 illustrations) were scaled down (for example the cover from 623x877 to 400x563, illustrations to 360 px wide) and re-compressed, so the file is 435 KB instead of 1.5 MB. That is a content change, so keeping the Project Gutenberg header and license on it is not allowed under paragraph 1.E.1 to 1.E.6 unless the official file is restored. Fix: either copy the official file over `peter-rabbit.epub` (and change \"435 KB\" to \"1.5 MB\" here), or strip all Project Gutenberg references as described above. Status until then: NOT OK to ship with the Project Gutenberg name; OK once fixed.",
+        "- **Use:** shown on the Library's \"Try a sample book\" card, which reads \"Public domain. Project Gutenberg, ebook 14838.\" The file is fetched from our own origin (`credentials: 'same-origin'`, Content-Security-Policy `connect-src 'self'`) only when a person taps the card; the service worker precache pattern lists no `.epub` (so it is never precached), and nothing downloads it at start-up. The EPUB loads no external resource (its only `http(s)` references are links to gutenberg.org that do nothing until tapped)."
       ]
     }
   ]
