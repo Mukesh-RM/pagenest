@@ -272,5 +272,6 @@ jobs:
             tests/test-results/
             tests/qa-reports/
             tests/artifacts/
+            tests/lighthouse/reports/
           if-no-files-found: ignore
           retention-days: 14

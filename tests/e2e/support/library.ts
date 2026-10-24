@@ -126,6 +126,41 @@ export function bookCards(page: Page): Locator {
   return page.getByRole('main').getByRole('listitem');
 }
 
+/**
+ * A card by its text, whether or not the Library windows (virtualises) its list: scrolls down the page in steps until the card
+ * is in the DOM, scrolls it to the middle of the screen and returns its locator. Fails with a clear message if it never appears.
+ */
+export async function findCard(page: Page, text: string | RegExp): Promise<Locator> {
+  const card = bookCards(page).filter({ hasText: text });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  for (let i = 0; i < 60; i++) {
+    if (await card.count()) {
+      // a windowed list re-renders while it scrolls, so the node can be replaced between count() and the scroll: retry
+      for (let k = 0; k < 5; k++) {
+        try { await card.first().scrollIntoViewIfNeeded({ timeout: 2000 }); return card.first(); } catch { await page.waitForTimeout(100); }
+      }
+    }
+    const moved = await page.evaluate(() => { const before = scrollY; window.scrollBy(0, Math.max(200, innerHeight * 0.7)); return scrollY - before; });
+    await page.waitForTimeout(220);
+    if (moved <= 0) break;
+  }
+  throw new Error(`No Library card with text ${String(text)} appeared while scrolling the whole list`);
+}
+
+/** Walks the whole Library list top to bottom and returns every distinct card seen (text and box), for windowed lists. */
+export async function scanCards(page: Page): Promise<{ text: string; right: number; width: number }[]> {
+  const seen = new Map<string, { text: string; right: number; width: number }>();
+  await page.evaluate(() => window.scrollTo(0, 0));
+  for (let i = 0; i < 60; i++) {
+    for (const c of await bookCards(page).evaluateAll((els) => els.map((el) => { const r = el.getBoundingClientRect(); return { text: (el.textContent ?? '').replace(/\s+/g, ' ').trim(), right: r.right, width: r.width }; }))) seen.set(c.text, c);
+    const moved = await page.evaluate(() => { const before = scrollY; window.scrollBy(0, Math.max(200, innerHeight * 0.7)); return scrollY - before; });
+    await page.waitForTimeout(220);
+    if (moved <= 0) break;
+  }
+  await page.evaluate(() => window.scrollTo(0, 0));
+  return [...seen.values()];
+}
+
 export function searchField(page: Page): Locator {
   return page.getByRole('searchbox').or(page.getByRole('textbox', { name: /search/i })).first();
 }

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { launch } from '../e2e/support/app';
 import { bookCards, filterChip, searchField, seedLibrary, SEED } from '../e2e/support/library';
-import { flingScroll, longTasks, measureInput, recordLongTasks, throttleCpu } from '../e2e/support/perf';
+import { flingScroll, touchScroll, longTasks, measureInput, recordLongTasks, throttleCpu } from '../e2e/support/perf';
 import { BUDGETS } from './budgets';
 
 // Large-library gates (brief: at least 1,000 books; blueprint 16: 5,000 books must scroll at 60 fps).
@@ -42,6 +42,23 @@ test(`scrolling a ${BUDGETS.library.sizeForScroll}-book library stays smooth (bl
   console.log(line);
   await testInfo.attach('library-scroll.txt', { body: line, contentType: 'text/plain' });
   expect(stats.scrolledPx, `the library did not scroll (the page). ${line}`).toBeGreaterThan(1000);
+  expect(stats.p95Ms, line).toBeLessThanOrEqual(j.p95FrameMs);
+  expect(stats.droppedRatio, line).toBeLessThanOrEqual(j.maxDroppedFrameRatio);
+  expect(stats.maxMs, line).toBeLessThanOrEqual(j.maxFrameMs);
+  expect(Math.max(0, ...tasks), line).toBeLessThanOrEqual(j.maxLongTaskMs);
+});
+
+test(`a touch-gesture scroll of the ${BUDGETS.library.sizeForScroll}-book library stays smooth and really moves the page`, async ({ page }, testInfo) => {
+  await openSeededLibrary(page, BUDGETS.library.sizeForScroll);
+  await expect(bookCards(page).first()).toBeVisible({ timeout: 20_000 });
+  await page.evaluate(() => { (window as unknown as { __longTasks: number[] }).__longTasks = []; });
+  const j = BUDGETS.jank;
+  // touchScroll throws if the page did not scroll, so a gesture that goes nowhere can never pass
+  const stats = await touchScroll(page, j.scrollSeconds, j.scrollPxPerSecond, 33.4);
+  const tasks = await longTasks(page);
+  const line = `touch scroll: ${stats.frames} frames, p95 ${stats.p95Ms.toFixed(1)} ms, worst ${stats.maxMs.toFixed(1)} ms, dropped ${(stats.droppedRatio * 100).toFixed(1)} %, scrolled ${Math.round(stats.scrolledPx)} px, long tasks ${JSON.stringify(tasks.map(Math.round))}`;
+  console.log(line);
+  await testInfo.attach('library-touch-scroll.txt', { body: line, contentType: 'text/plain' });
   expect(stats.p95Ms, line).toBeLessThanOrEqual(j.p95FrameMs);
   expect(stats.droppedRatio, line).toBeLessThanOrEqual(j.maxDroppedFrameRatio);
   expect(stats.maxMs, line).toBeLessThanOrEqual(j.maxFrameMs);

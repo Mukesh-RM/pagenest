@@ -3,8 +3,8 @@
 // ANY step failed (strict by default, also locally).
 //
 //   npm run qa                 all gates: stable + quality
-//   npm run qa:stable          unit, e2e on the real app, Lighthouse   (BLOCKING in CI)
-//   npm run qa:gates           product excellence + performance gates  (report-only in CI until QA_GATES_ENFORCED=1)
+//   npm run qa:stable          unit, e2e on the real app, Lighthouse on every screen   (BLOCKING in CI)
+//   npm run qa:gates           product excellence + performance gates + Lighthouse scenarios (250 books, first launch)  (report-only in CI until QA_GATES_ENFORCED=1)
 //
 // Building: locally Playwright's webServer builds the app once. In CI (CI=true) the workflow builds once and every
 // step reuses ./dist (see tests/README.md, "CI"). webkit-iphone runs locally, and in CI only with PAGENEST_WEBKIT=1.
@@ -27,12 +27,14 @@ const reporter = process.env.CI ? '--reporter=list,html,json' : '--reporter=list
 
 const stable = [
   ['Playwright: unit, e2e on the real app, accessibility, offline', ['npx', 'playwright', 'test', '--project=unit', '--project=chromium-desktop', '--project=chromium-mobile', ...(webkit ? ['--project=webkit-iphone'] : [])], process.env],
-  ['Lighthouse: PWA, accessibility, performance on every screen', ['npm', 'run', '--silent', 'lighthouse'], process.env],
+  ['Lighthouse: PWA, accessibility, performance on every screen', ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'none'], process.env],
 ];
 // Two separate runs, so the timing-sensitive performance gates never share the machine with the excellence tests.
 const gates = [
   ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile', '--retries=0', reporter], gatesEnv('gates-excellence')],
   ['Playwright: performance gates (one worker)', ['npx', 'playwright', 'test', '--project=perf-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-perf')],
+  // Cold first launch and a 250-book library (Performance >= 90, CLS < 0.1 each). The first launch is the strictest page: nothing cached yet.
+  ['Lighthouse scenarios: mid-size library and first launch', ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'only'], process.env],
 ];
 const steps = mode === 'stable' ? stable : mode === 'gates' ? gates : [stable[0], ...gates, stable[1]];
 
