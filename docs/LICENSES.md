@@ -8,10 +8,10 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 ## Summary
 
-- Installed packages audited: 392 (13 production, 379 development)
+- Installed packages audited: 685 (19 production, 666 development)
 - Source of data: package-lock.json + node_modules
 - QA toolchain (`tests/`, dev only, never shipped): 183 packages from package-lock.json; OK: 180, OK with note: 3, NOT OK: 0
-- OK: 390, OK with note: 2, NOT OK: 0
+- OK: 657, OK with note: 28, NOT OK: 0
 - Planned assets with open risks: 6 (see the Models table)
 
 ## Dependencies (npm)
@@ -20,23 +20,97 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 |---|---|---|---|---|---|
 | @adobe/css-tools | 4.5.0 | dev | MIT | https://www.npmjs.com/package/@adobe/css-tools/v/4.5.0 | OK |
 | @alloc/quick-lru | 5.3.0 | dev | MIT | https://www.npmjs.com/package/@alloc/quick-lru/v/5.3.0 | OK |
+| @apideck/better-ajv-errors | 0.3.7 | dev | MIT | https://www.npmjs.com/package/@apideck/better-ajv-errors/v/0.3.7 | OK |
 | @asamuzakjp/css-color | 3.2.0 | dev | MIT | https://www.npmjs.com/package/@asamuzakjp/css-color/v/3.2.0 | OK |
 | @babel/code-frame | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/code-frame/v/7.29.7 | OK |
 | @babel/compat-data | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/compat-data/v/7.29.7 | OK |
 | @babel/core | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/core/v/7.29.7 | OK |
 | @babel/generator | 7.29.8 | dev | MIT | https://www.npmjs.com/package/@babel/generator/v/7.29.8 | OK |
+| @babel/helper-annotate-as-pure | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-annotate-as-pure/v/7.29.7 | OK |
 | @babel/helper-compilation-targets | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-compilation-targets/v/7.29.7 | OK |
+| @babel/helper-create-class-features-plugin | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-create-class-features-plugin/v/7.29.7 | OK |
+| @babel/helper-create-regexp-features-plugin | 7.29.10 | dev | MIT | https://www.npmjs.com/package/@babel/helper-create-regexp-features-plugin/v/7.29.10 | OK |
+| @babel/helper-define-polyfill-provider | 0.6.8 | dev | MIT | https://www.npmjs.com/package/@babel/helper-define-polyfill-provider/v/0.6.8 | OK |
 | @babel/helper-globals | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-globals/v/7.29.7 | OK |
+| @babel/helper-member-expression-to-functions | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-member-expression-to-functions/v/7.29.7 | OK |
 | @babel/helper-module-imports | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-module-imports/v/7.29.7 | OK |
 | @babel/helper-module-transforms | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-module-transforms/v/7.29.7 | OK |
+| @babel/helper-optimise-call-expression | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-optimise-call-expression/v/7.29.7 | OK |
 | @babel/helper-plugin-utils | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-plugin-utils/v/7.29.7 | OK |
+| @babel/helper-remap-async-to-generator | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-remap-async-to-generator/v/7.29.7 | OK |
+| @babel/helper-replace-supers | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-replace-supers/v/7.29.7 | OK |
+| @babel/helper-skip-transparent-expression-wrappers | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-skip-transparent-expression-wrappers/v/7.29.7 | OK |
 | @babel/helper-string-parser | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/helper-string-parser/v/7.29.11 | OK |
 | @babel/helper-validator-identifier | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-validator-identifier/v/7.29.7 | OK |
 | @babel/helper-validator-option | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-validator-option/v/7.29.7 | OK |
+| @babel/helper-wrap-function | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/helper-wrap-function/v/7.29.7 | OK |
 | @babel/helpers | 7.29.10 | dev | MIT | https://www.npmjs.com/package/@babel/helpers/v/7.29.10 | OK |
 | @babel/parser | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/parser/v/7.29.11 | OK |
+| @babel/plugin-bugfix-firefox-class-in-computed-class-key | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-bugfix-firefox-class-in-computed-class-key/v/7.29.7 | OK |
+| @babel/plugin-bugfix-safari-class-field-initializer-scope | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-bugfix-safari-class-field-initializer-scope/v/7.29.7 | OK |
+| @babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression/v/7.29.7 | OK |
+| @babel/plugin-bugfix-safari-rest-destructuring-rhs-array | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-bugfix-safari-rest-destructuring-rhs-array/v/7.29.7 | OK |
+| @babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining/v/7.29.7 | OK |
+| @babel/plugin-bugfix-v8-static-class-fields-redefine-readonly | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-bugfix-v8-static-class-fields-redefine-readonly/v/7.29.7 | OK |
+| @babel/plugin-proposal-private-property-in-object | 7.21.0-placeholder-for-preset-env.2 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-proposal-private-property-in-object/v/7.21.0-placeholder-for-preset-env.2 | OK |
+| @babel/plugin-syntax-import-assertions | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-syntax-import-assertions/v/7.29.7 | OK |
+| @babel/plugin-syntax-import-attributes | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-syntax-import-attributes/v/7.29.7 | OK |
+| @babel/plugin-syntax-unicode-sets-regex | 7.18.6 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-syntax-unicode-sets-regex/v/7.18.6 | OK |
+| @babel/plugin-transform-arrow-functions | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-arrow-functions/v/7.29.7 | OK |
+| @babel/plugin-transform-async-generator-functions | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-async-generator-functions/v/7.29.7 | OK |
+| @babel/plugin-transform-async-to-generator | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-async-to-generator/v/7.29.7 | OK |
+| @babel/plugin-transform-block-scoped-functions | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-block-scoped-functions/v/7.29.7 | OK |
+| @babel/plugin-transform-block-scoping | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-block-scoping/v/7.29.11 | OK |
+| @babel/plugin-transform-class-properties | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-class-properties/v/7.29.7 | OK |
+| @babel/plugin-transform-class-static-block | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-class-static-block/v/7.29.7 | OK |
+| @babel/plugin-transform-classes | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-classes/v/7.29.11 | OK |
+| @babel/plugin-transform-computed-properties | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-computed-properties/v/7.29.7 | OK |
+| @babel/plugin-transform-destructuring | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-destructuring/v/7.29.7 | OK |
+| @babel/plugin-transform-dotall-regex | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-dotall-regex/v/7.29.7 | OK |
+| @babel/plugin-transform-duplicate-keys | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-duplicate-keys/v/7.29.7 | OK |
+| @babel/plugin-transform-duplicate-named-capturing-groups-regex | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-duplicate-named-capturing-groups-regex/v/7.29.7 | OK |
+| @babel/plugin-transform-dynamic-import | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-dynamic-import/v/7.29.7 | OK |
+| @babel/plugin-transform-explicit-resource-management | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-explicit-resource-management/v/7.29.7 | OK |
+| @babel/plugin-transform-exponentiation-operator | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-exponentiation-operator/v/7.29.7 | OK |
+| @babel/plugin-transform-export-namespace-from | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-export-namespace-from/v/7.29.7 | OK |
+| @babel/plugin-transform-for-of | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-for-of/v/7.29.7 | OK |
+| @babel/plugin-transform-function-name | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-function-name/v/7.29.7 | OK |
+| @babel/plugin-transform-json-strings | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-json-strings/v/7.29.7 | OK |
+| @babel/plugin-transform-literals | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-literals/v/7.29.7 | OK |
+| @babel/plugin-transform-logical-assignment-operators | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-logical-assignment-operators/v/7.29.7 | OK |
+| @babel/plugin-transform-member-expression-literals | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-member-expression-literals/v/7.29.7 | OK |
+| @babel/plugin-transform-modules-amd | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-modules-amd/v/7.29.7 | OK |
+| @babel/plugin-transform-modules-commonjs | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-modules-commonjs/v/7.29.7 | OK |
+| @babel/plugin-transform-modules-systemjs | 7.29.8 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-modules-systemjs/v/7.29.8 | OK |
+| @babel/plugin-transform-modules-umd | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-modules-umd/v/7.29.7 | OK |
+| @babel/plugin-transform-named-capturing-groups-regex | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-named-capturing-groups-regex/v/7.29.7 | OK |
+| @babel/plugin-transform-new-target | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-new-target/v/7.29.7 | OK |
+| @babel/plugin-transform-nullish-coalescing-operator | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-nullish-coalescing-operator/v/7.29.7 | OK |
+| @babel/plugin-transform-numeric-separator | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-numeric-separator/v/7.29.7 | OK |
+| @babel/plugin-transform-object-rest-spread | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-object-rest-spread/v/7.29.7 | OK |
+| @babel/plugin-transform-object-super | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-object-super/v/7.29.7 | OK |
+| @babel/plugin-transform-optional-catch-binding | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-optional-catch-binding/v/7.29.7 | OK |
+| @babel/plugin-transform-optional-chaining | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-optional-chaining/v/7.29.7 | OK |
+| @babel/plugin-transform-parameters | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-parameters/v/7.29.7 | OK |
+| @babel/plugin-transform-private-methods | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-private-methods/v/7.29.7 | OK |
+| @babel/plugin-transform-private-property-in-object | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-private-property-in-object/v/7.29.7 | OK |
+| @babel/plugin-transform-property-literals | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-property-literals/v/7.29.7 | OK |
 | @babel/plugin-transform-react-jsx-self | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-react-jsx-self/v/7.29.7 | OK |
 | @babel/plugin-transform-react-jsx-source | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-react-jsx-source/v/7.29.7 | OK |
+| @babel/plugin-transform-regenerator | 7.29.8 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-regenerator/v/7.29.8 | OK |
+| @babel/plugin-transform-regexp-modifiers | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-regexp-modifiers/v/7.29.7 | OK |
+| @babel/plugin-transform-reserved-words | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-reserved-words/v/7.29.7 | OK |
+| @babel/plugin-transform-shorthand-properties | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-shorthand-properties/v/7.29.7 | OK |
+| @babel/plugin-transform-spread | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-spread/v/7.29.11 | OK |
+| @babel/plugin-transform-sticky-regex | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-sticky-regex/v/7.29.7 | OK |
+| @babel/plugin-transform-template-literals | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-template-literals/v/7.29.7 | OK |
+| @babel/plugin-transform-typeof-symbol | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-typeof-symbol/v/7.29.7 | OK |
+| @babel/plugin-transform-unicode-escapes | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-unicode-escapes/v/7.29.7 | OK |
+| @babel/plugin-transform-unicode-property-regex | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-unicode-property-regex/v/7.29.7 | OK |
+| @babel/plugin-transform-unicode-regex | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-unicode-regex/v/7.29.7 | OK |
+| @babel/plugin-transform-unicode-sets-regex | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/plugin-transform-unicode-sets-regex/v/7.29.7 | OK |
+| @babel/preset-env | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/preset-env/v/7.29.7 | OK |
+| @babel/preset-modules | 0.1.6-no-external-plugins | dev | MIT | https://www.npmjs.com/package/@babel/preset-modules/v/0.1.6-no-external-plugins | OK |
 | @babel/runtime | 7.29.10 | dev | MIT | https://www.npmjs.com/package/@babel/runtime/v/7.29.10 | OK |
 | @babel/template | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/template/v/7.29.7 | OK |
 | @babel/traverse | 7.29.10 | dev | MIT | https://www.npmjs.com/package/@babel/traverse/v/7.29.10 | OK |
@@ -46,6 +120,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | @csstools/css-color-parser | 3.1.0 | dev | MIT | https://www.npmjs.com/package/@csstools/css-color-parser/v/3.1.0 | OK |
 | @csstools/css-parser-algorithms | 3.0.5 | dev | MIT | https://www.npmjs.com/package/@csstools/css-parser-algorithms/v/3.0.5 | OK |
 | @csstools/css-tokenizer | 3.0.4 | dev | MIT | https://www.npmjs.com/package/@csstools/css-tokenizer/v/3.0.4 | OK |
+| @emnapi/runtime | 1.11.3 | dev (optional) | MIT | https://www.npmjs.com/package/@emnapi/runtime/v/1.11.3 | OK |
 | @esbuild/aix-ppc64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/aix-ppc64/v/0.28.2 | OK |
 | @esbuild/android-arm | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/android-arm/v/0.28.2 | OK |
 | @esbuild/android-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/android-arm64/v/0.28.2 | OK |
@@ -86,9 +161,38 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | @humanfs/types | 0.15.0 | dev | Apache-2.0 | https://www.npmjs.com/package/@humanfs/types/v/0.15.0 | OK |
 | @humanwhocodes/module-importer | 1.0.1 | dev | Apache-2.0 | https://www.npmjs.com/package/@humanwhocodes/module-importer/v/1.0.1 | OK |
 | @humanwhocodes/retry | 0.4.3 | dev | Apache-2.0 | https://www.npmjs.com/package/@humanwhocodes/retry/v/0.4.3 | OK |
+| @img/colour | 1.1.0 | dev | MIT | https://www.npmjs.com/package/@img/colour/v/1.1.0 | OK |
+| @img/sharp-darwin-arm64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-darwin-arm64/v/0.35.5 | OK (note) |
+| @img/sharp-darwin-x64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-darwin-x64/v/0.35.5 | OK (note) |
+| @img/sharp-freebsd-wasm32 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-freebsd-wasm32/v/0.35.5 | OK (note) |
+| @img/sharp-libvips-darwin-arm64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-darwin-arm64/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-darwin-x64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-darwin-x64/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linux-arm | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-arm/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linux-arm64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-arm64/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linux-ppc64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-ppc64/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linux-riscv64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-riscv64/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linux-s390x | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-s390x/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linux-x64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-x64/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linuxmusl-arm64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linuxmusl-arm64/v/1.3.4 | OK (note) |
+| @img/sharp-libvips-linuxmusl-x64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linuxmusl-x64/v/1.3.4 | OK (note) |
+| @img/sharp-linux-arm | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-arm/v/0.35.5 | OK (note) |
+| @img/sharp-linux-arm64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-arm64/v/0.35.5 | OK (note) |
+| @img/sharp-linux-ppc64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-ppc64/v/0.35.5 | OK (note) |
+| @img/sharp-linux-riscv64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-riscv64/v/0.35.5 | OK (note) |
+| @img/sharp-linux-s390x | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-s390x/v/0.35.5 | OK (note) |
+| @img/sharp-linux-x64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-x64/v/0.35.5 | OK (note) |
+| @img/sharp-linuxmusl-arm64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linuxmusl-arm64/v/0.35.5 | OK (note) |
+| @img/sharp-linuxmusl-x64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linuxmusl-x64/v/0.35.5 | OK (note) |
+| @img/sharp-wasm32 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later AND MIT | https://www.npmjs.com/package/@img/sharp-wasm32/v/0.35.5 | OK (note) |
+| @img/sharp-webcontainers-wasm32 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-webcontainers-wasm32/v/0.35.5 | OK (note) |
+| @img/sharp-win32-arm64 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-win32-arm64/v/0.35.5 | OK (note) |
+| @img/sharp-win32-ia32 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-win32-ia32/v/0.35.5 | OK (note) |
+| @img/sharp-win32-x64 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-win32-x64/v/0.35.5 | OK (note) |
+| @isaacs/cliui | 9.0.0 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/@isaacs/cliui/v/9.0.0 | OK |
 | @jridgewell/gen-mapping | 0.3.13 | dev | MIT | https://www.npmjs.com/package/@jridgewell/gen-mapping/v/0.3.13 | OK |
 | @jridgewell/remapping | 2.3.5 | dev | MIT | https://www.npmjs.com/package/@jridgewell/remapping/v/2.3.5 | OK |
 | @jridgewell/resolve-uri | 3.1.2 | dev | MIT | https://www.npmjs.com/package/@jridgewell/resolve-uri/v/3.1.2 | OK |
+| @jridgewell/source-map | 0.3.11 | dev | MIT | https://www.npmjs.com/package/@jridgewell/source-map/v/0.3.11 | OK |
 | @jridgewell/sourcemap-codec | 1.6.0 | dev | MIT | https://www.npmjs.com/package/@jridgewell/sourcemap-codec/v/1.6.0 | OK |
 | @jridgewell/trace-mapping | 0.3.31 | dev | MIT | https://www.npmjs.com/package/@jridgewell/trace-mapping/v/0.3.31 | OK |
 | @napi-rs/lzma-linux-x64-gnu | 1.5.1 | dev (optional) | MIT | https://www.npmjs.com/package/@napi-rs/lzma-linux-x64-gnu/v/1.5.1 | OK |
@@ -97,6 +201,11 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | @nodelib/fs.walk | 1.2.8 | dev | MIT | https://www.npmjs.com/package/@nodelib/fs.walk/v/1.2.8 | OK |
 | @playwright/test | 1.64.1 | dev | Apache-2.0 | https://www.npmjs.com/package/@playwright/test/v/1.64.1 | OK |
 | @rolldown/pluginutils | 1.0.0-rc.3 | dev | MIT | https://www.npmjs.com/package/@rolldown/pluginutils/v/1.0.0-rc.3 | OK |
+| @rollup/plugin-babel | 6.1.0 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-babel/v/6.1.0 | OK |
+| @rollup/plugin-node-resolve | 16.0.3 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-node-resolve/v/16.0.3 | OK |
+| @rollup/plugin-replace | 6.0.3 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-replace/v/6.0.3 | OK |
+| @rollup/plugin-terser | 1.0.2 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-terser/v/1.0.2 | OK |
+| @rollup/pluginutils | 5.5.1 | dev | MIT | https://www.npmjs.com/package/@rollup/pluginutils/v/5.5.1 | OK |
 | @rollup/rollup-android-arm-eabi | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-android-arm-eabi/v/4.65.0 | OK |
 | @rollup/rollup-android-arm64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-android-arm64/v/4.65.0 | OK |
 | @rollup/rollup-darwin-arm64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-darwin-arm64/v/4.65.0 | OK |
@@ -125,6 +234,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | @testing-library/dom | 10.4.2 | dev | MIT | https://www.npmjs.com/package/@testing-library/dom/v/10.4.2 | OK |
 | @testing-library/jest-dom | 6.9.1 | dev | MIT | https://www.npmjs.com/package/@testing-library/jest-dom/v/6.9.1 | OK |
 | @testing-library/react | 16.3.3 | dev | MIT | https://www.npmjs.com/package/@testing-library/react/v/16.3.3 | OK |
+| @trickfilm400/rollup-plugin-off-main-thread | 3.0.0-pre1 | dev | Apache-2.0 | https://www.npmjs.com/package/@trickfilm400/rollup-plugin-off-main-thread/v/3.0.0-pre1 | OK |
 | @types/aria-query | 5.0.4 | dev | MIT | https://www.npmjs.com/package/@types/aria-query/v/5.0.4 | OK |
 | @types/babel__core | 7.20.5 | dev | MIT | https://www.npmjs.com/package/@types/babel__core/v/7.20.5 | OK |
 | @types/babel__generator | 7.27.0 | dev | MIT | https://www.npmjs.com/package/@types/babel__generator/v/7.27.0 | OK |
@@ -138,6 +248,8 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | @types/prop-types | 15.7.15 | dev | MIT | https://www.npmjs.com/package/@types/prop-types/v/15.7.15 | OK |
 | @types/react | 18.3.31 | dev | MIT | https://www.npmjs.com/package/@types/react/v/18.3.31 | OK |
 | @types/react-dom | 18.3.7 | dev | MIT | https://www.npmjs.com/package/@types/react-dom/v/18.3.7 | OK |
+| @types/resolve | 1.20.2 | dev | MIT | https://www.npmjs.com/package/@types/resolve/v/1.20.2 | OK |
+| @types/trusted-types | 2.0.7 | prod | MIT | https://www.npmjs.com/package/@types/trusted-types/v/2.0.7 | OK |
 | @typescript-eslint/eslint-plugin | 8.72.0 | dev | MIT | https://www.npmjs.com/package/@typescript-eslint/eslint-plugin/v/8.72.0 | OK |
 | @typescript-eslint/parser | 8.72.0 | dev | MIT | https://www.npmjs.com/package/@typescript-eslint/parser/v/8.72.0 | OK |
 | @typescript-eslint/project-service | 8.72.0 | dev | MIT | https://www.npmjs.com/package/@typescript-eslint/project-service/v/8.72.0 | OK |
@@ -160,6 +272,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | acorn-jsx | 5.3.2 | dev | MIT | https://www.npmjs.com/package/acorn-jsx/v/5.3.2 | OK |
 | agent-base | 7.1.4 | dev | MIT | https://www.npmjs.com/package/agent-base/v/7.1.4 | OK |
 | ajv | 6.15.0 | dev | MIT | https://www.npmjs.com/package/ajv/v/6.15.0 | OK |
+| ajv | 8.20.0 | dev | MIT | https://www.npmjs.com/package/ajv/v/8.20.0 | OK |
 | ansi-regex | 5.0.1 | dev | MIT | https://www.npmjs.com/package/ansi-regex/v/5.0.1 | OK |
 | ansi-styles | 4.3.0 | dev | MIT | https://www.npmjs.com/package/ansi-styles/v/4.3.0 | OK |
 | ansi-styles | 5.2.0 | dev | MIT | https://www.npmjs.com/package/ansi-styles/v/5.2.0 | OK |
@@ -168,17 +281,33 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | arg | 5.0.2 | dev | MIT | https://www.npmjs.com/package/arg/v/5.0.2 | OK |
 | argparse | 2.0.1 | dev | Python-2.0 | https://www.npmjs.com/package/argparse/v/2.0.1 | OK (note) |
 | aria-query | 5.3.0 | dev | Apache-2.0 | https://www.npmjs.com/package/aria-query/v/5.3.0 | OK |
+| array-buffer-byte-length | 1.0.2 | dev | MIT | https://www.npmjs.com/package/array-buffer-byte-length/v/1.0.2 | OK |
+| arraybuffer.prototype.slice | 1.0.4 | dev | MIT | https://www.npmjs.com/package/arraybuffer.prototype.slice/v/1.0.4 | OK |
 | assertion-error | 2.0.1 | dev | MIT | https://www.npmjs.com/package/assertion-error/v/2.0.1 | OK |
+| async | 3.2.6 | dev | MIT | https://www.npmjs.com/package/async/v/3.2.6 | OK |
+| async-function | 1.0.0 | dev | MIT | https://www.npmjs.com/package/async-function/v/1.0.0 | OK |
+| at-least-node | 1.0.0 | dev | ISC | https://www.npmjs.com/package/at-least-node/v/1.0.0 | OK |
 | autoprefixer | 10.6.1 | dev | MIT | https://www.npmjs.com/package/autoprefixer/v/10.6.1 | OK |
+| available-typed-arrays | 1.0.7 | dev | MIT | https://www.npmjs.com/package/available-typed-arrays/v/1.0.7 | OK |
+| babel-plugin-polyfill-corejs2 | 0.4.17 | dev | MIT | https://www.npmjs.com/package/babel-plugin-polyfill-corejs2/v/0.4.17 | OK |
+| babel-plugin-polyfill-corejs3 | 0.14.2 | dev | MIT | https://www.npmjs.com/package/babel-plugin-polyfill-corejs3/v/0.14.2 | OK |
+| babel-plugin-polyfill-regenerator | 0.6.8 | dev | MIT | https://www.npmjs.com/package/babel-plugin-polyfill-regenerator/v/0.6.8 | OK |
 | balanced-match | 1.0.2 | dev | MIT | https://www.npmjs.com/package/balanced-match/v/1.0.2 | OK |
+| balanced-match | 4.0.4 | dev | MIT | https://www.npmjs.com/package/balanced-match/v/4.0.4 | OK |
 | balanced-match | 4.0.4 | dev | MIT | https://www.npmjs.com/package/balanced-match/v/4.0.4 | OK |
 | baseline-browser-mapping | 2.11.32 | dev | Apache-2.0 | https://www.npmjs.com/package/baseline-browser-mapping/v/2.11.32 | OK |
 | binary-extensions | 2.3.0 | dev | MIT | https://www.npmjs.com/package/binary-extensions/v/2.3.0 | OK |
 | brace-expansion | 1.1.21 | dev | MIT | https://www.npmjs.com/package/brace-expansion/v/1.1.21 | OK |
+| brace-expansion | 2.1.7 | dev | MIT | https://www.npmjs.com/package/brace-expansion/v/2.1.7 | OK |
+| brace-expansion | 5.0.12 | dev | MIT | https://www.npmjs.com/package/brace-expansion/v/5.0.12 | OK |
 | brace-expansion | 5.0.12 | dev | MIT | https://www.npmjs.com/package/brace-expansion/v/5.0.12 | OK |
 | braces | 3.0.3 | dev | MIT | https://www.npmjs.com/package/braces/v/3.0.3 | OK |
 | browserslist | 4.29.4 | dev | MIT | https://www.npmjs.com/package/browserslist/v/4.29.4 | OK |
+| buffer-from | 1.1.2 | dev | MIT | https://www.npmjs.com/package/buffer-from/v/1.1.2 | OK |
 | cac | 6.7.14 | dev | MIT | https://www.npmjs.com/package/cac/v/6.7.14 | OK |
+| call-bind | 1.0.9 | dev | MIT | https://www.npmjs.com/package/call-bind/v/1.0.9 | OK |
+| call-bind-apply-helpers | 1.0.2 | dev | MIT | https://www.npmjs.com/package/call-bind-apply-helpers/v/1.0.2 | OK |
+| call-bound | 1.0.4 | dev | MIT | https://www.npmjs.com/package/call-bound/v/1.0.4 | OK |
 | callsites | 3.1.0 | dev | MIT | https://www.npmjs.com/package/callsites/v/3.1.0 | OK |
 | camelcase-css | 2.0.1 | dev | MIT | https://www.npmjs.com/package/camelcase-css/v/2.0.1 | OK |
 | caniuse-lite | 1.0.30001819 | dev | CC-BY-4.0 | https://www.npmjs.com/package/caniuse-lite/v/1.0.30001819 | OK (note) |
@@ -188,31 +317,50 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | chokidar | 3.6.0 | dev | MIT | https://www.npmjs.com/package/chokidar/v/3.6.0 | OK |
 | color-convert | 2.0.1 | dev | MIT | https://www.npmjs.com/package/color-convert/v/2.0.1 | OK |
 | color-name | 1.1.4 | dev | MIT | https://www.npmjs.com/package/color-name/v/1.1.4 | OK |
+| commander | 2.20.3 | dev | MIT | https://www.npmjs.com/package/commander/v/2.20.3 | OK |
 | commander | 4.1.1 | dev | MIT | https://www.npmjs.com/package/commander/v/4.1.1 | OK |
+| common-tags | 1.8.2 | dev | MIT | https://www.npmjs.com/package/common-tags/v/1.8.2 | OK |
 | concat-map | 0.0.1 | dev | MIT | https://www.npmjs.com/package/concat-map/v/0.0.1 | OK |
 | convert-source-map | 2.0.0 | dev | MIT | https://www.npmjs.com/package/convert-source-map/v/2.0.0 | OK |
 | cookie | 1.1.1 | prod | MIT | https://www.npmjs.com/package/cookie/v/1.1.1 | OK |
+| core-js-compat | 3.51.0 | dev | MIT | https://www.npmjs.com/package/core-js-compat/v/3.51.0 | OK |
 | cross-spawn | 7.0.6 | dev | MIT | https://www.npmjs.com/package/cross-spawn/v/7.0.6 | OK |
+| crypto-random-string | 2.0.0 | dev | MIT | https://www.npmjs.com/package/crypto-random-string/v/2.0.0 | OK |
 | css.escape | 1.5.1 | dev | MIT | https://www.npmjs.com/package/css.escape/v/1.5.1 | OK |
 | cssesc | 3.0.0 | dev | MIT | https://www.npmjs.com/package/cssesc/v/3.0.0 | OK |
 | cssstyle | 4.6.0 | dev | MIT | https://www.npmjs.com/package/cssstyle/v/4.6.0 | OK |
 | csstype | 3.2.3 | dev | MIT | https://www.npmjs.com/package/csstype/v/3.2.3 | OK |
 | data-urls | 5.0.0 | dev | MIT | https://www.npmjs.com/package/data-urls/v/5.0.0 | OK |
+| data-view-buffer | 1.0.2 | dev | MIT | https://www.npmjs.com/package/data-view-buffer/v/1.0.2 | OK |
+| data-view-byte-length | 1.0.2 | dev | MIT | https://www.npmjs.com/package/data-view-byte-length/v/1.0.2 | OK |
+| data-view-byte-offset | 1.0.1 | dev | MIT | https://www.npmjs.com/package/data-view-byte-offset/v/1.0.1 | OK |
 | debug | 4.4.3 | dev | MIT | https://www.npmjs.com/package/debug/v/4.4.3 | OK |
 | decimal.js | 10.6.0 | dev | MIT | https://www.npmjs.com/package/decimal.js/v/10.6.0 | OK |
 | deep-eql | 5.0.2 | dev | MIT | https://www.npmjs.com/package/deep-eql/v/5.0.2 | OK |
 | deep-is | 0.1.4 | dev | MIT | https://www.npmjs.com/package/deep-is/v/0.1.4 | OK |
+| deepmerge | 4.3.1 | dev | MIT | https://www.npmjs.com/package/deepmerge/v/4.3.1 | OK |
+| define-data-property | 1.1.4 | dev | MIT | https://www.npmjs.com/package/define-data-property/v/1.1.4 | OK |
+| define-properties | 1.2.1 | dev | MIT | https://www.npmjs.com/package/define-properties/v/1.2.1 | OK |
 | dequal | 2.0.3 | dev | MIT | https://www.npmjs.com/package/dequal/v/2.0.3 | OK |
+| detect-libc | 2.1.2 | dev | Apache-2.0 | https://www.npmjs.com/package/detect-libc/v/2.1.2 | OK |
 | dexie | 4.4.7 | prod | Apache-2.0 | https://www.npmjs.com/package/dexie/v/4.4.7 | OK |
 | dexie-react-hooks | 4.4.0 | prod | Apache-2.0 | https://www.npmjs.com/package/dexie-react-hooks/v/4.4.0 | OK |
 | didyoumean | 1.2.2 | dev | Apache-2.0 | https://www.npmjs.com/package/didyoumean/v/1.2.2 | OK |
 | dlv | 1.1.3 | dev | MIT | https://www.npmjs.com/package/dlv/v/1.1.3 | OK |
 | dom-accessibility-api | 0.5.16 | dev | MIT | https://www.npmjs.com/package/dom-accessibility-api/v/0.5.16 | OK |
 | dom-accessibility-api | 0.6.3 | dev | MIT | https://www.npmjs.com/package/dom-accessibility-api/v/0.6.3 | OK |
+| dunder-proto | 1.0.1 | dev | MIT | https://www.npmjs.com/package/dunder-proto/v/1.0.1 | OK |
+| ejs | 3.1.10 | dev | Apache-2.0 | https://www.npmjs.com/package/ejs/v/3.1.10 | OK |
 | electron-to-chromium | 1.5.464 | dev | ISC | https://www.npmjs.com/package/electron-to-chromium/v/1.5.464 | OK |
 | entities | 6.0.1 | dev | BSD-2-Clause | https://www.npmjs.com/package/entities/v/6.0.1 | OK |
+| es-abstract | 1.24.2 | dev | MIT | https://www.npmjs.com/package/es-abstract/v/1.24.2 | OK |
+| es-abstract-get | 1.0.0 | dev | MIT | https://www.npmjs.com/package/es-abstract-get/v/1.0.0 | OK |
+| es-define-property | 1.0.1 | dev | MIT | https://www.npmjs.com/package/es-define-property/v/1.0.1 | OK |
 | es-errors | 1.3.0 | dev | MIT | https://www.npmjs.com/package/es-errors/v/1.3.0 | OK |
 | es-module-lexer | 1.7.0 | dev | MIT | https://www.npmjs.com/package/es-module-lexer/v/1.7.0 | OK |
+| es-object-atoms | 1.1.2 | dev | MIT | https://www.npmjs.com/package/es-object-atoms/v/1.1.2 | OK |
+| es-set-tostringtag | 2.1.0 | dev | MIT | https://www.npmjs.com/package/es-set-tostringtag/v/2.1.0 | OK |
+| es-to-primitive | 1.3.4 | dev | MIT | https://www.npmjs.com/package/es-to-primitive/v/1.3.4 | OK |
 | esbuild | 0.28.2 | dev | MIT | https://www.npmjs.com/package/esbuild/v/0.28.2 | OK |
 | escalade | 3.2.0 | dev | MIT | https://www.npmjs.com/package/escalade/v/3.2.0 | OK |
 | escape-string-regexp | 4.0.0 | dev | MIT | https://www.npmjs.com/package/escape-string-regexp/v/4.0.0 | OK |
@@ -227,49 +375,103 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | esquery | 1.7.0 | dev | BSD-3-Clause | https://www.npmjs.com/package/esquery/v/1.7.0 | OK |
 | esrecurse | 4.3.0 | dev | BSD-2-Clause | https://www.npmjs.com/package/esrecurse/v/4.3.0 | OK |
 | estraverse | 5.3.0 | dev | BSD-2-Clause | https://www.npmjs.com/package/estraverse/v/5.3.0 | OK |
+| estree-walker | 2.0.2 | dev | MIT | https://www.npmjs.com/package/estree-walker/v/2.0.2 | OK |
 | estree-walker | 3.0.3 | dev | MIT | https://www.npmjs.com/package/estree-walker/v/3.0.3 | OK |
 | esutils | 2.0.3 | dev | BSD-2-Clause | https://www.npmjs.com/package/esutils/v/2.0.3 | OK |
+| eta | 4.6.0 | dev | MIT | https://www.npmjs.com/package/eta/v/4.6.0 | OK |
 | expect-type | 1.4.0 | dev | Apache-2.0 | https://www.npmjs.com/package/expect-type/v/1.4.0 | OK |
 | fake-indexeddb | 6.2.6 | dev | Apache-2.0 | https://www.npmjs.com/package/fake-indexeddb/v/6.2.6 | OK |
 | fast-deep-equal | 3.1.3 | dev | MIT | https://www.npmjs.com/package/fast-deep-equal/v/3.1.3 | OK |
 | fast-glob | 3.3.3 | dev | MIT | https://www.npmjs.com/package/fast-glob/v/3.3.3 | OK |
 | fast-json-stable-stringify | 2.1.0 | dev | MIT | https://www.npmjs.com/package/fast-json-stable-stringify/v/2.1.0 | OK |
 | fast-levenshtein | 2.0.6 | dev | MIT | https://www.npmjs.com/package/fast-levenshtein/v/2.0.6 | OK |
+| fast-uri | 3.1.9 | dev | BSD-3-Clause | https://www.npmjs.com/package/fast-uri/v/3.1.9 | OK |
 | fastq | 1.20.3 | dev | ISC | https://www.npmjs.com/package/fastq/v/1.20.3 | OK |
 | fdir | 6.5.0 | dev | MIT | https://www.npmjs.com/package/fdir/v/6.5.0 | OK |
 | fdir | 6.5.0 | dev | MIT | https://www.npmjs.com/package/fdir/v/6.5.0 | OK |
 | file-entry-cache | 8.0.0 | dev | MIT | https://www.npmjs.com/package/file-entry-cache/v/8.0.0 | OK |
+| filelist | 1.0.6 | dev | Apache-2.0 | https://www.npmjs.com/package/filelist/v/1.0.6 | OK |
 | fill-range | 7.1.1 | dev | MIT | https://www.npmjs.com/package/fill-range/v/7.1.1 | OK |
 | find-up | 5.0.0 | dev | MIT | https://www.npmjs.com/package/find-up/v/5.0.0 | OK |
 | flat-cache | 4.0.1 | dev | MIT | https://www.npmjs.com/package/flat-cache/v/4.0.1 | OK |
 | flatted | 3.4.4 | dev | ISC | https://www.npmjs.com/package/flatted/v/3.4.4 | OK |
+| for-each | 0.3.5 | dev | MIT | https://www.npmjs.com/package/for-each/v/0.3.5 | OK |
+| foreground-child | 3.3.1 | dev | ISC | https://www.npmjs.com/package/foreground-child/v/3.3.1 | OK |
 | fraction.js | 5.3.4 | dev | MIT | https://www.npmjs.com/package/fraction.js/v/5.3.4 | OK |
+| fs-extra | 9.1.0 | dev | MIT | https://www.npmjs.com/package/fs-extra/v/9.1.0 | OK |
 | fsevents | 2.3.3 | dev (optional) | MIT | https://www.npmjs.com/package/fsevents/v/2.3.3 | OK |
 | function-bind | 1.1.2 | dev | MIT | https://www.npmjs.com/package/function-bind/v/1.1.2 | OK |
+| function.prototype.name | 1.2.0 | dev | MIT | https://www.npmjs.com/package/function.prototype.name/v/1.2.0 | OK |
+| functions-have-names | 1.2.3 | dev | MIT | https://www.npmjs.com/package/functions-have-names/v/1.2.3 | OK |
+| generator-function | 2.0.1 | dev | MIT | https://www.npmjs.com/package/generator-function/v/2.0.1 | OK |
 | gensync | 1.0.0-beta.2 | dev | MIT | https://www.npmjs.com/package/gensync/v/1.0.0-beta.2 | OK |
+| get-intrinsic | 1.3.0 | dev | MIT | https://www.npmjs.com/package/get-intrinsic/v/1.3.0 | OK |
+| get-own-enumerable-property-symbols | 3.0.2 | dev | ISC | https://www.npmjs.com/package/get-own-enumerable-property-symbols/v/3.0.2 | OK |
+| get-proto | 1.0.1 | dev | MIT | https://www.npmjs.com/package/get-proto/v/1.0.1 | OK |
+| get-symbol-description | 1.1.0 | dev | MIT | https://www.npmjs.com/package/get-symbol-description/v/1.1.0 | OK |
+| glob | 11.1.0 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/glob/v/11.1.0 | OK |
 | glob-parent | 5.1.2 | dev | ISC | https://www.npmjs.com/package/glob-parent/v/5.1.2 | OK |
 | glob-parent | 5.1.2 | dev | ISC | https://www.npmjs.com/package/glob-parent/v/5.1.2 | OK |
 | glob-parent | 6.0.2 | dev | ISC | https://www.npmjs.com/package/glob-parent/v/6.0.2 | OK |
 | globals | 14.0.0 | dev | MIT | https://www.npmjs.com/package/globals/v/14.0.0 | OK |
 | globals | 17.13.0 | dev | MIT | https://www.npmjs.com/package/globals/v/17.13.0 | OK |
+| globalthis | 1.0.4 | dev | MIT | https://www.npmjs.com/package/globalthis/v/1.0.4 | OK |
+| gopd | 1.2.0 | dev | MIT | https://www.npmjs.com/package/gopd/v/1.2.0 | OK |
+| graceful-fs | 4.2.11 | dev | ISC | https://www.npmjs.com/package/graceful-fs/v/4.2.11 | OK |
+| has-bigints | 1.1.0 | dev | MIT | https://www.npmjs.com/package/has-bigints/v/1.1.0 | OK |
 | has-flag | 4.0.0 | dev | MIT | https://www.npmjs.com/package/has-flag/v/4.0.0 | OK |
+| has-property-descriptors | 1.0.2 | dev | MIT | https://www.npmjs.com/package/has-property-descriptors/v/1.0.2 | OK |
+| has-proto | 1.2.0 | dev | MIT | https://www.npmjs.com/package/has-proto/v/1.2.0 | OK |
+| has-symbols | 1.1.0 | dev | MIT | https://www.npmjs.com/package/has-symbols/v/1.1.0 | OK |
+| has-tostringtag | 1.0.2 | dev | MIT | https://www.npmjs.com/package/has-tostringtag/v/1.0.2 | OK |
 | hasown | 2.0.4 | dev | MIT | https://www.npmjs.com/package/hasown/v/2.0.4 | OK |
 | html-encoding-sniffer | 4.0.0 | dev | MIT | https://www.npmjs.com/package/html-encoding-sniffer/v/4.0.0 | OK |
 | http-proxy-agent | 7.0.2 | dev | MIT | https://www.npmjs.com/package/http-proxy-agent/v/7.0.2 | OK |
 | https-proxy-agent | 7.0.6 | dev | MIT | https://www.npmjs.com/package/https-proxy-agent/v/7.0.6 | OK |
 | iconv-lite | 0.6.3 | dev | MIT | https://www.npmjs.com/package/iconv-lite/v/0.6.3 | OK |
+| idb | 7.1.1 | dev | ISC | https://www.npmjs.com/package/idb/v/7.1.1 | OK |
 | ignore | 5.3.2 | dev | MIT | https://www.npmjs.com/package/ignore/v/5.3.2 | OK |
 | ignore | 7.0.14 | dev | MIT | https://www.npmjs.com/package/ignore/v/7.0.14 | OK |
 | import-fresh | 3.3.1 | dev | MIT | https://www.npmjs.com/package/import-fresh/v/3.3.1 | OK |
 | imurmurhash | 0.1.4 | dev | MIT | https://www.npmjs.com/package/imurmurhash/v/0.1.4 | OK |
 | indent-string | 4.0.0 | dev | MIT | https://www.npmjs.com/package/indent-string/v/4.0.0 | OK |
+| internal-slot | 1.1.0 | dev | MIT | https://www.npmjs.com/package/internal-slot/v/1.1.0 | OK |
+| is-array-buffer | 3.0.5 | dev | MIT | https://www.npmjs.com/package/is-array-buffer/v/3.0.5 | OK |
+| is-async-function | 2.1.1 | dev | MIT | https://www.npmjs.com/package/is-async-function/v/2.1.1 | OK |
+| is-bigint | 1.1.0 | dev | MIT | https://www.npmjs.com/package/is-bigint/v/1.1.0 | OK |
 | is-binary-path | 2.1.0 | dev | MIT | https://www.npmjs.com/package/is-binary-path/v/2.1.0 | OK |
+| is-boolean-object | 1.2.2 | dev | MIT | https://www.npmjs.com/package/is-boolean-object/v/1.2.2 | OK |
+| is-callable | 1.2.7 | dev | MIT | https://www.npmjs.com/package/is-callable/v/1.2.7 | OK |
 | is-core-module | 2.17.0 | dev | MIT | https://www.npmjs.com/package/is-core-module/v/2.17.0 | OK |
+| is-data-view | 1.0.2 | dev | MIT | https://www.npmjs.com/package/is-data-view/v/1.0.2 | OK |
+| is-date-object | 1.1.0 | dev | MIT | https://www.npmjs.com/package/is-date-object/v/1.1.0 | OK |
+| is-document.all | 1.0.0 | dev | MIT | https://www.npmjs.com/package/is-document.all/v/1.0.0 | OK |
 | is-extglob | 2.1.1 | dev | MIT | https://www.npmjs.com/package/is-extglob/v/2.1.1 | OK |
+| is-finalizationregistry | 1.1.1 | dev | MIT | https://www.npmjs.com/package/is-finalizationregistry/v/1.1.1 | OK |
+| is-generator-function | 1.1.2 | dev | MIT | https://www.npmjs.com/package/is-generator-function/v/1.1.2 | OK |
 | is-glob | 4.0.3 | dev | MIT | https://www.npmjs.com/package/is-glob/v/4.0.3 | OK |
+| is-map | 2.0.3 | dev | MIT | https://www.npmjs.com/package/is-map/v/2.0.3 | OK |
+| is-module | 1.0.0 | dev | MIT | https://www.npmjs.com/package/is-module/v/1.0.0 | OK |
+| is-negative-zero | 2.0.3 | dev | MIT | https://www.npmjs.com/package/is-negative-zero/v/2.0.3 | OK |
 | is-number | 7.0.0 | dev | MIT | https://www.npmjs.com/package/is-number/v/7.0.0 | OK |
+| is-number-object | 1.1.1 | dev | MIT | https://www.npmjs.com/package/is-number-object/v/1.1.1 | OK |
+| is-obj | 1.0.1 | dev | MIT | https://www.npmjs.com/package/is-obj/v/1.0.1 | OK |
 | is-potential-custom-element-name | 1.0.1 | dev | MIT | https://www.npmjs.com/package/is-potential-custom-element-name/v/1.0.1 | OK |
+| is-regex | 1.2.1 | dev | MIT | https://www.npmjs.com/package/is-regex/v/1.2.1 | OK |
+| is-regexp | 1.0.0 | dev | MIT | https://www.npmjs.com/package/is-regexp/v/1.0.0 | OK |
+| is-set | 2.0.3 | dev | MIT | https://www.npmjs.com/package/is-set/v/2.0.3 | OK |
+| is-shared-array-buffer | 1.0.4 | dev | MIT | https://www.npmjs.com/package/is-shared-array-buffer/v/1.0.4 | OK |
+| is-stream | 2.0.1 | dev | MIT | https://www.npmjs.com/package/is-stream/v/2.0.1 | OK |
+| is-string | 1.1.1 | dev | MIT | https://www.npmjs.com/package/is-string/v/1.1.1 | OK |
+| is-symbol | 1.1.1 | dev | MIT | https://www.npmjs.com/package/is-symbol/v/1.1.1 | OK |
+| is-typed-array | 1.1.15 | dev | MIT | https://www.npmjs.com/package/is-typed-array/v/1.1.15 | OK |
+| is-weakmap | 2.0.2 | dev | MIT | https://www.npmjs.com/package/is-weakmap/v/2.0.2 | OK |
+| is-weakref | 1.1.1 | dev | MIT | https://www.npmjs.com/package/is-weakref/v/1.1.1 | OK |
+| is-weakset | 2.0.4 | dev | MIT | https://www.npmjs.com/package/is-weakset/v/2.0.4 | OK |
+| isarray | 2.0.5 | dev | MIT | https://www.npmjs.com/package/isarray/v/2.0.5 | OK |
 | isexe | 2.0.0 | dev | ISC | https://www.npmjs.com/package/isexe/v/2.0.0 | OK |
+| jackspeak | 4.2.3 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/jackspeak/v/4.2.3 | OK |
+| jake | 10.9.4 | dev | Apache-2.0 | https://www.npmjs.com/package/jake/v/10.9.4 | OK |
 | jiti | 1.21.7 | dev | MIT | https://www.npmjs.com/package/jiti/v/1.21.7 | OK |
 | js-tokens | 4.0.0 | prod | MIT | https://www.npmjs.com/package/js-tokens/v/4.0.0 | OK |
 | js-tokens | 9.0.1 | dev | MIT | https://www.npmjs.com/package/js-tokens/v/9.0.1 | OK |
@@ -278,26 +480,36 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | jsesc | 3.1.0 | dev | MIT | https://www.npmjs.com/package/jsesc/v/3.1.0 | OK |
 | json-buffer | 3.0.1 | dev | MIT | https://www.npmjs.com/package/json-buffer/v/3.0.1 | OK |
 | json-schema-traverse | 0.4.1 | dev | MIT | https://www.npmjs.com/package/json-schema-traverse/v/0.4.1 | OK |
+| json-schema-traverse | 1.0.0 | dev | MIT | https://www.npmjs.com/package/json-schema-traverse/v/1.0.0 | OK |
 | json-stable-stringify-without-jsonify | 1.0.1 | dev | MIT | https://www.npmjs.com/package/json-stable-stringify-without-jsonify/v/1.0.1 | OK |
 | json5 | 2.2.3 | dev | MIT | https://www.npmjs.com/package/json5/v/2.2.3 | OK |
+| jsonfile | 6.2.1 | dev | MIT | https://www.npmjs.com/package/jsonfile/v/6.2.1 | OK |
+| jsonpointer | 5.0.1 | dev | MIT | https://www.npmjs.com/package/jsonpointer/v/5.0.1 | OK |
 | keyv | 4.5.4 | dev | MIT | https://www.npmjs.com/package/keyv/v/4.5.4 | OK |
+| leven | 3.1.0 | dev | MIT | https://www.npmjs.com/package/leven/v/3.1.0 | OK |
 | levn | 0.4.1 | dev | MIT | https://www.npmjs.com/package/levn/v/0.4.1 | OK |
 | lilconfig | 3.1.4 | dev | MIT | https://www.npmjs.com/package/lilconfig/v/3.1.4 | OK |
 | lines-and-columns | 1.2.4 | dev | MIT | https://www.npmjs.com/package/lines-and-columns/v/1.2.4 | OK |
 | locate-path | 6.0.0 | dev | MIT | https://www.npmjs.com/package/locate-path/v/6.0.0 | OK |
+| lodash.debounce | 4.0.8 | dev | MIT | https://www.npmjs.com/package/lodash.debounce/v/4.0.8 | OK |
 | lodash.merge | 4.6.2 | dev | MIT | https://www.npmjs.com/package/lodash.merge/v/4.6.2 | OK |
 | loose-envify | 1.4.0 | prod | MIT | https://www.npmjs.com/package/loose-envify/v/1.4.0 | OK |
 | loupe | 3.2.1 | dev | MIT | https://www.npmjs.com/package/loupe/v/3.2.1 | OK |
 | lru-cache | 5.1.1 | dev | ISC | https://www.npmjs.com/package/lru-cache/v/5.1.1 | OK |
 | lru-cache | 10.4.3 | dev | ISC | https://www.npmjs.com/package/lru-cache/v/10.4.3 | OK |
+| lru-cache | 11.5.3 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/lru-cache/v/11.5.3 | OK |
 | lucide-react | 1.61.0 | prod | ISC | https://www.npmjs.com/package/lucide-react/v/1.61.0 | OK |
 | lz-string | 1.5.0 | dev | MIT | https://www.npmjs.com/package/lz-string/v/1.5.0 | OK |
 | magic-string | 0.30.21 | dev | MIT | https://www.npmjs.com/package/magic-string/v/0.30.21 | OK |
+| math-intrinsics | 1.1.0 | dev | MIT | https://www.npmjs.com/package/math-intrinsics/v/1.1.0 | OK |
 | merge2 | 1.4.1 | dev | MIT | https://www.npmjs.com/package/merge2/v/1.4.1 | OK |
 | micromatch | 4.0.8 | dev | MIT | https://www.npmjs.com/package/micromatch/v/4.0.8 | OK |
 | min-indent | 1.0.1 | dev | MIT | https://www.npmjs.com/package/min-indent/v/1.0.1 | OK |
 | minimatch | 3.1.5 | dev | ISC | https://www.npmjs.com/package/minimatch/v/3.1.5 | OK |
+| minimatch | 5.1.9 | dev | ISC | https://www.npmjs.com/package/minimatch/v/5.1.9 | OK |
 | minimatch | 10.2.6 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/minimatch/v/10.2.6 | OK |
+| minimatch | 10.2.6 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/minimatch/v/10.2.6 | OK |
+| minipass | 7.1.3 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/minipass/v/7.1.3 | OK |
 | ms | 2.1.3 | dev | MIT | https://www.npmjs.com/package/ms/v/2.1.3 | OK |
 | mz | 2.7.0 | dev | MIT | https://www.npmjs.com/package/mz/v/2.7.0 | OK |
 | nanoid | 3.3.20 | dev | MIT | https://www.npmjs.com/package/nanoid/v/3.3.20 | OK |
@@ -307,14 +519,20 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | nwsapi | 2.2.28 | dev | MIT | https://www.npmjs.com/package/nwsapi/v/2.2.28 | OK |
 | object-assign | 4.1.1 | dev | MIT | https://www.npmjs.com/package/object-assign/v/4.1.1 | OK |
 | object-hash | 3.0.0 | dev | MIT | https://www.npmjs.com/package/object-hash/v/3.0.0 | OK |
+| object-inspect | 1.13.4 | dev | MIT | https://www.npmjs.com/package/object-inspect/v/1.13.4 | OK |
+| object-keys | 1.1.1 | dev | MIT | https://www.npmjs.com/package/object-keys/v/1.1.1 | OK |
+| object.assign | 4.1.7 | dev | MIT | https://www.npmjs.com/package/object.assign/v/4.1.7 | OK |
 | optionator | 0.9.4 | dev | MIT | https://www.npmjs.com/package/optionator/v/0.9.4 | OK |
+| own-keys | 1.0.2 | dev | MIT | https://www.npmjs.com/package/own-keys/v/1.0.2 | OK |
 | p-limit | 3.1.0 | dev | MIT | https://www.npmjs.com/package/p-limit/v/3.1.0 | OK |
 | p-locate | 5.0.0 | dev | MIT | https://www.npmjs.com/package/p-locate/v/5.0.0 | OK |
+| package-json-from-dist | 1.0.1 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/package-json-from-dist/v/1.0.1 | OK |
 | parent-module | 1.0.1 | dev | MIT | https://www.npmjs.com/package/parent-module/v/1.0.1 | OK |
 | parse5 | 7.3.0 | dev | MIT | https://www.npmjs.com/package/parse5/v/7.3.0 | OK |
 | path-exists | 4.0.0 | dev | MIT | https://www.npmjs.com/package/path-exists/v/4.0.0 | OK |
 | path-key | 3.1.1 | dev | MIT | https://www.npmjs.com/package/path-key/v/3.1.1 | OK |
 | path-parse | 1.0.7 | dev | MIT | https://www.npmjs.com/package/path-parse/v/1.0.7 | OK |
+| path-scurry | 2.0.2 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/path-scurry/v/2.0.2 | OK |
 | pathe | 2.0.3 | dev | MIT | https://www.npmjs.com/package/pathe/v/2.0.3 | OK |
 | pathval | 2.0.1 | dev | MIT | https://www.npmjs.com/package/pathval/v/2.0.1 | OK |
 | picocolors | 1.1.1 | dev | ISC | https://www.npmjs.com/package/picocolors/v/1.1.1 | OK |
@@ -322,9 +540,11 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | picomatch | 4.0.7 | dev | MIT | https://www.npmjs.com/package/picomatch/v/4.0.7 | OK |
 | picomatch | 4.0.7 | dev | MIT | https://www.npmjs.com/package/picomatch/v/4.0.7 | OK |
 | picomatch | 4.0.7 | dev | MIT | https://www.npmjs.com/package/picomatch/v/4.0.7 | OK |
+| picomatch | 4.0.7 | dev | MIT | https://www.npmjs.com/package/picomatch/v/4.0.7 | OK |
 | pirates | 4.0.7 | dev | MIT | https://www.npmjs.com/package/pirates/v/4.0.7 | OK |
 | playwright | 1.64.1 | dev | Apache-2.0 | https://www.npmjs.com/package/playwright/v/1.64.1 | OK |
 | playwright-core | 1.64.1 | dev | Apache-2.0 | https://www.npmjs.com/package/playwright-core/v/1.64.1 | OK |
+| possible-typed-array-names | 1.1.0 | dev | MIT | https://www.npmjs.com/package/possible-typed-array-names/v/1.1.0 | OK |
 | postcss | 8.5.31 | dev | MIT | https://www.npmjs.com/package/postcss/v/8.5.31 | OK |
 | postcss-import | 15.1.0 | dev | MIT | https://www.npmjs.com/package/postcss-import/v/15.1.0 | OK |
 | postcss-js | 4.1.0 | dev | MIT | https://www.npmjs.com/package/postcss-js/v/4.1.0 | OK |
@@ -333,6 +553,8 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | postcss-selector-parser | 6.1.5 | dev | MIT | https://www.npmjs.com/package/postcss-selector-parser/v/6.1.5 | OK |
 | postcss-value-parser | 4.2.0 | dev | MIT | https://www.npmjs.com/package/postcss-value-parser/v/4.2.0 | OK |
 | prelude-ls | 1.2.1 | dev | MIT | https://www.npmjs.com/package/prelude-ls/v/1.2.1 | OK |
+| pretty-bytes | 5.6.0 | dev | MIT | https://www.npmjs.com/package/pretty-bytes/v/5.6.0 | OK |
+| pretty-bytes | 6.1.1 | dev | MIT | https://www.npmjs.com/package/pretty-bytes/v/6.1.1 | OK |
 | pretty-format | 27.5.1 | dev | MIT | https://www.npmjs.com/package/pretty-format/v/27.5.1 | OK |
 | punycode | 2.3.1 | dev | MIT | https://www.npmjs.com/package/punycode/v/2.3.1 | OK |
 | queue-microtask | 1.2.3 | dev | MIT | https://www.npmjs.com/package/queue-microtask/v/1.2.3 | OK |
@@ -345,24 +567,57 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | read-cache | 1.0.2 | dev | MIT | https://www.npmjs.com/package/read-cache/v/1.0.2 | OK |
 | readdirp | 3.6.0 | dev | MIT | https://www.npmjs.com/package/readdirp/v/3.6.0 | OK |
 | redent | 3.0.0 | dev | MIT | https://www.npmjs.com/package/redent/v/3.0.0 | OK |
+| reflect.getprototypeof | 1.0.10 | dev | MIT | https://www.npmjs.com/package/reflect.getprototypeof/v/1.0.10 | OK |
+| regenerate | 1.5.0 | dev | MIT | https://www.npmjs.com/package/regenerate/v/1.5.0 | OK |
+| regenerate-unicode-properties | 10.3.0 | dev | MIT | https://www.npmjs.com/package/regenerate-unicode-properties/v/10.3.0 | OK |
+| regexp.prototype.flags | 1.5.4 | dev | MIT | https://www.npmjs.com/package/regexp.prototype.flags/v/1.5.4 | OK |
+| regexpu-core | 6.5.3 | dev | MIT | https://www.npmjs.com/package/regexpu-core/v/6.5.3 | OK |
+| regjsgen | 0.8.0 | dev | MIT | https://www.npmjs.com/package/regjsgen/v/0.8.0 | OK |
+| regjsparser | 0.13.4 | dev | BSD-2-Clause | https://www.npmjs.com/package/regjsparser/v/0.13.4 | OK |
+| require-from-string | 2.0.2 | dev | MIT | https://www.npmjs.com/package/require-from-string/v/2.0.2 | OK |
 | resolve | 1.22.13 | dev | MIT | https://www.npmjs.com/package/resolve/v/1.22.13 | OK |
 | resolve-from | 4.0.0 | dev | MIT | https://www.npmjs.com/package/resolve-from/v/4.0.0 | OK |
 | reusify | 1.1.0 | dev | MIT | https://www.npmjs.com/package/reusify/v/1.1.0 | OK |
 | rollup | 4.65.0 | dev | MIT | https://www.npmjs.com/package/rollup/v/4.65.0 | OK |
 | rrweb-cssom | 0.8.0 | dev | MIT | https://www.npmjs.com/package/rrweb-cssom/v/0.8.0 | OK |
 | run-parallel | 1.2.0 | dev | MIT | https://www.npmjs.com/package/run-parallel/v/1.2.0 | OK |
+| safe-array-concat | 1.1.4 | dev | MIT | https://www.npmjs.com/package/safe-array-concat/v/1.1.4 | OK |
+| safe-push-apply | 1.0.0 | dev | MIT | https://www.npmjs.com/package/safe-push-apply/v/1.0.0 | OK |
+| safe-regex-test | 1.1.0 | dev | MIT | https://www.npmjs.com/package/safe-regex-test/v/1.1.0 | OK |
 | safer-buffer | 2.1.2 | dev | MIT | https://www.npmjs.com/package/safer-buffer/v/2.1.2 | OK |
 | saxes | 6.0.0 | dev | ISC | https://www.npmjs.com/package/saxes/v/6.0.0 | OK |
 | scheduler | 0.23.2 | prod | MIT | https://www.npmjs.com/package/scheduler/v/0.23.2 | OK |
 | semver | 6.3.1 | dev | ISC | https://www.npmjs.com/package/semver/v/6.3.1 | OK |
 | semver | 7.8.5 | dev | ISC | https://www.npmjs.com/package/semver/v/7.8.5 | OK |
+| semver | 7.8.5 | dev | ISC | https://www.npmjs.com/package/semver/v/7.8.5 | OK |
+| serialize-javascript | 7.1.4 | dev | BSD-3-Clause | https://www.npmjs.com/package/serialize-javascript/v/7.1.4 | OK |
 | set-cookie-parser | 2.7.3 | prod | MIT | https://www.npmjs.com/package/set-cookie-parser/v/2.7.3 | OK |
+| set-function-length | 1.2.2 | dev | MIT | https://www.npmjs.com/package/set-function-length/v/1.2.2 | OK |
+| set-function-name | 2.0.2 | dev | MIT | https://www.npmjs.com/package/set-function-name/v/2.0.2 | OK |
+| set-proto | 1.0.0 | dev | MIT | https://www.npmjs.com/package/set-proto/v/1.0.0 | OK |
+| sharp | 0.35.5 | dev | Apache-2.0 | https://www.npmjs.com/package/sharp/v/0.35.5 | OK |
 | shebang-command | 2.0.0 | dev | MIT | https://www.npmjs.com/package/shebang-command/v/2.0.0 | OK |
 | shebang-regex | 3.0.0 | dev | MIT | https://www.npmjs.com/package/shebang-regex/v/3.0.0 | OK |
+| side-channel | 1.1.1 | dev | MIT | https://www.npmjs.com/package/side-channel/v/1.1.1 | OK |
+| side-channel-list | 1.0.1 | dev | MIT | https://www.npmjs.com/package/side-channel-list/v/1.0.1 | OK |
+| side-channel-map | 1.0.1 | dev | MIT | https://www.npmjs.com/package/side-channel-map/v/1.0.1 | OK |
+| side-channel-weakmap | 1.0.2 | dev | MIT | https://www.npmjs.com/package/side-channel-weakmap/v/1.0.2 | OK |
 | siginfo | 2.0.0 | dev | ISC | https://www.npmjs.com/package/siginfo/v/2.0.0 | OK |
+| signal-exit | 4.1.0 | dev | ISC | https://www.npmjs.com/package/signal-exit/v/4.1.0 | OK |
+| smob | 1.6.2 | dev | MIT | https://www.npmjs.com/package/smob/v/1.6.2 | OK |
+| source-map | 0.6.1 | dev | BSD-3-Clause | https://www.npmjs.com/package/source-map/v/0.6.1 | OK |
+| source-map | 0.8.0 | dev | BSD-3-Clause | https://www.npmjs.com/package/source-map/v/0.8.0 | OK |
 | source-map-js | 1.2.2 | dev | BSD-3-Clause | https://www.npmjs.com/package/source-map-js/v/1.2.2 | OK |
+| source-map-support | 0.5.21 | dev | MIT | https://www.npmjs.com/package/source-map-support/v/0.5.21 | OK |
 | stackback | 0.0.2 | dev | MIT | https://www.npmjs.com/package/stackback/v/0.0.2 | OK |
 | std-env | 3.10.0 | dev | MIT | https://www.npmjs.com/package/std-env/v/3.10.0 | OK |
+| stop-iteration-iterator | 1.1.0 | dev | MIT | https://www.npmjs.com/package/stop-iteration-iterator/v/1.1.0 | OK |
+| string.prototype.matchall | 4.1.0 | dev | MIT | https://www.npmjs.com/package/string.prototype.matchall/v/4.1.0 | OK |
+| string.prototype.trim | 1.2.11 | dev | MIT | https://www.npmjs.com/package/string.prototype.trim/v/1.2.11 | OK |
+| string.prototype.trimend | 1.0.10 | dev | MIT | https://www.npmjs.com/package/string.prototype.trimend/v/1.0.10 | OK |
+| string.prototype.trimstart | 1.0.8 | dev | MIT | https://www.npmjs.com/package/string.prototype.trimstart/v/1.0.8 | OK |
+| stringify-object | 3.3.0 | dev | BSD-2-Clause | https://www.npmjs.com/package/stringify-object/v/3.3.0 | OK |
+| strip-comments | 2.0.1 | dev | MIT | https://www.npmjs.com/package/strip-comments/v/2.0.1 | OK |
 | strip-indent | 3.0.0 | dev | MIT | https://www.npmjs.com/package/strip-indent/v/3.0.0 | OK |
 | strip-json-comments | 3.1.1 | dev | MIT | https://www.npmjs.com/package/strip-json-comments/v/3.1.1 | OK |
 | strip-literal | 3.1.0 | dev | MIT | https://www.npmjs.com/package/strip-literal/v/3.1.0 | OK |
@@ -371,6 +626,9 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | supports-preserve-symlinks-flag | 1.0.0 | dev | MIT | https://www.npmjs.com/package/supports-preserve-symlinks-flag/v/1.0.0 | OK |
 | symbol-tree | 3.2.4 | dev | MIT | https://www.npmjs.com/package/symbol-tree/v/3.2.4 | OK |
 | tailwindcss | 3.4.19 | dev | MIT | https://www.npmjs.com/package/tailwindcss/v/3.4.19 | OK |
+| temp-dir | 2.0.0 | dev | MIT | https://www.npmjs.com/package/temp-dir/v/2.0.0 | OK |
+| tempy | 0.6.0 | dev | MIT | https://www.npmjs.com/package/tempy/v/0.6.0 | OK |
+| terser | 5.51.2 | dev | BSD-2-Clause | https://www.npmjs.com/package/terser/v/5.51.2 | OK |
 | thenify | 3.3.1 | dev | MIT | https://www.npmjs.com/package/thenify/v/3.3.1 | OK |
 | thenify-all | 1.6.0 | dev | MIT | https://www.npmjs.com/package/thenify-all/v/1.6.0 | OK |
 | tinybench | 2.9.0 | dev | MIT | https://www.npmjs.com/package/tinybench/v/2.9.0 | OK |
@@ -386,15 +644,30 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | tr46 | 5.1.1 | dev | MIT | https://www.npmjs.com/package/tr46/v/5.1.1 | OK |
 | ts-api-utils | 2.5.0 | dev | MIT | https://www.npmjs.com/package/ts-api-utils/v/2.5.0 | OK |
 | ts-interface-checker | 0.1.13 | dev | Apache-2.0 | https://www.npmjs.com/package/ts-interface-checker/v/0.1.13 | OK |
+| tslib | 2.8.1 | dev (optional) | 0BSD | https://www.npmjs.com/package/tslib/v/2.8.1 | OK |
 | type-check | 0.4.0 | dev | MIT | https://www.npmjs.com/package/type-check/v/0.4.0 | OK |
+| type-fest | 0.16.0 | dev | (MIT OR CC0-1.0) | https://www.npmjs.com/package/type-fest/v/0.16.0 | OK |
+| typed-array-buffer | 1.0.3 | dev | MIT | https://www.npmjs.com/package/typed-array-buffer/v/1.0.3 | OK |
+| typed-array-byte-length | 1.0.3 | dev | MIT | https://www.npmjs.com/package/typed-array-byte-length/v/1.0.3 | OK |
+| typed-array-byte-offset | 1.0.5 | dev | MIT | https://www.npmjs.com/package/typed-array-byte-offset/v/1.0.5 | OK |
+| typed-array-length | 1.0.8 | dev | MIT | https://www.npmjs.com/package/typed-array-length/v/1.0.8 | OK |
 | typescript | 5.9.3 | dev | Apache-2.0 | https://www.npmjs.com/package/typescript/v/5.9.3 | OK |
 | typescript-eslint | 8.72.0 | dev | MIT | https://www.npmjs.com/package/typescript-eslint/v/8.72.0 | OK |
+| unbox-primitive | 1.1.0 | dev | MIT | https://www.npmjs.com/package/unbox-primitive/v/1.1.0 | OK |
 | undici-types | 6.21.0 | dev | MIT | https://www.npmjs.com/package/undici-types/v/6.21.0 | OK |
+| unicode-canonical-property-names-ecmascript | 2.0.1 | dev | MIT | https://www.npmjs.com/package/unicode-canonical-property-names-ecmascript/v/2.0.1 | OK |
+| unicode-match-property-ecmascript | 2.0.0 | dev | MIT | https://www.npmjs.com/package/unicode-match-property-ecmascript/v/2.0.0 | OK |
+| unicode-match-property-value-ecmascript | 2.2.1 | dev | MIT | https://www.npmjs.com/package/unicode-match-property-value-ecmascript/v/2.2.1 | OK |
+| unicode-property-aliases-ecmascript | 2.2.0 | dev | MIT | https://www.npmjs.com/package/unicode-property-aliases-ecmascript/v/2.2.0 | OK |
+| unique-string | 2.0.0 | dev | MIT | https://www.npmjs.com/package/unique-string/v/2.0.0 | OK |
+| universalify | 2.0.1 | dev | MIT | https://www.npmjs.com/package/universalify/v/2.0.1 | OK |
+| upath | 1.2.0 | dev | MIT | https://www.npmjs.com/package/upath/v/1.2.0 | OK |
 | update-browserslist-db | 1.3.4 | dev | MIT | https://www.npmjs.com/package/update-browserslist-db/v/1.3.4 | OK |
 | uri-js | 4.4.1 | dev | BSD-2-Clause | https://www.npmjs.com/package/uri-js/v/4.4.1 | OK |
 | util-deprecate | 1.0.2 | dev | MIT | https://www.npmjs.com/package/util-deprecate/v/1.0.2 | OK |
 | vite | 7.3.7 | dev | MIT | https://www.npmjs.com/package/vite/v/7.3.7 | OK |
 | vite-node | 3.2.4 | dev | MIT | https://www.npmjs.com/package/vite-node/v/3.2.4 | OK |
+| vite-plugin-pwa | 2.0.0 | dev | MIT | https://www.npmjs.com/package/vite-plugin-pwa/v/2.0.0 | OK |
 | vitest | 3.2.7 | dev | MIT | https://www.npmjs.com/package/vitest/v/3.2.7 | OK |
 | w3c-xmlserializer | 5.0.0 | dev | MIT | https://www.npmjs.com/package/w3c-xmlserializer/v/5.0.0 | OK |
 | webidl-conversions | 7.0.0 | dev | BSD-2-Clause | https://www.npmjs.com/package/webidl-conversions/v/7.0.0 | OK |
@@ -402,8 +675,28 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 | whatwg-mimetype | 4.0.0 | dev | MIT | https://www.npmjs.com/package/whatwg-mimetype/v/4.0.0 | OK |
 | whatwg-url | 14.2.0 | dev | MIT | https://www.npmjs.com/package/whatwg-url/v/14.2.0 | OK |
 | which | 2.0.2 | dev | ISC | https://www.npmjs.com/package/which/v/2.0.2 | OK |
+| which-boxed-primitive | 1.1.1 | dev | MIT | https://www.npmjs.com/package/which-boxed-primitive/v/1.1.1 | OK |
+| which-builtin-type | 1.2.1 | dev | MIT | https://www.npmjs.com/package/which-builtin-type/v/1.2.1 | OK |
+| which-collection | 1.0.2 | dev | MIT | https://www.npmjs.com/package/which-collection/v/1.0.2 | OK |
+| which-typed-array | 1.1.24 | dev | MIT | https://www.npmjs.com/package/which-typed-array/v/1.1.24 | OK |
 | why-is-node-running | 2.3.0 | dev | MIT | https://www.npmjs.com/package/why-is-node-running/v/2.3.0 | OK |
 | word-wrap | 1.2.5 | dev | MIT | https://www.npmjs.com/package/word-wrap/v/1.2.5 | OK |
+| workbox-background-sync | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-background-sync/v/7.4.1 | OK |
+| workbox-broadcast-update | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-broadcast-update/v/7.4.1 | OK |
+| workbox-build | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-build/v/7.4.1 | OK |
+| workbox-cacheable-response | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-cacheable-response/v/7.4.1 | OK |
+| workbox-core | 7.4.1 | prod | MIT | https://www.npmjs.com/package/workbox-core/v/7.4.1 | OK |
+| workbox-expiration | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-expiration/v/7.4.1 | OK |
+| workbox-google-analytics | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-google-analytics/v/7.4.1 | OK |
+| workbox-navigation-preload | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-navigation-preload/v/7.4.1 | OK |
+| workbox-precaching | 7.4.1 | prod | MIT | https://www.npmjs.com/package/workbox-precaching/v/7.4.1 | OK |
+| workbox-range-requests | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-range-requests/v/7.4.1 | OK |
+| workbox-recipes | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-recipes/v/7.4.1 | OK |
+| workbox-routing | 7.4.1 | prod | MIT | https://www.npmjs.com/package/workbox-routing/v/7.4.1 | OK |
+| workbox-strategies | 7.4.1 | prod | MIT | https://www.npmjs.com/package/workbox-strategies/v/7.4.1 | OK |
+| workbox-streams | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-streams/v/7.4.1 | OK |
+| workbox-sw | 7.4.1 | dev | MIT | https://www.npmjs.com/package/workbox-sw/v/7.4.1 | OK |
+| workbox-window | 7.4.1 | prod | MIT | https://www.npmjs.com/package/workbox-window/v/7.4.1 | OK |
 | ws | 8.22.0 | dev | MIT | https://www.npmjs.com/package/ws/v/8.22.0 | OK |
 | xml-name-validator | 5.0.0 | dev | Apache-2.0 | https://www.npmjs.com/package/xml-name-validator/v/5.0.0 | OK |
 | xmlchars | 2.2.0 | dev | MIT | https://www.npmjs.com/package/xmlchars/v/2.2.0 | OK |
@@ -413,6 +706,32 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 Notes:
 
+- **@img/sharp-darwin-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-darwin-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-freebsd-wasm32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-libvips-darwin-arm64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-darwin-x64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linux-arm@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linux-arm64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linux-ppc64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linux-riscv64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linux-s390x@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linux-x64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linuxmusl-arm64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-libvips-linuxmusl-x64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
+- **@img/sharp-linux-arm@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-linux-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-linux-ppc64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-linux-riscv64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-linux-s390x@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-linux-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-linuxmusl-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-linuxmusl-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-wasm32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later AND MIT.
+- **@img/sharp-webcontainers-wasm32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
+- **@img/sharp-win32-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later.
+- **@img/sharp-win32-ia32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later.
+- **@img/sharp-win32-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later.
 - **argparse@2.0.1**: Reviewed override (2026-10-24, Decision 9. Dev-only: js-yaml@4.3.2 <- @eslint/eslintrc <- eslint, used by its CLI only; not in the production tree and not in dist/. Python-2.0 (PSF license) is permissive and GPL-compatible: it only requires keeping the copyright notice and license text when redistributing, and the package is never redistributed with the app.). Declared: Python-2.0.
 - **caniuse-lite@1.0.30001819**: Reviewed override (2026-10-24, Decision 9. Dev-only: pulled in by autoprefixer and browserslist at build time; not in the production dependency tree and not in dist/ (checked the built bundle). CC-BY-4.0 requires attribution (author, license link, indication of changes) only when the data itself is shared; the compiled app does not include it. If caniuse-lite or browserslist data is ever bundled into the app, add the attribution 'caniuse-lite data by Alexis Deveria and contributors (caniuse.com), CC BY 4.0' to the licenses screen first.). Declared: CC-BY-4.0.
 
@@ -614,11 +933,13 @@ Notes:
 
 ### Reviewed overrides
 
-| Package | Version | Accepted license | Reason |
-|---|---|---|---|
-| caniuse-lite | 1.0.30001819 | CC-BY-4.0 | 2026-10-24, Decision 9. Dev-only: pulled in by autoprefixer and browserslist at build time; not in the production dependency tree and not in dist/ (checked the built bundle). CC-BY-4.0 requires attribution (author, license link, indication of changes) only when the data itself is shared; the compiled app does not include it. If caniuse-lite or browserslist data is ever bundled into the app, add the attribution 'caniuse-lite data by Alexis Deveria and contributors (caniuse.com), CC BY 4.0' to the licenses screen first. |
-| argparse | 2.0.1 | Python-2.0 | 2026-10-24, Decision 9. Dev-only: js-yaml@4.3.2 <- @eslint/eslintrc <- eslint, used by its CLI only; not in the production tree and not in dist/. Python-2.0 (PSF license) is permissive and GPL-compatible: it only requires keeping the copyright notice and license text when redistributing, and the package is never redistributed with the app. |
-| parse-cache-control | 1.0.1 | BSD-3-Clause | 2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped. |
+| Package | Version | Accepted license | Scope | Reason |
+|---|---|---|---|---|
+| caniuse-lite | 1.0.30001819 | CC-BY-4.0 | any | 2026-10-24, Decision 9. Dev-only: pulled in by autoprefixer and browserslist at build time; not in the production dependency tree and not in dist/ (checked the built bundle). CC-BY-4.0 requires attribution (author, license link, indication of changes) only when the data itself is shared; the compiled app does not include it. If caniuse-lite or browserslist data is ever bundled into the app, add the attribution 'caniuse-lite data by Alexis Deveria and contributors (caniuse.com), CC BY 4.0' to the licenses screen first. |
+| argparse | 2.0.1 | Python-2.0 | any | 2026-10-24, Decision 9. Dev-only: js-yaml@4.3.2 <- @eslint/eslintrc <- eslint, used by its CLI only; not in the production tree and not in dist/. Python-2.0 (PSF license) is permissive and GPL-compatible: it only requires keeping the copyright notice and license text when redistributing, and the package is never redistributed with the app. |
+| parse-cache-control | 1.0.1 | BSD-3-Clause | any | 2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped. |
+| @img/sharp-libvips-* | 1.3.4 | declared | dev only (fails if in prod tree, dist/ or public/) | 2026-10-24, Decision 9. LGPL-3.0-or-later prebuilt libvips binaries, installed only as optional dependencies of sharp@0.35.5. sharp is a devDependency used by one tool, scripts/pwa/generate-icons.mjs (renders the SVG icons to PNG). They are not in the production tree (npm ls --omit=dev), and dist/ and public/ contain no libvips code, no native binaries and no 'sharp' or 'libvips' strings. The committed PNG icons are the tool's output, hold only IHDR, pHYs, IDAT and IEND chunks (no embedded profile or text) and are not LGPL material. LGPL obligations apply to distributing the binaries, and PageNest does not. The audit fails if one of these appears in the production tree, in dist/ or in public/. |
+| @img/sharp-* | 0.35.5 | declared | dev only (fails if in prod tree, dist/ or public/) | 2026-10-24, Decision 9. Platform packages of sharp@0.35.5 (Apache-2.0; the wasm32 and win32 ones bundle LGPL libvips and say 'Apache-2.0 AND LGPL-3.0-or-later'). Same review as @img/sharp-libvips-*: optional dependencies of the devDependency sharp, used only by scripts/pwa/generate-icons.mjs, absent from the production tree and from dist/ and public/. Fails if one appears in the production tree, dist/ or public/. |
 
 ## Fonts
 
@@ -649,7 +970,6 @@ Expected licenses from the upstream projects. Once a package is installed it mov
 | Name | Version | License | Source | Status | Note |
 |---|---|---|---|---|---|
 | radix-ui / @radix-ui/* | latest | MIT | https://www.npmjs.com/org/radix-ui | OK |  |
-| vite-plugin-pwa | latest | MIT | https://www.npmjs.com/package/vite-plugin-pwa | OK | dev; pulls in workbox-* (MIT) |
 | comlink | latest | Apache-2.0 | https://www.npmjs.com/package/comlink | OK |  |
 | pdfjs-dist | latest | Apache-2.0 | https://www.npmjs.com/package/pdfjs-dist | OK | Worker file must be self-hosted, not loaded from a CDN. |
 | foliate-js | git/vendored | MIT | https://github.com/johnfactotum/foliate-js | OK (see note) | Not published to npm; vendored or git dependency. Its bundled sub-libraries (zip.js, fflate, PDF.js parts) carry their own licenses: check each vendored file. |

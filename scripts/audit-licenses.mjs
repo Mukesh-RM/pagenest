@@ -11,10 +11,14 @@
 // Exit code 1 when an installed package has a license that is not on the allow-list
 // (GPL, AGPL, LGPL, SSPL, CC-NC, unknown, UNLICENSED, ...). Planned assets from
 // scripts/audit-planned.json are listed as open risks but never change the exit code.
+//
+// Overrides (scripts/audit-license-overrides.json): `name` may end in `*` (scoped prefix). `"scope": "dev"` accepts a
+// package only while it is in the dev tree; it fails if the package is a production dependency or if dist/ or
+// public/ contain a native binary or one of the override's `distForbid` strings.
 // Owner: Auditor.
 import fs from 'node:fs';
 import path from 'node:path';
-import { SCRIPTS_DIR, escapeMd, exists, isMain, parseArgs, readJson, readText, relPath } from './audit-lib.mjs';
+import { SCRIPTS_DIR, escapeMd, exists, isMain, parseArgs, readJson, readText, relPath, walk } from './audit-lib.mjs';
 
 // ---------------------------------------------------------------- policy
 
@@ -413,8 +417,43 @@ function scanNodeModules(root, rootPkg) {
 
 // ---------------------------------------------------------------- analysis
 
+/** Override names are exact, or end in `*` for a scoped prefix such as `@img/sharp-libvips-*`. */
+function nameMatches(pattern, name) {
+  return pattern.endsWith('*') ? name.startsWith(pattern.slice(0, -1)) : pattern === name;
+}
+
 function matchOverride(overrides, p) {
-  return overrides.find((o) => o.name === p.name && (o.version === '*' || o.version === p.version));
+  return overrides.find((o) => nameMatches(o.name, p.name) && (o.version === '*' || o.version === p.version));
+}
+
+/** Binary file types that must never appear in the shipped output. */
+const NATIVE_EXT = /\.(node|so|dylib|dll)(\.\d+)*$/i;
+
+/**
+ * Guard for dev-only overrides (`"scope": "dev"`): the reviewed package must never reach the shipped output.
+ * Looks in dist/ and public/ for native binaries and for the override's `distForbid` strings (read as bytes, so
+ * binaries and wasm are covered too). Returns a list of human readable findings.
+ */
+export function scanShippedOutput(root, overrides) {
+  const forbid = [...new Set(overrides.filter((o) => o.scope === 'dev').flatMap((o) => o.distForbid || []))];
+  const findings = [];
+  for (const dir of ['dist', 'public']) {
+    const base = path.join(root, dir);
+    if (!exists(base)) continue;
+    for (const file of walk(base, { skipDirs: new Set() })) {
+      const rel = relPath(root, file);
+      if (NATIVE_EXT.test(file)) findings.push(`${rel}: native binary in shipped output`);
+      if (!forbid.length) continue;
+      let text;
+      try {
+        text = fs.readFileSync(file).toString('latin1').toLowerCase();
+      } catch {
+        continue;
+      }
+      for (const needle of forbid) if (text.includes(needle.toLowerCase())) findings.push(`${rel}: contains "${needle}"`);
+    }
+  }
+  return findings;
 }
 
 export function analyzePackages(packages, { overrides = [], registryLookup } = {}) {
@@ -429,7 +468,15 @@ export function analyzePackages(packages, { overrides = [], registryLookup } = {
       license = p.detected;
     }
     if (needsDetect(license) && p.registryLicense) license = p.registryLicense;
-    if (ov) {
+    if (ov && ov.scope === 'dev') {
+      // Dev-only exception for a license that would otherwise fail (for example LGPL native binaries of a build tool).
+      if (p.scope !== 'dev') {
+        result = { status: 'violation', reason: `override for ${ov.name} only allows the DEV tree, but this package is in the PRODUCTION dependency tree (${ov.reason})`, licenses: [] };
+      } else {
+        result = { status: 'note', reason: `Dev-only override (see Reviewed overrides: ${ov.name} ${ov.version}). Declared: ${license || 'none'}.`, licenses: [] };
+      }
+      if (ov.license && ov.license !== 'declared') license = ov.license;
+    } else if (ov) {
       const r = evaluateLicense(ov.license);
       result = { status: r.status === 'violation' ? 'violation' : 'note', reason: `Reviewed override (${ov.reason}). Declared: ${license || 'none'}.`, licenses: r.licenses };
       license = ov.license;
@@ -532,8 +579,8 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMod
 
   if (overrides.length) {
     out.push('### Reviewed overrides', '');
-    out.push('| Package | Version | Accepted license | Reason |', '|---|---|---|---|');
-    for (const o of overrides) out.push(`| ${escapeMd(o.name)} | ${escapeMd(o.version)} | ${escapeMd(o.license)} | ${escapeMd(o.reason)} |`);
+    out.push('| Package | Version | Accepted license | Scope | Reason |', '|---|---|---|---|---|');
+    for (const o of overrides) out.push(`| ${escapeMd(o.name)} | ${escapeMd(o.version)} | ${escapeMd(o.license)} | ${o.scope === 'dev' ? 'dev only (fails if in prod tree, dist/ or public/)' : 'any'} | ${escapeMd(o.reason)} |`);
     out.push('');
   }
 
@@ -597,6 +644,8 @@ export async function run(argv, { cwd = process.cwd(), log = console.log, errLog
     }
   }
   const violations = [...rows, ...qaRows].filter((r) => r.status === 'violation');
+  const shipped = scanShippedOutput(root, overrides);
+  for (const f of shipped) violations.push({ scope: 'shipped', name: 'dist/public', version: '-', license: 'dev-only override', reason: f });
   const notes = [...rows, ...qaRows].filter((r) => r.status === 'note');
   const risks = [...planned.fonts, ...planned.icons, ...planned.dependencies, ...planned.models].filter((r) => r.status === 'VERIFY' || r.status === 'NOT-OK');
 
