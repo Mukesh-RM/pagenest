@@ -1,5 +1,4 @@
 import { Button, Icon } from '@/ui';
-import { LibIcon } from '../icons';
 
 export interface SelectionBarProps {
   count: number;
@@ -29,7 +28,7 @@ export function SelectionBar({ count, total, allFavorite, onFavorite, onFinished
       ) : null}
       <span className="pn-lib-selbar__spacer" />
       <button type="button" className="pn-btn pn-btn--ghost pn-btn--icon" aria-label={allFavorite ? 'Remove from favorites' : 'Add to favorites'} disabled={count === 0} onClick={onFavorite}>
-        <LibIcon name="heart" filled={allFavorite} />
+        <Icon name="heart" filled={allFavorite} />
       </button>
       <button type="button" className="pn-btn pn-btn--ghost pn-btn--icon" aria-label="Mark as finished or not finished" disabled={count === 0} onClick={onFinished}>
         <Icon name="circleCheck" />

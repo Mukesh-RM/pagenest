@@ -102,7 +102,7 @@ async function seed(count: number): Promise<void> {
     }),
   );
 }
-const cards = () => screen.queryAllByRole('listitem').filter((li) => li.classList.contains('pn-library__item'));
+const cards = () => screen.queryAllByRole('listitem').filter((li) => li.classList.contains('pn-vlist__item'));
 const anyCard = async (): Promise<HTMLElement> => (await screen.findAllByRole('button', { name: /, Author \d/ }))[0] as HTMLElement;
 
 describe('the library list', () => {
@@ -235,9 +235,19 @@ describe('the library list', () => {
     await seed(6);
     renderLibrary();
     await waitFor(() => expect(cards().length).toBeGreaterThan(0));
-    expect(document.querySelector('[class*="pn-lib-card"], [class*="pn-lib-cover"], [class*="pn-lib-item"]')).toBeNull();
+    expect(document.querySelector('[class*="pn-lib-card"], [class*="pn-lib-cover"], [class*="pn-lib-item"], .pn-library__item')).toBeNull();
     expect(document.querySelectorAll('.pn-bookcard .pn-cover').length).toBe(cards().length);
-    expect(document.querySelector('.pn-library__grid')?.getAttribute('aria-label')).toBe('Books');
+    expect(screen.getByRole('list', { name: 'Books' }).getAttribute('aria-label')).toBe('Books');
+  });
+
+  it('marks a favorite with the design system\'s heart badge, and only a favorite', async () => {
+    await services.db.books.put(bookRecord('f1', { title: 'Loved Book', favorite: true, fingerprint: 'fp-f1' }));
+    await services.db.books.put(bookRecord('f2', { title: 'Plain Book', fingerprint: 'fp-f2' }));
+    renderLibrary();
+    const loved = await screen.findByRole('button', { name: /Loved Book/ });
+    expect(loved.getAttribute('aria-label')).toMatch(/\. Favorite$/);
+    expect(loved.querySelector('.pn-cover-badge--favorite, [class*="favorite"]')).toBeTruthy();
+    expect((await screen.findByRole('button', { name: /Plain Book/ })).getAttribute('aria-label')).not.toMatch(/Favorite/);
   });
 
   it('shows the header slot (the resume card) under the filters and above the books', async () => {
@@ -252,7 +262,7 @@ describe('the library list', () => {
     await waitFor(() => expect(cards().length).toBeGreaterThan(0));
     const slot = screen.getByRole('region', { name: 'Welcome back' });
     const filters = container.querySelector('.pn-library__options') as HTMLElement;
-    const grid = container.querySelector('.pn-library__grid') as HTMLElement;
+    const grid = container.querySelector('.pn-vlist') as HTMLElement;
     expect(filters.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(slot.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });

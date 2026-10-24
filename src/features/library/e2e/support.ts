@@ -93,6 +93,46 @@ export async function measureInput(page: Page, predicateSource: string, action: 
   return wait;
 }
 
+/**
+ * Wait until the page is at rest: the DOM has not changed for `quietMs`, a frame has been drawn since, and the
+ * browser reports idle time. This is the signal to use before timing a tap: a fixed timer is too short on a slow
+ * machine and too long on a fast one, and a tap that lands while covers or the list are still arriving measures that
+ * work, not the tap. Gives up (and says so) after `maxMs`.
+ */
+export async function waitForQuiet(page: Page, quietMs = 300, maxMs = 8000): Promise<number> {
+  return page.evaluate(
+    ({ quietMs, maxMs }) =>
+      new Promise<number>((resolve, reject) => {
+        const begin = performance.now();
+        let last = performance.now();
+        const observer = new MutationObserver(() => void (last = performance.now()));
+        observer.observe(document, { childList: true, subtree: true, attributes: true, characterData: true });
+        const idle = (cb: () => void): void => {
+          if ('requestIdleCallback' in window) window.requestIdleCallback(() => cb(), { timeout: 500 });
+          else setTimeout(cb, 50);
+        };
+        const check = (): void => {
+          const now = performance.now();
+          if (now - begin > maxMs) {
+            observer.disconnect();
+            reject(new Error(`The page did not come to rest within ${maxMs} ms`));
+          } else if (now - last >= quietMs) {
+            requestAnimationFrame(() =>
+              idle(() => {
+                if (performance.now() - last >= quietMs) {
+                  observer.disconnect();
+                  resolve(performance.now() - begin);
+                } else check();
+              }),
+            );
+          } else setTimeout(check, 50);
+        };
+        check();
+      }),
+    { quietMs, maxMs },
+  );
+}
+
 /** Seed the `books` store of the `pagenest` database directly, exactly as QA does (bare rows). Reloads. */
 export async function seedBooks(page: Page, count: number): Promise<void> {
   const total = await page.evaluate(async (count) => {

@@ -24,6 +24,7 @@ export function toCardBook(book: DataBook, coverUrl: string | undefined): CardBo
     ...(coverUrl ? { coverUrl } : {}),
     progress: book.finished ? 1 : Math.max(0, Math.min(100, book.percent)) / 100,
     audio: book.kind === 'audio',
+    ...(book.favorite ? { favorite: true } : {}),
   };
 }
 

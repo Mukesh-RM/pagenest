@@ -95,6 +95,14 @@ describe('audio tags', () => {
     expect(meta.author).toBe('Narr Ator');
     expect(meta.durationSec).toBeGreaterThan(8);
   });
+  it('reads tags from the bytes, not from the type the browser guessed from the name (an M4B called talk.mp3)', async () => {
+    const bytes = makeMp4Audio({ brand: 'M4B ', title: 'Tagged Talk', album: 'Tagged Talk', seconds: 20 });
+    const meta = await parseAudio(new File([bytes as BlobPart], 'talk.mp3', { type: 'audio/mpeg' }));
+    expect(meta.title).toBe('Tagged Talk');
+    expect(meta.durationSec).toBe(20);
+    const mp3 = await parseAudio(new File([makeMp3({ title: 'A Song', frames: 100 }) as BlobPart], 'song.m4b', { type: 'audio/mp4' }));
+    expect(mp3.title).toBe('A Song');
+  });
   it('M4B: title, duration and chapters', async () => {
     const meta = await parseAudio(blob(makeMp4Audio({ brand: 'M4B ', album: 'Audio Book', seconds: 90, chapters: [['Intro', 0], ['Part two', 30]] })));
     expect(meta.title).toBe('Audio Book');
