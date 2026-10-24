@@ -25,15 +25,15 @@ export interface ApprovedPiperVoiceMeta {
 
 /** Voices blocked by vetting — documentation / audit only; never ship or smoke-test these. */
 export const FORBIDDEN_PIPER_VOICE_IDS = [
-  'en_US-lessac-low',
-  'en_US-lessac-medium',
-  'en_US-lessac-high',
-  'en_US-libritts_r-medium',
-  'en_US-amy-low',
-  'en_US-amy-medium',
-  'en_US-ryan-low',
-  'en_US-ryan-medium',
-  'en_US-ryan-high',
+  'en_US-lessac-low', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-lessac-medium', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-lessac-high', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-libritts_r-medium', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-amy-low', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-amy-medium', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-ryan-low', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-ryan-medium', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
+  'en_US-ryan-high', // audit-ignore: deny-list entry (MODEL_VETTING NOT OK)
 ] as const;
 
 export const APPROVED_PIPER_VOICES: readonly ApprovedPiperVoiceMeta[] = [
