@@ -143,7 +143,16 @@ for (const width of [360, 430]) {
       await page.keyboard.press('Escape');
       await expect(dialog).toBeHidden();
       await page.locator('.pn-live__host').focus();
-      for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowRight');
+      // Go to where the story starts ("Once upon a time there were four little Rabbits") through the engine's own API.
+      await page.evaluate(async () => {
+        const renderer = document.querySelector('foliate-view').renderer;
+        const { index, doc } = renderer.getContents()[0];
+        const node = Array.from(doc.body.querySelectorAll('*')).flatMap((el) => Array.from(el.childNodes)).find((n) => n.nodeType === 3 && n.data.includes('Once upon a time'));
+        const range = doc.createRange();
+        range.setStart(node, node.data.indexOf('Once upon a time'));
+        range.setEnd(node, node.data.indexOf('Once upon a time') + 4);
+        await renderer.goTo({ index, anchor: range });
+      });
       await settled(page, 600);
       await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 500 }).catch(() => undefined);
       await page.waitForTimeout(400);
