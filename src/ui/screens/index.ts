@@ -10,17 +10,12 @@ import '../styles/screens.css';
 import '../styles/surfaces.css';
 
 /* Redesign: presentational screens (props and callbacks only, no data layer) */
-export { LibraryScreen, DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, type LibraryFilterOption, type LibraryScreenProps, type LibrarySortOption, type LibraryView } from './LibraryScreen';
+export { LibraryScreen, type LibraryScreenProps, type LibraryView } from './LibraryScreen';
+export { DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, type LibraryFilterOption, type LibrarySortOption } from './libraryOptions';
 export { BookDetailSheet, type BookDetailSheetProps } from './BookDetailSheet';
 export { ReaderScreen, type ReaderScreenProps } from './ReaderScreen';
-export {
-  ReaderSettingsSheet,
-  LINE_HEIGHT,
-  MARGIN_PX,
-  READER_MAX_FONT,
-  READER_MIN_FONT,
-  type ReaderSettingsSheetProps,
-} from './ReaderSettingsSheet';
+export { ReaderSettingsSheet, type ReaderSettingsSheetProps } from './ReaderSettingsSheet';
+export { LINE_HEIGHT, MARGIN_PX, READER_MAX_FONT, READER_MIN_FONT } from './readerOptions';
 export { AudioPlayerScreen, type AudioPlayerController, type AudioPlayerScreenProps } from './AudioPlayerScreen';
 export { VoiceStudioScreen, type VoiceStudioScreenProps } from './VoiceStudioScreen';
 

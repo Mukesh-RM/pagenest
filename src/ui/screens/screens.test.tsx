@@ -6,7 +6,8 @@ import { GALLERY_SCREENS, GalleryRoot } from '../demo/ScreenGallery';
 import { resetSheetHistoryForTests } from '../utils/sheetHistory';
 import { AudioPlayerScreen } from './AudioPlayerScreen';
 import { BookDetailSheet } from './BookDetailSheet';
-import { DEFAULT_LIBRARY_FILTERS, LibraryScreen } from './LibraryScreen';
+import { LibraryScreen } from './LibraryScreen';
+import { DEFAULT_LIBRARY_FILTERS } from './libraryOptions';
 import { ReaderScreen } from './ReaderScreen';
 import { VoiceStudioScreen } from './VoiceStudioScreen';
 

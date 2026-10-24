@@ -9,36 +9,17 @@ import type { StarterBookOffer } from '../components/StarterBookCard';
 import { Icon } from '../icons';
 import { SkeletonCard, SkeletonGroup } from '../components/Skeleton';
 import type { BookSummary } from '../types';
+import { DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, type LibraryFilterOption, type LibrarySortOption } from './libraryOptions';
+
+export type { LibraryFilterOption, LibrarySortOption };
 import { cx } from '../utils/cx';
 import type { RectLike } from '../utils/flip';
 import '../styles/screens.css';
 import '../styles/surfaces.css';
 
-export interface LibraryFilterOption {
-  id: string;
-  label: string;
-}
-
-export const DEFAULT_LIBRARY_FILTERS: readonly LibraryFilterOption[] = [
-  { id: 'all', label: 'All' },
-  { id: 'reading', label: 'Reading' },
-  { id: 'listening', label: 'Listening' },
-  { id: 'finished', label: 'Finished' },
-];
 
 export type LibraryView = 'grid' | 'list';
 
-export interface LibrarySortOption {
-  id: string;
-  label: string;
-}
-
-export const DEFAULT_LIBRARY_SORTS: readonly LibrarySortOption[] = [
-  { id: 'recent', label: 'Recently opened' },
-  { id: 'added', label: 'Recently added' },
-  { id: 'title', label: 'Title' },
-  { id: 'author', label: 'Author' },
-];
 
 export interface LibraryScreenProps {
   /** Books to show, already filtered and searched by the data layer. */

@@ -4,15 +4,11 @@ import { ChoiceGroup } from '../components/ChoiceGroup';
 import { Range } from '../components/Range';
 import { THEME_PALETTE } from '../theme/palette';
 import { THEME_LABELS, THEME_NAMES, type ThemeName } from '../theme/themes';
-import type { LineSpacing, MarginSize, ReaderFontOption, ReaderSettings } from '../types';
+import type { ReaderFontOption, ReaderSettings } from '../types';
+import { LINE_HEIGHT, READER_MAX_FONT, READER_MIN_FONT } from './readerOptions';
 import '../styles/screens.css';
 import '../styles/surfaces.css';
 
-export const READER_MIN_FONT = 14;
-export const READER_MAX_FONT = 32;
-
-export const LINE_HEIGHT: Record<LineSpacing, number> = { compact: 1.4, comfortable: 1.6, airy: 1.85 };
-export const MARGIN_PX: Record<MarginSize, number> = { narrow: 16, medium: 24, wide: 40 };
 
 export interface ReaderSettingsSheetProps {
   open: boolean;
