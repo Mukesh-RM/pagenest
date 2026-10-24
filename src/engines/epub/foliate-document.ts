@@ -144,6 +144,7 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
 
   /** Called once by the engine after `view.open`. Resolves when the first page is on screen. */
   async start(locator: Locator | undefined): Promise<void> {
+    this.#guardRender();
     this.#applyLayoutAttributes();
     this.applyStyles();
     this.#buildToc();
@@ -164,6 +165,24 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
     // put the page on the saved spot again, so a reopened book shows exactly the page it was closed on.
     if (target && !this.#fixed && (await this.#layoutSettled(SETTLE_MS))) await this.#navigate(target).catch(() => undefined);
     this.#readMetadata();
+  }
+
+  /**
+   * The paginator re-renders whenever its box changes size. If that happens while the next section's document is still
+   * loading (no body yet), foliate throws from inside its resize observer. The section renders itself when it has
+   * loaded, so a render attempted before that is safe to skip.
+   */
+  #guardRender(): void {
+    const renderer = this.#view.renderer as FoliateRenderer & { render?: () => void };
+    const render = renderer.render?.bind(renderer);
+    if (!render) return;
+    renderer.render = () => {
+      try {
+        render();
+      } catch (error) {
+        if (!(error instanceof TypeError)) throw error;
+      }
+    };
   }
 
   /** Waits (at most `ms`) for the open section's fonts and pictures to be ready. True when it did not time out. */

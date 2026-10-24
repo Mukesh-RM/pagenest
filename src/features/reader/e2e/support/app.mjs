@@ -25,7 +25,7 @@ export function watchErrors(page) {
   page.on('console', (m) => {
     if (m.type() === 'error' && !noise(m.text())) errors.push(`console: ${m.text()}`);
   });
-  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}\n${e.stack ?? ""}`));
   return errors;
 }
 
