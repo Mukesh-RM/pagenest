@@ -13,10 +13,10 @@ import '../screen-styles';
 const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
 
 /**
- * Height kept for the Library's two groups while their code loads (in `rem`, so it follows the text
+ * Height kept for the Library's two groups only while their code loads (in `rem`, so it follows the text
  * size), so the About group below does not move.
  */
-const PANELS_RESERVE_REM = 26;
+const PANELS_RESERVE_REM = 36; // measured: 36.9 rem at 360 px wide, 33 rem at 1024 px, 38 rem at 200 % text
 
 function usageText(storage: StorageStatus): string {
   if (storage.usageBytes === undefined) return 'Your browser does not say how much space PageNest uses.';
@@ -74,11 +74,9 @@ export function SettingsPage() {
       install={<InstallHelp />}
       storage={storage}
     >
-      <div style={{ minHeight: `${PANELS_RESERVE_REM}rem` }}>
-        <Suspense fallback={null}>
-          <LibrarySettingsPanels />
-        </Suspense>
-      </div>
+      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+        <LibrarySettingsPanels />
+      </Suspense>
     </SettingsScreen>
   );
 }
