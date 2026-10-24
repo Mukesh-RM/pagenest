@@ -239,3 +239,24 @@ test('unknown option is a usage error', async () => {
   const r = await capture(['--nope']);
   assert.equal(r.code, 2);
 });
+
+test('generated doc contains the Speech engine licensing section', async () => {
+  const root = tmp();
+  write(root, 'package.json', { name: 'app' });
+  assert.equal((await capture(['--root', root, '--write'])).code, 0);
+  const doc = fs.readFileSync(path.join(root, 'docs', 'LICENSES.md'), 'utf8');
+  assert.match(doc, /## Speech engine licensing/);
+  assert.match(doc, /eSpeak NG/);
+  assert.match(doc, /Decision 8/);
+});
+
+test('tests/ QA toolchain is audited too (violations fail, doc has its table)', async () => {
+  const root = tmp();
+  write(root, 'package.json', { name: 'app' });
+  write(root, 'tests/package.json', { name: 'qa', devDependencies: { bad: '1.0.0' } });
+  write(root, 'tests/package-lock.json', { lockfileVersion: 3, packages: { '': {}, 'node_modules/bad': { version: '1.0.0', license: 'GPL-3.0', dev: true } } });
+  const r = await capture(['--write'], { cwd: root });
+  assert.equal(r.code, 1);
+  assert.match(r.out, /bad@1\.0\.0/);
+  assert.match(fs.readFileSync(path.join(root, 'docs', 'LICENSES.md'), 'utf8'), /QA toolchain \(tests\/, dev only\)/);
+});

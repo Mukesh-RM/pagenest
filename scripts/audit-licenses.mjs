@@ -472,7 +472,7 @@ async function registryFill(packages, fetchFn) {
 
 const STATUS_TEXT = { OK: 'OK', 'OK-NOTE': 'OK (see note)', VERIFY: 'VERIFY before use', 'NOT-OK': 'NOT OK' };
 
-function renderDoc({ rootPkg, rows, mode, planned, overrides }) {
+function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMode = '' }) {
   const out = [];
   const installed = new Set(rows.map((r) => r.name));
   const count = (s) => rows.filter((r) => r.status === s).length;
@@ -487,6 +487,7 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides }) {
   } else {
     out.push(`- Installed packages audited: ${rows.length} (${rows.filter((r) => r.scope === 'prod').length} production, ${rows.filter((r) => r.scope === 'dev').length} development)`);
     out.push(`- Source of data: ${mode}`);
+    if (qaMode) out.push(`- QA toolchain (\`tests/\`, dev only, never shipped): ${qaRows.length} packages from ${qaMode}; OK: ${qaRows.filter((r) => r.status === 'ok').length}, OK with note: ${qaRows.filter((r) => r.status === 'note').length}, NOT OK: ${qaRows.filter((r) => r.status === 'violation').length}`);
     out.push(`- OK: ${count('ok')}, OK with note: ${count('note')}, NOT OK: ${count('violation')}`);
   }
   const risks = [...planned.fonts, ...planned.icons, ...planned.dependencies, ...planned.models].filter((r) => r.status === 'VERIFY' || r.status === 'NOT-OK');
@@ -512,6 +513,23 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides }) {
     }
   }
 
+  if (qaMode) {
+    out.push('### QA toolchain (tests/, dev only)', '');
+    out.push('Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing in it is bundled into the app.', '');
+    out.push('| Name | Version | License | Source | Status |', '|---|---|---|---|---|');
+    for (const r of qaRows) {
+      const status = r.status === 'ok' ? 'OK' : r.status === 'note' ? 'OK (note)' : 'NOT OK';
+      out.push(`| ${escapeMd(r.name)} | ${escapeMd(r.version)} | ${escapeMd(r.license)} | ${escapeMd(r.source)} | ${status} |`);
+    }
+    out.push('');
+    const qaNotes = qaRows.filter((r) => r.reason);
+    if (qaNotes.length) {
+      out.push('Notes:', '');
+      for (const r of qaNotes) out.push(`- **${escapeMd(r.name)}@${escapeMd(r.version)}**: ${escapeMd(r.reason)}`);
+      out.push('');
+    }
+  }
+
   if (overrides.length) {
     out.push('### Reviewed overrides', '');
     out.push('| Package | Version | Accepted license | Reason |', '|---|---|---|---|');
@@ -531,6 +549,15 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides }) {
   const plannedDeps = planned.dependencies.filter((d) => !d.name.split(' / ').some((n) => installed.has(n.trim())) && !installed.has(d.name));
   table('Planned stack (blueprint section 11, not installed yet)', plannedDeps, 'Expected licenses from the upstream projects. Once a package is installed it moves to the npm table above with the license read from the lockfile, and this row disappears.');
   table('Models and voice engines (planned)', planned.models, 'Blueprint 9.3 and 10: the license of the model WEIGHTS is checked per model before it is added. For Piper, every voice has its own MODEL_CARD; record each voice here when added.');
+
+  for (const sec of planned.sections || []) {
+    out.push(`## ${sec.title}`, '');
+    for (let i = 0; i < sec.paragraphs.length; i++) {
+      const para = sec.paragraphs[i];
+      out.push(para);
+      if (!(para.startsWith('- ') && (sec.paragraphs[i + 1] || '').startsWith('- '))) out.push('');
+    }
+  }
 
   out.push('## How to check', '', '```bash', 'node scripts/audit-licenses.mjs           # audit installed dependencies', 'node scripts/audit-licenses.mjs --write   # regenerate this file', 'node scripts/audit-licenses.mjs --check   # CI: fail if this file is stale', '```', '');
   return out.join('\n');
@@ -559,13 +586,23 @@ export async function run(argv, { cwd = process.cwd(), log = console.log, errLog
   const collected = collectPackages(root);
   if (args.registry && fetchFn) await registryFill(collected.packages, fetchFn);
   const rows = analyzePackages(collected.packages, { overrides });
-  const violations = rows.filter((r) => r.status === 'violation');
-  const notes = rows.filter((r) => r.status === 'note');
+  // The QA toolchain lives in tests/ with its own lockfile; audit it too (dev only) when auditing the real repo root.
+  let qaRows = [];
+  let qaMode = '';
+  if (!args.root && collected.rootPkg && exists(path.join(root, 'tests', 'package.json'))) {
+    const qa = collectPackages(path.join(root, 'tests'));
+    if (qa.rootPkg && qa.packages.length) {
+      qaRows = analyzePackages(qa.packages, { overrides });
+      qaMode = qa.mode;
+    }
+  }
+  const violations = [...rows, ...qaRows].filter((r) => r.status === 'violation');
+  const notes = [...rows, ...qaRows].filter((r) => r.status === 'note');
   const risks = [...planned.fonts, ...planned.icons, ...planned.dependencies, ...planned.models].filter((r) => r.status === 'VERIFY' || r.status === 'NOT-OK');
 
   let exit = violations.length ? 1 : 0;
   const docPath = path.join(root, 'docs', 'LICENSES.md');
-  const doc = renderDoc({ rootPkg: collected.rootPkg, rows, mode: collected.mode, planned, overrides });
+  const doc = renderDoc({ rootPkg: collected.rootPkg, rows, mode: collected.mode, planned, overrides, qaRows, qaMode });
 
   if (args.json) {
     log(JSON.stringify({ root, mode: collected.mode, packages: rows.length, violations, notes: notes.length, warnings: collected.warnings, plannedRisks: risks.map((r) => ({ name: r.name, status: r.status })) }, null, 2));
@@ -576,7 +613,8 @@ export async function run(argv, { cwd = process.cwd(), log = console.log, errLog
       log('  no package.json yet: no dependencies yet, nothing to audit.');
     } else {
       log(`  data: ${collected.mode}`);
-      log(`  packages: ${rows.length} (${rows.filter((r) => r.scope === 'prod').length} prod, ${rows.filter((r) => r.scope === 'dev').length} dev); ok ${rows.length - violations.length - notes.length}, notes ${notes.length}, violations ${violations.length}`);
+      log(`  packages: ${rows.length} root (${rows.filter((r) => r.scope === 'prod').length} prod, ${rows.filter((r) => r.scope === 'dev').length} dev); ok ${rows.length + qaRows.length - violations.length - notes.length}, notes ${notes.length}, violations ${violations.length} (including tests/)`);
+      if (qaMode) log(`  tests/ (QA toolchain): ${qaRows.length} packages from ${qaMode}`);
       if (rows.length === 0 && !collected.warnings.length) log('  no dependencies yet.');
     }
     for (const w of collected.warnings) log(`  WARNING: ${w}`);
