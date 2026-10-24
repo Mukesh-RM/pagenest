@@ -13,7 +13,8 @@ import {
   type RectLike,
   type SheetCloseReason,
 } from '@/ui';
-import { BookDetailHost, type OpenedBook } from '../components/BookDetailHost';
+import type { OpenedBook } from '../components/BookDetailHost';
+import { LazyBookDetailHost } from '../components/LazyBookDetailHost';
 import { LibraryResume, LibraryResumeSkeleton } from '../components/LibraryResume';
 import { SampleBookCard } from '../components/SampleBookCard';
 import { useCoverUrls, useLibraryPage } from '../library-hooks';
@@ -236,7 +237,7 @@ export function LibraryPage() {
       {importer ? (
         <input ref={picker} type="file" multiple accept={importer.accept} tabIndex={-1} aria-hidden="true" className="sr-only" onChange={onFiles} />
       ) : null}
-      <BookDetailHost opened={opened} onClose={closeDetail} onRead={openBook} onListen={openBook} onRemoveConfirmed={removeBook} />
+      <LazyBookDetailHost opened={opened} onClose={closeDetail} onRead={openBook} onListen={openBook} onRemoveConfirmed={removeBook} />
     </>
   );
 }

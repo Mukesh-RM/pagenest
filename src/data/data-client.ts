@@ -1,7 +1,7 @@
 import { getDb, type PageNestDB } from './db';
 import type { DataService, DisposableDataService } from './data-service';
 import { DATA_SERVICE_METHODS } from './data-service-methods';
-import { createFileStore, type FileData, type FileEntry, type FileStore } from './opfs';
+import type { FileData, FileEntry, FileStore } from './opfs';
 import { createRpcClient, type Remote, type RpcPort } from './rpc';
 
 /** The main-thread handle for {@link DataService}. Every call is asynchronous and off-thread when a worker exists. */
@@ -58,9 +58,10 @@ export function createDataClient(options: DataClientOptions = {}): DataClient {
       };
     } else {
       // The service is loaded on demand, so a browser that has Workers never downloads this copy of it.
-      const local: Promise<DisposableDataService> = import('./data-service').then((m) =>
-        m.createDataService({ db: options.db ?? getDb(), files: options.files ?? createFileStore() }),
-      );
+      const local: Promise<DisposableDataService> = Promise.all([
+        import('./data-service'),
+        options.files ?? import('./opfs').then((m) => m.createFileStore()),
+      ]).then(([m, files]) => m.createDataService({ db: options.db ?? getDb(), files }));
       const api: Record<string, unknown> = {};
       for (const method of DATA_SERVICE_METHODS) {
         const path = method.split('.');
@@ -75,7 +76,11 @@ export function createDataClient(options: DataClientOptions = {}): DataClient {
       }
       connection = {
         api: api as Remote<DataService>,
-        stop: () => void local.then((l) => l.dispose(), () => undefined),
+        stop: () =>
+          void local.then(
+            (l) => l.dispose(),
+            () => undefined,
+          ),
         worker: false,
       };
     }
