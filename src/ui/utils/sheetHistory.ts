@@ -9,6 +9,9 @@
  * - Sheets close in last-opened-first order when back is pressed.
  * - A sheet closed out of order leaves a "stale" entry; it is skipped when reached.
  * - A history.back() we trigger ourselves is counted in `ignore` so it never closes anything.
+ * - Each pushed entry carries a unique key (`pnSheet`). We only call history.back() for an entry whose
+ *   key is still the current history state, so closing a sheet after the screen navigated never undoes
+ *   that navigation.
  * - A sheet opened while one of our own history.back() calls is still pending waits for it, so
  *   the new entry is not swallowed by the pending traversal.
  */
@@ -44,6 +47,21 @@ function backSilently(): void {
   window.history.back();
 }
 
+/** True while `entry`'s own pushed history state is the current one. */
+function isCurrentState(entry: SheetEntry): boolean {
+  const state: unknown = window.history.state;
+  return !!state && typeof state === 'object' && (state as Record<string, unknown>).pnSheet === entry.id;
+}
+
+/**
+ * Undo `entry`'s history push, but only when it is still the current entry. If the screen navigated
+ * meanwhile (a route change while the sheet was open) a history.back() would undo that navigation
+ * instead, so the buried entry is left alone.
+ */
+function backIfCurrent(entry: SheetEntry): void {
+  if (isCurrentState(entry)) backSilently();
+}
+
 function onPopState(): void {
   if (ignore > 0) {
     ignore -= 1;
@@ -70,7 +88,7 @@ function settle(): void {
     const last = entries[entries.length - 1];
     if (!last || !last.stale) return;
     entries.pop();
-    backSilently();
+    backIfCurrent(last);
   }
 }
 
@@ -96,7 +114,7 @@ export function registerSheet(close: () => void): { entry: SheetEntry; release: 
     }
     if (index === entries.length - 1) {
       entries.pop();
-      backSilently();
+      backIfCurrent(entry);
       settle();
     } else {
       entry.stale = true;

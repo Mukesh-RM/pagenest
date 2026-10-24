@@ -34,7 +34,7 @@ describe('app shell', () => {
     expect(bar).toHaveAccessibleName('Main navigation');
     const labels = Array.from(bar.querySelectorAll('a')).map((a) => a.textContent);
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
-    expect(screen.getByTestId('pn-rail')).toBeInTheDocument();
+    expect(screen.queryByTestId('pn-rail')).toBeNull(); // phone width: only the tab bar is in the DOM
     expect(within(bar).getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
     await screen.findByText('Your shelf is waiting');
   });

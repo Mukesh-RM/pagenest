@@ -305,6 +305,10 @@
   transition:
     transform var(--pn-duration-slow) var(--pn-ease-out),
     opacity var(--pn-duration-slow) var(--pn-ease-out);
+}
+
+/* Promote to its own layer only while it moves (drag, spring, slide in or out) */
+.pn-sheet--moving {
   will-change: transform;
 }
 

@@ -45,6 +45,9 @@ const SWIPE_CLOSE_VELOCITY_PX_PER_MS = 0.6;
  * Modal bottom sheet (20 px top corners, slides up 250 ms ease-out).
  * Closes on: system back (popstate, before any route change), Esc, scrim click,
  * swipe down on the handle or header, and the close button.
+ * Back contract: opening pushes one history entry with a unique key; closing any other way pops it only if it
+ * is still the current entry (see utils/sheetHistory). Dragging is written from refs in requestAnimationFrame
+ * (transform only), so a drag never re-renders the sheet.
  * Traps focus, restores it on close, locks page scroll, and is announced as an aria-modal dialog.
  */
 export function BottomSheet({
@@ -64,9 +67,16 @@ export function BottomSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(open);
   const [shown, setShown] = useState(false);
-  const [dragY, setDragY] = useState(0);
+  // Drag position lives in refs and is written to the DOM from requestAnimationFrame; React state only
+  // changes when a drag starts or ends (never per pointermove).
   const [dragging, setDragging] = useState(false);
   const [springing, setSpringing] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const dragYRef = useRef(0);
+  const frameRef = useRef(0);
+  const springTimerRef = useRef(0);
+  // Motion duration read once per open or close (one getComputedStyle), then reused.
+  const slowMsRef = useRef(250);
   const entryRef = useRef<SheetEntry | null>(null);
 
   const onCloseRef = useRef(onClose);
@@ -74,19 +84,42 @@ export function BottomSheet({
     onCloseRef.current = onClose;
   });
 
+  const writeDrag = useCallback((y: number) => {
+    dragYRef.current = y;
+    sheetRef.current?.style.setProperty('--pn-sheet-drag', `${y}px`);
+  }, []);
+
   // Mount, then slide in on the next frame; slide out, then unmount.
   useEffect(() => {
+    slowMsRef.current = readDurationMs('--pn-duration-slow', 250);
+    // will-change: transform only while the sheet is actually moving.
+    setAnimating(true);
+    const settled = window.setTimeout(() => setAnimating(false), slowMsRef.current + 60);
     if (open) {
       setMounted(true);
+      writeDrag(0);
       const frame = window.requestAnimationFrame(() => setShown(true));
-      return () => window.cancelAnimationFrame(frame);
+      return () => {
+        window.cancelAnimationFrame(frame);
+        window.clearTimeout(settled);
+      };
     }
     setShown(false);
-    setDragY(0);
     setDragging(false);
-    const timer = window.setTimeout(() => setMounted(false), readDurationMs('--pn-duration-slow', 250));
-    return () => window.clearTimeout(timer);
-  }, [open]);
+    const timer = window.setTimeout(() => setMounted(false), slowMsRef.current);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(settled);
+    };
+  }, [open, writeDrag]);
+
+  useEffect(
+    () => () => {
+      window.cancelAnimationFrame(frameRef.current);
+      window.clearTimeout(springTimerRef.current);
+    },
+    [],
+  );
 
   // History entry (system back), Esc, scroll lock, focus trap and restore: only while open.
   useEffect(() => {
@@ -133,44 +166,59 @@ export function BottomSheet({
   }, [open, mounted]);
 
   // Swipe down on the handle or header closes the sheet (blueprint 5.7).
-  const drag = useRef<{ startY: number; startT: number; lastY: number; lastT: number } | null>(null);
+  const drag = useRef<{ startY: number; startT: number } | null>(null);
+  const pendingY = useRef(0);
 
   const onDragStart = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
     if ((event.target as HTMLElement).closest('button')) return;
-    drag.current = { startY: event.clientY, startT: event.timeStamp, lastY: event.clientY, lastT: event.timeStamp };
+    window.clearTimeout(springTimerRef.current);
+    drag.current = { startY: event.clientY, startT: event.timeStamp };
+    pendingY.current = 0;
+    setSpringing(false);
     setDragging(true);
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }, []);
 
-  const onDragMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    if (!d) return;
-    d.lastY = event.clientY;
-    d.lastT = event.timeStamp;
-    setDragY(Math.max(0, event.clientY - d.startY));
-  }, []);
+  const onDragMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const d = drag.current;
+      if (!d) return;
+      pendingY.current = Math.max(0, event.clientY - d.startY);
+      if (frameRef.current) return;
+      frameRef.current = window.requestAnimationFrame(() => {
+        frameRef.current = 0;
+        writeDrag(pendingY.current);
+      });
+    },
+    [writeDrag],
+  );
 
-  const onDragEnd = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    const d = drag.current;
-    drag.current = null;
-    if (!d) return;
-    event.currentTarget.releasePointerCapture?.(event.pointerId);
-    const distance = Math.max(0, event.clientY - d.startY);
-    const elapsed = Math.max(1, event.timeStamp - d.startT);
-    setDragging(false);
-    if (distance > SWIPE_CLOSE_DISTANCE_PX || distance / elapsed > SWIPE_CLOSE_VELOCITY_PX_PER_MS) {
-      onCloseRef.current('swipe');
-    } else {
-      // Released short of the close threshold: spring back with a small overshoot (transform only).
-      setDragY(0);
-      setSpringing(true);
-      window.setTimeout(() => setSpringing(false), readDurationMs('--pn-duration-slow', 250) + 50);
-    }
-  }, []);
+  const onDragEnd = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const d = drag.current;
+      drag.current = null;
+      if (!d) return;
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+      window.cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
+      const distance = Math.max(0, event.clientY - d.startY);
+      const elapsed = Math.max(1, event.timeStamp - d.startT);
+      writeDrag(distance);
+      setDragging(false);
+      if (distance > SWIPE_CLOSE_DISTANCE_PX || distance / elapsed > SWIPE_CLOSE_VELOCITY_PX_PER_MS) {
+        onCloseRef.current('swipe');
+      } else {
+        // Released short of the close threshold: spring back with a small overshoot (transform only).
+        setSpringing(true);
+        writeDrag(0);
+        springTimerRef.current = window.setTimeout(() => setSpringing(false), slowMsRef.current + 50);
+      }
+    },
+    [writeDrag],
+  );
 
   if (!mounted) return null;
 
-  const style = { ...extraStyle, '--pn-sheet-drag': `${dragY}px` } as CSSProperties;
   return (
     <ThemedPortal>
       <div className="pn-sheet-root" data-state={open && shown ? 'open' : 'closed'}>
@@ -187,8 +235,14 @@ export function BottomSheet({
           aria-labelledby={titleId}
           aria-hidden={open ? undefined : true}
           tabIndex={-1}
-          style={style}
-          className={cx('pn-sheet', dragging && 'pn-sheet--dragging', springing && 'pn-sheet--springing', className)}
+          style={extraStyle}
+          className={cx(
+            'pn-sheet',
+            (dragging || springing || animating) && 'pn-sheet--moving',
+            dragging && 'pn-sheet--dragging',
+            springing && 'pn-sheet--springing',
+            className,
+          )}
         >
           <div
             className="pn-sheet__drag"

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useMinWidth } from '../utils/media';
 import { Rail, TabBar, type NavItem } from './navigation';
 
 export interface AppShellProps {
@@ -14,23 +15,41 @@ export interface AppShellProps {
 }
 
 /**
- * Responsive frame: left rail from 768 px, bottom tab bar below it, mini-player floating above
+ * Responsive frame: left rail from 768 px, bottom tab bar below it (only one of the two is in the DOM), mini-player floating above
  * the tab bar on every screen. It publishes the height of the bottom chrome as
  * `--pn-bottom-chrome` on the document root so snackbars and content clear it.
  */
 export function AppShell({ items, value, onSelect, miniPlayer, railHeader, railFooter, children }: AppShellProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // Only one navigation is rendered per breakpoint (the other would be a hidden duplicate in the DOM).
+  const wide = useMinWidth('tablet');
+
   useEffect(() => {
     const el = bottomRef.current;
     const root = document.documentElement;
     if (!el) return undefined;
-    const publish = () => root.style.setProperty('--pn-bottom-chrome', `${el.offsetHeight}px`);
-    publish();
+    let frame = 0;
+    let last = -1;
+    const write = (height: number) => {
+      const rounded = Math.round(height);
+      if (rounded === last) return;
+      last = rounded;
+      root.style.setProperty('--pn-bottom-chrome', `${rounded}px`);
+    };
+    // One measurement up front, then ResizeObserver sizes (no layout read), batched to one write per frame.
+    write(el.getBoundingClientRect().height);
     if (typeof ResizeObserver === 'undefined') return () => root.style.removeProperty('--pn-bottom-chrome');
-    const observer = new ResizeObserver(publish);
-    observer.observe(el);
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[entries.length - 1];
+      if (!entry) return;
+      const size = entry.borderBoxSize?.[0]?.blockSize ?? entry.contentRect.height;
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(() => write(size));
+    });
+    observer.observe(el, { box: 'border-box' });
     return () => {
+      window.cancelAnimationFrame(frame);
       observer.disconnect();
       root.style.removeProperty('--pn-bottom-chrome');
     };
@@ -38,11 +57,11 @@ export function AppShell({ items, value, onSelect, miniPlayer, railHeader, railF
 
   return (
     <div className="pn-shell">
-      <Rail items={items} value={value} onSelect={onSelect} header={railHeader} footer={railFooter} />
+      {wide ? <Rail items={items} value={value} onSelect={onSelect} header={railHeader} footer={railFooter} /> : null}
       <main className="pn-shell__main">{children}</main>
       <div className="pn-shell__bottom" ref={bottomRef}>
         {miniPlayer}
-        <TabBar items={items} value={value} onSelect={onSelect} />
+        {wide ? null : <TabBar items={items} value={value} onSelect={onSelect} />}
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 import '../test/setup';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '../test/user';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { installViewport } from '../test/viewport';
 import { AppShell } from './AppShell';
 import { DEFAULT_NAV_ITEMS, Rail, TabBar, type NavItem } from './navigation';
 
@@ -99,7 +100,7 @@ describe('AppShell', () => {
       </AppShell>,
     );
     expect(screen.getByRole('main')).toHaveTextContent('page');
-    expect(screen.getAllByRole('navigation')).toHaveLength(2); // CSS hides one of them per breakpoint
+    expect(screen.getAllByRole('navigation')).toHaveLength(1); // one navigation per breakpoint, never both
     expect(screen.getByText('player slot').compareDocumentPosition(screen.getByTestId('pn-tabbar'))).toBe(
       Node.DOCUMENT_POSITION_FOLLOWING,
     ); // mini-player sits above the tab bar
@@ -110,5 +111,76 @@ describe('AppShell', () => {
     expect(document.documentElement.style.getPropertyValue('--pn-bottom-chrome')).toMatch(/^\d+px$/);
     unmount();
     expect(document.documentElement.style.getPropertyValue('--pn-bottom-chrome')).toBe('');
+  });
+});
+
+describe('AppShell breakpoint switching', () => {
+  let viewport: ReturnType<typeof installViewport> | undefined;
+  afterEach(() => viewport?.restore());
+
+  const shell = () => (
+    <AppShell items={DEFAULT_NAV_ITEMS} value="library" onSelect={() => undefined}>
+      <p>page</p>
+    </AppShell>
+  );
+
+  it.each([
+    [360, 'pn-tabbar'],
+    [430, 'pn-tabbar'],
+    [767, 'pn-tabbar'],
+    [768, 'pn-rail'],
+    [1024, 'pn-rail'],
+    [1440, 'pn-rail'],
+  ])('at %i px exactly one navigation is in the DOM: %s', (width, expected) => {
+    viewport = installViewport(width);
+    render(shell());
+    const navs = screen.getAllByRole('navigation');
+    expect(navs).toHaveLength(1);
+    expect(navs[0]).toHaveClass(expected);
+  });
+
+  it('swaps the rail and tab bar when the viewport crosses 768 px, keeping the page and the mini-player', () => {
+    viewport = installViewport(430);
+    render(
+      <AppShell items={DEFAULT_NAV_ITEMS} value="library" onSelect={() => undefined} miniPlayer={<p>player slot</p>}>
+        <p>page</p>
+      </AppShell>,
+    );
+    expect(screen.getByTestId('pn-tabbar')).toBeInTheDocument();
+    viewport.setWidth(1280);
+    expect(screen.queryByTestId('pn-tabbar')).toBeNull();
+    expect(screen.getByRole('navigation', { name: 'Main navigation' })).toHaveClass('pn-rail');
+    expect(screen.getByText('page')).toBeInTheDocument();
+    expect(screen.getByText('player slot')).toBeInTheDocument();
+    viewport.setWidth(400);
+    expect(screen.getByTestId('pn-tabbar')).toBeInTheDocument();
+  });
+
+  it('measures the bottom chrome with the observed border box and batches writes into one frame', async () => {
+    const callbacks: ResizeObserverCallback[] = [];
+    const original = window.ResizeObserver;
+    window.ResizeObserver = class {
+      constructor(cb: ResizeObserverCallback) {
+        callbacks.push(cb);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+    try {
+      render(shell());
+      const root = document.documentElement;
+      const spy = vi.spyOn(root.style, 'setProperty');
+      const entry = (h: number) =>
+        ({ borderBoxSize: [{ blockSize: h, inlineSize: 10 }], contentRect: { height: 1 } }) as unknown as ResizeObserverEntry;
+      callbacks[0]!([entry(70)], {} as ResizeObserver);
+      callbacks[0]!([entry(81)], {} as ResizeObserver);
+      expect(spy).not.toHaveBeenCalled();
+      await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(root.style.getPropertyValue('--pn-bottom-chrome')).toBe('81px');
+    } finally {
+      window.ResizeObserver = original;
+    }
   });
 });

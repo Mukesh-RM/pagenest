@@ -42,24 +42,24 @@ export function clearCoverColorCache(): void {
 }
 
 async function loadBitmap(src: string): Promise<ImageBitmap | HTMLImageElement | undefined> {
-  if (typeof createImageBitmap === 'function' && typeof fetch === 'function') {
+  if (typeof Image === 'undefined') return undefined;
+  const image = await new Promise<HTMLImageElement | undefined>((resolve) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(undefined);
+    img.src = src;
+  });
+  if (!image) return undefined;
+  if (typeof createImageBitmap === 'function') {
     try {
-      const response = await fetch(src);
-      const blob = await response.blob();
-      // Decoded and resized off the main thread by the browser.
-      return await createImageBitmap(blob, { resizeWidth: SAMPLE_SIZE, resizeHeight: SAMPLE_SIZE, resizeQuality: 'low' });
+      // Resized by the browser off the main thread; only 24 x 24 pixels ever reach script.
+      return await createImageBitmap(image, { resizeWidth: SAMPLE_SIZE, resizeHeight: SAMPLE_SIZE, resizeQuality: 'low' });
     } catch {
-      /* fall through to the image element */
+      /* draw the image element instead */
     }
   }
-  if (typeof Image === 'undefined') return undefined;
-  return new Promise((resolve) => {
-    const image = new Image();
-    image.decoding = 'async';
-    image.onload = () => resolve(image);
-    image.onerror = () => resolve(undefined);
-    image.src = src;
-  });
+  return image;
 }
 
 /**
