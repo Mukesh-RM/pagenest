@@ -12,6 +12,9 @@ import type { AppServices } from './services-context';
 import { useSettings } from './settings-store';
 import { ThemeProvider } from './ThemeProvider';
 
+// The Library's windowed list lays rows out from the width of its container; jsdom reports 0, so a phone width is used.
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 360 });
+
 let counter = 0;
 
 /** A fresh, isolated database and services for one test. Close `services.db` afterwards. */
