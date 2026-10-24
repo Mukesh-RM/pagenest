@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { registerMiniPlayerComponent } from '@/app/audio-mini-register';
+import { useChromeStore } from '@/app/route-chrome';
 import { listenPath } from '@/app/route-paths';
 import { MiniPlayer } from '@/ui';
 import { PlayerProvider } from './PlayerProvider';
@@ -9,7 +9,9 @@ import { preloadPlayerEngine } from './lazy-runtime';
 /**
  * Tab-bar mini-player shell: UI + chrome store. Mounts {@link PlayerProvider} in this lazy chunk.
  */
-export function ChromeMiniPlayer(): JSX.Element {
+export function ChromeMiniPlayer(): null | JSX.Element {
+  const session = useChromePlayerStore((s) => s.sessionActive);
+  if (!session) return null;
   return (
     <div className="min-h-[calc(var(--pn-miniplayer-height)+var(--pn-space-2))]">
       <PlayerProvider>
@@ -19,7 +21,7 @@ export function ChromeMiniPlayer(): JSX.Element {
   );
 }
 
-registerMiniPlayerComponent(ChromeMiniPlayer);
+useChromeStore.setState({ mp: ChromeMiniPlayer });
 
 function ChromeMiniPlayerInner(): null | JSX.Element {
   const chrome = useChromePlayerStore((s) => s.chrome);

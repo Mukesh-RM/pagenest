@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState, type ComponentType } from 'react';
 import { create } from 'zustand';
 import type { RouteChrome } from '@/app/contracts';
 
@@ -14,18 +14,11 @@ interface Entry {
 
 interface ChromeState {
   readonly entries: Readonly<Record<number, Entry>>;
-  /** True while the audio owner reports an active listening session (mini-player gate + PWA prompts). */
-  readonly audioSession: boolean;
+  readonly as: boolean;
+  readonly mp?: ComponentType;
 }
 
-export const useChromeStore = create<ChromeState>(() => ({
-  entries: {},
-  audioSession: false,
-}));
-
-export function publishAudioSession(sessionActive: boolean): void {
-  useChromeStore.setState({ audioSession: sessionActive });
-}
+export const useChromeStore = create<ChromeState>(() => ({ entries: {}, as: false }));
 
 /** The chrome the frame must show now: screens beat route defaults, deeper beats shallower, none means `full`. */
 export function resolveChrome(entries: Readonly<Record<number, Entry>>): RouteChrome {
@@ -88,5 +81,5 @@ export function useCurrentChrome(): RouteChrome {
 
 /** Test helper: forget every registration. */
 export function resetRouteChromeForTests(): void {
-  useChromeStore.setState({ entries: {}, audioSession: false });
+  useChromeStore.setState({ entries: {}, as: false });
 }

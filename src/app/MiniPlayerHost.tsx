@@ -1,24 +1,11 @@
-import { useSyncExternalStore, type ComponentType } from 'react';
 import type { MiniPlayerSlot } from '@/app/contracts';
-import { getMiniPlayerComponent, subscribeMiniPlayerReady } from './audio-mini-register';
+import { useChromeStore } from './route-chrome';
 
-const always = (): boolean => true;
-
-function useMiniPlayerComponent(): ComponentType | null {
-  return useSyncExternalStore(subscribeMiniPlayerReady, getMiniPlayerComponent, getMiniPlayerComponent);
-}
-
-function DefaultLazyMiniPlayer(): null | JSX.Element {
-  const Player = useMiniPlayerComponent();
-  return Player ? <Player /> : null;
-}
-
-/** Renders the registered mini-player above the tab bar when the slot is active. */
 export function MiniPlayerHost({ slot }: { slot: MiniPlayerSlot }) {
-  const useActive = slot.useActive ?? always;
-  const active = useActive();
-  if (!active) return null;
-  const Component = slot.Component ?? DefaultLazyMiniPlayer;
+  const lazy = useChromeStore((s) => s.mp);
+  const active = slot.useActive ? slot.useActive() : true;
+  const Component = slot.Component ?? lazy;
+  if (!active || !Component) return null;
   return (
     <div data-testid="mini-player-slot">
       <Component />

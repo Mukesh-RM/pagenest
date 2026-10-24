@@ -3,15 +3,16 @@
  * Do not import the audio engine or PlayerProvider from here.
  */
 export { miniPlayerSlot } from './chrome-slot';
-import { useChromeStore } from '@/app/route-chrome';
+import { useChromePlayerStore } from './chrome-store';
 
 export function useIsPlaying(): boolean {
-  return useChromeStore((s) => s.audioSession);
+  return useChromePlayerStore((s) => s.sessionActive);
 }
 
 export function useMiniPlayerActive(): boolean {
-  return useChromeStore((s) => s.audioSession);
+  return useIsPlaying();
 }
+
 export { useChromePlayerStore } from './chrome-store';
 export { preloadPlayerEngine } from './lazy-runtime';
 export { LazyPlayerRoot } from './LazyPlayerRoot';
