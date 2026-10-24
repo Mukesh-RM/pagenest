@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
 import { chapterSubtitle } from '@/engines/audio/media-session';
-import { Chip } from '@/ui';
 import { useCoverUrl } from '@/app/library-hooks';
 import { useAudioController } from './PlayerProvider';
 import { usePlayerStore } from './audio-store';
 import { useAudioPlayerController, type PlayerSheet } from './useAudioPlayerController';
-import { BookmarksSheet, ChaptersSheet, SleepTimerSheet } from './player-sheets';
+import { ChaptersSheet, SleepTimerSheet } from './player-sheets';
 
 const AudioPlayerScreen = lazy(() =>
   import('@/ui/screens/AudioPlayerScreen').then((m) => ({ default: m.AudioPlayerScreen })),
@@ -57,14 +56,8 @@ export function IntegratedPlayerView({ book, welcome }: { book: BookRecord; welc
       <Suspense fallback={<p className="px-[var(--pn-margin)] pt-[calc(1rem+var(--pn-safe-top))] text-muted">Loading player…</p>}>
         <AudioPlayerScreen book={summary} chapter={chapter} controller={playerController} onCollapse={onCollapse} />
       </Suspense>
-      <div className="fixed bottom-[calc(var(--pn-safe-bottom)+1rem)] right-[var(--pn-margin)] z-10 flex flex-col gap-2">
-        <Chip icon="bookmark" onClick={() => setSheet('bookmarks')} aria-label="Bookmarks">
-          Bookmarks
-        </Chip>
-      </div>
       <SleepTimerSheet open={sheet === 'sleep'} onClose={() => setSheet(null)} controller={controller} />
       <ChaptersSheet open={sheet === 'chapters'} onClose={() => setSheet(null)} controller={controller} />
-      <BookmarksSheet open={sheet === 'bookmarks'} onClose={() => setSheet(null)} controller={controller} />
       {state.errorMessage ? (
         <p className="px-[var(--pn-margin)] text-sm text-[var(--pn-danger)]" role="alert">{state.errorMessage}</p>
       ) : null}

@@ -1,11 +1,7 @@
-import { useEffect, useState } from 'react';
 import { BottomSheet, Button, Chip, ChipGroup } from '@/ui';
 import type { AudioController } from '@/engines/audio/types';
 import { formatClock } from '@/engines/audio/util';
-import { useServices } from '@/app/services-context';
 import { usePlayerStore } from './audio-store';
-import { addBookmark, listBookmarks, removeBookmark } from './bookmarks';
-
 const SPEED_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
 const SLEEP_MINUTES = [5, 15, 30, 45, 60];
 
@@ -100,82 +96,6 @@ export function ChaptersSheet({
         <Button variant="secondary" onClick={() => controller.previousChapter()}>Previous</Button>
         <Button variant="secondary" onClick={() => controller.nextChapter()}>Next</Button>
       </div>
-    </BottomSheet>
-  );
-}
-
-export function BookmarksSheet({
-  open,
-  onClose,
-  controller,
-}: {
-  open: boolean;
-  onClose: () => void;
-  controller: AudioController;
-}) {
-  const state = usePlayerStore((s) => s.state);
-  const item = state.item;
-  const { db } = useServices();
-  const [bookmarks, setBookmarks] = useState<Awaited<ReturnType<typeof listBookmarks>>>([]);
-  const [note, setNote] = useState('');
-
-  useEffect(() => {
-    if (!open || !item) return;
-    void listBookmarks(db, item.bookId).then(setBookmarks);
-  }, [open, item, db]);
-
-  if (!item) return null;
-
-  return (
-    <BottomSheet open={open} onClose={() => onClose()} title="Bookmarks">
-      <div className="flex gap-2">
-        <input
-          type="text"
-          className="min-h-11 flex-1 rounded-card border border-border bg-surface px-3 text-base"
-          placeholder="Label"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-        <Button
-          variant="secondary"
-          onClick={() => {
-            if (!state.locator) return;
-            const label = note.trim() || `Bookmark at ${formatClock(state.positionSec)}`;
-            void addBookmark(db, item.bookId, state.locator, label).then((b) => {
-              setBookmarks((prev) => [...prev, b]);
-              setNote('');
-            });
-          }}
-        >
-          Save
-        </Button>
-      </div>
-      <ul className="mt-3 space-y-2">
-        {bookmarks.map((b) => (
-          <li key={b.id} className="flex items-center justify-between gap-2">
-            <button
-              type="button"
-              className="text-left text-accent underline-offset-2 hover:underline"
-              onClick={() => {
-                if (b.locator.kind === 'audio') {
-                  const track = item.tracks[b.locator.trackIndex];
-                  if (track) controller.seekTo(track.startOffsetSec + b.locator.positionSec);
-                }
-                onClose();
-              }}
-            >
-              {b.label}
-            </button>
-            <Button
-              variant="ghost"
-              aria-label="Delete bookmark"
-              onClick={() => void removeBookmark(db, b.id).then(() => setBookmarks((prev) => prev.filter((x) => x.id !== b.id)))}
-            >
-              Remove
-            </Button>
-          </li>
-        ))}
-      </ul>
     </BottomSheet>
   );
 }

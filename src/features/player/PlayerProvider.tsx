@@ -38,8 +38,9 @@ export function useAudioController(): AudioController {
  * Owns the single audio element and Zustand sync. Register {@link miniPlayerSlot} in AppServices.
  */
 export function PlayerProvider({ children }: { children: ReactNode }) {
-  const { progress } = useServices();
+  const { progress, db } = useServices();
   const controller = useMemo(() => {
+    if (sharedController) return sharedController;
     const deferred = createDeferredAudioController(progress, (audio, active) => {
       sharedAudio = audio;
       sharedController = active;
@@ -64,6 +65,14 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const detach = attachPlayerKeyboard(controller);
     return detach;
   }, [controller]);
+
+  useEffect(() => {
+    void import('./skip-settings').then(({ loadAudioSkipOptions }) =>
+      loadAudioSkipOptions(db).then((opts) => {
+        if (Object.keys(opts).length > 0) controller.setOptions(opts);
+      }),
+    );
+  }, [controller, db]);
 
   useEffect(() => {
     let lock: WakeLockSentinel | undefined;

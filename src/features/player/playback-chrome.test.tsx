@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { SnackbarProvider } from '@/ui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMockAudioElement } from '@/engines/audio/test/mock-audio';
 import { audioItemFromSingleFile } from '@/engines/audio/build-item';
@@ -73,9 +74,11 @@ describe('playback survives chrome unmount', () => {
     const ui = (mini: boolean) => (
       <MemoryRouter>
         <ServicesProvider services={services}>
-          <PlayerProvider>
-            {mini ? <AudioMiniPlayer /> : <IntegratedPlayerView book={book} />}
-          </PlayerProvider>
+          <SnackbarProvider>
+            <PlayerProvider>
+              {mini ? <AudioMiniPlayer /> : <IntegratedPlayerView book={book} />}
+            </PlayerProvider>
+          </SnackbarProvider>
         </ServicesProvider>
       </MemoryRouter>
     );

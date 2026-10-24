@@ -40,6 +40,42 @@ test.describe('integrated audio player', () => {
     const art = page.locator('.pn-player__art');
     await expect(art).toBeVisible();
   });
+
+  test('bookmark add, undo, remove, and seek', async ({ page }) => {
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await page.getByRole('button', { name: /Add bookmark at/i }).click();
+    const undo = page.getByRole('button', { name: 'Undo' });
+    await expect(undo).toBeVisible();
+    await expect(page.locator('.pn-snackbar')).toContainText(/Bookmark added at/i);
+    await undo.click();
+    await page.getByRole('button', { name: /Add bookmark at/i }).click();
+    await expect(page.locator('.pn-snackbar')).toContainText(/Bookmark added at/i);
+
+    await page.getByRole('button', { name: 'More options' }).click();
+    await page.getByRole('menuitem', { name: 'Bookmarks (1)' }).click();
+    await expect(page.getByRole('dialog', { name: 'Bookmarks' })).toBeVisible();
+
+    const deleteBtn = page.getByRole('button', { name: /Delete bookmark at/i }).first();
+    await deleteBtn.click();
+    await expect(page.locator('.pn-snackbar')).toContainText('Bookmark removed');
+    await page.getByRole('button', { name: 'Undo' }).click();
+    await expect(page.getByRole('dialog', { name: 'Bookmarks' })).toBeVisible();
+
+    await page.getByRole('button', { name: /Go to /i }).first().click();
+    await expect(page.getByRole('dialog', { name: 'Bookmarks' })).not.toBeVisible();
+  });
+
+  test('skip interval persists across reload', async ({ page }) => {
+    await page.getByRole('button', { name: 'More options' }).click();
+    await page.getByRole('menuitem', { name: 'Skip buttons' }).click();
+    await expect(page.getByRole('dialog', { name: 'Skip buttons' })).toBeVisible();
+    await page.getByLabel('Back, seconds').getByRole('radio', { name: '30 seconds' }).click();
+    await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible();
+  });
 });
 
 test.describe('audio player screenshots', () => {
