@@ -22,3 +22,10 @@ vite-plugin-pwa, workbox-precaching, workbox-routing, workbox-window (MIT); shar
 
 ## Decision 7 (Oct 24, 2026) Model
 Composer was requested for all work. Bots report they cannot select a model from inside their sessions, so this cannot be enforced from here; flagged to Mukeshh.
+
+## Decision 8 (Oct 24, 2026) Speech engine licensing (Auditor finding)
+eSpeak NG (GPL-3.0-or-later) is embedded by browser Piper stacks and by the phonemizer used by kokoro-js; Piper itself is GPL-3.0 since v1.3 (archived rhasspy/piper is MIT). The PWA is MIT, so shipping GPL code needs a deliberate choice. Plan: Phase 4 starts with a spike on a non-GPL phonemizer and non-GPL engine path. If none gives acceptable quality, fall back to relicensing the PageNest repo to GPL-3.0 (still free and open, still consistent with the product rules) and flag it to Mukeshh. Nothing GPL is added to main before that decision is recorded here.
+Voice rule: every Piper voice is checked per voice. en_US-lessac (Blizzard 2013, research-only) is NOT allowed; prefer libritts_r voices. Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) need the Hugging Face weight license tag checked before use.
+
+## Decision 9 (Oct 24, 2026) Dev-only licenses
+MPL-2.0 dev-only tools (axe-core, @axe-core/playwright) are accepted. sharp's LGPL libvips binaries are accepted only as dev-only and never bundled; the audit script flags them if shipped.
