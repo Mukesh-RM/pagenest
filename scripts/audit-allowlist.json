@@ -1,0 +1,17 @@
+{
+  "_comment": "Hosts that network calls in src/ may contact (audit-privacy.mjs). Same-origin and relative URLs are always allowed. Keep this to model-download hosts (blueprint sections 4, 9.3, 17). Edit by adding objects; 'host' may start with '*.' for subdomains; optional 'pathRegex' restricts the URL path. Each entry needs a reason.",
+  "allowedHosts": [
+    { "host": "huggingface.co", "reason": "Model downloads (Piper voices, Kokoro ONNX)" },
+    { "host": "*.huggingface.co", "reason": "Model downloads incl. cdn-lfs.huggingface.co" },
+    { "host": "*.hf.co", "reason": "Hugging Face CDN and Xet bridge hosts for model files" },
+    { "host": "github.com", "pathRegex": "^/[^/]+/[^/]+/(releases/download|raw)/", "reason": "Model files attached to GitHub releases or raw files" },
+    { "host": "raw.githubusercontent.com", "reason": "Raw model or voice list files" },
+    { "host": "objects.githubusercontent.com", "reason": "GitHub release asset redirect target" },
+    { "host": "release-assets.githubusercontent.com", "reason": "GitHub release asset redirect target" }
+  ],
+  "warnHosts": [
+    { "host": "localhost", "reason": "Dev server or Voice Helper; review: the blueprint has no localhost network feature" },
+    { "host": "127.0.0.1", "reason": "Same as localhost" },
+    { "host": "[::1]", "reason": "Same as localhost" }
+  ]
+}

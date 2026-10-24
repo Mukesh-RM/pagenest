@@ -18,7 +18,9 @@
     "test:e2e": "playwright test --pass-with-no-tests",
     "icons": "node scripts/pwa/generate-icons.mjs",
     "validate:pwa": "node scripts/pwa/validate-pwa-assets.mjs",
-    "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs"
+    "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs",
+    "audit": "node scripts/audit-all.mjs",
+    "audit:licenses": "node scripts/audit-licenses.mjs --check"
   },
   "dependencies": {
     "dexie": "^4.4.7",
