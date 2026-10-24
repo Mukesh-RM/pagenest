@@ -39,11 +39,11 @@ describe('performance rules for src/app', () => {
     }
   });
 
-  it('keeps overlays (PWA prompts, book detail sheet) out of the first-paint chunk: only dynamic imports', () => {
-    const lazyWrappers = /Lazy(PwaPrompts|BookDetailHost)\.tsx$/;
+  it('keeps overlays (PWA prompts) out of the first-paint chunk: only dynamic imports', () => {
+    const lazyWrappers = /Lazy(PwaPrompts)\.tsx$/;
     const offenders = files
       .filter((f) => !lazyWrappers.test(f.name))
-      .filter((f) => f.text.split('\n').some((line) => /^import (?!type)/.test(line) && /from '[^']*\/(PwaPromptsHost|BookDetailHost)';/.test(line)))
+      .filter((f) => f.text.split('\n').some((line) => /^import (?!type)/.test(line) && /from '[^']*\/(PwaPromptsHost)';/.test(line)))
       .map((f) => f.name);
     expect(offenders).toEqual([]);
   });

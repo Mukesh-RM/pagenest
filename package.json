@@ -19,6 +19,7 @@
     "check:bundle": "node scripts/check-bundle.mjs",
     "icons": "node scripts/pwa/generate-icons.mjs",
     "validate:pwa": "node scripts/pwa/validate-pwa-assets.mjs",
+    "test:e2e:library": "playwright test -c src/features/library/e2e/playwright.config.mjs",
     "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs",
     "audit": "node scripts/audit-all.mjs",
     "audit:licenses": "node scripts/audit-licenses.mjs --check"

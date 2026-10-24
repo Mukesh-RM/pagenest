@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ReaderScreen as DesignReaderScreen, useTheme, type ReaderSettings } from '@/ui';
+import { useTheme, type ReaderSettings } from '@/ui';
+import { ReaderScreen as DesignReaderScreen } from '@/ui/screens';
 import type { BookScreenProps } from '../components/BookSummary';
 import { DEFAULT_READER_SETTINGS, loadReaderSettings, READER_FONTS, saveReaderSettings } from '../reader-settings';
 import { useServices } from '../services-context';

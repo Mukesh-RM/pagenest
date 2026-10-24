@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResumeInfo } from '@/data/resume';
 import { LibraryResume, LibraryResumeSkeleton, RESUME_CARD_HEIGHT_REM } from './components/LibraryResume';
 import { hadResumeCard, rememberResumeCard } from './resume-hint';
-import { LibraryPage } from './pages/LibraryPage';
+import { LibraryRoute } from './pages/LibraryRoute';
 import { ServicesProvider } from './services';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 import { setSetting } from '@/data/settings';
@@ -99,7 +99,7 @@ describe('Library resume card', () => {
   it('is hidden when there is nothing to resume', async () => {
     const services = await launch();
     renderApp(services);
-    await screen.findByText('Your library is empty');
+    await screen.findByText('Your shelf is waiting');
     expect(screen.queryByText(/Welcome back/)).toBeNull();
     services.db.close();
   });
@@ -164,13 +164,13 @@ describe('Library resume card', () => {
       <MemoryRouter>
         <ServicesProvider services={services}>
           <SnackbarProvider>
-            <LibraryPage />
+            <LibraryRoute />
           </SnackbarProvider>
         </ServicesProvider>
       </MemoryRouter>,
     );
     expect(container.querySelector('[aria-hidden="true"][style*="rem"]')).not.toBeNull();
-    await screen.findByText('Your library is empty');
+    await screen.findByText('Your shelf is waiting');
     services.db.close();
   });
 });

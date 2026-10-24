@@ -1,6 +1,7 @@
 import { getSetting, setSetting, SETTING_KEYS } from '@/data/settings';
 import type { PageNestDB } from '@/data/db';
-import { isThemeName, READER_MAX_FONT, READER_MIN_FONT, type ReaderFontOption, type ReaderSettings } from '@/ui';
+import { isThemeName, type ReaderFontOption, type ReaderSettings } from '@/ui';
+import { READER_MAX_FONT, READER_MIN_FONT } from '@/ui/screens';
 
 /**
  * The fonts the reader offers. Literata and Inter ship with the app (SIL OFL); the others are

@@ -74,6 +74,15 @@ describe('bundle budget script', () => {
     expect(code).toBe(1);
   });
 
+  it('gives only the Library import worker the 60 kB worker budget; other workers stay at 55 kB', () => {
+    const imp = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'import.worker-1.js': 58_000 }, page());
+    expect(run(imp)).toMatchObject({ code: 0 });
+    const tooBig = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'import.worker-1.js': 62_000 }, page());
+    expect(run(tooBig).out).toMatch(/FAIL worker chunk import\.worker-1\.js/);
+    const other = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'search.worker-1.js': 58_000 }, page());
+    expect(run(other).out).toMatch(/FAIL worker chunk search\.worker-1\.js/);
+  });
+
   it('gives a Web Worker chunk more room than a screen (it carries its own Dexie), but not unlimited', () => {
     const fits = makeDist({ 'index-abc.js': 10_000, 'index-abc.css': 1_000, 'data.worker-1.js': 48_000 }, page());
     const ok = run(fits);

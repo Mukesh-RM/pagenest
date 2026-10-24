@@ -6,7 +6,7 @@ import { lazy, type ComponentType } from 'react';
  * can start them early (see {@link preloadScreens}).
  */
 const loaders = {
-  library: () => import('./pages/LibraryPage').then((m) => ({ default: m.LibraryPage })),
+  library: () => import('./pages/LibraryRoute').then((m) => ({ default: m.LibraryRoute })),
   collections: () => import('./pages/CollectionsPage').then((m) => ({ default: m.CollectionsPage })),
   stats: () => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })),
   settings: () => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),

@@ -25,6 +25,8 @@ export default defineConfig({
       devOptions: { enabled: false },
     }),
   ],
+  // Workers are ES modules: the Library's import and search workers use dynamic import and nested workers.
+  worker: { format: 'es' },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
