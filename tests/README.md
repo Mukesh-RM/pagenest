@@ -14,8 +14,9 @@ Owner: QA (`/tests` only). Everything here is self-contained: it has its own `pa
 ## Run
 
 ```bash
+npm ci                                     # repo root: the app and Playwright
 cd tests
-npm install
+npm ci
 npx playwright install chromium webkit     # first time only (on Linux: sudo npx playwright install-deps webkit)
 
 npm test                                   # builds the real app from the repo root, runs `vite preview`, runs all projects
@@ -30,6 +31,13 @@ node lighthouse/run.mjs --url https://xyz.pages.dev/ --threshold 90
 Environment variables: `PAGENEST_BASE_URL`, `PAGENEST_TARGET=fixture`, `PAGENEST_NO_SERVER=1` (start no server; `npm run test:unit` sets it), `PAGENEST_PORT` (default 4173), `PAGENEST_PHASE` (default 0; set to 1 to also enforce the Share Target manifest check), `PAGENEST_LAUNCH_BUDGET_MS` (default 1000, the offline launch budget from blueprint section 20), `CHROME_PATH` for Lighthouse.
 
 Service workers only run in production builds, so the suite always uses `vite preview` on a built app, never `vite dev`.
+
+### Who builds the app (never twice)
+
+- **Locally** (`CI` unset): Playwright's `webServer` runs `npm run build` and then `vite preview`. You do not need to build first.
+- **In CI** (`CI=true`): the workflow's own "Build" step already ran, so the `webServer` runs only `vite preview` and fails fast with a clear message if `dist/index.html` is missing.
+- Override with `PAGENEST_SKIP_BUILD=1` (never build) or `PAGENEST_SKIP_BUILD=0` (always build).
+- `webkit-iphone` is left out of the project list in CI unless `PAGENEST_WEBKIT=1`, because the CI job installs Chromium only.
 
 ## What the app must provide (selector contract)
 
