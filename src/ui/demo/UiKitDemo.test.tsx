@@ -1,6 +1,6 @@
 import '../test/setup';
 import { render, screen, within } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { resetSheetHistoryForTests } from '../utils/sheetHistory';
 import UiKitDemo, { UiKitDemo as NamedDemo } from './UiKitDemo';
@@ -60,5 +60,23 @@ describe('UiKitDemo', () => {
     await user.click(screen.getByRole('button', { name: 'Delete a book' }));
     expect(screen.getByText('Moby Dick deleted')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Undo' }).length).toBeGreaterThan(0);
+  });
+
+  it('the contrast toggle layers high contrast on the scoped theme, including every theme panel', async () => {
+    const user = userEvent.setup();
+    render(<UiKitDemo defaultMode="sepia" defaultContrastMode="standard" />);
+    const scope = document.querySelector<HTMLElement>('.pn-demo-scope')!;
+    expect(scope).toHaveAttribute('data-contrast', 'standard');
+    const group = screen.getByRole('group', { name: 'Contrast' });
+    await user.click(within(group).getByRole('button', { name: 'High contrast' }));
+    expect(scope).toHaveAttribute('data-theme', 'sepia');
+    expect(scope).toHaveAttribute('data-contrast', 'high');
+    expect(within(group).getByRole('button', { name: 'High contrast' })).toHaveAttribute('aria-pressed', 'true');
+    for (const theme of ['light', 'sepia', 'dark', 'black']) {
+      expect(document.querySelector(`.pn-demo__theme-panel[data-theme="${theme}"]`)).toHaveAttribute('data-contrast', 'high');
+    }
+    await user.click(within(group).getByRole('button', { name: 'Standard' }));
+    expect(scope).toHaveAttribute('data-contrast', 'standard');
+    expect(document.documentElement).not.toHaveAttribute('data-contrast');
   });
 });

@@ -8,6 +8,8 @@ import './styles/index.css';
 export { Button, type ButtonProps, type ButtonVariant, type IconButtonProps, type LabelButtonProps } from './components/Button';
 export { Chip, ChipGroup, type ChipGroupProps, type ChipProps } from './components/Chip';
 export { Card, LONG_PRESS_MS, type CardProps, type InteractiveCardProps, type StaticCardProps } from './components/Card';
+export { VirtualList, type VirtualListHandle, type VirtualListProps } from './components/VirtualList';
+export { autoColumns, navigate as navigateGrid, rowCountFor } from './utils/virtual';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export { BottomSheet, type BottomSheetProps, type SheetCloseReason } from './components/BottomSheet';
 export {
@@ -40,42 +42,7 @@ export { UpdateAvailableSnackbar, type UpdateAvailableSnackbarProps } from './co
 export { Skeleton, SkeletonCard, SkeletonGroup, type SkeletonGroupProps, type SkeletonProps } from './components/Skeleton';
 export { EmptyState, type EmptyStateAction, type EmptyStateProps } from './components/EmptyState';
 export { Icon, type IconName, type IconProps } from './icons';
-export {
-  COLOR_TOKENS,
-  THEME_PALETTE,
-  THEME_SCHEME,
-  type ColorToken,
-  THEME_LABELS,
-  THEME_MODES,
-  THEME_NAMES,
-  THEME_PAGE_COLOR,
-  ThemeProvider,
-  ThemeScope,
-  ThemedPortal,
-  isThemeMode,
-  isThemeName,
-  resolveTheme,
-  useSystemPrefersDark,
-  useTheme,
-  type ThemeContextValue,
-  type ThemeMode,
-  type ThemeName,
-  type ThemeProviderProps,
-  type ThemeScopeProps,
-  CUSTOM_THEME_ID,
-  DEFAULT_CUSTOM_THEME,
-  THEME_CHOICES,
-  customContrastPairs,
-  customThemeStyle,
-  isThemeChoice,
-  normalizeHex,
-  parseCustomTheme,
-  resolveCustomTheme,
-  useThemePalette,
-  type CustomThemeInput,
-  type ResolvedCustomTheme,
-  type ThemeChoice,
-} from './theme';
+export * from './theme';
 export { prefersReducedMotion, useReducedMotion } from './utils/motion';
 export { cx } from './utils/cx';
 

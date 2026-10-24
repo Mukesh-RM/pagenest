@@ -5,7 +5,7 @@ import { BookCard } from '../components/BookCard';
 import { BookCover } from '../components/BookCover';
 import { Icon } from '../icons';
 import { ICON_NODES } from '../icons/nodes';
-import { THEME_PALETTE } from '../theme/palette';
+import { HIGH_CONTRAST_PALETTE, THEME_PALETTE } from '../theme/palette';
 import { THEME_NAMES } from '../theme/themes';
 import { declarationsFor, parseCss, readUiFile } from '../test/css';
 import { contrastRatio } from '../utils/wcag';
@@ -79,6 +79,17 @@ describe('favorite badge', () => {
       for (const cover of ['#ffffff', '#000000']) {
         const badge = mix(pal['inverse-surface'], cover, 0.88);
         expect(contrastRatio(pal['inverse-accent'], badge), `${theme} over ${cover}`).toBeGreaterThanOrEqual(3);
+      }
+    }
+  });
+
+  it('the heart is 3:1 or better in high contrast too', () => {
+    for (const theme of THEME_NAMES) {
+      const pal = { ...THEME_PALETTE[theme], ...HIGH_CONTRAST_PALETTE[theme] };
+      for (const cover of ['#ffffff', '#000000']) {
+        const a = pal['inverse-surface'];
+        const mixed = '#' + [0, 1, 2].map((i) => Math.round(Number.parseInt(a.slice(1 + i * 2, 3 + i * 2), 16) * 0.88 + Number.parseInt(cover.slice(1 + i * 2, 3 + i * 2), 16) * 0.12).toString(16).padStart(2, '0')).join('');
+        expect(contrastRatio(pal['inverse-accent'], mixed), `${theme} high over ${cover}`).toBeGreaterThanOrEqual(3);
       }
     }
   });

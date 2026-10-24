@@ -189,7 +189,7 @@
   width: 100%;
   margin: 0;
   padding: var(--pn-space-4);
-  border: 1px solid rgb(var(--pn-line));
+  border: var(--pn-border-width) solid rgb(var(--pn-line));
   border-radius: var(--pn-radius-card);
   background: rgb(var(--pn-surface));
   color: rgb(var(--pn-text));
@@ -208,9 +208,8 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-  transition:
-    transform var(--pn-duration-fast) var(--pn-ease-out),
-    border-color var(--pn-duration-fast) var(--pn-ease-out);
+  /* Only transform moves smoothly; the selected border swaps instantly (motion-rules.test.ts) */
+  transition: transform var(--pn-duration-fast) var(--pn-ease-out);
 }
 
 .pn-card--interactive:active {
@@ -375,7 +374,7 @@
 .pn-sheet__footer {
   flex: none;
   padding: var(--pn-space-3) var(--pn-space-6) calc(var(--pn-space-4) + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid rgb(var(--pn-line));
+  border-top: var(--pn-border-width) solid rgb(var(--pn-line));
 }
 
 /* ---------- Navigation: tab bar (phone) and rail (tablet and desktop) ---------- */
@@ -405,7 +404,6 @@
   text-decoration: none;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: color var(--pn-duration-fast) var(--pn-ease-out);
 }
 
 .pn-nav__item[aria-current="page"] {
@@ -426,7 +424,7 @@
   position: relative;
   z-index: var(--pn-z-nav);
   background: rgb(var(--pn-surface-raised));
-  border-top: 1px solid rgb(var(--pn-line));
+  border-top: var(--pn-border-width) solid rgb(var(--pn-line));
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -459,7 +457,7 @@
   padding: var(--pn-space-4) var(--pn-space-2);
   gap: var(--pn-space-4);
   background: rgb(var(--pn-surface-raised));
-  border-inline-end: 1px solid rgb(var(--pn-line));
+  border-inline-end: var(--pn-border-width) solid rgb(var(--pn-line));
   z-index: var(--pn-z-nav);
   /* Stays put while the page scrolls: pinned to the top, full viewport height, scrolls on its own if it must. */
   position: sticky;
@@ -554,7 +552,7 @@
   margin: 0 var(--pn-space-2) var(--pn-space-2);
   padding: var(--pn-space-2);
   position: relative;
-  border: 1px solid rgb(var(--pn-line));
+  border: var(--pn-border-width) solid rgb(var(--pn-line));
   border-radius: var(--pn-radius-card);
   background: rgb(var(--pn-surface-raised));
   color: rgb(var(--pn-text));
@@ -826,7 +824,7 @@
   margin-bottom: var(--pn-space-2);
   border-radius: var(--pn-radius-pill);
   background: rgb(var(--pn-surface));
-  border: 1px solid rgb(var(--pn-line));
+  border: var(--pn-border-width) solid rgb(var(--pn-line));
   color: rgb(var(--pn-link));
 }
 
@@ -875,7 +873,7 @@
   align-items: center;
   gap: var(--pn-space-3);
   padding: var(--pn-space-4);
-  border: 1px solid rgb(var(--pn-line));
+  border: var(--pn-border-width) solid rgb(var(--pn-line));
   border-radius: var(--pn-radius-card);
   background: rgb(var(--pn-surface-raised));
   color: rgb(var(--pn-text));
@@ -948,7 +946,7 @@
   justify-content: center;
   width: var(--pn-space-12);
   height: var(--pn-space-12);
-  border: 1px solid rgb(var(--pn-line));
+  border: var(--pn-border-width) solid rgb(var(--pn-line));
   border-radius: var(--pn-radius-card);
   background: rgb(var(--pn-surface));
   color: rgb(var(--pn-link));
@@ -1559,4 +1557,40 @@
   margin: var(--pn-space-2) 0 0;
   color: rgb(var(--pn-muted));
   font-size: var(--pn-text-sm);
+}
+
+/* ---------- VirtualList: only rows near the screen exist; rows move with transform, never top/height ---------- */
+.pn-vlist {
+  position: relative;
+}
+
+.pn-vlist--self {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pn-vlist__inner {
+  position: relative;
+  width: 100%;
+}
+
+.pn-vlist__row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: grid;
+  align-items: stretch;
+  will-change: transform;
+}
+
+.pn-vlist__item {
+  min-width: 0;
+}
+
+.pn-vlist__item:focus-visible {
+  outline: var(--pn-focus-width, 2px) solid rgb(var(--pn-focus-ring));
+  outline-offset: var(--pn-focus-offset, 2px);
+  border-radius: var(--pn-radius-card);
 }

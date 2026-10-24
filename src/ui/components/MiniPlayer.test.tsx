@@ -1,6 +1,6 @@
 import '../test/setup';
 import { act, render, screen } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MiniPlayer } from './MiniPlayer';
 

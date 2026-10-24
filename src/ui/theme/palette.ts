@@ -4,7 +4,7 @@
  * `styles/tokens.css` is what the browser uses; `palette.test.ts` fails if the two differ,
  * so this table cannot drift from the CSS.
  */
-import type { ThemeName } from './themes';
+import type { ContrastLevel, ThemeName } from './themes';
 
 export const COLOR_TOKENS = [
   'page',
@@ -134,3 +134,107 @@ export const THEME_SCHEME: Readonly<Record<ThemeName, 'light' | 'dark'>> = {
   dark: 'dark',
   black: 'dark',
 };
+
+/**
+ * Color tokens the high-contrast option replaces. Page, surface and the skeleton and scrim colors
+ * keep the theme's own values, so each theme stays recognizable.
+ */
+export const HIGH_CONTRAST_TOKENS = [
+  'text',
+  'muted',
+  'accent',
+  'on-accent',
+  'accent-soft',
+  'accent-ink',
+  'link',
+  'border-strong',
+  'line',
+  'focus-ring',
+  'danger',
+  'inverse-surface',
+  'inverse-text',
+  'inverse-accent',
+] as const satisfies readonly ColorToken[];
+
+export type HighContrastToken = (typeof HIGH_CONTRAST_TOKENS)[number];
+
+/** High-contrast overrides per theme (hex). Kept in sync with `styles/tokens.css` by a test. */
+export const HIGH_CONTRAST_PALETTE: Readonly<Record<ThemeName, Readonly<Record<HighContrastToken, string>>>> = {
+  light: {
+    'text': '#000000',
+    'muted': '#3d3b36',
+    'accent': '#115e5a',
+    'on-accent': '#ffffff',
+    'accent-soft': '#d9ebe8',
+    'accent-ink': '#0c5350',
+    'link': '#115e5a',
+    'border-strong': '#55534c',
+    'line': '#767470',
+    'focus-ring': '#115e5a',
+    'danger': '#8c1a12',
+    'inverse-surface': '#000000',
+    'inverse-text': '#ffffff',
+    'inverse-accent': '#33ccc4',
+  },
+  sepia: {
+    'text': '#000000',
+    'muted': '#3b2f23',
+    'accent': '#0f5653',
+    'on-accent': '#ffffff',
+    'accent-soft': '#d6e9e5',
+    'accent-ink': '#0b504c',
+    'link': '#0f5653',
+    'border-strong': '#5a4a38',
+    'line': '#7d6c55',
+    'focus-ring': '#0f5653',
+    'danger': '#8a1c10',
+    'inverse-surface': '#2a1f14',
+    'inverse-text': '#ffffff',
+    'inverse-accent': '#33ccc4',
+  },
+  dark: {
+    'text': '#ffffff',
+    'muted': '#d4d3ce',
+    'accent': '#47cac3',
+    'on-accent': '#000000',
+    'accent-soft': '#17423f',
+    'accent-ink': '#80dfdb',
+    'link': '#86e3dc',
+    'border-strong': '#a6a8b3',
+    'line': '#7d7f89',
+    'focus-ring': '#ffffff',
+    'danger': '#ffb3ac',
+    'inverse-surface': '#ffffff',
+    'inverse-text': '#000000',
+    'inverse-accent': '#11625e',
+  },
+  black: {
+    'text': '#ffffff',
+    'muted': '#d4d3ce',
+    'accent': '#39c6bf',
+    'on-accent': '#000000',
+    'accent-soft': '#0d3532',
+    'accent-ink': '#48d1ca',
+    'link': '#86e3dc',
+    'border-strong': '#a6a8b3',
+    'line': '#7d7f89',
+    'focus-ring': '#ffffff',
+    'danger': '#ffb3ac',
+    'inverse-surface': '#ffffff',
+    'inverse-text': '#000000',
+    'inverse-accent': '#11625e',
+  },
+};
+
+/** Scrim opacity per theme in high contrast (a stronger dim behind sheets). */
+export const HIGH_CONTRAST_SCRIM_OPACITY: Readonly<Record<ThemeName, number>> = {
+  light: 0.6,
+  sepia: 0.6,
+  dark: 0.8,
+  black: 0.85,
+};
+
+/** Full palette of a theme at a contrast level: the base palette with high-contrast overrides applied. */
+export function getPalette(theme: ThemeName, contrast: ContrastLevel = 'standard'): Readonly<Record<ColorToken, string>> {
+  return contrast === 'high' ? { ...THEME_PALETTE[theme], ...HIGH_CONTRAST_PALETTE[theme] } : THEME_PALETTE[theme];
+}

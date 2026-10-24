@@ -45,3 +45,31 @@ export function resolveTheme(mode: ThemeMode, systemPrefersDark: boolean): Theme
   if (mode === 'system') return systemPrefersDark ? 'dark' : 'light';
   return mode;
 }
+
+/** High-contrast option (blueprint 5.8). It layers on top of any of the four themes. */
+export const CONTRAST_LEVELS = ['standard', 'high'] as const;
+export type ContrastLevel = (typeof CONTRAST_LEVELS)[number];
+
+/** Contrast setting: follow the system (`prefers-contrast: more`), or force standard or high. */
+export const CONTRAST_MODES = ['system', ...CONTRAST_LEVELS] as const;
+export type ContrastMode = (typeof CONTRAST_MODES)[number];
+
+export const CONTRAST_LABELS: Record<ContrastMode, string> = {
+  system: 'System',
+  standard: 'Standard',
+  high: 'High contrast',
+};
+
+export function isContrastLevel(value: unknown): value is ContrastLevel {
+  return typeof value === 'string' && (CONTRAST_LEVELS as readonly string[]).includes(value);
+}
+
+export function isContrastMode(value: unknown): value is ContrastMode {
+  return value === 'system' || isContrastLevel(value);
+}
+
+/** Resolve the contrast setting to a concrete level. */
+export function resolveContrast(mode: ContrastMode, systemPrefersMore: boolean): ContrastLevel {
+  if (mode === 'system') return systemPrefersMore ? 'high' : 'standard';
+  return mode;
+}

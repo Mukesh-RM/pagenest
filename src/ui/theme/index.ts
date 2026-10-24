@@ -1,4 +1,14 @@
-export { COLOR_TOKENS, THEME_PALETTE, THEME_SCHEME, type ColorToken } from './palette';
+export {
+  COLOR_TOKENS,
+  HIGH_CONTRAST_PALETTE,
+  HIGH_CONTRAST_SCRIM_OPACITY,
+  HIGH_CONTRAST_TOKENS,
+  THEME_PALETTE,
+  THEME_SCHEME,
+  getPalette,
+  type ColorToken,
+  type HighContrastToken,
+} from './palette';
 export {
   CUSTOM_THEME_ID,
   DEFAULT_CUSTOM_THEME,
@@ -11,6 +21,9 @@ export {
   type ResolvedCustomTheme,
 } from './custom';
 export {
+  CONTRAST_LABELS,
+  CONTRAST_LEVELS,
+  CONTRAST_MODES,
   THEME_CHOICES,
   isThemeChoice,
   type ThemeChoice,
@@ -18,9 +31,14 @@ export {
   THEME_MODES,
   THEME_NAMES,
   THEME_PAGE_COLOR,
+  isContrastLevel,
+  isContrastMode,
   isThemeMode,
   isThemeName,
+  resolveContrast,
   resolveTheme,
+  type ContrastLevel,
+  type ContrastMode,
   type ThemeMode,
   type ThemeName,
 } from './themes';
@@ -29,6 +47,7 @@ export {
   ThemeScope,
   ThemedPortal,
   useSystemPrefersDark,
+  useSystemPrefersMoreContrast,
   useThemeName,
   useThemePalette,
   useTheme,

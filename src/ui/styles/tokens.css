@@ -185,6 +185,11 @@
   /* Touch targets (blueprint 5.4 and 5.8) */
   --pn-touch: 44px;
 
+  /* Strokes: focus ring and borders (thicker in high contrast, see below) */
+  --pn-focus-width: 2px;
+  --pn-focus-offset: 2px;
+  --pn-border-width: 1px;
+
   /* Typography: two families (Inter for controls and small text, Literata for headings and book titles), three weights
      (400, 600, 700), sizes 12 / 14 / 16 / 20 / 28 px at the default root size. Sizes are rem so they follow the
      user's text size setting up to 200% and beyond. */
@@ -221,6 +226,193 @@
   --pn-rail-width: 80px;
   --pn-miniplayer-height: 64px;
   --pn-bottom-chrome: 0px;
+}
+
+/*
+ * ---------- High contrast option (blueprint 5.8) ----------
+ * Layers on top of ANY theme. Select with data-contrast="high" on the SAME element as data-theme
+ * (document root, ThemeScope wrapper, portal wrapper: ThemeProvider and ThemeScope write both).
+ * data-contrast="standard" switches it off explicitly. With no data-contrast attribute, the
+ * system setting prefers-contrast: more turns it on (second block below, same values).
+ * Page and surface colors stay as in the theme; text pairs reach at least 7:1 (AAA), focus ring
+ * and accent fill at least 7:1, control borders at least 4.5:1, hairlines at least 3:1.
+ * Keep one declaration per line: tests read them line by line.
+ */
+
+/* High contrast + light */
+[data-theme="light"][data-contrast="high"],
+:root:not([data-theme])[data-contrast="high"] {
+  --pn-text: 0 0 0;
+  --pn-muted: 61 59 54;
+  --pn-accent: 17 94 90;
+  --pn-on-accent: 255 255 255;
+  --pn-accent-soft: 217 235 232;
+  --pn-accent-ink: 12 83 80;
+  --pn-link: 17 94 90;
+  --pn-border-strong: 85 83 76;
+  --pn-line: 118 116 112;
+  --pn-focus-ring: 17 94 90;
+  --pn-danger: 140 26 18;
+  --pn-inverse-surface: 0 0 0;
+  --pn-inverse-text: 255 255 255;
+  --pn-inverse-accent: 51 204 196;
+  --pn-scrim-opacity: 0.6;
+}
+
+/* High contrast + sepia */
+[data-theme="sepia"][data-contrast="high"] {
+  --pn-text: 0 0 0;
+  --pn-muted: 59 47 35;
+  --pn-accent: 15 86 83;
+  --pn-on-accent: 255 255 255;
+  --pn-accent-soft: 214 233 229;
+  --pn-accent-ink: 11 80 76;
+  --pn-link: 15 86 83;
+  --pn-border-strong: 90 74 56;
+  --pn-line: 125 108 85;
+  --pn-focus-ring: 15 86 83;
+  --pn-danger: 138 28 16;
+  --pn-inverse-surface: 42 31 20;
+  --pn-inverse-text: 255 255 255;
+  --pn-inverse-accent: 51 204 196;
+  --pn-scrim-opacity: 0.6;
+}
+
+/* High contrast + dark */
+[data-theme="dark"][data-contrast="high"] {
+  --pn-text: 255 255 255;
+  --pn-muted: 212 211 206;
+  --pn-accent: 71 202 195;
+  --pn-on-accent: 0 0 0;
+  --pn-accent-soft: 23 66 63;
+  --pn-accent-ink: 128 223 219;
+  --pn-link: 134 227 220;
+  --pn-border-strong: 166 168 179;
+  --pn-line: 125 127 137;
+  --pn-focus-ring: 255 255 255;
+  --pn-danger: 255 179 172;
+  --pn-inverse-surface: 255 255 255;
+  --pn-inverse-text: 0 0 0;
+  --pn-inverse-accent: 17 98 94;
+  --pn-scrim-opacity: 0.8;
+}
+
+/* High contrast + black */
+[data-theme="black"][data-contrast="high"] {
+  --pn-text: 255 255 255;
+  --pn-muted: 212 211 206;
+  --pn-accent: 57 198 191;
+  --pn-on-accent: 0 0 0;
+  --pn-accent-soft: 13 53 50;
+  --pn-accent-ink: 72 209 202;
+  --pn-link: 134 227 220;
+  --pn-border-strong: 166 168 179;
+  --pn-line: 125 127 137;
+  --pn-focus-ring: 255 255 255;
+  --pn-danger: 255 179 172;
+  --pn-inverse-surface: 255 255 255;
+  --pn-inverse-text: 0 0 0;
+  --pn-inverse-accent: 17 98 94;
+  --pn-scrim-opacity: 0.85;
+}
+
+/* Stroke widths: thicker focus ring and borders in high contrast; "standard" resets them in nested scopes */
+[data-contrast="standard"] {
+  --pn-focus-width: 2px;
+  --pn-focus-offset: 2px;
+  --pn-border-width: 1px;
+}
+
+[data-contrast="high"] {
+  --pn-focus-width: 4px;
+  --pn-focus-offset: 3px;
+  --pn-border-width: 2px;
+}
+
+/* Follow the system setting when the app has not chosen (no data-contrast attribute) */
+@media (prefers-contrast: more) {
+  :root:not([data-contrast]) {
+    --pn-focus-width: 4px;
+    --pn-focus-offset: 3px;
+    --pn-border-width: 2px;
+  }
+
+  /* system high contrast + light */
+  [data-theme="light"]:not([data-contrast]),
+  :root:not([data-theme]):not([data-contrast]) {
+    --pn-text: 0 0 0;
+    --pn-muted: 61 59 54;
+    --pn-accent: 17 94 90;
+    --pn-on-accent: 255 255 255;
+    --pn-accent-soft: 217 235 232;
+    --pn-accent-ink: 12 83 80;
+    --pn-link: 17 94 90;
+    --pn-border-strong: 85 83 76;
+    --pn-line: 118 116 112;
+    --pn-focus-ring: 17 94 90;
+    --pn-danger: 140 26 18;
+    --pn-inverse-surface: 0 0 0;
+    --pn-inverse-text: 255 255 255;
+    --pn-inverse-accent: 51 204 196;
+    --pn-scrim-opacity: 0.6;
+  }
+
+  /* system high contrast + sepia */
+  [data-theme="sepia"]:not([data-contrast]) {
+    --pn-text: 0 0 0;
+    --pn-muted: 59 47 35;
+    --pn-accent: 15 86 83;
+    --pn-on-accent: 255 255 255;
+    --pn-accent-soft: 214 233 229;
+    --pn-accent-ink: 11 80 76;
+    --pn-link: 15 86 83;
+    --pn-border-strong: 90 74 56;
+    --pn-line: 125 108 85;
+    --pn-focus-ring: 15 86 83;
+    --pn-danger: 138 28 16;
+    --pn-inverse-surface: 42 31 20;
+    --pn-inverse-text: 255 255 255;
+    --pn-inverse-accent: 51 204 196;
+    --pn-scrim-opacity: 0.6;
+  }
+
+  /* system high contrast + dark */
+  [data-theme="dark"]:not([data-contrast]) {
+    --pn-text: 255 255 255;
+    --pn-muted: 212 211 206;
+    --pn-accent: 71 202 195;
+    --pn-on-accent: 0 0 0;
+    --pn-accent-soft: 23 66 63;
+    --pn-accent-ink: 128 223 219;
+    --pn-link: 134 227 220;
+    --pn-border-strong: 166 168 179;
+    --pn-line: 125 127 137;
+    --pn-focus-ring: 255 255 255;
+    --pn-danger: 255 179 172;
+    --pn-inverse-surface: 255 255 255;
+    --pn-inverse-text: 0 0 0;
+    --pn-inverse-accent: 17 98 94;
+    --pn-scrim-opacity: 0.8;
+  }
+
+  /* system high contrast + black */
+  [data-theme="black"]:not([data-contrast]) {
+    --pn-text: 255 255 255;
+    --pn-muted: 212 211 206;
+    --pn-accent: 57 198 191;
+    --pn-on-accent: 0 0 0;
+    --pn-accent-soft: 13 53 50;
+    --pn-accent-ink: 72 209 202;
+    --pn-link: 134 227 220;
+    --pn-border-strong: 166 168 179;
+    --pn-line: 125 127 137;
+    --pn-focus-ring: 255 255 255;
+    --pn-danger: 255 179 172;
+    --pn-inverse-surface: 255 255 255;
+    --pn-inverse-text: 0 0 0;
+    --pn-inverse-accent: 17 98 94;
+    --pn-scrim-opacity: 0.85;
+  }
 }
 
 /* Tablet and desktop: wider margins (the rail replaces the tab bar at the same breakpoint) */

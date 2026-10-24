@@ -42,6 +42,24 @@ text. Two families and three weights are enforced by `styles/design-rules.test.t
 Latin, 97 kB in total (recipe in `fonts/README.md`). `preloadCriticalFonts()` (from `fonts/preload.ts`, exported from `@/ui`) adds
 `<link rel="preload">` for Inter and Literata regular only.
 
+**High contrast** (blueprint 5.8): `data-contrast="high"` layers over any theme, on the same element as
+`data-theme` (`<ThemeProvider>`, `<ThemeScope>` and `<ThemedPortal>` write both, so scopes and sheets match).
+`data-contrast="standard"` switches it off for a subtree. With no attribute, `prefers-contrast: more` turns it on
+in CSS, and `<ThemeProvider>` resolves it in script. It replaces text, muted, accent, on-accent, link, danger,
+border-strong, line, focus-ring and the snackbar (`--pn-inverse-*`) colors and strengthens the scrim; page and
+surface colors stay the theme's own. Strokes get thicker through `--pn-focus-width` (2 to 4 px),
+`--pn-focus-offset` and `--pn-border-width` (1 to 2 px). Text pairs are at least 7:1, focus ring and accent
+fill at least 7:1, control borders at least 4.5:1, hairlines at least 3:1, on all 8 theme x contrast combinations.
+
+```tsx
+<ThemeProvider mode="sepia" contrastMode="high">...</ThemeProvider>   // contrastMode: 'system' | 'standard' | 'high'
+const { contrast, contrastMode, setContrastMode } = useTheme();
+<ThemeScope theme="light" contrast="standard">...</ThemeScope>       // omit contrast to inherit
+```
+
+Code that needs hex values: `getPalette(theme, 'high')`, `HIGH_CONTRAST_PALETTE`; helpers `resolveContrast`,
+`CONTRAST_MODES`, `CONTRAST_LABELS`, `useSystemPrefersMoreContrast`. Persisting the setting is the app's job.
+
 **Reduced motion**: durations become 0 under `prefers-reduced-motion: reduce`, and the document root
 attribute `data-reduce-motion="true" | "false"` forces it on or off (in-app setting).
 
@@ -104,6 +122,71 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
 * `ReaderScreen`: optional `minutesLeftInChapter` ("8 min left in chapter" above the book progress, always visible).
 * `BookDetailSheet`: `onRemove` now appears as "Remove from library" inside a "More options" (⋯) menu, never as a loose red button.
 * `ErrorNotice`: DRM, damaged and unsupported files never show "Try again" (`canRetry(kind)`); they add one plain help line.
+
+### Collections and Stats (wire-ready, presentational)
+
+`import { CollectionsScreen, StatsScreen, CollectionNameSheet, CollectionBooksEmpty } from '@/ui/screens'` (lazy routes only).
+Gallery: `collections`, `collections-empty`, `collections-loading`, `collections-new`, `collections-shelf-empty`, `stats`,
+`stats-empty`, `stats-loading`. Empty states use `Illustration` (`shelf`, `books`, `chart`).
+
+**Wiring `src/app/pages/CollectionsPage.tsx` (or the Library bot's `CollectionsScreen` body):**
+1. Map shelves to `CollectionShelf[]` = `{ id, name, bookCount, covers?: string[] }` (`covers` = up to four cover URLs of the
+   shelf's first books; leave out for the shelf icon). Pass `loading` while `shelves === undefined`.
+2. `<CollectionsScreen shelves loading onOpenShelf onOpenSmart onCreate onRename onDelete onMove notice />`.
+   `onMove(shelf, -1 | 1)` replaces the four inline icon buttons (Rename, Move up/down and Delete live in one "⋯" menu per row;
+   the first shelf has no "Move up", the last no "Move down"). `smart` defaults to Unfinished and Recently added
+   (`DEFAULT_SMART_COLLECTIONS`, ids `unfinished` and `recent` to map to your presets).
+3. New and Rename: keep `naming` state and render `<CollectionNameSheet open mode name onNameChange onSubmit onClose error busy />`
+   (the sheet blocks blank names; trim and validate in the data layer; pass its message as `error`).
+4. An opened shelf with no books: `<CollectionBooksEmpty name action />`. Delete keeps its snackbar undo.
+5. Delete the page's own `ShelfRow`/Tailwind row markup and `LibIcon` imports (use `Icon` names `pencil`, `trash`).
+
+**Wiring `src/app/pages/StatsPage.tsx`:** keep `data.stats(Date.now())` and the visibility refresh, then render
+`<StatsScreen loading={summary === undefined} minutesPerDay={summary.minutesPerDay} dayLabels={short weekday names} dayNames={long weekday names} sessionCount={summary.sessionCount} finishedBooks={summary.finishedBooks} emptyAction={{ label: 'Open your library', icon: 'library', onClick: goToLibrary }} />`.
+Labels as today: `new Date(Date.now() - (6 - i) * DAY_MS).toLocaleDateString(undefined, { weekday: 'short' | 'long' })`.
+The screen draws its own header ("Stats"); drop `PageHeader` there. Bars are scaled with `transform` from a CSS variable,
+so nothing lays out while they grow, and each bar is read as "Wednesday: 35 min" (today as "Today: ...").
+
+### Long lists: VirtualList (one windowing implementation)
+
+`VirtualList` (`components/VirtualList.tsx`, geometry in `utils/virtual.ts`) draws only the rows near the screen, so
+5,000 books cost the same to scroll as 30. Props: `items`, `renderItem(item, index)`, `getKey`, `columns` (a number, or a
+function of the list width: use `autoColumns(width, minItemWidth, gap)` for the CSS auto-fill rule), `gap`, `rowGap`,
+`rowHeight` (fixed, exact scrolling) **or** measured rows with `estimatedRowHeight` (rows not drawn yet use the average
+of the measured ones, rows re-measure when text size or width changes), `overscan` (rows, default 3), `scroller`
+(`window` default, or `self` for a box with its own height), `scrollPaddingTop` (sticky headers), `role` (`list` or
+`listbox`), `keyboardNav`, `initialSize`, `onRangeChange`. A ref gives `scrollToIndex(i, {align})` and `focusItem(i)`.
+
+- Rows move with `transform: translate3d`, never `top`; rows are `role="presentation"`, items are `listitem` (or
+  `option`) with `aria-posinset` and `aria-setsize` for the whole set ("12 of 4800").
+- Keyboard: Tab walks the drawn items; the focused item and its neighbouring rows stay drawn even when scrolled far away;
+  arrows move by item or row, Home/End jump to the first/last item, Page Up/Down move a screenful; text fields inside
+  items keep their keys; at the edges the key is not swallowed, so the page still scrolls.
+- `LibraryScreen` uses it only when there are more than `virtualizeAbove` books (default `LIBRARY_VIRTUALIZE_ABOVE` = 60);
+  smaller libraries render the plain CSS grid. `screens/libraryGrid.ts` mirrors the CSS grid (9/10/11/12 rem minimums,
+  the same gaps per breakpoint), so the windowed grid is pixel-identical to the plain one.
+- The Library feature's own `useWindowVirtual` (`src/features/library/virtual.ts`) is a second implementation of the same
+  idea; recommendation: Library adopts `VirtualList` and deletes it (same geometry: columns from auto-fill, row pitch,
+  overscan; plus keyboard, ARIA set size, measured rows and focus retention).
+
+### Motion rule
+
+CSS transitions and keyframes may only change `transform`, `opacity` (and `translate`, `scale`, `rotate`). Colors, borders,
+shadows and sizes swap instantly. `styles/motion-rules.test.ts` fails otherwise, for `src/ui` and every other stylesheet
+under `src`; the documented `MOTION_ALLOW_LIST` there (file, selector, property, reason; stale entries fail) is empty today.
+
+### High contrast (blueprint 5.8)
+
+`ThemeProvider` takes `contrastMode` ("system" | "standard" | "high", default "system" = `prefers-contrast: more`),
+`onContrastModeChange`, and writes `data-contrast` next to `data-theme`; `ThemeScope contrast="high"` forces a subtree.
+Every theme x high contrast keeps text at 7:1 or better and non-text at 3:1 or better (computed from `tokens.css` in
+`styles/contrast.high.test.ts`). The accents stay in the **teal family** (dark teal on Light and Sepia, light teal on
+Dark and Black; a test checks the hue), so high contrast looks like the same app, not another one.
+**Custom + high contrast**: `resolveCustomTheme(input, 'high')` (the provider does it when `mode="custom"`) raises every
+text pair to `textTarget`: 7:1 whenever the chosen page color can give black or white 7:1, otherwise the best the page
+allows and never below AA; strong borders 4.5:1, hairlines 3:1, focus ring in the text color, stronger scrim.
+`SettingsScreen` shows a "Contrast" row when `contrastMode` and `onContrastModeChange` are passed.
+App: persist the contrast setting next to the theme and pass both to `ThemeProvider`.
 
 ### Text size is rem-only
 
@@ -221,7 +304,7 @@ All interactive controls are at least 44 x 44 px, have a visible `:focus-visible
 
 ## Demo page (dev only)
 
-`demo/UiKitDemo.tsx` shows every component in every theme with a theme switcher. It is not exported from
+`demo/UiKitDemo.tsx` shows every component in every theme with a theme switcher and a contrast toggle (System, Standard, High contrast). It is not exported from
 `index.ts`, so production bundles do not include it. The Architect mounts it in the router like this
 (only the app code outside `src/ui` changes):
 
@@ -255,6 +338,9 @@ import { THEME_PALETTE, THEME_SCHEME } from '@/ui/theme/palette';
 
 - `styles/contrast.test.ts`: WCAG ratios computed from `styles/tokens.css` for every theme (text pairs at least 4.5:1,
   focus ring, control borders and accent fill at least 3:1). Fails if any token drifts.
+- `styles/contrast.high.test.ts`: the same computed check for all 8 theme x high-contrast combinations (text at least 7:1),
+  CSS and `palette.ts` sync, the `prefers-contrast: more` block, thicker strokes.
+- `theme/contrast.test.tsx`: contrast attribute and API behavior, system preference, scopes and portals.
 - `styles/tokens.test.ts`: 4 px grid, radii, 150 to 250 ms motion, reduced motion, 44 px targets, breakpoints,
   palette in sync with CSS, self-hosted assets, no network code.
 - `components/*.test.tsx`, `theme/theme.test.tsx`, `demo/UiKitDemo.test.tsx`: behavior and accessibility.
@@ -262,4 +348,4 @@ import { THEME_PALETTE, THEME_SCHEME } from '@/ui/theme/palette';
 - `styles/design-rules.test.ts`: 4 px grid, two font families, three weights, one icon set, one accent per theme, font budget, demo isolation.
 - `screens/screens.test.tsx`, `components/Redesign.test.tsx`, `utils/utils.test.ts`, `shortcuts.test.tsx`: screens by role and label, focus order, tint contrast on every theme, time-left, shortcuts.
 
-`test/user.ts` is a tiny stand-in for `@testing-library/user-event` (not a project dependency).
+User interaction in tests uses the real `@testing-library/user-event` (MIT, dev dependency).
