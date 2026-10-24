@@ -1,16 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
-
-/** End-to-end tests live in /tests/e2e (owned by QA). */
-export default defineConfig({
-  testDir: './tests/e2e',
-  fullyParallel: true,
-  forbidOnly: !!process.env['CI'],
-  reporter: 'list',
-  use: { baseURL: 'http://localhost:4173', trace: 'on-first-retry' },
-  projects: [{ name: 'chromium', use: { ...devices['Pixel 7'] } }],
-  webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-    url: 'http://localhost:4173',
-    reuseExistingServer: !process.env['CI'],
-  },
-});
+/**
+ * Root Playwright entry point. The real configuration (projects, web server, targets) is owned by QA and lives in
+ * tests/playwright.config.ts; this file only re-exports it so `npx playwright test` and `npm run test:e2e` work from
+ * the repository root and from /tests with identical behaviour.
+ */
+export { default } from './tests/playwright.config';

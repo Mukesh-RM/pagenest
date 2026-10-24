@@ -63,7 +63,19 @@ export function currentTheme(page: Page): Promise<string | undefined> {
   return page.evaluate(() => document.documentElement.dataset.theme);
 }
 
-/** Chooses a theme in Settings through the "Theme" radio group (blueprint 5.2: Light, Sepia, Dark, Black). */
+/**
+ * A theme option in Settings or onboarding. The app uses native radio inputs hidden behind a swatch label, so the label is
+ * what a finger or mouse hits (and Playwright cannot click the 1 px input itself). Pass "Match my phone" for system.
+ */
+export function themeRadio(page: Page, name: string): Locator {
+  return page.getByRole('radio', { name: new RegExp(`^${name}$`, 'i') });
+}
+
+export function themeOption(page: Page, name: string): Locator {
+  return themeRadio(page, name).locator('xpath=ancestor::label[1]');
+}
+
+/** Chooses a theme in Settings (blueprint 5.2: Light, Sepia, Dark, Black). */
 export async function chooseTheme(page: Page, theme: ThemeName): Promise<void> {
   await gotoTab(page, 'Settings');
   const radio = page.getByRole('radio', { name: new RegExp(`^${theme}$`, 'i') });
@@ -93,10 +105,13 @@ export async function openSheet(page: Page): Promise<void> {
  * very load, a reload is needed before it controls the page, so we do exactly that once.
  */
 export async function waitForServiceWorkerControl(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+  // `ready` never settles when the app registers no service worker, so race it against a timeout and fail with a clear reason.
+  await page.evaluate(async (timeoutMs) => {
     if (!('serviceWorker' in navigator)) throw new Error('Service workers are not supported');
-    await navigator.serviceWorker.ready;
-  });
+    const none = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`No service worker became active within ${timeoutMs} ms (is one registered?)`)), timeoutMs));
+    await Promise.race([navigator.serviceWorker.ready, none]);
+  }, 8_000);
   const controlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
   if (!controlled) {
     await page.reload();
