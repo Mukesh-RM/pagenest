@@ -80,6 +80,72 @@ export async function flingScroll(
 }
 
 /**
+ * Scrolls the page with REAL touch input (CDP Input.dispatchTouchEvent: touchStart, a paced series of touchMove, touchEnd,
+ * repeated as successive swipes, through the browser's input pipeline and compositor exactly as a finger does) and records
+ * every requestAnimationFrame interval while it runs. Unlike `flingScroll` (which sets scrollTop from script) this exercises
+ * touch-action, scroll chaining and compositor scrolling. Needs a Chromium context with `hasTouch` (the Pixel 7 projects).
+ *
+ * Why not Input.synthesizeScrollGesture with source "touch"? In headless Chromium it does nothing: the page stays at
+ * scrollTop 0 while the call returns normally, which is how an earlier harness measured jank on a page that never moved.
+ *
+ * It FAILS LOUDLY if the page did not actually move: `scrolledPx` must reach `minShare` (default 40 %) of what the swipes
+ * asked for, so a gesture that goes nowhere can never produce a green run.
+ */
+export async function touchScroll(page: Page, seconds: number, pxPerSecond: number, dropMs: number, opts: { minShare?: number } = {}): Promise<FrameStats> {
+  if (page.context().browser()?.browserType().name() !== 'chromium') throw new Error('touchScroll needs Chromium (CDP Input.dispatchTouchEvent)');
+  const cdp = await page.context().newCDPSession(page);
+  const scroller = '(document.scrollingElement ?? document.documentElement)';
+  const view = await page.evaluate((sel) => ({ w: innerWidth, h: innerHeight, top: eval(sel).scrollTop as number, max: (eval(sel).scrollHeight - innerHeight) as number }), scroller);
+  const wanted = Math.min(Math.round(pxPerSecond * seconds), Math.max(0, view.max - view.top));
+  if (wanted < 200) throw new Error(`touchScroll: the page has only ${Math.round(view.max - view.top)} px left to scroll; nothing to measure`);
+  await page.evaluate(() => {
+    const w = window as unknown as { __rafDeltas: number[]; __rafStop: boolean };
+    w.__rafDeltas = []; w.__rafStop = false;
+    let last = performance.now();
+    const tick = (now: number) => { w.__rafDeltas.push(now - last); last = now; if (!w.__rafStop) requestAnimationFrame(tick); };
+    requestAnimationFrame(tick);
+  });
+  const x = Math.round(view.w / 2);
+  const swipe = Math.round(view.h * 0.6);
+  const y0 = Math.round(view.h * 0.85);
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const t0 = Date.now();
+  let asked = 0;
+  while (Date.now() - t0 < seconds * 1000 && asked < wanted) {
+    const len = Math.min(swipe, wanted - asked);
+    const began = Date.now();
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y0 }] });
+    for (;;) {
+      const done = Math.min(len, ((Date.now() - began) / 1000) * pxPerSecond);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: Math.round(y0 - done) }] });
+      if (done >= len) break;
+      await sleep(8);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    asked += len;
+  }
+  const gestureMs = Date.now() - t0;
+  await sleep(150); // let the compositor finish the last fling frames
+  const { deltas, after } = await page.evaluate((sel) => {
+    const w = window as unknown as { __rafDeltas: number[]; __rafStop: boolean };
+    w.__rafStop = true;
+    return { deltas: w.__rafDeltas.slice(1), after: eval(sel).scrollTop as number };
+  }, scroller);
+  await cdp.detach().catch(() => {});
+  const scrolledPx = after - view.top;
+  if (!(scrolledPx >= asked * (opts.minShare ?? 0.4))) {
+    throw new Error(`touchScroll: the touch gesture did not scroll the page (swipes asked ${asked} px, scrollTop ${Math.round(view.top)} -> ${Math.round(after)}, ${gestureMs} ms). Not measuring jank on a page that did not move: check touch-action, overflow and that the context has hasTouch.`);
+  }
+  return {
+    frames: deltas.length,
+    p95Ms: percentile(deltas, 95),
+    maxMs: Math.max(0, ...deltas),
+    droppedRatio: deltas.filter((d) => d > dropMs).length / Math.max(1, deltas.length),
+    scrolledPx,
+  };
+}
+
+/**
  * Installs pointerdown and keydown listeners that remembers the event time, then resolves latency as: first painted frame in which
  * `isDone()` is true, minus the pointerdown time. Use `armTap` before tapping and `tapLatency` after.
  */
