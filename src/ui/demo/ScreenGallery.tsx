@@ -34,6 +34,7 @@ import {
   SAMPLE_BOOKS,
   SAMPLE_CHAPTER,
   SAMPLE_DETAIL,
+  SAMPLE_DETAIL_AUDIO,
   SAMPLE_DETAIL_LONG,
   SAMPLE_FONTS,
   SAMPLE_PARAGRAPHS,
@@ -50,6 +51,7 @@ export const GALLERY_SCREENS = [
   'library-error',
   'detail',
   'detail-long',
+  'detail-audio',
   'reader',
   'reader-aa',
   'player',
@@ -97,7 +99,7 @@ function LibraryDemo({
   empty?: boolean;
   error?: boolean;
   detail?: boolean;
-  detailBook?: 'short' | 'long';
+  detailBook?: 'short' | 'long' | 'audio';
   helpOpen?: boolean;
 }) {
   const [filter, setFilter] = useState('all');
@@ -165,7 +167,7 @@ function LibraryDemo({
       </AppShell>
       <BookDetailSheet
         open={open}
-        book={detailBook === 'long' ? SAMPLE_DETAIL_LONG : SAMPLE_DETAIL}
+        book={detailBook === 'long' ? SAMPLE_DETAIL_LONG : detailBook === 'audio' ? SAMPLE_DETAIL_AUDIO : SAMPLE_DETAIL}
         onClose={() => setOpen(false)}
         onRead={noop}
         onListen={noop}
@@ -346,6 +348,8 @@ export function ScreenGallery({ screen, theme = 'light' }: { screen: GalleryScre
       return <LibraryDemo detail />;
     case 'detail-long':
       return <LibraryDemo detail detailBook="long" />;
+    case 'detail-audio':
+      return <LibraryDemo detail detailBook="audio" />;
     case 'reader':
       return <ReaderDemo theme={theme} />;
     case 'reader-aa':

@@ -7,6 +7,7 @@ import { ProgressBar } from '../components/ProgressBar';
 import { progressWords } from '../components/BookCard';
 import { useCoverTint } from '../hooks';
 import type { BookDetail } from '../types';
+import { isAudioOnly } from '../utils/bookKind';
 import { formatDuration } from '../utils/time';
 import { playFlip, type RectLike } from '../utils/flip';
 import '../styles/screens.css';
@@ -48,6 +49,7 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
     book.durationSeconds ? formatDuration(book.durationSeconds) : undefined,
   ].filter(Boolean);
   const started = book.progress > 0 && book.progress < 1;
+  const audioOnly = isAudioOnly(book);
   return (
     <BottomSheet
       open={open}
@@ -57,16 +59,27 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
       style={tint.style}
       footer={
         <div className="pn-detail__actions">
-          {onRead ? (
-            <Button icon="bookOpen" onClick={() => onRead(book)}>
-              {started ? 'Continue reading' : book.progress >= 1 ? 'Read again' : 'Start reading'}
-            </Button>
-          ) : null}
-          {onListen && book.audio ? (
-            <Button variant="secondary" icon="headphones" onClick={() => onListen(book)}>
-              {started ? 'Keep listening' : 'Listen'}
-            </Button>
-          ) : null}
+          {audioOnly ? (
+            // Audio only: Listen is THE action. There is nothing to read, so Read is not offered.
+            onListen ? (
+              <Button icon="headphones" onClick={() => onListen(book)}>
+                {started ? 'Keep listening' : book.progress >= 1 ? 'Listen again' : 'Listen'}
+              </Button>
+            ) : null
+          ) : (
+            <>
+              {onRead ? (
+                <Button icon="bookOpen" onClick={() => onRead(book)}>
+                  {started ? 'Continue reading' : book.progress >= 1 ? 'Read again' : 'Start reading'}
+                </Button>
+              ) : null}
+              {onListen && book.audio ? (
+                <Button variant="secondary" icon="headphones" onClick={() => onListen(book)}>
+                  {started ? 'Keep listening' : 'Listen'}
+                </Button>
+              ) : null}
+            </>
+          )}
           {onRemove ? (
             <OverflowMenu
               label="More options"
@@ -79,7 +92,7 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
       <div className="pn-detail">
         <div className="pn-detail__aside">
           <div ref={coverRef} className="pn-detail__cover">
-            <BookCover title={book.title} author={book.author} src={book.coverUrl} eager />
+            <BookCover title={book.title} author={book.author} src={book.coverUrl} eager favorite={book.favorite} />
           </div>
           <div className="pn-detail__meta">
             <p className="pn-detail__author">{book.author ?? 'Unknown author'}</p>
