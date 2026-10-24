@@ -4,15 +4,3 @@
   --pn-safe-top: env(safe-area-inset-top, 0px);
   --pn-safe-bottom: env(safe-area-inset-bottom, 0px);
 }
-
-/* Route chrome (docs/ROUTE_CHROME.md). The frame from the design system is always rendered so a
-   screen is never remounted; on immersive routes its rail and bottom bar (tab bar, mini-player)
-   are taken out of the layout. `display: contents` keeps this wrapper from affecting layout. */
-.pn-chrome-scope {
-  display: contents;
-}
-
-.pn-chrome-scope[data-chrome='immersive'] .pn-rail,
-.pn-chrome-scope[data-chrome='immersive'] .pn-shell__bottom {
-  display: none;
-}

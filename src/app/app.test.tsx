@@ -6,7 +6,6 @@ import { useSettings } from './settings-store';
 import { minutesPerDay } from '@/data/stats';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 
-
 let db: PageNestDB;
 let services: AppServices;
 
@@ -36,11 +35,11 @@ describe('app shell', () => {
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
     expect(screen.queryByTestId('pn-rail')).toBeNull(); // phone width: only the tab bar is in the DOM
     expect(within(bar).getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
   });
 
   it.each([
-    ['/', 'Library', 'Your shelf is waiting'],
+    ['/', 'Library', 'Your library is empty'],
     ['/collections', 'Collections', 'No shelves yet'],
     ['/stats', 'Stats', 'Nothing to count yet'],
   ])('%s shows its heading and a plain empty state', async (path, heading, empty) => {
@@ -52,14 +51,14 @@ describe('app shell', () => {
   it('settings shows appearance, storage and privacy', async () => {
     renderAt('/settings');
     expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Theme' })).toBeInTheDocument();
     expect(await screen.findByText(/does not say how much space|PageNest uses/)).toBeInTheDocument();
     expect(screen.getByText(/collects nothing/)).toBeInTheDocument();
   });
 
   it('sends unknown addresses to the library', async () => {
     renderAt('/nowhere/at/all');
-    expect(await screen.findByText('Your shelf is waiting')).toBeInTheDocument();
+    expect(await screen.findByText('Your library is empty')).toBeInTheDocument();
   });
 
   it('lists books from the database with progress', async () => {
@@ -75,14 +74,18 @@ describe('app shell', () => {
       favorite: false,
       finished: false,
     });
-    await db.progress.put({ bookId: id, mode: 'read', locator: { kind: 'reflow', section: 0, textOffset: 0 }, percent: 40, updatedAt: 1 });
+    await db.progress.put({
+      bookId: id,
+      mode: 'read',
+      locator: { kind: 'reflow', section: 0, textOffset: 0 },
+      percent: 40,
+      updatedAt: 1,
+    });
     renderAt('/');
     expect((await screen.findAllByText('Persuasion')).length).toBeGreaterThan(0);
-    expect(screen.getByText('Welcome back')).toBeInTheDocument();
-    expect(screen.getByText('Jane Austen')).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByRole('progressbar', { name: 'Progress for Persuasion' })).toHaveAttribute('aria-valuenow', '40'),
-    );
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.getAllByText('Jane Austen').length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByRole('progressbar', { name: '40% read', hidden: true })).toHaveAttribute('aria-valuenow', '40'));
   });
 });
 

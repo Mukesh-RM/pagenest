@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { MiniPlayerSlot, ProgressService, SampleBookProvider } from '@/app/contracts';
+import type { BookImporter, MiniPlayerSlot, ProgressService, SampleBookProvider } from '@/app/contracts';
 import type { CoverUrlCache } from '@/data/cover-url';
 import type { DataClient } from '@/data/data-client';
 import type { PageNestDB } from '@/data/db';
@@ -20,6 +20,11 @@ export interface AppServices {
    * no sample card at all (see `SampleBookProvider`).
    */
   readonly sampleBook?: SampleBookProvider;
+  /**
+   * Optional "Add books" implementation, supplied by the Library owner (see `BookImporter`).
+   * Without it the Library's Add button says that adding books is not available yet.
+   */
+  readonly importer?: BookImporter;
   /**
    * Optional persistent mini-player, supplied by the Audio owner. Without it the frame shows no
    * mini-player and reserves no space for one (see `MiniPlayerSlot`).

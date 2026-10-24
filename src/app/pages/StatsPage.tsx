@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DAY_MS, type StatsSummary } from '@/data/stats';
-import { EmptyState } from '@/ui';
-import { PageHeader } from '../components/PageHeader';
+import { EmptyState, Illustration } from '@/ui';
+import { PageHeader, Screen } from '../components/PageHeader';
 import { useServices } from '../services-context';
 
 /** Reading and listening time. Simple bars, no clutter (blueprint 5.6). */
@@ -36,23 +36,27 @@ export function StatsPage() {
     [days],
   );
 
-  if (summary === undefined || days === undefined) return <PageHeader title="Stats" />;
+  if (summary === undefined || days === undefined) {
+    return (
+      <Screen>
+        <PageHeader title="Stats" />
+      </Screen>
+    );
+  }
   const max = Math.max(1, ...days);
 
   return (
-    <>
+    <Screen>
       <PageHeader title="Stats" />
       {summary.sessionCount === 0 ? (
         <EmptyState
-          art="stats"
+          art={<Illustration name="chart" />}
           title="Nothing to count yet"
           description="Your reading and listening time will show up here, a little each day. There is no pressure and no streak to keep."
         />
       ) : (
         <section aria-label="Last 7 days" className="rounded-card bg-surface p-4">
-          <p className="mb-4 text-sm text-muted">
-            Minutes per day, last 7 days. Finished books: {summary.finishedBooks}.
-          </p>
+          <p className="mb-4 text-sm text-muted">Minutes per day, last 7 days. Finished books: {summary.finishedBooks}.</p>
           <ul className="flex h-40 items-end gap-2">
             {days.map((minutes, i) => (
               <li key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
@@ -69,6 +73,6 @@ export function StatsPage() {
           </ul>
         </section>
       )}
-    </>
+    </Screen>
   );
 }

@@ -92,3 +92,68 @@ export function useCoverUrl(bookId: string, hasCover: boolean): string | undefin
   }, [covers, bookId, hasCover]);
   return url;
 }
+
+/** Book ids that have a cover, as one stable string, so a list that keeps its covers does not re-run effects. */
+function coverKey(books: readonly { readonly id: string; readonly coverRef?: unknown }[]): string {
+  return books
+    .filter((b) => b.coverRef !== undefined)
+    .map((b) => b.id)
+    .join('\n');
+}
+
+/**
+ * Cover `blob:` URLs for a whole grid at once (`{ [bookId]: url }`). One lease per book that has a
+ * cover is held while the book is in `books` and released when it leaves or the screen unmounts;
+ * a cover that is still loading is simply missing from the result (the card shows its title card,
+ * so nothing shifts when the image arrives). Re-runs only when the set of books with covers changes.
+ */
+export function useCoverUrls(books: readonly { readonly id: string; readonly coverRef?: unknown }[]): Readonly<Record<string, string>> {
+  const { covers } = useServices();
+  const key = coverKey(books);
+  const [urls, setUrls] = useState<Readonly<Record<string, string>>>({});
+  const leases = useRef(new Map<string, { release: () => void; url: string }>());
+
+  useEffect(() => {
+    const wanted = new Set(key === '' ? [] : key.split('\n'));
+    const held = leases.current;
+    let changed = false;
+    for (const [id, lease] of held) {
+      if (!wanted.has(id)) {
+        lease.release();
+        held.delete(id);
+        changed = true;
+      }
+    }
+    if (changed) setUrls(Object.fromEntries([...held].map(([id, lease]) => [id, lease.url])));
+    let cancelled = false;
+    for (const id of wanted) {
+      if (held.has(id)) continue;
+      void covers.acquire(id).then(
+        (lease) => {
+          if (!lease) return;
+          if (cancelled || !wanted.has(id) || held.has(id)) {
+            lease.release();
+            return;
+          }
+          held.set(id, lease);
+          setUrls((current) => ({ ...current, [id]: lease.url }));
+        },
+        () => undefined,
+      );
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [covers, key]);
+
+  // Release everything when the screen goes away.
+  useEffect(() => {
+    const held = leases.current;
+    return () => {
+      for (const lease of held.values()) lease.release();
+      held.clear();
+    };
+  }, []);
+
+  return urls;
+}

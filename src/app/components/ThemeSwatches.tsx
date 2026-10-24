@@ -1,65 +1,43 @@
-import { useId } from 'react';
-import { Icon } from '@/ui';
+import { memo, useCallback } from 'react';
+import { ChoiceGroup, type ChoiceOption } from '@/ui';
 import { useServices } from '../services-context';
 import { useSettings } from '../settings-store';
-import { THEME_LABELS, THEMES, type ThemeName } from '../themes';
+import { THEME_LABELS, THEMES, type ThemePreference } from '../themes';
 
-const SWATCHES: readonly ThemeName[] = ['light', 'sepia', 'dark', 'black'];
+/** The four themes with a small preview of their own page and accent colors, then "Match my phone". */
+const OPTIONS: ReadonlyArray<ChoiceOption<ThemePreference>> = [
+  ...(['light', 'sepia', 'dark', 'black'] as const).map((name) => {
+    const t = THEMES[name];
+    return {
+      value: name,
+      label: THEME_LABELS[name],
+      preview: (
+        <span
+          className="flex h-10 w-full items-center justify-center gap-2 rounded-card border"
+          style={{
+            backgroundColor: t.page,
+            color: t.text,
+            borderColor: t.line,
+          }}
+        >
+          <span className="font-serif font-bold">Aa</span>
+          <span className="block h-2 w-6 rounded-full" style={{ backgroundColor: t.accent }} />
+        </span>
+      ),
+    };
+  }),
+  { value: 'system', label: THEME_LABELS.system },
+];
 
 /**
- * The four theme swatches from blueprint 5.2 plus "Match my phone" (Onboarding and Settings). Native
- * radio inputs, so arrow keys move the choice and screen readers read each
- * theme by name. The choice is saved at once and applied by ThemeProvider.
+ * Theme choice for Onboarding and Settings, built on the design system's `ChoiceGroup` (a radio
+ * group with arrow keys, Home and End, 44 px targets). The choice is saved at once and applied by
+ * ThemeProvider.
  */
-export function ThemeSwatches() {
+export const ThemeSwatches = memo(function ThemeSwatches() {
   const { db } = useServices();
   const preference = useSettings((s) => s.themePreference);
   const setPreference = useSettings((s) => s.setThemePreference);
-  const group = useId();
-
-  return (
-    <fieldset className="min-w-0">
-      <legend className="mb-2 font-medium">Theme</legend>
-      <div className="grid grid-cols-2 gap-3">
-        {SWATCHES.map((name) => {
-          const t = THEMES[name];
-          return (
-            <label key={name} className="relative block">
-              <input
-                type="radio"
-                name={group}
-                value={name}
-                checked={preference === name}
-                onChange={() => void setPreference(db, name)}
-                className="peer sr-only"
-              />
-              <span
-                className="flex min-h-[72px] flex-col justify-between rounded-card border-2 p-3 peer-checked:ring-2 peer-checked:ring-accent peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent"
-                style={{ backgroundColor: t.page, color: t.text, borderColor: t.line }}
-              >
-                <span className="font-semibold">{THEME_LABELS[name]}</span>
-                <span className="mt-2 block h-2 w-10 rounded-full" style={{ backgroundColor: t.accent }} aria-hidden="true" />
-              </span>
-              {preference === name ? (
-                <span className="absolute right-2 top-2" style={{ color: t.accent }}>
-                  <Icon name="check" size={20} />
-                </span>
-              ) : null}
-            </label>
-          );
-        })}
-      </div>
-      <label className="mt-3 flex min-h-touch cursor-pointer items-center gap-3">
-        <input
-          type="radio"
-          name={group}
-          value="system"
-          checked={preference === 'system'}
-          onChange={() => void setPreference(db, 'system')}
-          className="h-5 w-5 accent-[rgb(var(--pn-accent))]"
-        />
-        <span>{THEME_LABELS.system}</span>
-      </label>
-    </fieldset>
-  );
-}
+  const onChange = useCallback((value: ThemePreference) => void setPreference(db, value), [db, setPreference]);
+  return <ChoiceGroup label="Theme" variant="tiles" value={preference} options={OPTIONS} onChange={onChange} />;
+});

@@ -12,7 +12,13 @@ function fakeProvider(overrides: Partial<SampleBookProvider> = {}): SampleBookPr
   return {
     info: { title: 'Pride and Prejudice', author: 'Jane Austen', license: 'Public domain', provenance: 'Project Gutenberg, ebook 1342' },
     available: () => true,
-    importSample: vi.fn(async (): Promise<ImportResult> => ({ bookId: 'sample-1', kind: 'ebook', format: 'epub', title: 'Pride and Prejudice', alreadyInLibrary: false })),
+    importSample: vi.fn(async (): Promise<ImportResult> => ({
+      bookId: 'sample-1',
+      kind: 'ebook',
+      format: 'epub',
+      title: 'Pride and Prejudice',
+      alreadyInLibrary: false,
+    })),
     ...overrides,
   } as SampleBookProvider & { importSample: ReturnType<typeof vi.fn> };
 }
@@ -66,7 +72,11 @@ describe('SampleBookCard', () => {
   });
 
   it('navigates audiobooks to the listen route', async () => {
-    renderCard(fakeProvider({ importSample: vi.fn(async () => ({ bookId: 'a1', kind: 'audio' as const, format: 'm4b' as const, title: 'T', alreadyInLibrary: true })) }));
+    renderCard(
+      fakeProvider({
+        importSample: vi.fn(async () => ({ bookId: 'a1', kind: 'audio' as const, format: 'm4b' as const, title: 'T', alreadyInLibrary: true })),
+      }),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Add the sample book' }));
     expect(await screen.findByTestId('where')).toHaveTextContent('/listen/a1');
   });
@@ -117,7 +127,7 @@ describe('sample card in the empty Library', () => {
   it('is hidden without a provider', async () => {
     const services = await launch();
     renderApp(services);
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByText('Try a sample book')).toBeNull();
     services.db.close();
   });
@@ -125,7 +135,7 @@ describe('sample card in the empty Library', () => {
   it('is hidden when the provider says it is not available', async () => {
     const services = await launch({ sampleBook: fakeProvider({ available: () => false }) });
     renderApp(services);
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByText('Try a sample book')).toBeNull();
     services.db.close();
   });
@@ -135,7 +145,17 @@ describe('sample card in the empty Library', () => {
     const services = await launch({ sampleBook: provider });
     // The "import" really adds the book, as the Library's implementation would.
     provider.importSample.mockImplementation(async () => {
-      await services.db.books.add({ id: 'sample-1', fingerprint: 'fp', kind: 'ebook', format: 'epub', title: 'Pride and Prejudice', author: 'Jane Austen', addedAt: 1, favorite: false, finished: false });
+      await services.db.books.add({
+        id: 'sample-1',
+        fingerprint: 'fp',
+        kind: 'ebook',
+        format: 'epub',
+        title: 'Pride and Prejudice',
+        author: 'Jane Austen',
+        addedAt: 1,
+        favorite: false,
+        finished: false,
+      });
       return { bookId: 'sample-1', kind: 'ebook', format: 'epub', title: 'Pride and Prejudice', alreadyInLibrary: false };
     });
     renderApp(services);
@@ -148,9 +168,18 @@ describe('sample card in the empty Library', () => {
 
   it('is not shown once the library has a book', async () => {
     const services = await launch({ sampleBook: fakeProvider() });
-    await services.db.books.add({ id: 'b', fingerprint: 'f', kind: 'pdf', format: 'pdf', title: 'Mine', addedAt: 1, favorite: false, finished: false });
+    await services.db.books.add({
+      id: 'b',
+      fingerprint: 'f',
+      kind: 'pdf',
+      format: 'pdf',
+      title: 'Mine',
+      addedAt: 1,
+      favorite: false,
+      finished: false,
+    });
     renderApp(services);
-    await screen.findByText('Mine');
+    await screen.findAllByText('Mine');
     expect(screen.queryByText('Try a sample book')).toBeNull();
     services.db.close();
   });

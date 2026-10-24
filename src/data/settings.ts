@@ -18,4 +18,6 @@ export const SETTING_KEYS = {
   fontSizePx: 'fontSizePx',
   /** `true` once the first-run onboarding was finished or skipped. */
   onboardingDone: 'onboardingDone',
+  /** `ReaderSettings` (size, font, theme, spacing, margins) chosen in the reader's "Aa" sheet. */
+  readerSettings: 'readerSettings',
 } as const;

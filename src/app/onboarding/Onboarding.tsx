@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { ImportResult } from '@/app/contracts';
 import { Button } from '@/ui';
 import { FontSizeControl } from '../components/FontSizeControl';
+import { SampleBookCard } from '../components/SampleBookCard';
 import { ThemeSwatches } from '../components/ThemeSwatches';
+import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
 import { useSettings } from '../settings-store';
 
@@ -11,7 +15,7 @@ export const ONBOARDING_STEPS = 3;
 const PREVIEW_TEXT =
   'Call me Ishmael. Some years ago, never mind how long precisely, having little or no money in my purse, I thought I would sail about a little and see the watery part of the world.';
 
-const HEADING = 'mb-3 text-[length:var(--pn-text-xl)] font-semibold leading-tight outline-none';
+const HEADING = 'mb-3 font-serif text-[length:var(--pn-text-xl)] font-bold leading-tight outline-none';
 
 /**
  * First-run onboarding (blueprint 5.6): Welcome, where your books will live,
@@ -21,9 +25,9 @@ const HEADING = 'mb-3 text-[length:var(--pn-text-xl)] font-semibold leading-tigh
  * users start at the top of the new card.
  */
 export function Onboarding() {
-  const { db } = useServices();
+  const { db, sampleBook } = useServices();
+  const navigate = useNavigate();
   const complete = useSettings((s) => s.completeOnboarding);
-  const fontSizePx = useSettings((s) => s.fontSizePx);
   const [step, setStep] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
   const last = step === ONBOARDING_STEPS - 1;
@@ -33,9 +37,20 @@ export function Onboarding() {
   }, [step]);
 
   const finish = (): void => void complete(db);
+  // The sample book is the fastest way in: finish onboarding and open it, one tap from the first card.
+  const openSample = useCallback(
+    (result: ImportResult) => {
+      void complete(db);
+      navigate(pathForBook({ id: result.bookId, kind: result.kind }), {
+        replace: true,
+      });
+    },
+    [complete, db, navigate],
+  );
+  const sample = sampleBook?.available() ? sampleBook : undefined;
 
   return (
-    <main className="mx-auto flex min-h-full w-full max-w-md flex-col px-4 pb-[calc(1rem+var(--pn-safe-bottom))] pt-[calc(1rem+var(--pn-safe-top))]">
+    <main className="mx-auto flex min-h-full w-full max-w-md flex-col px-[var(--pn-margin)] pb-[calc(1rem+var(--pn-safe-bottom))] pt-[calc(1rem+var(--pn-safe-top))]">
       <div className="flex min-h-touch items-center justify-between">
         <p className="text-muted" id="onboarding-step">
           Step {step + 1} of {ONBOARDING_STEPS}
@@ -53,9 +68,8 @@ export function Onboarding() {
             <h1 ref={heading} tabIndex={-1} className={HEADING}>
               Your books, your voice, no account.
             </h1>
-            <p className="text-muted">
-              PageNest keeps everything on this device. There is no sign-in, no ads and no tracking.
-            </p>
+            <p className="text-muted">PageNest keeps everything on this device. There is no sign-in, no ads and no tracking.</p>
+            {sample ? <SampleBookCard provider={sample} onImported={openSample} /> : null}
           </>
         ) : step === 1 ? (
           <>
@@ -67,9 +81,7 @@ export function Onboarding() {
               <li>After the first load, PageNest works without internet.</li>
               <li>Nothing you add is ever uploaded.</li>
             </ul>
-            <p className="rounded-card bg-surface p-4">
-              Adding books arrives in the next release. For now, choose how PageNest looks.
-            </p>
+            <p className="rounded-card bg-surface p-4">Adding your own books arrives in the next release. For now, choose how PageNest looks.</p>
           </>
         ) : (
           <>
@@ -82,11 +94,7 @@ export function Onboarding() {
             <div className="mb-4">
               <FontSizeControl />
             </div>
-            <p
-              data-testid="font-preview"
-              className="rounded-card bg-surface p-4 leading-relaxed"
-              style={{ fontSize: `${fontSizePx}px` }}
-            >
+            <p data-testid="font-preview" className="rounded-card bg-surface p-4 font-serif text-[length:1rem] leading-relaxed">
               {PREVIEW_TEXT}
             </p>
           </>
@@ -101,11 +109,7 @@ export function Onboarding() {
         ) : (
           <span />
         )}
-        {last ? (
-          <Button onClick={finish}>Done</Button>
-        ) : (
-          <Button onClick={() => setStep(step + 1)}>Next</Button>
-        )}
+        {last ? <Button onClick={finish}>Done</Button> : <Button onClick={() => setStep(step + 1)}>Next</Button>}
       </div>
     </main>
   );

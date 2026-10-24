@@ -1,12 +1,12 @@
 /**
  * App text size (blueprint 5.8, "dynamic text size"). One setting, stored in
  * Dexie as `fontSizePx`, drives the root font size, so everything sized in
- * `rem` scales together. The range keeps the layout intact at 360 px wide; the
- * reader will have its own, wider range (12 to 40 px) and can use this value
- * as its starting point.
+ * `rem` scales together. The range runs from 88 % to 200 % of the 16 px
+ * default; the design system's layouts are checked at 200 % on a 360 px screen. The reader has
+ * its own, separate size setting (`ReaderSettings.fontSize`).
  */
 export const FONT_SIZE_MIN = 14;
-export const FONT_SIZE_MAX = 24;
+export const FONT_SIZE_MAX = 32;
 export const FONT_SIZE_DEFAULT = 16;
 
 /** Round to a whole pixel and keep inside the allowed range. NaN gives the default. */

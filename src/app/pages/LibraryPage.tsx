@@ -1,54 +1,54 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { ImportResult } from '@/app/contracts';
-import { EmptyState, ProgressBar, SkeletonCard, SkeletonGroup } from '@/ui';
-import { loadResume } from '@/data/resume';
-import { PageHeader } from '../components/PageHeader';
-import { ResumeCard, ResumeCardSkeleton } from '../components/ResumeCard';
+import { loadResume, type ResumeInfo } from '@/data/resume';
+import type { BookSummary as LibraryBook, LibraryQuery, LibraryStatus } from '@/data/library-query';
+import {
+  DEFAULT_LIBRARY_FILTERS,
+  ErrorNotice,
+  LibraryScreen as DesignLibraryScreen,
+  useSnackbar,
+  type BookSummary,
+  type RectLike,
+  type SheetCloseReason,
+} from '@/ui';
+import { BookDetailHost, type OpenedBook } from '../components/BookDetailHost';
+import { LibraryResume, LibraryResumeSkeleton } from '../components/LibraryResume';
 import { SampleBookCard } from '../components/SampleBookCard';
-import { useCoverUrl, useLibraryPage } from '../library-hooks';
+import { useCoverUrls, useLibraryPage } from '../library-hooks';
 import { pathForBook } from '../route-paths';
 import { hadResumeCard, rememberResumeCard } from '../resume-hint';
 import { useServices } from '../services-context';
 
-/** The most books this placeholder grid shows at once. The Library feature replaces it with a windowed list. */
+/** The most books shown at once. The grid is a plain CSS grid, so 500 cards stay smooth; a windowed list can raise this. */
 const GRID_LIMIT = 500;
 
-interface BookCardProps {
-  bookId: string;
-  hasCover: boolean;
-  title: string;
-  author: string | undefined;
-  format: string;
-  percent: number;
-}
+/** The design system's filter chips and what each one asks the data layer for. */
+const FILTER_STATUS: Readonly<Record<string, LibraryStatus | undefined>> = {
+  all: undefined,
+  reading: 'reading',
+  listening: 'listening',
+  finished: 'finished',
+};
+
+/** The design system's screen, memoized: opening a sheet or a snackbar must not re-render the grid. */
+const MemoLibraryScreen = memo(DesignLibraryScreen);
+
+type Notice = { kind: 'unavailable' } | { kind: 'failed'; message: string };
 
 /**
- * One book tile. Memoized, and takes plain values (not the database row, which is a new object
- * on every live-query run), so a progress write for one book re-renders only that book's tile.
+ * Library home, built from the design system's `LibraryScreen` and fed by the data worker (search,
+ * filter chips, one page at a time). Everything on it does something: tapping a card opens the book
+ * detail sheet (Read or Listen, Remove with Undo), the resume card continues where the person
+ * stopped, and Add books opens the file picker when the Library owner's `importer` is registered
+ * (otherwise it says plainly that adding is not available yet). The "Try a sample book" card shows
+ * on an empty library only when a `SampleBookProvider` is registered and available.
  */
-export const BookCard = memo(function BookCard({ bookId, hasCover, title, author, format, percent }: BookCardProps) {
-  const cover = useCoverUrl(bookId, hasCover);
-  return (
-    <li className="relative flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-card bg-surface p-3">
-      {cover ? <img src={cover} alt="" decoding="async" className="absolute inset-0 h-full w-full object-cover opacity-30" /> : null}
-      <div className="relative">
-        <p className="line-clamp-3 font-semibold">{title}</p>
-        {author ? <p className="line-clamp-1 text-sm text-muted">{author}</p> : null}
-      </div>
-      <div className="relative">
-        <p className="mb-1 text-xs uppercase text-muted">{format}</p>
-        <ProgressBar value={percent / 100} label={`Progress for ${title}`} />
-      </div>
-    </li>
-  );
-});
-
-/** Library home. Lists what is in the database; shows the empty state when nothing was added yet. */
 export function LibraryPage() {
-  const { db, progress, sampleBook } = useServices();
+  const { db, progress, data, sampleBook, importer } = useServices();
   const navigate = useNavigate();
+  const snackbar = useSnackbar();
   const here = useRef(true);
   useEffect(() => {
     here.current = true;
@@ -56,6 +56,60 @@ export function LibraryPage() {
       here.current = false;
     };
   }, []);
+
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const text = useDeferredValue(query).trim();
+  const status = FILTER_STATUS[filter];
+  const request = useMemo<Partial<LibraryQuery>>(
+    () => ({
+      limit: GRID_LIMIT,
+      ...(text ? { text } : {}),
+      ...(status ? { status } : {}),
+    }),
+    [text, status],
+  );
+  const { page, error } = useLibraryPage(request);
+  const items = page?.items;
+  const covers = useCoverUrls(items ?? []);
+
+  const books = useMemo<BookSummary[]>(
+    () =>
+      (items ?? []).map((b) => ({
+        id: b.id,
+        title: b.title,
+        ...(b.author ? { author: b.author } : {}),
+        ...(covers[b.id] ? { coverUrl: covers[b.id] } : {}),
+        progress: b.percent / 100,
+        audio: b.kind === 'audio',
+      })),
+    [items, covers],
+  );
+
+  // The last saved position (newest progress row of an unfinished book), with its chapter.
+  const resume = useLiveQuery(async () => ({ value: await loadResume(db) }), [db, progress]);
+  // Reserve the card's space from the first frame if the last visit had one, so nothing jumps.
+  const [hadCard] = useState(hadResumeCard);
+  const [resumeDismissed, setResumeDismissed] = useState(false);
+  const shownCard = resume?.value !== undefined;
+  useEffect(() => {
+    if (resume) rememberResumeCard(shownCard);
+  }, [resume, shownCard]);
+  const resumeInfo = resume?.value;
+  const goResume = useCallback((info: ResumeInfo) => navigate(pathForBook({ id: info.bookId, kind: info.kind })), [navigate]);
+  const dismissResume = useCallback(() => setResumeDismissed(true), []);
+  const resumeNode = useMemo(
+    () =>
+      resume === undefined ? (
+        hadCard ? (
+          <LibraryResumeSkeleton />
+        ) : null
+      ) : resumeInfo && !resumeDismissed ? (
+        <LibraryResume info={resumeInfo} onResume={goResume} onDismiss={dismissResume} />
+      ) : null,
+    [resume, hadCard, resumeInfo, resumeDismissed, goResume, dismissResume],
+  );
+
   // Open the sample once it is added, unless the person already left the Library meanwhile.
   const openImported = useCallback(
     (result: ImportResult) => {
@@ -63,66 +117,120 @@ export function LibraryPage() {
     },
     [navigate],
   );
-  // One page from the data worker (never the whole table, never every progress row).
-  const { page } = useLibraryPage({ limit: GRID_LIMIT });
+  const emptyLibrary = page !== undefined && page.total === 0 && text === '' && status === undefined;
+  const sample = useMemo(
+    () => (emptyLibrary && sampleBook?.available() ? <SampleBookCard provider={sampleBook} onImported={openImported} /> : null),
+    [emptyLibrary, sampleBook, openImported],
+  );
 
-  // The last saved position (newest progress row of an unfinished book), with its chapter.
-  const resume = useLiveQuery(async () => ({ value: await loadResume(db) }), [db, progress]);
-  // Reserve the card's space from the first frame if the last visit had one, so nothing jumps.
-  const [hadCard] = useState(hadResumeCard);
-  const shownCard = resume?.value !== undefined;
-  useEffect(() => {
-    if (resume) rememberResumeCard(shownCard);
-  }, [resume, shownCard]);
+  // Add books.
+  const [notice, setNotice] = useState<Notice | undefined>();
+  const picker = useRef<HTMLInputElement>(null);
+  const onAdd = useCallback(() => {
+    if (importer?.available()) picker.current?.click();
+    else setNotice({ kind: 'unavailable' });
+  }, [importer]);
+  const onFiles = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const files = [...(event.target.files ?? [])];
+      event.target.value = ''; // so choosing the same file again still fires
+      if (!importer || files.length === 0) return;
+      importer.importFiles(files).then(
+        (outcomes) => {
+          const added = outcomes.filter((o) => 'result' in o).length;
+          const firstError = outcomes.find((o): o is Extract<typeof o, { error: string }> => 'error' in o);
+          if (firstError) setNotice({ kind: 'failed', message: firstError.error });
+          if (added > 0)
+            snackbar.show({
+              message: added === 1 ? 'Added to your library.' : `Added ${added} books to your library.`,
+            });
+        },
+        () =>
+          setNotice({
+            kind: 'failed',
+            message: 'Nothing was added. Please try again.',
+          }),
+      );
+    },
+    [importer, snackbar],
+  );
+  const noticeNode = useMemo(() => {
+    const dismiss = () => setNotice(undefined);
+    if (notice?.kind === 'unavailable') {
+      return (
+        <ErrorNotice
+          title="Adding books is not ready yet"
+          description="This version cannot import files yet. Nothing was lost, and your library stays as it is."
+          onDismiss={dismiss}
+        />
+      );
+    }
+    if (notice?.kind === 'failed') return <ErrorNotice title="Some files were not added" description={notice.message} onDismiss={dismiss} />;
+    if (error && page === undefined) return <ErrorNotice kind="generic" description="Your library could not load. Please reopen the app." />;
+    return null;
+  }, [notice, error, page]);
 
-  const books = page?.items;
-  const ready = books !== undefined && resume !== undefined;
-  const resumeInfo = resume?.value;
+  // Book detail.
+  const [opened, setOpened] = useState<OpenedBook | undefined>();
+  const itemsRef = useRef<readonly LibraryBook[] | undefined>(items);
+  itemsRef.current = items;
+  const coversRef = useRef(covers);
+  coversRef.current = covers;
+  const onOpenBook = useCallback((book: BookSummary, rect: RectLike | undefined) => {
+    const row = itemsRef.current?.find((b) => b.id === book.id);
+    if (row) setOpened({ book: row, coverUrl: coversRef.current[row.id], rect });
+  }, []);
+  const closeDetail = useCallback((_reason: SheetCloseReason) => setOpened(undefined), []);
+  const openBook = useCallback(
+    (book: LibraryBook) => {
+      setOpened(undefined);
+      navigate(pathForBook(book));
+    },
+    [navigate],
+  );
+  const removeBook = useCallback(
+    (book: LibraryBook) => {
+      setOpened(undefined);
+      void data.books.trash([book.id]).then(
+        (receipt) =>
+          snackbar.show({
+            message: `Removed “${book.title}”.`,
+            onAction: () => void data.books.restore(receipt.token),
+            // Undo is gone once the message is: make the removal final (frees the files).
+            onDismiss: (reason) => {
+              if (reason !== 'action') void data.books.purge(receipt.token);
+            },
+          }),
+        () =>
+          setNotice({
+            kind: 'failed',
+            message: 'That book could not be removed. Nothing was changed.',
+          }),
+      );
+    },
+    [data, snackbar],
+  );
 
   return (
     <>
-      <PageHeader title="Library" />
-      {!ready ? null : resumeInfo ? <ResumeCard info={resumeInfo} href={pathForBook({ id: resumeInfo.bookId, kind: resumeInfo.kind })} /> : null}
-      {!ready && hadCard ? <ResumeCardSkeleton /> : null}
-      {!ready ? (
-        <SkeletonGroup label="Loading your library">
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {Array.from({ length: 6 }, (_, i) => (
-              <li key={i}>
-                <SkeletonCard />
-              </li>
-            ))}
-          </ul>
-        </SkeletonGroup>
-      ) : books.length === 0 ? (
-        <>
-          <EmptyState
-            art="bookOpen"
-            title="Your shelf is waiting"
-            description="Books, PDFs and audiobooks you add will appear here, and they stay on this device. Adding files arrives in the next update."
-          />
-          {sampleBook?.available() ? <SampleBookCard provider={sampleBook} onImported={openImported} /> : null}
-        </>
-      ) : (
-        <>
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {books.map((book) => (
-              <BookCard
-                key={book.id}
-                bookId={book.id}
-                hasCover={book.coverRef !== undefined}
-                title={book.title}
-                author={book.author}
-                format={book.format}
-                percent={Math.round(book.percent)}
-              />
-            ))}
-          </ul>
-          {page && page.total > books.length ? (
-            <p className="mt-4 text-center text-sm text-muted">{`Showing ${books.length} of ${page.total} books.`}</p>
-          ) : null}
-        </>
-      )}
+      <MemoLibraryScreen
+        books={books}
+        loading={page === undefined}
+        filters={DEFAULT_LIBRARY_FILTERS}
+        filter={filter}
+        onFilterChange={setFilter}
+        query={query}
+        onQueryChange={setQuery}
+        onOpenBook={onOpenBook}
+        onAdd={onAdd}
+        notice={noticeNode}
+        resume={resumeNode}
+        hint={sample}
+      />
+      {importer ? (
+        <input ref={picker} type="file" multiple accept={importer.accept} tabIndex={-1} aria-hidden="true" className="sr-only" onChange={onFiles} />
+      ) : null}
+      <BookDetailHost opened={opened} onClose={closeDetail} onRead={openBook} onListen={openBook} onRemoveConfirmed={removeBook} />
     </>
   );
 }
