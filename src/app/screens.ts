@@ -10,6 +10,8 @@ const loaders = {
   collections: () => import('./pages/CollectionsPage').then((m) => ({ default: m.CollectionsPage })),
   stats: () => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })),
   settings: () => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
+  read: () => import('./pages/BookRoute').then((m) => ({ default: m.ReadRoute })),
+  listen: () => import('./pages/BookRoute').then((m) => ({ default: m.ListenRoute })),
   onboarding: () => import('./onboarding/Onboarding').then((m) => ({ default: m.Onboarding })),
 } satisfies Record<string, () => Promise<{ default: ComponentType }>>;
 
@@ -19,6 +21,8 @@ export const LibraryScreen = lazy(loaders.library);
 export const CollectionsScreen = lazy(loaders.collections);
 export const StatsScreen = lazy(loaders.stats);
 export const SettingsScreen = lazy(loaders.settings);
+export const ReadScreen = lazy(loaders.read);
+export const ListenScreen = lazy(loaders.listen);
 export const OnboardingScreen = lazy(loaders.onboarding);
 
 /** Start downloading screens now. Safe to call many times: the browser and bundler cache the module. */

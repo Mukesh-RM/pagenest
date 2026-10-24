@@ -1,4 +1,4 @@
-import type { Locator } from '@/app/contracts';
+import type { BookKind, Locator, ProgressRecord } from '@/app/contracts';
 import type { PageNestDB } from './db';
 import type { BookRecord, ChapterRecord, ProgressRow } from './schema';
 
@@ -7,6 +7,8 @@ export interface ResumeInfo {
   readonly bookId: string;
   readonly title: string;
   readonly author?: string;
+  /** Decides the route: audiobooks open in the player, everything else in the reader. */
+  readonly kind: BookKind;
   readonly mode: ProgressRow['mode'];
   /** Exact saved position. Hand this to the reader or player; it restores the same spot. */
   readonly locator: Locator;
@@ -73,6 +75,7 @@ export function pickResume(
     return {
       bookId: book.id,
       title: book.title,
+      kind: book.kind,
       ...(book.author ? { author: book.author } : {}),
       mode: row.mode,
       locator: row.locator,
@@ -102,4 +105,34 @@ export async function loadResume(db: PageNestDB): Promise<ResumeInfo | undefined
   });
   const chapters = first ? await db.chapters.where('bookId').equals(first.bookId).toArray() : [];
   return pickResume(rows, books, () => chapters);
+}
+
+/**
+ * Where a book stands, for its own screen: the newest saved position across modes (including one
+ * not yet written, via the progress service) and the chapter it falls in. `undefined` if the book
+ * is unknown or was never opened. Unlike {@link loadResume} it does not skip finished books.
+ */
+export async function loadBookPosition(
+  db: PageNestDB,
+  progress: { getLatest(bookId: string): Promise<ProgressRecord | undefined> },
+  bookId: string,
+): Promise<ResumeInfo | undefined> {
+  const [book, latest, chapters] = await Promise.all([
+    db.books.get(bookId),
+    progress.getLatest(bookId),
+    db.chapters.where('bookId').equals(bookId).toArray(),
+  ]);
+  if (!book || !latest) return undefined;
+  const chapter = chapterForLocator(chapters, latest.locator);
+  return {
+    bookId: book.id,
+    title: book.title,
+    kind: book.kind,
+    ...(book.author ? { author: book.author } : {}),
+    mode: latest.mode,
+    locator: latest.locator,
+    percent: latest.percent,
+    ...(chapter ? { chapterNumber: chapter.index + 1, chapterTitle: chapter.title } : {}),
+    updatedAt: latest.updatedAt,
+  };
 }
