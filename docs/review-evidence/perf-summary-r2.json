@@ -1,0 +1,254 @@
+{
+ "tap": {
+  "cpu1x": {
+   "sum": {
+    "tab": {
+     "n": 12,
+     "min": 70.9,
+     "p50": 79.8,
+     "p95": 97.2,
+     "max": 97.2
+    },
+    "openBook": {
+     "n": 6,
+     "min": 75.8,
+     "p50": 79.6,
+     "p95": 95.8,
+     "max": 95.8
+    },
+    "aaSheet": {
+     "n": 6,
+     "min": 57.1,
+     "p50": 62.8,
+     "p95": 64,
+     "max": 64
+    },
+    "editDetails": {
+     "n": 4,
+     "min": 61.3,
+     "p50": 63.3,
+     "p95": 63.8,
+     "max": 63.8
+    }
+   },
+   "raw": {
+    "tab": [
+     75.39999999850988,
+     97.19999999925494,
+     81.20000000298023,
+     77.40000000223517,
+     70.90000000223517,
+     76.39999999850988,
+     81.20000000298023,
+     80.5,
+     80.39999999850988,
+     79.80000000074506,
+     80.5,
+     78.10000000149012
+    ],
+    "openBook": [
+     95.80000000074506,
+     82.09999999776483,
+     75.80000000074506,
+     78.60000000149012,
+     79.70000000298023,
+     79.60000000149012
+    ],
+    "aaSheet": [
+     57.099999997764826,
+     63.79999999701977,
+     64,
+     57.600000001490116,
+     63.599999997764826,
+     62.80000000074506
+    ],
+    "editDetails": [
+     63.80000000074506,
+     63.30000000074506,
+     63.599999997764826,
+     61.30000000074506
+    ]
+   }
+  },
+  "cpu4x": {
+   "sum": {
+    "tab": {
+     "n": 12,
+     "min": 72.8,
+     "p50": 77,
+     "p95": 131.1,
+     "max": 131.1
+    },
+    "openBook": {
+     "n": 6,
+     "min": 78.4,
+     "p50": 92.1,
+     "p95": 108.6,
+     "max": 108.6
+    },
+    "aaSheet": {
+     "n": 6,
+     "min": 59.3,
+     "p50": 61.7,
+     "p95": 78.8,
+     "max": 78.8
+    },
+    "editDetails": {
+     "n": 4,
+     "min": 61.1,
+     "p50": 63.4,
+     "p95": 72.2,
+     "max": 72.2
+    }
+   },
+   "raw": {
+    "tab": [
+     92.80000000074506,
+     131.09999999776483,
+     128.80000000074506,
+     73.60000000149012,
+     77.60000000149012,
+     75.09999999776483,
+     89.80000000074506,
+     80.19999999925494,
+     73.39999999850988,
+     73.69999999925494,
+     72.80000000074506,
+     77
+    ],
+    "openBook": [
+     108.60000000149012,
+     95.80000000074506,
+     78.40000000223517,
+     95.19999999925494,
+     91.20000000298023,
+     92.09999999776483
+    ],
+    "aaSheet": [
+     78.80000000074506,
+     63.100000001490116,
+     61.70000000298023,
+     59.30000000074506,
+     61.100000001490116,
+     71
+    ],
+    "editDetails": [
+     72.20000000298023,
+     63.5,
+     63.399999998509884,
+     61.100000001490116
+    ]
+   }
+  }
+ },
+ "libraryLoad": {
+  "5000": [
+   {
+    "wallMsToFirstCard": 901,
+    "fcp": 140,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 83,
+    "load": 105
+   },
+   {
+    "wallMsToFirstCard": 910,
+    "fcp": 140,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 86,
+    "load": 105
+   },
+   {
+    "wallMsToFirstCard": 932,
+    "fcp": 160,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 93,
+    "load": 109
+   }
+  ],
+  "sample": [
+   {
+    "wallMsToFirstCard": 955,
+    "fcp": 180,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 86,
+    "load": 125
+   },
+   {
+    "wallMsToFirstCard": 901,
+    "fcp": 144,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 84,
+    "load": 106
+   },
+   {
+    "wallMsToFirstCard": 927,
+    "fcp": 140,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 84,
+    "load": 101
+   }
+  ],
+  "seeded 32": [
+   {
+    "wallMsToFirstCard": 910,
+    "fcp": 148,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 95,
+    "load": 114
+   },
+   {
+    "wallMsToFirstCard": 923,
+    "fcp": 140,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 83,
+    "load": 104
+   },
+   {
+    "wallMsToFirstCard": 895,
+    "fcp": 136,
+    "cls": 0,
+    "shifts": 0,
+    "shiftDetail": [],
+    "longTasks": [],
+    "dcl": 82,
+    "load": 102
+   }
+  ]
+ },
+ "offline": {
+  "libraryShown": true,
+  "libraryMs": 145,
+  "cardVisible": 0,
+  "coverImgLoaded": [],
+  "bookOpens": true,
+  "readerText": "The Tale of Peter Rabbit | Not started yet | Aa | The reader arrives in a later release. Your place in this book is saved on this device and will be used when i",
+  "tab_Collections": true,
+  "tab_Stats": true,
+  "tab_Settings": true,
+  "deepLinkSettings": true
+ }
+}

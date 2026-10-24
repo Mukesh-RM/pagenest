@@ -1,0 +1,206 @@
+[
+ {
+  "scenario": "first-launch-root",
+  "run": 1,
+  "finalUrl": "http://127.0.0.1:5321/",
+  "lhVersion": "11.7.1",
+  "form": "mobile",
+  "throttling": "simulate",
+  "scores": {
+   "performance": 77,
+   "accessibility": 97,
+   "best-practices": 100,
+   "pwa": 100
+  },
+  "FCP": 3631,
+  "LCP": 4281,
+  "TBT": 35,
+  "CLS": 0,
+  "SI": 3631,
+  "TTI": 3791,
+  "failed": {
+   "performance": [
+    "first-contentful-paint: First Contentful Paint (3.6 s)",
+    "largest-contentful-paint: Largest Contentful Paint (4.3 s)",
+    "speed-index: Speed Index (3.6 s)"
+   ],
+   "accessibility": [
+    "heading-order: Heading elements are not in a sequentially-descending order"
+   ],
+   "best-practices": [],
+   "pwa": []
+  },
+  "a11yFailedAll": [
+   "heading-order"
+  ],
+  "landed": "/"
+ },
+ {
+  "scenario": "first-launch-root",
+  "run": 2,
+  "finalUrl": "http://127.0.0.1:5321/",
+  "lhVersion": "11.7.1",
+  "form": "mobile",
+  "throttling": "simulate",
+  "scores": {
+   "performance": 77,
+   "accessibility": 97,
+   "best-practices": 100,
+   "pwa": 100
+  },
+  "FCP": 3547,
+  "LCP": 4336,
+  "TBT": 14,
+  "CLS": 0,
+  "SI": 3547,
+  "TTI": 3730,
+  "failed": {
+   "performance": [
+    "first-contentful-paint: First Contentful Paint (3.5 s)",
+    "largest-contentful-paint: Largest Contentful Paint (4.3 s)",
+    "speed-index: Speed Index (3.5 s)"
+   ],
+   "accessibility": [
+    "heading-order: Heading elements are not in a sequentially-descending order"
+   ],
+   "best-practices": [],
+   "pwa": []
+  },
+  "a11yFailedAll": [
+   "heading-order"
+  ],
+  "landed": "/"
+ },
+ {
+  "scenario": "first-launch-root",
+  "run": 3,
+  "finalUrl": "http://127.0.0.1:5321/",
+  "lhVersion": "11.7.1",
+  "form": "mobile",
+  "throttling": "simulate",
+  "scores": {
+   "performance": 77,
+   "accessibility": 97,
+   "best-practices": 100,
+   "pwa": 100
+  },
+  "FCP": 3621,
+  "LCP": 4255,
+  "TBT": 9,
+  "CLS": 0,
+  "SI": 3621,
+  "TTI": 3725,
+  "failed": {
+   "performance": [
+    "first-contentful-paint: First Contentful Paint (3.6 s)",
+    "largest-contentful-paint: Largest Contentful Paint (4.3 s)",
+    "speed-index: Speed Index (3.6 s)"
+   ],
+   "accessibility": [
+    "heading-order: Heading elements are not in a sequentially-descending order"
+   ],
+   "best-practices": [],
+   "pwa": []
+  },
+  "a11yFailedAll": [
+   "heading-order"
+  ],
+  "landed": "/"
+ },
+ {
+  "scenario": "library-after-onboarding",
+  "run": 1,
+  "finalUrl": "http://127.0.0.1:5321/",
+  "lhVersion": "11.7.1",
+  "form": "mobile",
+  "throttling": "simulate",
+  "scores": {
+   "performance": 91,
+   "accessibility": 100,
+   "best-practices": 100,
+   "pwa": 100
+  },
+  "FCP": 62,
+  "LCP": 128,
+  "TBT": 7,
+  "CLS": 0.18955042527339,
+  "SI": 270,
+  "TTI": 111,
+  "failed": {
+   "performance": [
+    "cumulative-layout-shift: Cumulative Layout Shift (0.19)"
+   ],
+   "accessibility": [],
+   "best-practices": [],
+   "pwa": []
+  },
+  "a11yFailedAll": [
+   "label-content-name-mismatch"
+  ],
+  "landed": "/"
+ },
+ {
+  "scenario": "library-after-onboarding",
+  "run": 2,
+  "finalUrl": "http://127.0.0.1:5321/",
+  "lhVersion": "11.7.1",
+  "form": "mobile",
+  "throttling": "simulate",
+  "scores": {
+   "performance": 91,
+   "accessibility": 100,
+   "best-practices": 100,
+   "pwa": 100
+  },
+  "FCP": 68,
+  "LCP": 141,
+  "TBT": 19,
+  "CLS": 0.18955042527339,
+  "SI": 280,
+  "TTI": 128,
+  "failed": {
+   "performance": [
+    "cumulative-layout-shift: Cumulative Layout Shift (0.19)"
+   ],
+   "accessibility": [],
+   "best-practices": [],
+   "pwa": []
+  },
+  "a11yFailedAll": [
+   "label-content-name-mismatch"
+  ],
+  "landed": "/"
+ },
+ {
+  "scenario": "library-after-onboarding",
+  "run": 3,
+  "finalUrl": "http://127.0.0.1:5321/",
+  "lhVersion": "11.7.1",
+  "form": "mobile",
+  "throttling": "simulate",
+  "scores": {
+   "performance": 91,
+   "accessibility": 100,
+   "best-practices": 100,
+   "pwa": 100
+  },
+  "FCP": 62,
+  "LCP": 135,
+  "TBT": 14,
+  "CLS": 0.18955042527339,
+  "SI": 249,
+  "TTI": 121,
+  "failed": {
+   "performance": [
+    "cumulative-layout-shift: Cumulative Layout Shift (0.19)"
+   ],
+   "accessibility": [],
+   "best-practices": [],
+   "pwa": []
+  },
+  "a11yFailedAll": [
+   "label-content-name-mismatch"
+  ],
+  "landed": "/"
+ }
+]
