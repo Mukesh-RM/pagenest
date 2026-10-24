@@ -8,6 +8,7 @@ const here = dirname(fileURLToPath(import.meta.url));
  * Target selection (first match wins):
  *   PAGENEST_BASE_URL=https://host/path/  test an already running or deployed build (no server started)
  *   PAGENEST_TARGET=fixture               serve tests/fixtures/reference-app (harness self-check only)
+ *   PAGENEST_NO_SERVER=1                  start no server (the browser-less unit project)
  *   default                               build the real app from the repo root and run `vite preview`
  *
  * Service workers only run in production builds, so the real app is always built, never run with `vite dev`.
@@ -20,7 +21,7 @@ const repoRoot = resolve(here, '..');
 const rawBase = external ?? `http://127.0.0.1:${PORT}/`;
 export const baseURL = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
-const webServer = external
+const webServer = external || process.env.PAGENEST_NO_SERVER === '1'
   ? undefined
   : useFixture
     ? {

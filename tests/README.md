@@ -27,7 +27,7 @@ npm run lighthouse                         # audits ../dist (run `npm run build`
 node lighthouse/run.mjs --url https://xyz.pages.dev/ --threshold 90
 ```
 
-Environment variables: `PAGENEST_BASE_URL`, `PAGENEST_TARGET=fixture`, `PAGENEST_PORT` (default 4173), `PAGENEST_PHASE` (default 0; set to 1 to also enforce the Share Target manifest check), `PAGENEST_LAUNCH_BUDGET_MS` (default 1000, the offline launch budget from blueprint section 20), `CHROME_PATH` for Lighthouse.
+Environment variables: `PAGENEST_BASE_URL`, `PAGENEST_TARGET=fixture`, `PAGENEST_NO_SERVER=1` (start no server; `npm run test:unit` sets it), `PAGENEST_PORT` (default 4173), `PAGENEST_PHASE` (default 0; set to 1 to also enforce the Share Target manifest check), `PAGENEST_LAUNCH_BUDGET_MS` (default 1000, the offline launch budget from blueprint section 20), `CHROME_PATH` for Lighthouse.
 
 Service workers only run in production builds, so the suite always uses `vite preview` on a built app, never `vite dev`.
 

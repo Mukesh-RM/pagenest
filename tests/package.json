@@ -12,7 +12,7 @@
     "install:browsers": "playwright install chromium webkit",
     "test": "playwright test",
     "test:fixture": "PAGENEST_TARGET=fixture playwright test",
-    "test:unit": "playwright test --project=unit",
+    "test:unit": "PAGENEST_NO_SERVER=1 playwright test --project=unit",
     "test:e2e": "playwright test --project=chromium-desktop --project=chromium-mobile --project=webkit-iphone",
     "lighthouse": "node lighthouse/run.mjs",
     "typecheck": "tsc --noEmit"
