@@ -8,6 +8,14 @@ export type ThemeName = (typeof THEME_NAMES)[number];
 export const THEME_MODES = ['system', ...THEME_NAMES] as const;
 export type ThemeMode = (typeof THEME_MODES)[number];
 
+/** What the person can choose in Settings: system, the four built-in themes, or their own colors (blueprint 5.2). */
+export const THEME_CHOICES = [...THEME_MODES, 'custom'] as const;
+export type ThemeChoice = (typeof THEME_CHOICES)[number];
+
+export function isThemeChoice(value: unknown): value is ThemeChoice {
+  return value === 'custom' || isThemeMode(value);
+}
+
 export const THEME_LABELS: Record<ThemeMode, string> = {
   system: 'System',
   light: 'Light',

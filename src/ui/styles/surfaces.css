@@ -1,0 +1,229 @@
+/*
+ * Surfaces added by the second design pass: theme picker and Custom colors, Settings, Onboarding, first-run path,
+ * install sheet pieces. Same rules as components.css: flat selectors, 4 px grid, tokens only.
+ */
+
+/* ---------- Theme picker ---------- */
+.pn-themes {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pn-themes__legend {
+  margin-bottom: var(--pn-space-2);
+  padding: 0;
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-themes__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--pn-space-3);
+}
+
+.pn-theme-card {
+  position: relative;
+  display: block;
+  min-width: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pn-theme-card__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pn-theme-card__face {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--pn-space-2);
+  min-height: 72px;
+  padding: var(--pn-space-3);
+  border: 2px solid transparent;
+  border-radius: var(--pn-radius-card);
+  box-shadow: 0 0 0 1px rgb(var(--pn-border-strong));
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-theme-card__name {
+  overflow-wrap: anywhere;
+}
+
+.pn-theme-card__sample {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-1);
+}
+
+.pn-theme-card__bar {
+  display: block;
+  width: 40px;
+  height: 8px;
+  border-radius: var(--pn-radius-pill);
+}
+
+.pn-theme-card__bar--short {
+  width: 24px;
+  height: 4px;
+  opacity: 0.7;
+}
+
+/* Selected: a 3 px accent ring plus a check badge, so it never depends on color alone */
+.pn-theme-card--selected .pn-theme-card__face {
+  box-shadow: 0 0 0 3px rgb(var(--pn-accent));
+}
+
+.pn-theme-card__check {
+  position: absolute;
+  top: var(--pn-space-2);
+  right: var(--pn-space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--pn-radius-pill);
+  background: rgb(var(--pn-accent));
+  color: rgb(var(--pn-on-accent));
+}
+
+.pn-theme-card__input:focus-visible + .pn-theme-card__face {
+  outline: 2px solid rgb(var(--pn-focus-ring));
+  outline-offset: 4px;
+}
+
+.pn-themes__system {
+  display: flex;
+  align-items: center;
+  gap: var(--pn-space-3);
+  min-height: var(--pn-touch);
+  margin-top: var(--pn-space-2);
+  cursor: pointer;
+}
+
+.pn-themes__system input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  accent-color: rgb(var(--pn-accent));
+}
+
+/* ---------- Custom colors ---------- */
+.pn-custom {
+  display: grid;
+  gap: var(--pn-space-3);
+  margin-top: var(--pn-space-4);
+  padding: var(--pn-space-4);
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface));
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+}
+
+.pn-custom__row {
+  display: grid;
+  grid-template-columns: minmax(56px, auto) var(--pn-touch) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--pn-space-3);
+}
+
+.pn-custom__label {
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-custom__swatch {
+  width: var(--pn-touch);
+  height: var(--pn-touch);
+  padding: 0;
+  border: 1px solid rgb(var(--pn-border-strong));
+  border-radius: var(--pn-radius-card);
+  background: none;
+  cursor: pointer;
+}
+
+.pn-custom__hex {
+  min-width: 0;
+  min-height: var(--pn-touch);
+  padding: 0 var(--pn-space-3);
+  border: 1px solid rgb(var(--pn-border-strong));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface-raised));
+  color: rgb(var(--pn-text));
+  font: inherit;
+  font-size: var(--pn-text-md);
+}
+
+.pn-custom__hex[aria-invalid="true"] {
+  border-color: rgb(var(--pn-danger));
+}
+
+.pn-custom__error {
+  grid-column: 1 / -1;
+  color: rgb(var(--pn-danger));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-custom__note {
+  margin: 0;
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-custom__reset {
+  justify-self: start;
+  min-height: var(--pn-touch);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgb(var(--pn-link));
+  font: inherit;
+  font-size: var(--pn-text-sm);
+  font-weight: var(--pn-weight-semibold);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- Text size control ---------- */
+.pn-textsize {
+  display: grid;
+  gap: var(--pn-space-2);
+  min-width: 0;
+}
+
+.pn-textsize__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--pn-space-2);
+}
+
+.pn-textsize__label {
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-textsize__value {
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-textsize__row {
+  display: grid;
+  grid-template-columns: var(--pn-touch) minmax(0, 1fr) var(--pn-touch);
+  align-items: center;
+  gap: var(--pn-space-1);
+}
+
+/* ---------- Black is first-class: sheets are black with a hairline, never grey ---------- */
+[data-theme="black"] .pn-sheet {
+  background: rgb(var(--pn-page));
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+  border-bottom: 0;
+}

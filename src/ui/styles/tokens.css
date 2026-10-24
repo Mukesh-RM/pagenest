@@ -127,6 +127,37 @@
   --pn-shadow-raised: none;
 }
 
+/* ---------- Theme: Custom (blueprint 5.2, "You pick") ----------
+ * These are the defaults (DEFAULT_CUSTOM_THEME). Once the person picks colors, the ThemeProvider writes the
+ * derived palette inline on the element carrying data-theme="custom" (see theme/custom.ts); every one of them
+ * is nudged to stay WCAG AA. custom.test.ts fails if this block drifts from resolveCustomTheme(DEFAULT). */
+[data-theme="custom"] {
+  color-scheme: dark;
+  --pn-page: 30 34 48;
+  --pn-surface: 41 45 58;
+  --pn-surface-raised: 50 54 67;
+  --pn-text: 235 231 242;
+  --pn-muted: 169 168 180;
+  --pn-accent: 185 167 245;
+  --pn-on-accent: 0 0 0;
+  --pn-accent-soft: 61 61 87;
+  --pn-accent-ink: 185 167 245;
+  --pn-link: 185 167 245;
+  --pn-border-strong: 129 129 141;
+  --pn-line: 59 62 75;
+  --pn-focus-ring: 185 167 245;
+  --pn-danger: 255 143 134;
+  --pn-on-danger: 0 0 0;
+  --pn-inverse-surface: 235 231 242;
+  --pn-inverse-text: 30 34 48;
+  --pn-inverse-accent: 104 98 143;
+  --pn-skeleton: 42 46 60;
+  --pn-skeleton-highlight: 53 56 69;
+  --pn-scrim: 0 0 0;
+  --pn-scrim-opacity: 0.6;
+  --pn-shadow-raised: none;
+}
+
 /* ---------- Theme independent tokens ---------- */
 :root {
   /* 4 px spacing grid (blueprint 5.4) */
