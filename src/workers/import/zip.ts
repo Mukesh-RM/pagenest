@@ -195,8 +195,8 @@ function dosDateTime(date: Date): { time: number; date: number } {
   };
 }
 
-function bytes(length: number): { view: DataView; array: Uint8Array } {
-  const array = new Uint8Array(length);
+function bytes(length: number): { view: DataView; array: Uint8Array<ArrayBuffer> } {
+  const array = new Uint8Array(new ArrayBuffer(length));
   return { view: new DataView(array.buffer), array };
 }
 
@@ -265,7 +265,7 @@ export class ZipBuilder {
   /** Write the directory and return the finished archive. */
   finish(): Blob {
     const cdStart = this.offset;
-    const cdParts: Uint8Array[] = [];
+    const cdParts: Uint8Array<ArrayBuffer>[] = [];
     let cdSize = 0;
     for (const e of this.entries) {
       const big = e.size >= this.zip64Threshold || e.offset >= this.zip64Threshold;
@@ -303,7 +303,7 @@ export class ZipBuilder {
       cdSize += array.length;
     }
     const needs64 = this.entries.length >= 0xffff || cdStart >= this.zip64Threshold || cdSize >= this.zip64Threshold;
-    const tail: Uint8Array[] = [];
+    const tail: BlobPart[] = [];
     if (needs64) {
       const e64 = bytes(56);
       e64.view.setUint32(0, EOCD64_SIG, true);

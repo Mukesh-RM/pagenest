@@ -249,14 +249,14 @@ function sniffOgg(page: Uint8Array): SniffResult {
   return ok('audio', 'ogg');
 }
 
-interface Mp4Box {
+export interface Mp4Box {
   type: string;
   start: number;
   headerSize: number;
   size: number;
 }
 
-function boxAt(b: Uint8Array, at: number, fileEnd: number): Mp4Box | undefined {
+export function boxAt(b: Uint8Array, at: number, fileEnd: number): Mp4Box | undefined {
   if (at + 8 > b.length) return undefined;
   let size = u32be(b, at);
   let headerSize = 8;
@@ -271,7 +271,23 @@ function boxAt(b: Uint8Array, at: number, fileEnd: number): Mp4Box | undefined {
   return { type: ascii(b, at + 4, at + 8), start: at, headerSize, size };
 }
 
-function childBoxes(b: Uint8Array, from: number, to: number): Mp4Box[] {
+/** Walk the top-level boxes by their headers only until `moov` is found. Returns `undefined` when it is missing or cut short. */
+export async function locateMoov(file: Blob, base = 0): Promise<Mp4Box | undefined> {
+  let at = base;
+  for (let guard = 0; guard < 4096 && at + 8 <= file.size; guard += 1) {
+    const header = await readRange(file, at, 16);
+    const box = boxAt(header, 0, file.size - at);
+    if (!box) return undefined;
+    if (box.type === 'moov') {
+      if (box.size > MAX_MOOV_BYTES || at + box.size > file.size) return undefined;
+      return { ...box, start: at };
+    }
+    at += box.size;
+  }
+  return undefined;
+}
+
+export function childBoxes(b: Uint8Array, from: number, to: number): Mp4Box[] {
   const out: Mp4Box[] = [];
   let at = from;
   while (at + 8 <= to) {
@@ -309,7 +325,7 @@ function readMoov(b: Uint8Array, from: number, to: number): Mp4Facts {
     const stbl = minf ? childBoxes(b, minf.start + minf.headerSize, minf.start + minf.size).find((x) => x.type === 'stbl') : undefined;
     const stsd = stbl ? childBoxes(b, stbl.start + stbl.headerSize, stbl.start + stbl.size).find((x) => x.type === 'stsd') : undefined;
     if (stsd) {
-      const entry = ascii(b, stsd.start + stsd.headerSize + 8, stsd.start + stsd.headerSize + 12);
+      const entry = ascii(b, stsd.start + stsd.headerSize + 12, stsd.start + stsd.headerSize + 16);
       if (['drms', 'enca', 'aavd', 'drmi'].includes(entry)) facts.protectedAudio = true;
     }
   }
@@ -326,21 +342,8 @@ async function sniffMp4(file: Blob, base: number, probe: Uint8Array): Promise<Sn
   if (brands.has('M4P ') || brands.has('aax ') || brands.has('aaxc')) return no('drm');
   if (brands.has('qt  ') || brands.has('heic') || brands.has('mif1') || brands.has('avif') || brands.has('crx ')) return no('unsupported-type');
 
-  // Walk the top-level boxes by header only until `moov` is found.
-  let at = base;
-  let moov: Mp4Box | undefined;
-  for (let guard = 0; guard < 4096 && at + 8 <= file.size; guard += 1) {
-    const header = await readRange(file, at, 16);
-    const box = boxAt(header, 0, file.size - at);
-    if (!box) return no('damaged');
-    if (box.type === 'moov') {
-      moov = { ...box, start: at };
-      break;
-    }
-    at += box.size;
-  }
+  const moov = await locateMoov(file, base);
   if (!moov) return no('damaged');
-  if (moov.size > MAX_MOOV_BYTES) return no('damaged');
   const bytes = await readRange(file, moov.start, moov.size);
   const facts = readMoov(bytes, moov.headerSize, bytes.length);
   if (facts.protectedAudio) return no('drm');

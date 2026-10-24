@@ -49,6 +49,8 @@ export interface ParsedMeta {
   durationSec?: number;
   cover?: CoverBytes;
   chapters?: ParsedChapter[];
+  /** Audio only: the tag title of this one file (the book title is the album). */
+  trackTitle?: string;
 }
 
 /** Keep metadata short, single-line and free of control characters. */
