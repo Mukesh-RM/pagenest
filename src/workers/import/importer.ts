@@ -1,4 +1,4 @@
-import type { BookFormat } from '@/app/contracts';
+import type { BookFormat, BookKind } from '@/app/contracts';
 import type { BookRepository} from '@/data/books';
 import { BookRepositoryError, type NewChapter, type NewTrack } from '@/data/books';
 import { computeFingerprint } from '@/data/fingerprint';
@@ -41,13 +41,22 @@ export interface ImportRun {
 
 interface Sniffed {
   item: ImportItem;
+  index: number;
   name: string;
   result: Awaited<ReturnType<typeof sniffFile>>;
 }
 
-const unsupported = (name: string, reason: UnsupportedReason): ItemOutcome => ({
+interface Dup {
+  id: string;
+  title: string;
+  kind: BookKind;
+  format: BookFormat;
+}
+
+const unsupported = (name: string, index: number, reason: UnsupportedReason): ItemOutcome => ({
   status: 'unsupported',
   name,
+  index,
   reason,
   message: UNSUPPORTED_MESSAGES[reason],
 });
@@ -75,6 +84,10 @@ export function reasonForError(error: unknown): UnsupportedReason {
   return 'failed';
 }
 
+function firstFormatOf(tracks: readonly Sniffed[]): BookFormat {
+  return (tracks[0]?.result.ok ? tracks[0].result.format : 'mp3') as BookFormat;
+}
+
 export class Importer {
   private readonly inFlight = new Set<string>();
   private lastAddedAt = 0;
@@ -90,11 +103,11 @@ export class Importer {
   /** Import every item. Outcomes arrive through `run.onOutcome` in completion order. */
   async importAll(items: readonly ImportItem[], run: ImportRun): Promise<void> {
     const sniffed: Sniffed[] = [];
-    await mapPool(items, 4, async (item) => {
-      sniffed.push({ item, name: item.file.name, result: await sniffFile(item.file) });
+    await mapPool(items, 4, async (item, index) => {
+      sniffed.push({ item, index, name: item.file.name, result: await sniffFile(item.file) });
     }, run.isCancelled);
     // Keep the order the person chose.
-    sniffed.sort((a, b) => items.indexOf(a.item) - items.indexOf(b.item));
+    sniffed.sort((a, b) => a.index - b.index);
 
     // A folder with two or more audio files is one audiobook.
     const byFolder = new Map<string, Sniffed[]>();
@@ -145,7 +158,7 @@ export class Importer {
       units,
       run.concurrency ?? 3,
       async (unit) => {
-        if (unit.kind === 'skip') return emit({ status: 'skipped', name: unit.s.name });
+        if (unit.kind === 'skip') return emit({ status: 'skipped', name: unit.s.name, index: unit.s.index });
         if (unit.kind === 'single') return emit(await this.importSingle(unit.s));
         return emit(await this.importAlbum(unit.folder, unit.tracks, unit.sidecars));
       },
@@ -155,9 +168,9 @@ export class Importer {
 
   // -------------------------------------------------------------------------
 
-  private async findDuplicate(fingerprint: string): Promise<{ id: string; title: string } | undefined> {
+  private async findDuplicate(fingerprint: string): Promise<Dup | undefined> {
     const row = await this.deps.books.findByFingerprint(fingerprint);
-    return row ? { id: row.id, title: row.title } : undefined;
+    return row ? { id: row.id, title: row.title, kind: row.kind, format: row.format } : undefined;
   }
 
   /** A cover blob at card size (or the original bytes when it cannot be shrunk). */
@@ -169,14 +182,14 @@ export class Importer {
 
   private async importSingle(s: Sniffed): Promise<ItemOutcome> {
     const { file } = s.item;
-    if (!s.result.ok) return unsupported(s.name, s.result.reason);
+    if (!s.result.ok) return unsupported(s.name, s.index, s.result.reason);
     const { kind, format } = s.result;
     let fingerprint = '';
     let claimed = false;
     try {
       fingerprint = await computeFingerprint(file);
-      const dup = await this.claim(fingerprint);
-      if (dup) return { status: 'duplicate', name: s.name, title: dup.title, bookId: dup.id };
+      const dup = await this.claim(fingerprint, kind, format);
+      if (dup) return { status: 'duplicate', name: s.name, index: s.index, title: dup.title, bookId: dup.id, kind: dup.kind, format: dup.format };
       claimed = true;
 
       const meta = await this.readMeta(file, format);
@@ -204,10 +217,10 @@ export class Importer {
         ...(chapters.length > 0 ? { chapters } : {}),
       });
       return result.status === 'added'
-        ? { status: 'added', name: s.name, book: result.book }
-        : { status: 'duplicate', name: s.name, title: result.existing.title, bookId: result.existing.id };
+        ? { status: 'added', name: s.name, index: s.index, book: result.book }
+        : { status: 'duplicate', name: s.name, index: s.index, title: result.existing.title, bookId: result.existing.id, kind: result.existing.kind, format: result.existing.format };
     } catch (error) {
-      return unsupported(s.name, reasonForError(error));
+      return unsupported(s.name, s.index, reasonForError(error));
     } finally {
       if (claimed) this.inFlight.delete(fingerprint);
     }
@@ -216,6 +229,7 @@ export class Importer {
   private async importAlbum(folder: string, tracksIn: Sniffed[], sidecars: Sniffed[]): Promise<ItemOutcome> {
     const tracks = [...tracksIn].sort((a, b) => naturalCompare(a.item.relPath ?? a.name, b.item.relPath ?? b.name));
     const name = lastFolderName(folder);
+    const index = tracks[0]?.index ?? 0;
     let fingerprint = '';
     let claimed = false;
     try {
@@ -223,8 +237,8 @@ export class Importer {
       for (const t of tracks) prints.push(await computeFingerprint(t.item.file));
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(prints.join('|')));
       fingerprint = `album${tracks.length}-${Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('')}`;
-      const dup = await this.claim(fingerprint);
-      if (dup) return { status: 'duplicate', name, title: dup.title, bookId: dup.id };
+      const dup = await this.claim(fingerprint, 'audio', firstFormatOf(tracks));
+      if (dup) return { status: 'duplicate', name, index, title: dup.title, bookId: dup.id, kind: dup.kind, format: dup.format };
       claimed = true;
 
       const trackRows: NewTrack[] = [];
@@ -262,21 +276,21 @@ export class Importer {
         chapters,
       });
       return result.status === 'added'
-        ? { status: 'added', name, book: result.book }
-        : { status: 'duplicate', name, title: result.existing.title, bookId: result.existing.id };
+        ? { status: 'added', name, index, book: result.book }
+        : { status: 'duplicate', name, index, title: result.existing.title, bookId: result.existing.id, kind: result.existing.kind, format: result.existing.format };
     } catch (error) {
-      return unsupported(name, reasonForError(error));
+      return unsupported(name, index, reasonForError(error));
     } finally {
       if (claimed) this.inFlight.delete(fingerprint);
     }
   }
 
   /** Reserve a fingerprint. Returns the existing book when it is already there or being added right now. */
-  private async claim(fingerprint: string): Promise<{ id: string; title: string } | undefined> {
+  private async claim(fingerprint: string, kind: BookKind, format: BookFormat): Promise<Dup | undefined> {
     if (this.inFlight.has(fingerprint)) {
       // Another copy of the same file is being added at this moment: wait for it, then report it.
       for (let i = 0; i < 600 && this.inFlight.has(fingerprint); i += 1) await new Promise((r) => setTimeout(r, 10));
-      return (await this.findDuplicate(fingerprint)) ?? { id: '', title: 'this book' };
+      return (await this.findDuplicate(fingerprint)) ?? { id: '', title: 'this book', kind, format };
     }
     this.inFlight.add(fingerprint); // reserve first: the check below awaits, and a twin must not slip in
     const existing = await this.findDuplicate(fingerprint);

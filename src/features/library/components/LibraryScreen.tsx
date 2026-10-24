@@ -147,9 +147,6 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset }: LibraryView
     },
     [controller],
   );
-  useEffect(() => {
-    controller.sweepOnce();
-  }, [controller]);
   const share = params.get('share');
   useEffect(() => {
     if (share === null) return;

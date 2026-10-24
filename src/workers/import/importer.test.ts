@@ -317,15 +317,6 @@ describe('backup and restore', () => {
 });
 
 describe('housekeeping', () => {
-  it('removes files that no book points at, but never the ones that belong to books', async () => {
-    await run([item(await makeEpub(), 'a')]);
-    await files.write('books/ghost/book.epub', new Uint8Array(5));
-    await files.write('covers/ghost.img', new Uint8Array(5));
-    const events: WorkerEvent[] = [];
-    await service().handle({ type: 'sweep', jobId: 's' }, (e) => events.push(e));
-    expect(events.find((e) => e.type === 'done')).toMatchObject({ result: { removed: 1 } });
-    expect((await files.list('books')).length).toBe(1);
-  });
   it('splits storage by kind and frees only caches', async () => {
     await run([item(await makeEpub({ cover: png }), 'a'), item(makeMp3({ title: 'x', frames: 80 }), 'b')]);
     await files.write('renders/b/1.opus', new Uint8Array(1000));

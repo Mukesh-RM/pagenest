@@ -1,5 +1,4 @@
 import type { ImportResult, SampleBookInfo, SampleBookProvider } from '@/app/contracts';
-import { getDb, type PageNestDB } from '@/data/db';
 import type { ItemOutcome } from '@/workers/import/protocol';
 import type { ImportController } from './import-controller';
 import { getImportController } from './registry';
@@ -20,7 +19,6 @@ export interface SampleDeps {
   url?: string;
   fetchFn?: typeof fetch;
   controller?: () => ImportController;
-  db?: () => PageNestDB;
 }
 
 /**
@@ -31,21 +29,20 @@ export function createSampleBookProvider(deps: SampleDeps = {}): SampleBookProvi
   const url = deps.url ?? sampleUrl;
   const doFetch = deps.fetchFn ?? ((input: RequestInfo | URL, init?: RequestInit) => fetch(input, init));
   const controller = deps.controller ?? getImportController;
-  const database = deps.db ?? getDb;
   return {
     info: SAMPLE_INFO,
     available: () => typeof Worker !== 'undefined' || deps.controller !== undefined,
     async importSample(): Promise<ImportResult> {
-      let blob: Blob;
+      let bytes: ArrayBuffer;
       try {
         const response = await doFetch(url, { credentials: 'same-origin' });
         if (!response.ok) throw new Error(`status ${response.status}`);
-        blob = await response.blob();
+        bytes = await response.arrayBuffer();
       } catch {
         throw new Error(FAILED);
       }
-      if (blob.size === 0) throw new Error(FAILED);
-      const file = new File([blob], 'The Tale of Peter Rabbit.epub', { type: 'application/epub+zip' });
+      if (bytes.byteLength === 0) throw new Error(FAILED);
+      const file = new File([bytes], 'The Tale of Peter Rabbit.epub', { type: 'application/epub+zip' });
       let outcome: ItemOutcome | undefined;
       await controller().importFiles([{ file }], (o: ItemOutcome) => {
         outcome = o;
@@ -54,8 +51,7 @@ export function createSampleBookProvider(deps: SampleDeps = {}): SampleBookProvi
         return { bookId: outcome.book.id, kind: outcome.book.kind, format: outcome.book.format, title: outcome.book.title, alreadyInLibrary: false };
       }
       if (outcome?.status === 'duplicate') {
-        const row = await database().books.get(outcome.bookId);
-        return { bookId: outcome.bookId, kind: row?.kind ?? 'ebook', format: row?.format ?? 'epub', title: outcome.title, alreadyInLibrary: true };
+        return { bookId: outcome.bookId, kind: outcome.kind, format: outcome.format, title: outcome.title, alreadyInLibrary: true };
       }
       throw new Error(FAILED);
     },

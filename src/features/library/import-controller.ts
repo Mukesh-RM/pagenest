@@ -187,15 +187,6 @@ export class ImportController {
     return files.length;
   }
 
-  private swept = false;
-
-  /** Once per session, before the first import: delete files that belong to no book. */
-  sweepOnce(): void {
-    if (this.swept) return;
-    this.swept = true;
-    this.deps.imports.run({ type: 'sweep' }).done.catch(() => undefined);
-  }
-
   dispose(): void {
     this.disposed = true;
     clearTimeout(this.flushTimer);

@@ -1,3 +1,4 @@
+import type { BookFormat, BookKind } from '@/app/contracts';
 import type { BookRecord } from '@/data/schema';
 import type { UnsupportedReason } from './types';
 
@@ -15,13 +16,16 @@ export interface ImportItem {
 /** A book as stored. */
 export type StoredBook = BookRecord;
 
-/** What happened to one file (or one folder of audio files that became one book). */
+/**
+ * What happened to one file (or one folder of audio files that became one book). `index` is the
+ * position of the file in the list that was imported (for a folder book, its first file).
+ */
 export type ItemOutcome =
-  | { status: 'added'; name: string; book: StoredBook }
-  | { status: 'duplicate'; name: string; title: string; bookId: string }
-  | { status: 'unsupported'; name: string; reason: UnsupportedReason; message: string }
+  | { status: 'added'; name: string; index: number; book: StoredBook }
+  | { status: 'duplicate'; name: string; index: number; title: string; bookId: string; kind: BookKind; format: BookFormat }
+  | { status: 'unsupported'; name: string; index: number; reason: UnsupportedReason; message: string }
   /** A cover picture or other file next to audio files in a folder; used or skipped without comment. */
-  | { status: 'skipped'; name: string };
+  | { status: 'skipped'; name: string; index: number };
 
 export interface ImportSummary {
   added: number;
@@ -51,7 +55,6 @@ export type WorkerRequest =
   | { type: 'cancel'; jobId: string }
   | { type: 'backup'; jobId: string }
   | { type: 'restore'; jobId: string; file: Blob }
-  | { type: 'sweep'; jobId: string }
   | { type: 'usage'; jobId: string }
   | { type: 'clear-caches'; jobId: string };
 

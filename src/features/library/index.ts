@@ -6,3 +6,4 @@ export { CollectionsScreen } from './components/CollectionsScreen';
 export { BackupRestorePanel } from './components/BackupRestorePanel';
 export { StoragePanel } from './components/StoragePanel';
 export { createSampleBookProvider, SAMPLE_INFO } from './sample';
+export { createBookImporter, ACCEPT_ANY_FILE } from './importer';

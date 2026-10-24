@@ -1033,6 +1033,12 @@ Summary of DECISIONS.md, Decision 8 (Oct 24, 2026). Nothing GPL is in the reposi
 - **Enforcement:** `audit-licenses.mjs` fails when an installed package is `phonemizer`, `espeak*`, `piper-wasm`, `piper-phonemize*` or similar, even if it declares a permissive license, unless a reviewed entry is added to `scripts/audit-license-overrides.json` after the decision is recorded.
 - **Related, Decision 9 (dev-only licenses):** MPL-2.0 dev-only tools (`axe-core`, `@axe-core/playwright`) are accepted. LGPL libvips binaries shipped with `sharp` are accepted only as dev-only and never bundled; the audit flags them if shipped.
 
+## Bundled content (sample book)
+
+| Name | Source | License | Status | Note |
+|---|---|---|---|---|
+| The Tale of Peter Rabbit, by Beatrix Potter (EPUB, 435 KB) | Project Gutenberg ebook 14838, https://www.gutenberg.org/ebooks/14838 (file `src/features/library/sample/peter-rabbit.epub`) | Public domain (the text was published in 1902 and the author died in 1943; the book's own metadata says "Public domain in the USA.") | OK | Shown on the Library's "Try a sample book" card. Fetched from our own origin only when a person taps the card, never precached by the service worker, never downloaded at start-up. The file is kept exactly as Project Gutenberg published it, including its "Project Gutenberg License" page and trademark notice, which is what that license asks for when the name is kept. |
+
 ## How to check
 
 ```bash

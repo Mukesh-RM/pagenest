@@ -24,7 +24,6 @@ export type ImportServiceDeps = ImportDeps & Omit<RestoreDeps, 'books'>;
 export function createImportService(deps: ImportServiceDeps): ImportService {
   const importer = new Importer(deps);
   const cancelled = new Set<string>();
-  let activeImports = 0;
   return {
     async handle(request, emit) {
       const { jobId } = request;
@@ -34,8 +33,12 @@ export function createImportService(deps: ImportServiceDeps): ImportService {
             cancelled.add(request.jobId);
             return;
           case 'import': {
-            const summary: ImportSummary = { added: 0, duplicates: 0, unsupported: 0, skipped: 0 };
-            activeImports += 1;
+            const summary: ImportSummary = {
+              added: 0,
+              duplicates: 0,
+              unsupported: 0,
+              skipped: 0,
+            };
             try {
               await importer.importAll(request.items, {
                 isCancelled: () => cancelled.has(jobId),
@@ -49,32 +52,42 @@ export function createImportService(deps: ImportServiceDeps): ImportService {
                 },
               });
             } finally {
-              activeImports -= 1;
               cancelled.delete(jobId);
             }
             emit({ type: 'done', jobId, result: summary });
             return;
           }
           case 'backup': {
-            const blob = await createBackup(deps.db, deps.files, (stage, done, total) => emit({ type: 'progress', jobId, stage, done, total }));
-            emit({ type: 'done', jobId, result: { blob, fileName: backupFileName() } });
+            const blob = await createBackup(deps.db, deps.files, (stage, done, total) =>
+              emit({ type: 'progress', jobId, stage, done, total }),
+            );
+            emit({
+              type: 'done',
+              jobId,
+              result: { blob, fileName: backupFileName() },
+            });
             return;
           }
           case 'restore': {
-            const result = await restoreBackup(request.file, deps, (stage, done, total) => emit({ type: 'progress', jobId, stage, done, total }));
+            const result = await restoreBackup(request.file, deps, (stage, done, total) =>
+              emit({ type: 'progress', jobId, stage, done, total }),
+            );
             emit({ type: 'done', jobId, result });
             return;
           }
-          case 'sweep': {
-            const removed = activeImports === 0 ? (await deps.books.cleanupOrphans()).removedBookIds.length : 0;
-            emit({ type: 'done', jobId, result: { removed } });
-            return;
-          }
           case 'usage':
-            emit({ type: 'done', jobId, result: await storageBreakdown(deps.db, deps.files) });
+            emit({
+              type: 'done',
+              jobId,
+              result: await storageBreakdown(deps.db, deps.files),
+            });
             return;
           case 'clear-caches':
-            emit({ type: 'done', jobId, result: { removed: await clearCaches(deps.db, deps.files) } });
+            emit({
+              type: 'done',
+              jobId,
+              result: { removed: await clearCaches(deps.db, deps.files) },
+            });
             return;
         }
       } catch (error) {

@@ -29,10 +29,12 @@ window.addEventListener('error', (e) => errors.push(String(e.message)));
 window.addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)));
 (window as unknown as { __errors: string[] }).__errors = errors;
 
+// eslint-disable-next-line react-refresh/only-export-components -- test harness entry, not hot reloaded
 function Where() {
   return <p data-testid="where">{useLocation().pathname}</p>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- test harness entry, not hot reloaded
 function Page() {
   const path = new URLSearchParams(window.location.search).get('screen') ?? 'library';
   return (
