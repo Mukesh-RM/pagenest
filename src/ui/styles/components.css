@@ -1102,6 +1102,15 @@
   color: rgb(var(--pn-on-accent));
 }
 
+.pn-bookcard__badge--favorite {
+  /* Bottom-left: the top holds the title and the audio badge, the bottom right holds "finished" */
+  top: auto;
+  right: auto;
+  bottom: var(--pn-space-2);
+  left: var(--pn-space-2);
+  color: rgb(var(--pn-inverse-accent));
+}
+
 .pn-bookcard__body {
   display: flex;
   flex-direction: column;

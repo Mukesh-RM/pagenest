@@ -12,6 +12,8 @@ export interface BookSummary {
   progress: number;
   /** The book has audio (audiobook, or read-aloud ready): shows the headphone badge. */
   audio?: boolean;
+  /** A favorite: a small heart on the cover, "Favorite" in the card's spoken name. */
+  favorite?: boolean;
 }
 
 export interface BookDetail extends BookSummary {
@@ -19,6 +21,11 @@ export interface BookDetail extends BookSummary {
   /** "EPUB", "PDF", "M4B"... */
   format?: string;
   pages?: number;
+  /**
+   * Force the "audio only" layout: Listen is the main action and Read is hidden. Leave out and it is worked out by
+   * `isAudioOnly`: audio, no page count, and not a text format.
+   */
+  audioOnly?: boolean;
   durationSeconds?: number;
   description?: string;
   /** Plain-words place in the book for the resume line, e.g. "chapter 7". */
