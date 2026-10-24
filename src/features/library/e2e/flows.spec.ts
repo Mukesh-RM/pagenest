@@ -16,7 +16,7 @@ test('what a file is comes from its content, never its name or type', async ({ p
     { name: 'holiday.jpg', mimeType: 'image/jpeg', buffer: buffer(await makeEpub({ title: 'Secret Epub', author: 'N. Ame' })) },
     { name: 'REPORT', mimeType: '', buffer: buffer(makePdf({ title: 'Nameless Pdf', pages: 2 })) },
     { name: 'song.txt', mimeType: 'text/plain', buffer: buffer(makeMp3({ title: 'Quiet Song', frames: 80 })) },
-    { name: 'letter.epub', mimeType: 'application/epub+zip', buffer: buffer(new Uint8Array(64).fill(9)) },
+    { name: 'letter.epub', mimeType: 'application/epub+zip', buffer: buffer(Uint8Array.from({ length: 256 }, (_, i) => (i * 7) % 251)) },
     { name: 'photo.png', mimeType: 'image/png', buffer: buffer(makeText('Just some words in a note. '.repeat(20))) },
   ]);
   await expect(page.getByRole('status').filter({ hasText: /Added 4 books/ })).toBeVisible({ timeout: 30_000 });
