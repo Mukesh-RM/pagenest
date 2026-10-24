@@ -75,15 +75,62 @@ A test fails if they differ from `tokens.css`.
 | `EmptyState` | title, description, one action |
 | `Icon` | vendored Lucide, 24 px outline, decorative unless `label` is given |
 
+## Entries, lazy loading and bundle size
+
+| Import | What it loads | Use it for |
+|---|---|---|
+| `@/ui` | Primitives, theme, hooks, shell, PWA prompts and `styles/index.css` (fonts, tokens, base, components, shell). **No screen at runtime.** It also re-exports every screen's prop *types* (`export type`, erased at build time). | The app shell, first paint. Initial CSS: about 9.4 kB gzip (budget 12). |
+| `@/ui/screens` | Every screen, `FirstRunBooks`, `ThemePicker`, `TextSizeControl`, `StarterBookCard` and `screens.css` + `surfaces.css`. | Lazy routes only. |
+| `@/ui/screens/OnboardingScreen` (one module per screen: `LibraryScreen`, `BookDetailSheet`, `ReaderScreen`, `AudioPlayerScreen`, `VoiceStudioScreen`, `SettingsScreen`) | That screen and the two screen stylesheets, which Vite emits once as a shared lazy CSS chunk. Each has a **default export**. | `const Settings = lazy(() => import('@/ui/screens/SettingsScreen'))`. |
+
+The barrel is side-effect free apart from the CSS import, and the screens never reach the initial chunk as long as the
+app imports them through `lazy()` (bundle check: initial JS 108.3 kB gzip of 120, CSS 9.4 of 12 on this branch).
+If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css` out of that rule.
+
+### Typed props of the new screens
+
+* `OnboardingScreen`: `step` (0 to 2), `onNext`, `onBack`, `onSkip`, `onDone`, `starter?: StarterBookOffer`,
+  `onAddBooks?`, `look: ReactNode` (card 3, usually `ThemePicker` + `TextSizeControl`). Export: `OnboardingScreenProps`,
+  `ONBOARDING_STEP_COUNT`. The contract the QA suite relies on is unchanged: h1 "Your books, your voice, no account.",
+  "Pick a look", "Step n of 3", buttons Skip / Next / Back / Done.
+* `SettingsScreen`: `theme: ThemeChoice`, `onThemeChange`, `customTheme?`, `onCustomThemeChange`, `textSize` (px, 14 to 32),
+  `onTextSizeChange`, `install?: ReactNode` (pass `<InstallHelp />`), `storage?: SettingsStorage | null`
+  (`{ usageText, persisted?, onKeepData? }`; `undefined` shows "Checking…", `null` hides it), `children` for more groups.
+  Export: `SettingsScreenProps`, `SettingsStorage`.
+* `LibraryScreen`: `onAdd` is optional (no "Add books" button without it), `emptyActions?: ReactNode` adds an action to
+  the empty library, `starter?: StarterBookOffer` shows the first-run starter card, `sort` and `view` props as before.
+* `AudioPlayerScreen`: optional `controller?: AudioPlayerController` (`playing, position, duration, speed, sleepLabel,
+  toggle(), seek(s), skip(d), cycleSpeed(), openSleep(), openChapters()`). It wins over the individual props, which still work.
+* `ReaderScreen`: optional `minutesLeftInChapter` ("8 min left in chapter" above the book progress, always visible).
+* `BookDetailSheet`: `onRemove` now appears as "Remove from library" inside a "More options" (⋯) menu, never as a loose red button.
+* `ErrorNotice`: DRM, damaged and unsupported files never show "Try again" (`canRetry(kind)`); they add one plain help line.
+
+### Text size is rem-only
+
+All `--pn-text-*` tokens are `rem`. The app sets ONE value, `--pn-font-size`, through `applyTextSize(px)` (14 to 32,
+that is 87.5% to 200%), and `html { font-size: var(--pn-font-size) }` does the rest. Do not write `--pn-text-*` from
+the app. `TEXT_TOKEN_PX` is gone. The tab bar caps its labels in CSS so four tabs still fit at 200%.
+
+### Wiring checklist for `src/app` (the designer does not edit it)
+
+1. `src/app/font-size.ts`: `FONT_SIZE_MAX` 24 to 32 (use `TEXT_SIZE_MAX`); `apply-theme.ts`: call `applyTextSize` and stop writing the px tokens.
+2. Theme: add `custom` to the saved preference plus a saved `customTheme` (`{ page, text, accent }`, parse with `parseCustomTheme`); pass `mode` and `customTheme` to `ThemeProvider`.
+3. Replace `ThemeSwatches` and `FontSizeControl` with `ThemePicker` and `TextSizeControl`, or mount `SettingsScreen` (lazy).
+4. Onboarding: `OnboardingScreen`; pass `starter` only when `sampleBook.available()` and map the import result to `busy` / `error`; drop the "arrives in the next release" copy.
+5. Library: `LibraryScreen` (`onAdd` only when adding works); the empty library shows the starter card when `starter` is given.
+6. Settings: `<SettingsScreen install={<InstallHelp />} />`; mount `<PwaPrompts />` once inside the theme provider.
+7. Load every screen with `React.lazy` and prefetch the tab chunks on idle after launch (first visits to a lazy tab are the slowest taps).
+
 ## Screens (`screens/`, props and callbacks only)
 
 | Screen | What the app passes |
 |---|---|
-| `LibraryScreen` | `books: BookSummary[]` (already filtered), `loading`, `filter` + `onFilterChange`, `query` + `onQueryChange`, `onOpenBook(book, coverRect)`, `onAdd`, slots `resume`, `hint`, `notice` |
+| `LibraryScreen` | `books: BookSummary[]` (already filtered), `loading`, `filter` + `onFilterChange`, `query` + `onQueryChange`, `onOpenBook(book, coverRect)`, `onAdd?`, `emptyActions?`, `starter?`, slots `resume`, `hint`, `notice` |
 | `BookDetailSheet` | `open`, `book: BookDetail`, `onClose`, `originRect` (the cover grows out of its card), `onRead`, `onListen`, `onRemove` (the app answers with a `ConfirmDialog`). Tinted from the cover. Bottom sheet on phones, two panes from 1024 px |
 | `ReaderScreen` + `ReaderSettingsSheet` | title, chapter, progress, `settings: ReaderSettings`, `fonts`, `onSettingsChange`, `settingsOpen` (the "Aa" sheet: size, font, page color, line spacing, margins, with a live sample), children = the page |
-| `AudioPlayerScreen` | `book`, `playing`, `position`, `duration`, `speed`, `sleepLabel`, handlers. Time left is shown at the chosen speed ("4 h 28 min left at 1.25×"). Tinted from the cover |
-| `VoiceStudioScreen` | `voices: VoiceOption[]`, `selectedId`, `onSelect`, `onPreview`, `onNext` (step 1 of 3) |
+| `AudioPlayerScreen` | `book`, then either `controller` or `playing`, `position`, `duration`, `speed`, `sleepLabel`, handlers. Time left is shown at the chosen speed ("4 h 28 min left at 1.25×"). Tinted from the cover |
+| `VoiceStudioScreen` | `voices: VoiceOption[]`, `selectedId`, `onSelect`, `onPreview`, `onNext` (step 1 of 3, Next pinned to the bottom) |
+| `OnboardingScreen`, `SettingsScreen` | see "Typed props of the new screens" above |
 
 Data never lives here: the types are in `types.ts` (`BookSummary`, `BookDetail`, `ReaderSettings`, `VoiceOption`, `HintStore`).
 

@@ -59,9 +59,11 @@ export function BookCover({ title, author, src, eager, className }: BookCoverPro
   const style = { '--pn-cover-bg': colors.background, '--pn-cover-fg': colors.foreground } as CSSProperties;
   return (
     <span className={cx('pn-cover', 'pn-cover--generated', className)} style={style} aria-hidden="true">
-      <span className="pn-cover__rule" />
-      <span className="pn-cover__title">{title}</span>
-      {author ? <span className="pn-cover__author">{author}</span> : null}
+      <span className="pn-cover__inner">
+        <span className="pn-cover__rule" />
+        <span className="pn-cover__title">{title}</span>
+        {author ? <span className="pn-cover__author">{author}</span> : null}
+      </span>
     </span>
   );
 }

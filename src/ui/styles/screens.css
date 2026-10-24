@@ -95,6 +95,7 @@
 
 /* ---------- Book detail ---------- */
 .pn-detail {
+  padding-top: var(--pn-space-3);
   display: flex;
   flex-direction: column;
   gap: var(--pn-space-5);
@@ -245,9 +246,13 @@
 }
 
 .pn-reader__footer {
+  position: sticky;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   gap: var(--pn-space-1);
+  border-top: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+  background: rgb(var(--pn-page));
   padding: var(--pn-space-2) var(--pn-margin) calc(var(--pn-space-3) + env(safe-area-inset-bottom, 0px));
 }
 
@@ -864,22 +869,7 @@
   margin: var(--pn-space-1) 0 0;
 }
 
-/* ---------- Voice: no mid-phrase wrapping, footer pinned, selected row keeps its play button ---------- */
-.pn-voice__meta {
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: var(--pn-space-2);
-}
-
-.pn-voice__meta > span + span::before {
-  content: "·";
-  margin-right: var(--pn-space-2);
-}
-
-.pn-voice__meta > span {
-  white-space: nowrap;
-}
-
+/* ---------- Voice: two fixed lines per voice (language, then quality and status), so nothing wraps mid-phrase ---------- */
 .pn-voice__item--checked::before {
   opacity: 0;
 }

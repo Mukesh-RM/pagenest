@@ -12,7 +12,7 @@
   gap: var(--pn-space-2);
   min-height: var(--pn-touch);
   min-width: var(--pn-touch);
-  padding: 0 var(--pn-space-5);
+  padding: var(--pn-space-2) var(--pn-space-5);
   border: 0;
   border-radius: var(--pn-radius-button);
   background: transparent;
@@ -21,8 +21,10 @@
   font-size: var(--pn-text-md);
   font-weight: var(--pn-weight-semibold);
   line-height: var(--pn-leading-tight);
+  text-align: center;
   text-decoration: none;
-  white-space: nowrap;
+  /* Wraps by whole words when a label is longer than its row (200% text); one line at normal sizes */
+  white-space: normal;
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
@@ -1003,12 +1005,19 @@
 }
 
 .pn-cover--generated {
+  background: var(--pn-cover-bg);
+  color: var(--pn-cover-fg);
+  container-type: inline-size;
+}
+
+/* The inner box is sized in container units (cqw of the cover), so the title always fits the card */
+.pn-cover__inner {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: var(--pn-space-4) var(--pn-space-3) var(--pn-space-3);
-  background: var(--pn-cover-bg);
-  color: var(--pn-cover-fg);
+  width: 100%;
+  height: 100%;
+  padding: 9cqw 8cqw 8cqw;
 }
 
 .pn-cover__rule {
@@ -1025,10 +1034,11 @@
   flex: 0 1 auto;
   min-height: 0;
   max-height: calc(4 * 1.25em);
-  margin-top: var(--pn-space-3);
+  margin-top: 6cqw;
   overflow: hidden;
   font-family: var(--pn-font-serif);
-  font-size: var(--pn-text-md);
+  /* Scales with the cover so the longest word still fits a small card ("Prejudice" on a 96 px cover) */
+  font-size: clamp(0.75rem, 12.5cqw, var(--pn-text-md));
   font-weight: var(--pn-weight-heading);
   line-height: var(--pn-leading-tight);
   overflow-wrap: anywhere;
@@ -1042,7 +1052,7 @@
   padding-top: var(--pn-space-2);
   max-height: calc(2 * 1.25em + var(--pn-space-2));
   overflow: hidden;
-  font-size: var(--pn-text-xs);
+  font-size: clamp(0.75rem, 9.5cqw, var(--pn-text-xs));
   font-weight: var(--pn-weight-semibold);
   line-height: var(--pn-leading-tight);
   letter-spacing: 0.02em;
