@@ -15,6 +15,7 @@ export {
   ThemeScope,
   ThemedPortal,
   useSystemPrefersDark,
+  useThemeName,
   useTheme,
   type ThemeContextValue,
   type ThemeProviderProps,

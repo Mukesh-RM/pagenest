@@ -120,3 +120,18 @@ export function ThemedPortal({ children }: { children: ReactNode }) {
     document.body,
   );
 }
+
+/**
+ * Name of the theme in effect for the calling component: the nearest `<ThemeScope>` or `<ThemeProvider>`,
+ * else the `data-theme` on the document root, else "light". Components that compute colors in script
+ * (cover tint) use it so they match their surroundings.
+ */
+export function useThemeName(): ThemeName {
+  const scoped = useContext(PortalThemeContext);
+  if (scoped) return scoped;
+  if (typeof document !== 'undefined') {
+    const attr = document.documentElement.getAttribute('data-theme');
+    if (attr === 'light' || attr === 'sepia' || attr === 'dark' || attr === 'black') return attr;
+  }
+  return 'light';
+}

@@ -34,6 +34,8 @@ export interface BottomSheetProps {
   closeOnScrim?: boolean;
   closeLabel?: string;
   className?: string;
+  /** Extra inline style, for example the `--pn-cover-tint` variables from `useCoverTint` (with className "pn-tinted"). */
+  style?: CSSProperties;
 }
 
 const SWIPE_CLOSE_DISTANCE_PX = 96;
@@ -56,6 +58,7 @@ export function BottomSheet({
   closeOnScrim = true,
   closeLabel = 'Close',
   className,
+  style: extraStyle,
 }: BottomSheetProps) {
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -63,6 +66,7 @@ export function BottomSheet({
   const [shown, setShown] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [springing, setSpringing] = useState(false);
   const entryRef = useRef<SheetEntry | null>(null);
 
   const onCloseRef = useRef(onClose);
@@ -157,13 +161,16 @@ export function BottomSheet({
     if (distance > SWIPE_CLOSE_DISTANCE_PX || distance / elapsed > SWIPE_CLOSE_VELOCITY_PX_PER_MS) {
       onCloseRef.current('swipe');
     } else {
+      // Released short of the close threshold: spring back with a small overshoot (transform only).
       setDragY(0);
+      setSpringing(true);
+      window.setTimeout(() => setSpringing(false), readDurationMs('--pn-duration-slow', 250) + 50);
     }
   }, []);
 
   if (!mounted) return null;
 
-  const style = { '--pn-sheet-drag': `${dragY}px` } as CSSProperties;
+  const style = { ...extraStyle, '--pn-sheet-drag': `${dragY}px` } as CSSProperties;
   return (
     <ThemedPortal>
       <div className="pn-sheet-root" data-state={open && shown ? 'open' : 'closed'}>
@@ -181,7 +188,7 @@ export function BottomSheet({
           aria-hidden={open ? undefined : true}
           tabIndex={-1}
           style={style}
-          className={cx('pn-sheet', dragging && 'pn-sheet--dragging', className)}
+          className={cx('pn-sheet', dragging && 'pn-sheet--dragging', springing && 'pn-sheet--springing', className)}
         >
           <div
             className="pn-sheet__drag"

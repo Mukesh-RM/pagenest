@@ -177,6 +177,7 @@
   --pn-duration-base: 200ms;
   --pn-duration-slow: 250ms;
   --pn-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --pn-ease-spring: cubic-bezier(0.34, 1.35, 0.64, 1);
 
   /* Layers */
   --pn-z-nav: 10;
