@@ -126,6 +126,17 @@ describe('loadResume', () => {
     expect(await loadResume(db)).toBeUndefined();
   });
 
+  it('returns nothing when the newest position is at 0 % (opened, not read), and falls back to an older book that was read', async () => {
+    await db.books.bulkAdd([book('b1', { title: 'Opened only' }), book('b2', { title: 'Half read' })]);
+    await db.progress.bulkAdd([
+      { bookId: 'b1', mode: 'read', locator: reflow(0), percent: 0, updatedAt: 900 },
+      { bookId: 'b2', mode: 'read', locator: reflow(3), percent: 50, updatedAt: 800 },
+    ]);
+    expect(await loadResume(db)).toMatchObject({ bookId: 'b2', percent: 50 });
+    await db.progress.where('bookId').equals('b2').delete();
+    expect(await loadResume(db)).toBeUndefined();
+  });
+
   it('reads the newest unfinished book with its chapter from Dexie', async () => {
     await db.books.bulkAdd([book('b1', { title: 'Long Road' }), book('b2', { finished: true })]);
     await db.chapters.bulkAdd([chapter(0, 'Start', { locator: reflow(0) }), chapter(6, 'The Storm', { locator: reflow(6) })]);
