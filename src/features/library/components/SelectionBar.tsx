@@ -1,4 +1,4 @@
-import { Button } from '@/ui';
+import { Button, Icon } from '@/ui';
 import { LibIcon } from '../icons';
 
 export interface SelectionBarProps {
@@ -32,16 +32,16 @@ export function SelectionBar({ count, total, allFavorite, onFavorite, onFinished
         <LibIcon name="heart" filled={allFavorite} />
       </button>
       <button type="button" className="pn-btn pn-btn--ghost pn-btn--icon" aria-label="Mark as finished or not finished" disabled={count === 0} onClick={onFinished}>
-        <LibIcon name="checkCircle" />
+        <Icon name="circleCheck" />
       </button>
       <Button variant="ghost" iconOnly icon="collections" aria-label="Add to a collection" disabled={count === 0} onClick={onShelf} />
       {onDetails ? (
         <button type="button" className="pn-btn pn-btn--ghost pn-btn--icon" aria-label="Edit details" onClick={onDetails}>
-          <LibIcon name="pencil" />
+          <Icon name="pencil" />
         </button>
       ) : null}
       <button type="button" className="pn-btn pn-btn--ghost pn-btn--icon" aria-label="Delete" disabled={count === 0} onClick={onDelete}>
-        <LibIcon name="trash" />
+        <Icon name="trash" />
       </button>
     </div>
   );

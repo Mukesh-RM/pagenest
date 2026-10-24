@@ -8,7 +8,7 @@ type Payload = { name: string; mimeType: string; buffer: Buffer };
 const payload = (name: string, mimeType: string, bytes: Uint8Array): Payload => ({ name, mimeType, buffer: Buffer.from(bytes) });
 
 async function openAddSheet(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Add$/ }).click();
+  await page.getByRole('button', { name: 'Add books' }).first().click();
   await expect(page.getByTestId('pick-files')).toBeAttached();
 }
 

@@ -1,150 +1,130 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
-import type { ViewMode } from './model';
 
-/** Window virtualization for the grid and list: only the rows near the screen exist in the page. */
+/**
+ * Window virtualization for the design system's own book grid (`pn-library__grid`). The list keeps the
+ * design system's CSS: its columns, gaps and card sizes. Only the rows near the screen are in the page.
+ * Space for the rows that are not drawn is added as padding above and below the grid, so the scroll
+ * bar and the scroll position behave exactly as if every book were there.
+ */
 
-export const GRID_GAP = 16;
-export const LIST_GAP = 8;
-export const MIN_CARD_WIDTH = 144;
-/** A cover is 2:3. */
-export const COVER_RATIO = 1.5;
-const OVERSCAN_PX = 480;
+/** Rows drawn above and below the screen, in pixels. */
+export const OVERSCAN_PX = 480;
+/** Books drawn before the first measurement tells how many columns and how tall a row is. */
+export const FIRST_DRAW = 24;
 
-export interface LayoutInput {
-  width: number;
-  count: number;
-  mode: ViewMode;
-  /** Height of the title and author block under a grid cover. */
-  metaHeight: number;
-  /** Height of one list row. */
-  rowHeight: number;
-}
-
-export interface Layout {
+/** What the browser laid out for the design system's grid. */
+export interface Geometry {
   columns: number;
-  gap: number;
-  itemWidth: number;
-  itemHeight: number;
-  /** Distance from the top of one row to the top of the next. */
+  /** Distance from the top of one row to the top of the next: card height plus row gap. */
   pitch: number;
-  rows: number;
-  totalHeight: number;
 }
 
-export function computeLayout({ width, count, mode, metaHeight, rowHeight }: LayoutInput): Layout {
-  const w = Math.max(0, Math.floor(width));
-  if (mode === 'list') {
-    const columns = w >= 960 ? 2 : 1;
-    const gap = LIST_GAP;
-    const itemWidth = columns === 1 ? w : (w - GRID_GAP) / 2;
-    const rows = Math.ceil(count / columns);
-    const pitch = rowHeight + gap;
-    return { columns, gap, itemWidth, itemHeight: rowHeight, pitch, rows, totalHeight: Math.max(0, rows * pitch - gap) };
-  }
-  const gap = GRID_GAP;
-  const columns = Math.max(2, Math.floor((w + gap) / (MIN_CARD_WIDTH + gap)));
-  const itemWidth = Math.max(0, (w - gap * (columns - 1)) / columns);
-  const itemHeight = Math.round(itemWidth * COVER_RATIO) + metaHeight;
+export interface Window {
+  /** First book drawn. */
+  start: number;
+  /** One past the last book drawn. */
+  end: number;
+  /** Space standing in for the rows above and below. */
+  padTop: number;
+  padBottom: number;
+}
+
+/** Books to draw for a page scrolled `scrollTop` px into the grid, in a viewport `viewportHeight` px tall. */
+export function windowFor(geometry: Geometry | null, count: number, scrollTop: number, viewportHeight: number, overscanPx: number = OVERSCAN_PX): Window {
+  if (count <= 0) return { start: 0, end: 0, padTop: 0, padBottom: 0 };
+  if (!geometry || geometry.columns < 1 || geometry.pitch <= 0) return { start: 0, end: Math.min(count, FIRST_DRAW), padTop: 0, padBottom: 0 };
+  const { columns, pitch } = geometry;
   const rows = Math.ceil(count / columns);
-  const pitch = itemHeight + gap;
-  return { columns, gap, itemWidth, itemHeight, pitch, rows, totalHeight: Math.max(0, rows * pitch - gap) };
+  const first = Math.min(rows - 1, Math.max(0, Math.floor(Math.max(0, scrollTop - overscanPx) / pitch)));
+  const last = Math.min(rows, Math.max(first + 1, Math.ceil((scrollTop + viewportHeight + overscanPx) / pitch)));
+  return { start: first * columns, end: Math.min(count, last * columns), padTop: first * pitch, padBottom: (rows - last) * pitch };
 }
 
-export interface RowRange {
-  first: number;
-  /** Exclusive. */
-  last: number;
-}
-
-/** Rows that touch the screen (plus a little above and below), given how far the list is scrolled. */
-export function visibleRows(layout: Layout, scrollTop: number, viewportHeight: number, overscanPx: number = OVERSCAN_PX): RowRange {
-  if (layout.rows === 0 || layout.pitch <= 0) return { first: 0, last: 0 };
-  const top = Math.max(0, scrollTop - overscanPx);
-  const bottom = scrollTop + viewportHeight + overscanPx;
-  const first = Math.min(layout.rows, Math.max(0, Math.floor(top / layout.pitch)));
-  const last = Math.min(layout.rows, Math.max(first, Math.ceil(bottom / layout.pitch)));
-  return { first, last };
-}
-
-export interface ItemBox {
-  index: number;
-  x: number;
-  y: number;
-}
-
-export function itemBoxes(layout: Layout, range: RowRange, count: number): ItemBox[] {
-  const out: ItemBox[] = [];
-  for (let row = range.first; row < range.last; row += 1) {
-    for (let col = 0; col < layout.columns; col += 1) {
-      const index = row * layout.columns + col;
-      if (index >= count) return out;
-      out.push({ index, x: col * (layout.itemWidth + layout.gap), y: row * layout.pitch });
-    }
-  }
-  return out;
-}
-
-export interface VirtualState {
-  layout: Layout;
-  boxes: ItemBox[];
-  /** False until the container has a width, so nothing is drawn at the wrong size. */
-  ready: boolean;
+/** Columns and row pitch of a laid-out grid, read from the browser. `null` when there is nothing to measure. */
+export function measureGrid(list: HTMLElement): Geometry | null {
+  const first = list.firstElementChild;
+  if (!first) return null;
+  const style = getComputedStyle(list);
+  const tracks = style.gridTemplateColumns;
+  const columns = !tracks || tracks === 'none' ? 1 : tracks.split(' ').filter(Boolean).length;
+  const gap = parseFloat(style.rowGap);
+  const height = first.getBoundingClientRect().height;
+  if (!(height > 0)) return null;
+  return { columns: Math.max(1, columns), pitch: height + (Number.isFinite(gap) ? gap : 0) };
 }
 
 /**
- * Tracks the container width and the page scroll, and returns the items to draw. Only re-renders when
- * the visible rows change, not on every scroll event.
+ * Tracks the page scroll and the grid's laid-out size, and returns which books to draw. It only
+ * re-renders when the set of drawn rows changes, not on every scroll event.
  */
-export function useWindowVirtual(
-  ref: RefObject<HTMLElement | null>,
-  { count, mode, metaHeight, rowHeight }: Omit<LayoutInput, 'width'>,
-): VirtualState {
-  const [width, setWidth] = useState(0);
-  const [range, setRange] = useState<RowRange>({ first: 0, last: 0 });
-  const layoutRef = useRef<Layout>(computeLayout({ width: 0, count, mode, metaHeight, rowHeight }));
-  const layout = computeLayout({ width, count, mode, metaHeight, rowHeight });
-  layoutRef.current = layout;
+/** `layoutKey` names the kind of rows (grid or list); when it changes the drawn rows are worked out again. */
+export function useGridWindow(ref: RefObject<HTMLElement | null>, count: number, layoutKey: string): Window {
+  const [geometry, setGeometry] = useState<Geometry | null>(null);
+  const [win, setWin] = useState<Window>(() => windowFor(null, count, 0, 0));
+  const geometryRef = useRef<Geometry | null>(null);
+  const countRef = useRef(count);
+  countRef.current = count;
   const frame = useRef(0);
 
-  const update = useCallback(() => {
+  const recompute = useCallback(() => {
     frame.current = 0;
     const el = ref.current;
     if (!el) return;
-    const top = el.getBoundingClientRect().top; // distance from the top of the viewport
-    const next = visibleRows(layoutRef.current, -top, window.innerHeight);
-    setRange((prev) => (prev.first === next.first && prev.last === next.last ? prev : next));
+    const top = el.getBoundingClientRect().top;
+    const next = windowFor(geometryRef.current, countRef.current, -top, window.innerHeight);
+    setWin((prev) => (prev.start === next.start && prev.end === next.end && prev.padTop === next.padTop && prev.padBottom === next.padBottom ? prev : next));
   }, [ref]);
 
   const schedule = useCallback(() => {
-    if (frame.current === 0) frame.current = requestAnimationFrame(update);
-  }, [update]);
+    if (frame.current === 0) frame.current = requestAnimationFrame(recompute);
+  }, [recompute]);
 
+  // After every render: read what the browser laid out. If it changed (width, text size, view), draw again.
+  // No dependency list on purpose: a card's height can change with anything that re-renders it, and the
+  // state is only set when the measurement really changed, so this cannot loop.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el) return undefined;
-    setWidth(el.clientWidth);
-    if (typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(() => setWidth(el.clientWidth));
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [ref]);
+    if (!el) return;
+    const next = measureGrid(el);
+    const prev = geometryRef.current;
+    if (next && (!prev || prev.columns !== next.columns || Math.abs(prev.pitch - next.pitch) > 0.5)) {
+      geometryRef.current = next;
+      setGeometry(next);
+    }
+  });
+
+  useLayoutEffect(() => {
+    recompute();
+  }, [recompute, geometry, count, layoutKey]);
 
   useEffect(() => {
+    const el = ref.current;
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
+    const observer = typeof ResizeObserver === 'undefined' || !el ? undefined : new ResizeObserver(() => {
+      const fresh = measureGrid(el);
+      const prev = geometryRef.current;
+      if (fresh && (!prev || prev.columns !== fresh.columns || Math.abs(prev.pitch - fresh.pitch) > 0.5)) {
+        geometryRef.current = fresh;
+        setGeometry(fresh);
+      }
+    });
+    if (observer && el) observer.observe(el);
     return () => {
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
+      observer?.disconnect();
       if (frame.current) cancelAnimationFrame(frame.current);
       frame.current = 0;
     };
-  }, [schedule]);
+  }, [ref, schedule]);
 
-  // Recompute whenever the layout itself changes (width, count, mode, text size).
-  useLayoutEffect(() => {
-    update();
-  }, [update, layout.pitch, layout.rows, layout.columns, width]);
+  return clampWindow(win, count);
+}
 
-  const clamped: RowRange = { first: Math.min(range.first, layout.rows), last: Math.min(range.last, layout.rows) };
-  return { layout, boxes: width > 0 ? itemBoxes(layout, clamped, count) : [], ready: width > 0 };
+/** The count can shrink between a render and the next measurement; never draw books that are gone. */
+function clampWindow(win: Window, count: number): Window {
+  if (win.end <= count && win.start <= count) return win;
+  return { ...win, start: Math.min(win.start, count), end: Math.min(win.end, count) };
 }

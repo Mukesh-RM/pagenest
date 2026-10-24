@@ -102,7 +102,8 @@ async function seed(count: number): Promise<void> {
     }),
   );
 }
-const cards = () => screen.queryAllByRole('listitem').filter((li) => li.classList.contains('pn-lib-item'));
+const cards = () => screen.queryAllByRole('listitem').filter((li) => li.classList.contains('pn-library__item'));
+const anyCard = async (): Promise<HTMLElement> => (await screen.findAllByRole('button', { name: /, Author \d/ }))[0] as HTMLElement;
 
 describe('the library list', () => {
   it('shows books seeded straight into the database, with nothing else set up', async () => {
@@ -116,8 +117,9 @@ describe('the library list', () => {
   it('shows a skeleton while loading and a designed empty state for an empty library', async () => {
     renderLibrary();
     expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
-    expect(await screen.findByRole('heading', { name: 'Your shelf is waiting' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Add files' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Your library is empty' })).toBeTruthy();
+    expect(screen.getByText('Add an EPUB, PDF or audiobook from your device. Everything stays on this device.')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Add books' })).toHaveLength(2); // the header's and the empty state's
     expect(cards()).toHaveLength(0);
   });
 
@@ -132,12 +134,12 @@ describe('the library list', () => {
     expect(cards()).toHaveLength(3); // every 25th of 60 books: 0, 25, 50
     await user.clear(screen.getByRole('searchbox'));
     await user.type(screen.getByRole('searchbox'), 'qqqq');
-    expect(await screen.findByRole('heading', { name: 'No books match' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'No books match that search' })).toBeTruthy();
     await user.click(screen.getByRole('button', { name: 'Clear search and filters' }));
     await waitFor(() => expect(cards().length).toBeGreaterThan(3));
   });
 
-  it('the Favorites chip filters, is a toggle, and a second tap clears it', async () => {
+  it('the Favorites chip filters, and All brings every book back', async () => {
     await seed(60);
     renderLibrary();
     await waitFor(() => expect(cards().length).toBeGreaterThan(0));
@@ -148,7 +150,8 @@ describe('the library list', () => {
     expect(chip.getAttribute('aria-pressed')).toBe('true');
     await waitFor(() => expect(cards().every((c) => /Starred/.test(c.textContent ?? ''))).toBe(true));
     expect(cards()).toHaveLength(6);
-    await user.click(chip);
+    await user.click(screen.getByRole('button', { name: 'All' }));
+    expect(chip.getAttribute('aria-pressed')).toBe('false');
     await waitFor(() => expect(cards().length).toBeGreaterThan(6));
   });
 
@@ -157,23 +160,101 @@ describe('the library list', () => {
     const { unmount } = renderLibrary();
     await waitFor(() => expect(cards().length).toBeGreaterThan(0));
     const user = userEvent.setup();
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Sort books' }), 'title');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Sort by' }), 'title');
     await waitFor(() => expect(cards()[0]?.textContent).toMatch(/Book 001|Starred Book 000/));
-    await user.click(screen.getByRole('button', { name: 'Show as a list' }));
-    await waitFor(() => expect(document.querySelector('.pn-lib-row')).not.toBeNull());
+    await user.click(screen.getByRole('button', { name: 'List' }));
+    await waitFor(() => expect(document.querySelector('.pn-bookcard--list')).not.toBeNull());
     unmount();
     renderLibrary();
-    await waitFor(() => expect(document.querySelector('.pn-lib-row')).not.toBeNull());
-    expect((screen.getByRole('combobox', { name: 'Sort books' }) as HTMLSelectElement).value).toBe('title');
+    await waitFor(() => expect(document.querySelector('.pn-bookcard--list')).not.toBeNull());
+    expect((screen.getByRole('combobox', { name: 'Sort by' }) as HTMLSelectElement).value).toBe('title');
   });
 
-  it('opens a book in the reader, or the player for audio', async () => {
-    await services.db.books.put(bookRecord('a1', { title: 'Reader Book' }));
-    await services.db.books.put(bookRecord('a2', { title: 'Listen Book', kind: 'audio', format: 'mp3' }));
+  it('tapping a book opens the design system\'s detail sheet, then Read or Listen goes to the reader or the player', async () => {
+    await services.db.books.put(bookRecord('a1', { title: 'Reader Book', author: 'A. Writer', pages: 120 }));
+    await services.db.books.put(bookRecord('a2', { title: 'Listen Book', kind: 'audio', format: 'm4b', durationSec: 7200 }));
     renderLibrary();
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: /Reader Book/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Reader Book' });
+    expect(screen.queryByTestId('where')).toBeNull(); // not opened in the reader yet
+    expect(within(sheet).getAllByText('A. Writer').length).toBeGreaterThan(0);
+    expect(within(sheet).getByText(/EPUB/)).toBeTruthy();
+    expect(within(sheet).getByText('Not started')).toBeTruthy();
+    expect(within(sheet).queryByRole('button', { name: 'Listen' })).toBeNull();
+    await user.click(within(sheet).getByRole('button', { name: 'Start reading' }));
     expect(screen.getByTestId('where').textContent).toBe('/read/a1');
+  });
+
+  it('opens an audiobook in the player from its detail sheet', async () => {
+    await services.db.books.put(bookRecord('a2', { title: 'Listen Book', kind: 'audio', format: 'm4b', durationSec: 7200 }));
+    renderLibrary();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: /Listen Book/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Listen Book' });
+    expect(within(sheet).getByText(/2 h/)).toBeTruthy();
+    await user.click(within(sheet).getByRole('button', { name: 'Listen' }));
+    expect(screen.getByTestId('where').textContent).toBe('/listen/a2');
+  });
+
+  it('removes a book from the detail sheet\'s menu after a question, with Undo', async () => {
+    await services.db.books.put(bookRecord('a1', { title: 'Reader Book', fingerprint: 'fp-a1' }));
+    renderLibrary();
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: /Reader Book/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Reader Book' });
+    expect(within(sheet).queryByRole('button', { name: 'Remove from library' })).toBeNull(); // inside the menu, not loose
+    await user.click(within(sheet).getByRole('button', { name: 'More options' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove from library' }));
+    const confirm = await screen.findByRole('dialog', { name: /Remove .Reader Book.\?/ });
+    expect(await services.db.books.count()).toBe(1); // nothing is removed before the answer
+    await user.click(within(confirm).getByRole('button', { name: 'Remove' }));
+    expect(await screen.findByText('Book removed')).toBeTruthy();
+    expect(await services.db.books.count()).toBe(0);
+    await user.click(screen.getByRole('button', { name: 'Undo' }));
+    await waitFor(async () => expect(await services.db.books.count()).toBe(1));
+  });
+
+  it('is the design system\'s toolbar: a labelled sort select, the layout switch, and one row of chips with Favorites', async () => {
+    await seed(6);
+    renderLibrary();
+    await waitFor(() => expect(cards().length).toBeGreaterThan(0));
+    expect(screen.getByRole('button', { name: 'Add books' }).className).toContain('pn-btn--primary');
+    expect(screen.getByRole('heading', { name: 'Library', level: 1 })).toBeTruthy();
+    const group = screen.getByRole('group', { name: 'Filter library' });
+    expect(within(group).getAllByRole('button').map((b) => b.textContent)).toEqual(['All', 'Favorites', 'Reading', 'Listening', 'Finished']);
+    expect(group.className).toContain('pn-chip-group--scroll'); // one row that scrolls, never wraps
+    expect(group.parentElement?.className).toBe('pn-library__filters'); // with the design system's fade at its end
+    expect(screen.getByText('Sort by').tagName).toBe('LABEL');
+    expect(within(screen.getByRole('combobox', { name: 'Sort by' })).getAllByRole('option').map((o) => o.textContent)).toEqual(['Recently opened', 'Recently added', 'Title', 'Author']);
+    const layout = screen.getByRole('group', { name: 'Library layout' });
+    expect(within(layout).getByRole('button', { name: 'Grid of covers' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('draws every card with the design system\'s BookCard and BookCover, never its own markup', async () => {
+    await seed(6);
+    renderLibrary();
+    await waitFor(() => expect(cards().length).toBeGreaterThan(0));
+    expect(document.querySelector('[class*="pn-lib-card"], [class*="pn-lib-cover"], [class*="pn-lib-item"]')).toBeNull();
+    expect(document.querySelectorAll('.pn-bookcard .pn-cover').length).toBe(cards().length);
+    expect(document.querySelector('.pn-library__grid')?.getAttribute('aria-label')).toBe('Books');
+  });
+
+  it('shows the header slot (the resume card) under the filters and above the books', async () => {
+    await seed(3);
+    const { container } = render(
+      <ServicesContext.Provider value={services}>
+        <MemoryRouter>
+          <LibraryScreen header={<section aria-label="Welcome back">Resume here</section>} />
+        </MemoryRouter>
+      </ServicesContext.Provider>,
+    );
+    await waitFor(() => expect(cards().length).toBeGreaterThan(0));
+    const slot = screen.getByRole('region', { name: 'Welcome back' });
+    const filters = container.querySelector('.pn-library__options') as HTMLElement;
+    const grid = container.querySelector('.pn-library__grid') as HTMLElement;
+    expect(filters.compareDocumentPosition(slot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(slot.compareDocumentPosition(grid) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 
@@ -182,7 +263,7 @@ describe('selecting, editing and deleting', () => {
     await seed(5);
     renderLibrary();
     const user = userEvent.setup();
-    const first = (await screen.findAllByRole('button', { name: /by Author/ }))[0] as HTMLElement;
+    const first = await anyCard();
     fireEvent.contextMenu(first); // right-click or press and hold starts selecting
     await user.click(await screen.findByRole('button', { name: /favorites/ }));
     await waitFor(async () => expect((await services.db.books.toArray()).filter((b) => b.favorite).length).toBeGreaterThanOrEqual(1));
@@ -197,10 +278,10 @@ describe('selecting, editing and deleting', () => {
     await services.db.progress.put({ bookId: 'perf-000', mode: 'read', locator: { kind: 'reflow', section: 0, textOffset: 0 }, percent: 30, updatedAt: 1 });
     renderLibrary();
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Select books' }));
+    fireEvent.contextMenu(await anyCard()); // press and hold starts selecting
     await user.click(await screen.findByRole('button', { name: 'Select all' }));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(await screen.findByText('3 books deleted')).toBeTruthy();
+    expect(await screen.findByText('3 books removed')).toBeTruthy();
     expect(await services.db.books.count()).toBe(0);
     await waitFor(() => expect(cards()).toHaveLength(0));
     await user.click(screen.getByRole('button', { name: 'Undo' }));
@@ -213,7 +294,7 @@ describe('selecting, editing and deleting', () => {
     await seed(2);
     renderLibrary();
     const user = userEvent.setup();
-    const card = (await screen.findAllByRole('button', { name: /by Author/ }))[0] as HTMLElement;
+    const card = await anyCard();
     fireEvent.contextMenu(card);
     await user.click(await screen.findByRole('button', { name: 'Edit details' }));
     const title = await screen.findByLabelText('Title');
@@ -229,7 +310,7 @@ describe('selecting, editing and deleting', () => {
     await seed(2);
     renderLibrary();
     const user = userEvent.setup();
-    const card = (await screen.findAllByRole('button', { name: /by Author/ }))[0] as HTMLElement;
+    const card = await anyCard();
     fireEvent.contextMenu(card);
     await user.click(await screen.findByRole('button', { name: 'Add to a collection' }));
     await user.type(await screen.findByLabelText('New collection'), 'Summer');
@@ -242,7 +323,7 @@ describe('selecting, editing and deleting', () => {
 describe('adding files', () => {
   async function pick(...files: File[]): Promise<void> {
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Add' }));
+    await user.click(await (await screen.findAllByRole('button', { name: 'Add books' }))[0] as HTMLElement);
     const input = (await screen.findByTestId('pick-files')) as HTMLInputElement;
     await user.upload(input, files);
   }
@@ -305,12 +386,12 @@ describe('the sample book card', () => {
   it('shows in an empty library and opens the book once it is added', async () => {
     renderLibrary({ sampleBook: provider() });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: /Try a sample book|sample/i }));
+    await user.click(await screen.findByRole('button', { name: 'Add the sample book' }));
     await waitFor(() => expect(screen.getByTestId('where').textContent).toBe('/read/sample-1'));
   });
   it('is not shown when the provider says it cannot work', async () => {
     renderLibrary({ sampleBook: provider({ available: () => false }) });
-    await screen.findByRole('heading', { name: 'Your shelf is waiting' });
+    await screen.findByRole('heading', { name: 'Your library is empty' });
     expect(screen.queryByRole('button', { name: /sample/i })).toBeNull();
   });
 });

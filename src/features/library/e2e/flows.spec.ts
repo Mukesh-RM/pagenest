@@ -5,13 +5,13 @@ import { cards, consoleErrors } from './support';
 const buffer = (bytes: Uint8Array): Buffer => Buffer.from(bytes);
 
 async function pick(page: Page, files: { name: string; mimeType: string; buffer: Buffer }[]): Promise<void> {
-  await page.getByRole('button', { name: /^Add$/ }).click();
+  await page.getByRole('button', { name: 'Add books' }).first().click();
   await page.getByTestId('pick-files').setInputFiles(files);
 }
 
 test('what a file is comes from its content, never its name or type', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Your shelf is waiting' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your library is empty' })).toBeVisible();
   await pick(page, [
     { name: 'holiday.jpg', mimeType: 'image/jpeg', buffer: buffer(await makeEpub({ title: 'Secret Epub', author: 'N. Ame' })) },
     { name: 'REPORT', mimeType: '', buffer: buffer(makePdf({ title: 'Nameless Pdf', pages: 2 })) },
@@ -40,7 +40,7 @@ test('the sample book is fetched only when tapped, and opens within 30 s of firs
   });
   const started = Date.now();
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Your shelf is waiting' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your library is empty' })).toBeVisible();
   await page.waitForTimeout(1500);
   expect(epubRequests, 'nothing is downloaded before the person taps').toEqual([]);
   await page.getByRole('button', { name: 'Add the sample book' }).click();
@@ -65,7 +65,7 @@ test('the sample book is fetched only when tapped, and opens within 30 s of firs
 
 test('the 1.5 MB sample is still ready within 30 s on a slow connection (Fast 3G, 4x slower CPU)', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Your shelf is waiting' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your library is empty' })).toBeVisible();
   const cdp = await page.context().newCDPSession(page);
   await cdp.send('Network.enable');
   // Chrome's "Fast 3G" preset: 1.6 Mbit/s down, 150 ms round trip.
@@ -91,7 +91,7 @@ test('asks the browser to keep the library after the first import, once', async 
     storage.persisted = async () => false;
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Your shelf is waiting' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your library is empty' })).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __persistCalls: number }).__persistCalls)).toBe(0);
   await pick(page, [{ name: 'a.epub', mimeType: '', buffer: buffer(await makeEpub({ title: 'First' })) }]);
   await expect(page.getByRole('status').filter({ hasText: /Added 1 book/ })).toBeVisible({ timeout: 20_000 });
@@ -125,7 +125,7 @@ test('text at 200% and reduced motion keep the library usable', async ({ page })
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.addInitScript(() => document.addEventListener('DOMContentLoaded', () => ((document.documentElement.style.fontSize = '200%'))));
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Your shelf is waiting' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your library is empty' })).toBeVisible();
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow, 'no sideways scrolling at 200% text').toBeLessThanOrEqual(1);
   const motion = await page.evaluate(() => {

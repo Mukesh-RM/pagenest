@@ -1,56 +1,47 @@
 import { describe, expect, it } from 'vitest';
-import type { BookRecord as StoredBook } from '@/data/schema';
-import { CARD_COLORS, cardColor, describeBook, formatDuration, initials, parsePrefs, toLibraryQuery } from './model';
-
-const book = (id: string, over: Partial<StoredBook> = {}): StoredBook => ({
-  id, fingerprint: id, kind: 'ebook', format: 'epub', title: id, addedAt: 1, favorite: false, finished: false, ...over,
-});
+import { FILTERS, SORT_LABELS, formatDuration, formatTag, isFinished, parsePrefs, toLibraryQuery } from './model';
 
 describe('toLibraryQuery', () => {
-  const base = { text: '', segment: 'all', chip: null, sort: 'title' } as const;
+  const base = { text: '', filter: 'all', sort: 'title' } as const;
   it('asks only for what is set', () => {
-    expect(toLibraryQuery(base)).toEqual({ segment: 'all', sort: 'title' });
-    expect(toLibraryQuery({ ...base, chip: 'favorites', segment: 'audio' })).toEqual({ segment: 'audio', status: 'favorites', sort: 'title' });
+    expect(toLibraryQuery(base)).toEqual({ sort: 'title' });
+    expect(toLibraryQuery({ ...base, filter: 'favorites' })).toEqual({ status: 'favorites', sort: 'title' });
+    expect(toLibraryQuery({ ...base, filter: 'reading' })).toEqual({ status: 'reading', sort: 'title' });
   });
   it('ranks a search by relevance instead of the chosen sort, and trims it', () => {
-    expect(toLibraryQuery({ ...base, text: '  zebra ' })).toEqual({ text: 'zebra', segment: 'all' });
+    expect(toLibraryQuery({ ...base, text: '  zebra ' })).toEqual({ text: 'zebra' });
   });
   it('keeps a shelf', () => {
     expect(toLibraryQuery({ ...base, collectionId: 'c1' })).toMatchObject({ collectionId: 'c1' });
   });
 });
 
+describe('the words on the screen', () => {
+  it('uses the design system\'s sort words', () => {
+    expect(Object.values(SORT_LABELS)).toEqual(['Recently opened', 'Recently added', 'Title', 'Author']);
+  });
+  it('has the design system\'s four filters and Favorites, each once', () => {
+    expect(FILTERS.map((f) => f.label)).toEqual(['All', 'Favorites', 'Reading', 'Listening', 'Finished']);
+    expect(new Set(FILTERS.map((f) => f.id)).size).toBe(FILTERS.length);
+  });
+});
+
 describe('helpers', () => {
-  it('reads saved preferences safely', () => {
-    expect(parsePrefs({ view: 'list', sort: 'title', segment: 'audio' })).toEqual({ view: 'list', sort: 'title', segment: 'audio' });
-    expect(parsePrefs({ view: 'cube', sort: 7 })).toEqual({ view: 'grid', sort: 'recent', segment: 'all' });
-    expect(parsePrefs(null)).toEqual({ view: 'grid', sort: 'recent', segment: 'all' });
+  it('reads saved preferences safely, ignoring old ones it no longer has', () => {
+    expect(parsePrefs({ view: 'list', sort: 'title', segment: 'audio' })).toEqual({ view: 'list', sort: 'title' });
+    expect(parsePrefs({ view: 'cube', sort: 7 })).toEqual({ view: 'grid', sort: 'recent' });
+    expect(parsePrefs(null)).toEqual({ view: 'grid', sort: 'recent' });
   });
-  it('describes a book for a screen reader', () => {
-    expect(describeBook(book('x', { title: 'Dune', author: 'Frank Herbert', favorite: true }), 42)).toBe('Dune, by Frank Herbert, book, 42 percent done, favorite');
-    expect(describeBook(book('x', { title: 'Tale', kind: 'audio' }), 100)).toBe('Tale, audiobook, finished');
+  it('knows a finished book by its flag or by reaching the end', () => {
+    expect(isFinished({ finished: true }, 0)).toBe(true);
+    expect(isFinished({ finished: false }, 100)).toBe(true);
+    expect(isFinished({ finished: false }, 99)).toBe(false);
   });
-  it('formats durations', () => {
+  it('names the format and formats durations', () => {
+    expect(formatTag({ format: 'm4b' })).toBe('M4B');
     expect(formatDuration(undefined)).toBeUndefined();
     expect(formatDuration(1800)).toBe('30 min');
     expect(formatDuration(3600 * 20 + 600)).toBe('20 h 10 min');
     expect(formatDuration(7200)).toBe('2 h');
-  });
-  it('gives a title the same card color every time, and initials from real words', () => {
-    expect(cardColor('Moby Dick')).toEqual(cardColor('Moby Dick'));
-    expect(initials('The Great Gatsby')).toBe('GG');
-    expect(initials('日本語の本')).toBe('日');
-    expect(initials('!!!')).toBe('?');
-    expect(initials('one')).toBe('O');
-  });
-  it('title card colors keep white text at AA contrast (4.5:1)', () => {
-    const lum = (hex: string): number => {
-      const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
-      return 0.2126 * (c[0] as number) + 0.7152 * (c[1] as number) + 0.0722 * (c[2] as number);
-    };
-    for (const { bg, fg } of CARD_COLORS) {
-      const [hi, lo] = [lum(fg), lum(bg)].sort((a, b) => b - a) as [number, number];
-      expect((hi + 0.05) / (lo + 0.05), bg).toBeGreaterThanOrEqual(4.5);
-    }
   });
 });
