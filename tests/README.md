@@ -24,6 +24,7 @@ npm run test:unit                          # contrast maths only, needs no app
 PAGENEST_BASE_URL=https://xyz.pages.dev/ npm test   # test a deployed or already running build instead
 npm run test:fixture                       # run the suite against the reference fixture (harness self-check)
 
+npm run test:excellence                    # product excellence gates per screen (themes, text size, viewports, CLS, motion, offline, console)
 npm run test:perf                          # performance gates only (Chromium mobile, one worker: steadiest numbers)
 npm run qa                                 # everything: Playwright, performance gates, Lighthouse; non-zero exit if ANY gate fails
 
@@ -95,3 +96,26 @@ How the tests work, and what they cannot see:
 - Seeding: `e2e/support/library.ts` writes books straight into IndexedDB database `pagenest`, store `books`, with the blueprint 13 `BookRecord` fields (`src/data/schema.ts`), then reloads. This stands in for the Library import path, which has not landed. When Library ships an import or seed API, swap `seedLibrary` and keep the tests.
 - Search and filter tests find the field by role `searchbox` (or a textbox named Search) and the chip by name (`Favorites`, as a button, tab, radio or checkbox). They fail, not skip, while the Library screen lacks them. Owner: Library, with UI/UX.
 - Emulated CPU throttling and headless Chromium are a proxy. The real-device checklist in `real-device/` still decides.
+
+
+## Product excellence gates (per screen)
+
+From Mukeshh's bar (`/workspace/pagenest-excellence-bar.txt`). Thresholds are in `perf/budgets.ts` under `excellence`; the tests are in `excellence/screens.spec.ts` (project `excellence-chromium-mobile`; layout shift needs Chromium) plus `e2e/` for the rest.
+
+| Gate | Threshold | Test |
+|---|---|---|
+| Lighthouse per screen (Library, Collections, Stats, Settings) | Performance, Accessibility and PWA each 90 or more | `lighthouse/run.mjs` audits every screen in `excellence.screens`, after skipping onboarding in the Chrome profile |
+| AA contrast, five themes | 4.5:1; Light, Sepia, Dark, Black, **Custom** (blueprint 5.2). The app must offer all five | `e2e/a11y.spec.ts` (four themes, every screen, axe), `excellence/` (five themes offered; Custom contrast) |
+| 200% text size | every screen and the sheet: no horizontal overflow or clipped text, controls reachable and not covered, navigation in view, axe clean | `excellence/` (`applyTextScale` doubles `--pn-font-size` and `--pn-text-*`, which is what an OS text scale does to the app's px text) |
+| In-app text size reaches 200% | largest setting at least 2x the default | `excellence/` |
+| Phone widths 360 and 430 px | no horizontal overflow; all targets 44 px or more (a radio's whole label counts); tab bar pinned to the bottom with content padding; CLS under 0.1 | `excellence/` |
+| Laptop widths 1280x800 and 1440x900 | no horizontal overflow; rail beside the content, not overlapping; content at least 60 % of the width; rail stays in view while the page scrolls; CLS under 0.1 | `excellence/` |
+| Layout shift | CLS under 0.1 after load and after walking through every tab, at all four viewports | `excellence/` |
+| Reduced motion | `prefers-reduced-motion: reduce`: no transition or animation over 50 ms (computed styles and running animations), on every screen, a theme change and the sheet | `excellence/` |
+| Offline | every screen reloads offline and shows its heading | `e2e/offline.spec.ts`, `excellence/` |
+| Zero console problems | no console error or warning, page error, failed request or HTTP 4xx/5xx on every screen and theme | `excellence/`, `e2e/smoke.spec.ts` |
+| Taps and scrolling | see "Performance gates" | `perf/` |
+
+First launch shows onboarding. `launch()` in `e2e/support/app.ts` clicks Skip (which stores `onboardingDone`) so every test starts on the Library; only `e2e/onboarding.spec.ts` looks at onboarding itself (`launchFresh`).
+
+Local runs share the machine with other tools, so use your own port: `PAGENEST_PORT=4391 npm run qa`. The real-app server is never reused (a stale one could serve an old build) and is started with `node .../vite.js preview`.

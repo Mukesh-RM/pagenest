@@ -17,7 +17,7 @@ export async function overflowProblems(page: Page): Promise<Problem[]> {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') continue;
       const r = el.getBoundingClientRect();
-      if (r.width === 0 || r.height === 0) continue;
+      if (r.width <= 2 || r.height <= 2) continue; // not rendered, or visually hidden (sr-only)
       if (r.right > de.clientWidth + 1 && !el.closest('[aria-hidden="true"]') && cs.position !== 'fixed' && !el.closest('[data-allow-overflow]')) {
         // content poking out to the right of the viewport (ignore elements inside their own horizontal scroller)
         let scroller: Element | null = el.parentElement; let inside = false;
@@ -80,6 +80,7 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') continue;
       const label = (el as HTMLInputElement).labels?.[0];
+      if (!label && (el.getBoundingClientRect().width === 0 || el.getBoundingClientRect().height === 0)) continue; // not rendered (for example the tablet rail on a phone)
       const probe: Element = label && (el as HTMLInputElement).type !== 'text' ? label : el;
       probe.scrollIntoView({ block: 'center', inline: 'center' });
       const r = probe.getBoundingClientRect();
@@ -89,7 +90,7 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
       const top = document.elementFromPoint(x, y);
       if (top && !(probe === top || probe.contains(top) || top.contains(probe))) out.push({ what: 'control is covered', where: `${name} covered by ${top.tagName.toLowerCase()} "${(top.textContent ?? '').trim().slice(0, 30)}"` });
     }
-    document.querySelector('main')?.scrollTo(0, 0);
+    window.scrollTo(0, 0);
     return out;
   });
 }
@@ -146,32 +147,61 @@ export async function longestMotion(page: Page): Promise<{ ms: number; where: st
 }
 
 /**
- * "Usable layout": navigation and content are both visible, do not overlap, and fit in the viewport.
- * Phones: navigation is a bar under the content (blueprint 5.5). Laptops: a rail beside the content, and the content
- * area takes at least `minContentShare` (budgets.ts minContentShareOfWidth) of the screen so the page is not a thin strip.
+ * "Usable layout": navigation and content are both visible and fit the screen width.
+ * The page scrolls as a whole (the tab bar is fixed to the bottom on phones, a rail sits beside the content on laptops).
+ * Phones: the visible navigation is a bar pinned to the bottom edge, and the content leaves room for it (bottom padding)
+ * so the last item is never hidden. Laptops: a side rail that does not overlap the content, and the content area takes at
+ * least `minContentShare` (budgets.ts minContentShareOfWidth) of the screen so the page is not a thin strip.
  */
 export async function expectUsableLayout(
   page: Page, vp: { width: number; height: number; phone: boolean }, label: string, minContentShare: number,
 ): Promise<void> {
   const boxes = await page.evaluate(() => {
-    const rect = (el: Element | null) => { const r = el?.getBoundingClientRect(); return r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null; };
-    return { nav: rect(document.querySelector('nav')), main: rect(document.querySelector('main')) };
+    const rect = (el: Element | null | undefined) => { const r = el?.getBoundingClientRect(); return r ? { x: r.x, y: r.y, w: r.width, h: r.height } : null; };
+    const nav = [...document.querySelectorAll('nav')].find((n) => n.getBoundingClientRect().width > 0 && getComputedStyle(n).visibility !== 'hidden');
+    const main = document.querySelector('main');
+    return { nav: rect(nav), main: rect(main), mainPadBottom: main ? parseFloat(getComputedStyle(main).paddingBottom) : 0, pageScrollsSideways: document.documentElement.scrollWidth > document.documentElement.clientWidth };
   });
-  expect(boxes.nav, `${label}: navigation missing`).not.toBeNull();
+  expect(boxes.nav, `${label}: no visible navigation`).not.toBeNull();
   expect(boxes.main, `${label}: main content missing`).not.toBeNull();
   const nav = boxes.nav!; const main = boxes.main!;
-  const overlap = nav.x < main.x + main.w - 1 && nav.x + nav.w > main.x + 1 && nav.y < main.y + main.h - 1 && nav.y + nav.h > main.y + 1;
-  expect(overlap, `${label}: navigation overlaps content (nav ${JSON.stringify(nav)}, main ${JSON.stringify(main)})`).toBe(false);
-  for (const [name, b] of [['navigation', nav], ['content', main]] as const) {
-    expect(b.x, `${label}: ${name} starts left of the screen`).toBeGreaterThanOrEqual(-1);
-    expect(b.x + b.w, `${label}: ${name} ends right of the screen`).toBeLessThanOrEqual(vp.width + 1);
-    expect(b.y + b.h, `${label}: ${name} ends below the screen`).toBeLessThanOrEqual(vp.height + 1);
-  }
+  expect(nav.x, `${label}: navigation starts left of the screen`).toBeGreaterThanOrEqual(-1);
+  expect(nav.x + nav.w, `${label}: navigation ends right of the screen`).toBeLessThanOrEqual(vp.width + 1);
+  expect(main.x + main.w, `${label}: content ends right of the screen`).toBeLessThanOrEqual(vp.width + 1);
   if (vp.phone) {
-    expect(nav.y, `${label}: phone navigation should sit below the content`).toBeGreaterThanOrEqual(main.y + main.h - 2);
+    expect(nav.y + nav.h, `${label}: navigation ends below the screen`).toBeLessThanOrEqual(vp.height + 1);
+    expect(nav.y + nav.h, `${label}: phone tab bar should be pinned to the bottom edge`).toBeGreaterThanOrEqual(vp.height - 2);
+    expect(nav.w, `${label}: phone tab bar should span the screen`).toBeGreaterThanOrEqual(vp.width * 0.95);
+    expect(boxes.mainPadBottom, `${label}: content needs bottom padding of at least the tab bar height (${Math.round(nav.h)} px) so the last item is not hidden`).toBeGreaterThanOrEqual(nav.h - 1);
     expect(main.w, `${label}: content should use the full phone width`).toBeGreaterThanOrEqual(vp.width * 0.95);
   } else {
     expect(nav.h, `${label}: laptop navigation should be a side rail, not a bar`).toBeGreaterThan(nav.w);
+    // the rail must stay usable while the page scrolls: scroll to the bottom and require every rail link inside the viewport
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    const hidden = await page.evaluate(() => {
+      const links = [...document.querySelectorAll('nav a')].filter((a) => a.getBoundingClientRect().width > 0);
+      return links.filter((a) => { const r = a.getBoundingClientRect(); return r.top < 0 || r.bottom > innerHeight; }).map((a) => (a.textContent ?? '').trim());
+    });
+    expect(hidden, `${label}: rail links scroll out of view when the page scrolls (the rail should be sticky or fixed): ${hidden.join(', ')}`).toEqual([]);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const overlap = nav.x < main.x + main.w - 1 && nav.x + nav.w > main.x + 1;
+    expect(overlap, `${label}: rail overlaps content (nav ${JSON.stringify(nav)}, main ${JSON.stringify(main)})`).toBe(false);
     expect(main.w, `${label}: content area is only ${Math.round(main.w)} px of ${vp.width}`).toBeGreaterThanOrEqual(vp.width * minContentShare);
   }
+}
+
+/**
+ * Emulates a 200% system text size for apps whose root size is driven by CSS variables set in px (PageNest sets
+ * --pn-font-size and --pn-text-*): every such px variable on the root is multiplied by `scale`, exactly what an OS text
+ * scale does to px text. Returns the resulting body font size.
+ */
+export async function applyTextScale(page: Page, scale: number): Promise<number> {
+  return page.evaluate((scale) => {
+    const root = document.documentElement;
+    const names = ['--pn-font-size', '--pn-text-xs', '--pn-text-sm', '--pn-text-md', '--pn-text-lg', '--pn-text-xl'];
+    const cs = getComputedStyle(root);
+    const bases = names.map((n) => parseFloat(cs.getPropertyValue(n)));
+    names.forEach((n, i) => { if (Number.isFinite(bases[i])) root.style.setProperty(n, `${bases[i]! * scale}px`); });
+    return parseFloat(getComputedStyle(document.body).fontSize);
+  }, scale);
 }

@@ -35,7 +35,7 @@ export function longTasks(page: Page): Promise<number[]> {
 export interface FrameStats { frames: number; p95Ms: number; maxMs: number; droppedRatio: number; scrolledPx: number }
 
 /**
- * Flings the element's scroll position at a constant speed for `seconds`, recording every requestAnimationFrame interval.
+ * Flings the scroll position of `selector` (or of the whole page with 'document') at a constant speed for `seconds`, recording every requestAnimationFrame interval.
  * Main-thread work that delays frames (long tasks, layout storms) shows up as slow frames.
  */
 export async function flingScroll(
@@ -44,7 +44,7 @@ export async function flingScroll(
   return page.evaluate(
     ({ selector, seconds, pxPerSecond, dropMs }) =>
       new Promise<FrameStats>((resolve) => {
-        const el = document.querySelector(selector);
+        const el = selector === 'document' ? document.scrollingElement : document.querySelector(selector);
         if (!el) throw new Error(`Scroll container ${selector} not found`);
         const deltas: number[] = [];
         const startTop = el.scrollTop;

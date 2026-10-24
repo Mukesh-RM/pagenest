@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { TABS, chooseTheme, gotoTab, launch, openSheet, primaryNav, sheet, tab, themeOption, themeRadio, waitForServiceWorkerControl, type TabName } from '../e2e/support/app';
 import { expectNoA11yViolations, expectNoContrastViolations } from '../e2e/support/axe';
 import {
-  expectControlsReachable, expectNoOverflow, expectUsableLayout, expectTargetsBigEnough, longestMotion, readCls, recordLayoutShift,
+  applyTextScale, expectControlsReachable, expectNoOverflow, expectUsableLayout, expectTargetsBigEnough, longestMotion, readCls, recordLayoutShift,
 } from '../e2e/support/layout';
 import { BUDGETS } from '../perf/budgets';
 
@@ -60,25 +60,33 @@ test.describe('200% text size', () => {
   for (const name of TABS) {
     test(`${name}: nothing clipped, no horizontal scroll, controls reachable, axe clean`, async ({ page }) => {
       await launch(page);
-      await page.addStyleTag({ content: `html { font-size: ${X.textScalePercent}% !important; }` });
       await gotoTab(page, name);
-      const rootPx = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
-      expect(rootPx, 'root font size after scaling').toBeGreaterThanOrEqual(31);
+      const bodyPx = await applyTextScale(page, X.textScalePercent / 100);
+      expect(bodyPx, 'body font size after scaling (16 px x 2)').toBeGreaterThanOrEqual(31);
       const label = `${name} at ${X.textScalePercent}% text`;
       await expectNoOverflow(page, label);
       await expect(primaryNav(page), 'navigation stays visible').toBeVisible();
       await expect(tab(page, name), 'current tab stays reachable').toBeInViewport();
-      const viewportH = page.viewportSize()!.height;
-      const mainBox = await page.locator('main').boundingBox();
-      expect(mainBox!.height, `content area keeps at least 40% of the screen (${label})`).toBeGreaterThanOrEqual(viewportH * 0.4);
       await expectControlsReachable(page, label);
       await expectNoA11yViolations(page, label);
     });
   }
 
+  test('the in-app text size setting can reach 200% (blueprint 5.8: dynamic text size)', async ({ page }) => {
+    await launch(page);
+    await gotoTab(page, 'Settings');
+    const slider = page.getByRole('slider').first();
+    await expect(slider, 'Settings has no text size control').toBeVisible();
+    await slider.focus();
+    await page.keyboard.press('End'); // a range input jumps to its maximum
+    await expect.poll(() => page.evaluate(() => parseFloat(getComputedStyle(document.body).fontSize))).toBeGreaterThan(16);
+    const px = await page.evaluate(() => parseFloat(getComputedStyle(document.body).fontSize));
+    expect(px / 16, `largest in-app text size is ${px} px = ${Math.round((px / 16) * 100)}% of default; the bar asks for 200%`).toBeGreaterThanOrEqual(X.textScalePercent / 100);
+  });
+
   test('the Install help sheet works at 200% text size', async ({ page }) => {
     await launch(page);
-    await page.addStyleTag({ content: `html { font-size: ${X.textScalePercent}% !important; }` });
+    await applyTextScale(page, X.textScalePercent / 100);
     await openSheet(page);
     await expectNoOverflow(page, 'install sheet at 200% text');
     const box = await sheet(page).boundingBox();
