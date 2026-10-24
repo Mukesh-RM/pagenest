@@ -4,6 +4,10 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* App text size setting (px), set by ThemeProvider. Rem-based sizes scale with it. */
+    font-size: var(--pn-font-size, 16px);
+  }
   html,
   body,
   #root {
@@ -11,12 +15,12 @@
   }
   body {
     @apply bg-page text-ink font-sans antialiased;
-    font-size: 16px;
+    font-size: 1rem;
     margin: 0;
     overscroll-behavior-y: none;
   }
   :focus-visible {
-    outline: 2px solid rgb(var(--pn-accent));
+    outline: 2px solid rgb(var(--pn-focus-ring));
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {

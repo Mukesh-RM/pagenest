@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 async function firstLoad(page) {
   await page.goto('/');
+  // First launch shows onboarding; skip it (it is remembered, so later loads open the Library).
+  await page.getByRole('button', { name: 'Skip' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Library' })).toBeVisible();
   await page.evaluate(() => navigator.serviceWorker.ready);
   // The first worker does not claim the page, so it controls it from the next load on (an update applies on a launch).

@@ -1,9 +1,37 @@
-import { BookMarked } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { EmptyState } from '../components/EmptyState';
+import { memo, useEffect, useState } from 'react';
+import { EmptyState, ProgressBar, SkeletonCard, SkeletonGroup } from '@/ui';
+import { loadResume } from '@/data/resume';
 import { PageHeader } from '../components/PageHeader';
-import { SkeletonGrid } from '../components/Skeleton';
+import { ResumeCard, ResumeCardSkeleton } from '../components/ResumeCard';
+import { hadResumeCard, rememberResumeCard } from '../resume-hint';
 import { useServices } from '../services-context';
+
+interface BookCardProps {
+  title: string;
+  author: string | undefined;
+  format: string;
+  percent: number;
+}
+
+/**
+ * One book tile. Memoized, and takes plain values (not the database row, which is a new object
+ * on every live-query run), so a progress write for one book re-renders only that book's tile.
+ */
+const BookCard = memo(function BookCard({ title, author, format, percent }: BookCardProps) {
+  return (
+    <li className="flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-card bg-surface p-3">
+      <div>
+        <p className="line-clamp-3 font-semibold">{title}</p>
+        {author ? <p className="line-clamp-1 text-sm text-muted">{author}</p> : null}
+      </div>
+      <div>
+        <p className="mb-1 text-xs uppercase text-muted">{format}</p>
+        <ProgressBar value={percent / 100} label={`Progress for ${title}`} />
+      </div>
+    </li>
+  );
+});
 
 /** Library home. Lists what is in the database; shows the empty state when nothing was added yet. */
 export function LibraryPage() {
@@ -16,42 +44,44 @@ export function LibraryPage() {
     return best;
   }, [db, progress]);
 
+  // The last saved position (newest progress row of an unfinished book), with its chapter.
+  const resume = useLiveQuery(async () => ({ value: await loadResume(db) }), [db, progress]);
+  // Reserve the card's space from the first frame if the last visit had one, so nothing jumps.
+  const [hadCard] = useState(hadResumeCard);
+  const shownCard = resume?.value !== undefined;
+  useEffect(() => {
+    if (resume) rememberResumeCard(shownCard);
+  }, [resume, shownCard]);
+
+  const ready = books !== undefined && resume !== undefined;
+  const resumeInfo = resume?.value;
+
   return (
     <>
       <PageHeader title="Library" />
-      {books === undefined ? (
-        <SkeletonGrid />
+      {!ready ? null : resumeInfo ? <ResumeCard info={resumeInfo} /> : null}
+      {!ready && hadCard ? <ResumeCardSkeleton /> : null}
+      {!ready ? (
+        <SkeletonGroup label="Loading your library">
+          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {Array.from({ length: 6 }, (_, i) => (
+              <li key={i}>
+                <SkeletonCard />
+              </li>
+            ))}
+          </ul>
+        </SkeletonGroup>
       ) : books.length === 0 ? (
-        <EmptyState icon={BookMarked} title="Your shelf is waiting">
-          Books, PDFs and audiobooks you add will appear here, and they stay on this device. Adding files arrives in the
-          next update.
-        </EmptyState>
+        <EmptyState
+          art="bookOpen"
+          title="Your shelf is waiting"
+          description="Books, PDFs and audiobooks you add will appear here, and they stay on this device. Adding files arrives in the next update."
+        />
       ) : (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-          {books.map((book) => {
-            const percent = Math.round(percents?.get(book.id) ?? 0);
-            return (
-              <li key={book.id} className="flex aspect-[2/3] flex-col justify-between overflow-hidden rounded-card bg-surface p-3">
-                <div>
-                  <p className="line-clamp-3 font-semibold">{book.title}</p>
-                  {book.author ? <p className="line-clamp-1 text-sm text-muted">{book.author}</p> : null}
-                </div>
-                <div>
-                  <p className="mb-1 text-xs uppercase text-muted">{book.format}</p>
-                  <div
-                    role="progressbar"
-                    aria-label={`Progress for ${book.title}`}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={percent}
-                    className="h-1 rounded-full bg-line"
-                  >
-                    <div className="h-1 rounded-full bg-accent" style={{ width: `${percent}%` }} />
-                  </div>
-                </div>
-              </li>
-            );
-          })}
+          {books.map((book) => (
+            <BookCard key={book.id} title={book.title} author={book.author} format={book.format} percent={Math.round(percents?.get(book.id) ?? 0)} />
+          ))}
         </ul>
       )}
     </>
