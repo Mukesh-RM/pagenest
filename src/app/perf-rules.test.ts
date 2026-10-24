@@ -60,6 +60,14 @@ describe('performance rules for src/app', () => {
     expect(importers.sort()).toEqual([...routes].sort());
   });
 
+  it("registers the Library through '@/features/library/provider' (no screens, no CSS); only the lazy route imports the screens barrel", () => {
+    const barrel = /from '@\/features\/library';/;
+    const offenders = files.filter((f) => barrel.test(f.text) && !f.name.endsWith('pages/LibraryRoute.tsx')).map((f) => f.name);
+    expect(offenders).toEqual([]);
+    const services = files.find((f) => f.name.endsWith('src/app/services.tsx'))?.text ?? '';
+    expect(services).toContain("from '@/features/library/provider'");
+  });
+
   it('keeps overlays (PWA prompts) out of the first-paint chunk: only dynamic imports', () => {
     const lazyWrappers = /Lazy(PwaPrompts)\.tsx$/;
     const offenders = files
