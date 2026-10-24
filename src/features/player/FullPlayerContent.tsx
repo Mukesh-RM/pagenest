@@ -58,10 +58,17 @@ export function FullPlayerContent({ controller }: { controller: AudioController 
           {coverUrl ? <img src={coverUrl} alt="" className="h-full w-full rounded-card object-cover" /> : null}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-lg font-semibold">{chapter?.title ?? item.title}</p>
-          <p className="text-sm text-muted">{item.author ?? 'Audiobook'}</p>
-          <p className="mt-1 text-sm text-muted">
-            {formatClock(state.positionSec)} · {formatClock(state.bookRemainingSec)} left at {state.speed}x
+          <p className="text-lg font-semibold break-words">{chapter?.title ?? item.title}</p>
+          <p className="text-base text-muted break-words">{item.author ?? 'Audiobook'}</p>
+          <p
+            className="mt-2 text-base leading-snug text-muted [overflow-wrap:anywhere]"
+            data-testid="player-time-remaining"
+          >
+            <span data-testid="player-time-elapsed">{formatClock(state.positionSec)}</span>
+            {' · '}
+            <span data-testid="player-time-left">{formatClock(state.bookRemainingSec)} left</span>
+            {' at '}
+            <span data-testid="player-speed-display">{state.speed}x</span>
           </p>
         </div>
       </div>
@@ -82,9 +89,9 @@ export function FullPlayerContent({ controller }: { controller: AudioController 
         <ProgressBar value={progress} label="Book progress" className="mt-2" />
       </label>
 
-      <section aria-label="Playback speed">
-        <p className="mb-2 text-sm font-medium">Speed</p>
-        <ChipGroup label="Playback speed">
+        <section aria-label="Playback speed" data-testid="player-speed-section" className="min-w-0">
+          <p className="mb-2 text-base font-medium">Speed</p>
+          <ChipGroup label="Playback speed" scroll>
           {SPEED_STEPS.map((rate) => (
             <Chip key={rate} selected={state.speed === rate} onClick={() => controller.setSpeed(rate)}>
               {rate}x
@@ -93,9 +100,14 @@ export function FullPlayerContent({ controller }: { controller: AudioController 
         </ChipGroup>
       </section>
 
-      <section aria-label="Sleep timer">
-        <p className="mb-2 text-sm font-medium">Sleep timer</p>
-        <ChipGroup label="Sleep timer">
+        <section aria-label="Sleep timer" data-testid="player-sleep-section" className="min-w-0">
+          <p className="mb-2 text-base font-medium">Sleep timer</p>
+          {state.sleep ? (
+            <p className="mb-2 text-base text-muted" data-testid="player-sleep-active">
+              Sleep timer: {formatClock(state.sleep.remainingSec)} remaining
+            </p>
+          ) : null}
+          <ChipGroup label="Sleep timer" scroll>
           {SLEEP_MINUTES.map((m) => (
             <Chip
               key={m}

@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import type { ProgressService } from '@/app/contracts';
 import { createAudioController, createAudioElement } from '@/engines/audio';
 import type { AudioController } from '@/engines/audio/types';
 import { useServices } from '@/app/services-context';
@@ -14,7 +15,13 @@ export function getAudioController(): AudioController | undefined {
   return sharedController;
 }
 
-function ensureController(progress: import('@/app/contracts').ProgressService): AudioController {
+/** Test-only: drop the singleton between cases. */
+export function resetAudioForTests(): void {
+  sharedController = undefined;
+  sharedAudio = undefined;
+}
+
+function ensureController(progress: ProgressService): AudioController {
   if (!sharedAudio) sharedAudio = createAudioElement();
   if (!sharedController) sharedController = createAudioController({ audio: sharedAudio, progress });
   return sharedController;

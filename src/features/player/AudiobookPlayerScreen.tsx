@@ -28,6 +28,13 @@ export default function AudiobookPlayerScreen({ book, position }: AudiobookPlaye
       setLoading(false);
       return;
     }
+    const loaded = controller.getState().item;
+    if (loaded?.bookId === book.id && controller.getState().status !== 'idle') {
+      setWelcome(position);
+      setError(undefined);
+      setLoading(false);
+      return;
+    }
     void loadAudiobookForBook(controller, book, position).then((result) => {
       if (result.ok) {
         setWelcome(result.welcome ?? position);

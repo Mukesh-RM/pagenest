@@ -4,7 +4,8 @@ import { audioItemFromSingleFile } from '@/engines/audio/build-item';
 import { DexieProgressService } from '@/data/progress-service';
 import { getDb } from '@/data/db';
 import { createMockAudioElement } from '@/engines/audio/test/mock-audio';
-import { usePlayerStore } from './audio-store';
+import { snapshotFromState } from './playback-snapshot';
+import { selectIsPlaying, usePlayerStore } from './audio-store';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -23,13 +24,20 @@ describe('chrome unmount safety', () => {
       { index: 0, title: 'A', startSec: 0 },
     ]);
     await controller.load(item);
-    usePlayerStore.getState().setState(controller.getState());
+    controller.setSpeed(2);
+    controller.setSleepTimer({ kind: 'endOfChapter' });
+    controller.goToChapter(0);
     await controller.play();
-    const playing = controller.getState().status;
-    // Simulate mini-player unmount: no React teardown of the controller.
-    expect(controller.getState().item?.bookId).toBe('b1');
-    expect(playing).toBe('playing');
+    usePlayerStore.getState().setState(controller.getState());
+    const before = snapshotFromState(controller.getState(), selectIsPlaying());
+    // Simulate mini-player unmount: controller is not torn down.
+    expect(before.isPlaying).toBe(true);
+    expect(before.speed).toBe(2);
+    expect(before.sleepEndOfChapter).toBe(true);
+    expect(before.chapterIndex).toBe(0);
     controller.pause();
-    expect(controller.getState().positionSec).toBeGreaterThanOrEqual(0);
+    const after = snapshotFromState(controller.getState(), selectIsPlaying());
+    expect(after.speed).toBe(2);
+    expect(after.sleepEndOfChapter).toBe(true);
   });
 });
