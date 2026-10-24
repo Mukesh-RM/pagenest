@@ -1,0 +1,30 @@
+@import './app/theme.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-page text-ink font-sans antialiased;
+    font-size: 16px;
+    margin: 0;
+    overscroll-behavior-y: none;
+  }
+  :focus-visible {
+    outline: 2px solid rgb(var(--pn-accent));
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
