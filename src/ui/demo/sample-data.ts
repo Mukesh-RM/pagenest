@@ -76,15 +76,16 @@ interface SampleRow {
   author?: string;
   progress: number;
   audio?: boolean;
+  favorite?: boolean;
   cover?: CoverSpec;
 }
 
 const ROWS: readonly SampleRow[] = [
   { id: 'b01', title: 'The Orchard at the End of Winter', author: 'Marguerite Aldous', progress: 0.42, audio: true, cover: { bg: '#264653', fg: '#f4ead5', accent: '#e9c46a', kind: 'sun' } },
   { id: 'b02', title: 'Salt, Light and Other Small Mercies: Essays from a Coastal Year', author: 'Tobias Wren-Hallett and Imani Okonkwo-Reyes, with a foreword by Jun Takeda', progress: 0.08, cover: { bg: '#f1e3c6', fg: '#3b2f23', accent: '#bc4b51', kind: 'stripes' } },
-  { id: 'b03', title: 'Field Notes on Quiet', author: 'Ana Lindqvist', progress: 0, cover: { bg: '#e8efe9', fg: '#1f3a35', accent: '#2f6f6b', kind: 'frame' } },
+  { id: 'b03', title: 'Field Notes on Quiet', author: 'Ana Lindqvist', progress: 0, favorite: true, cover: { bg: '#e8efe9', fg: '#1f3a35', accent: '#2f6f6b', kind: 'frame' } },
   { id: 'b04', title: 'A Brief History of Rivers', author: 'Daniel Osei', progress: 1, cover: { bg: '#1d3557', fg: '#f1faee', accent: '#8fd3cc', kind: 'hills' } },
-  { id: 'b05', title: 'Nightjar', author: 'Priya Raman', progress: 0.87, audio: true, cover: { bg: '#1b1b2f', fg: '#efe9f4', accent: '#f6c177', kind: 'moon' } },
+  { id: 'b05', title: 'Nightjar', author: 'Priya Raman', progress: 0.87, audio: true, favorite: true, cover: { bg: '#1b1b2f', fg: '#efe9f4', accent: '#f6c177', kind: 'moon' } },
   { id: 'b06', title: 'The Cartographer’s Daughter', author: 'Elena Marchetti', progress: 0.15, cover: { bg: '#8c5a3c', fg: '#fbf1e1', accent: '#f0d9a8', kind: 'circles' } },
   { id: 'b07', title: 'Small Hours', author: 'Kenji Mori', progress: 0.63, audio: true, cover: { bg: '#2d1e2f', fg: '#fde8e0', accent: '#ef8354', kind: 'block' } },
   { id: 'b08', title: 'Ten Thousand Steps to the Sea', author: 'Rosalind Achterberg', progress: 0.27, cover: { bg: '#d9e8f2', fg: '#12324a', accent: '#3a7ca5', kind: 'grid' } },
@@ -105,6 +106,7 @@ export const SAMPLE_BOOKS: readonly BookSummary[] = ROWS.map((row) => ({
   author: row.author,
   progress: row.progress,
   audio: row.audio,
+  favorite: row.favorite,
   coverUrl: row.cover ? coverDataUrl(row.title, row.author ?? '', row.cover) : undefined,
 }));
 
@@ -117,6 +119,16 @@ export const SAMPLE_DETAIL: BookDetail = {
   where: 'chapter 7',
   description:
     'When the last frost lifts, Ines returns to her grandmother’s orchard to settle the estate and stays to learn what the trees remember. A quiet, warm novel about land, inheritance and the slow work of starting again.',
+};
+
+/** An audiobook with no pages: Listen is the main action, Read is not offered. */
+export const SAMPLE_DETAIL_AUDIO: BookDetail = {
+  ...SAMPLE_BOOKS[4]!,
+  narrator: 'Dev Anand',
+  format: 'M4B',
+  durationSeconds: 7 * 3600 + 5 * 60,
+  where: 'chapter 12',
+  description: 'A night-shift radio host starts to hear one caller every hour. A quiet, close-in audio novel, read in a single voice.',
 };
 
 export const SAMPLE_DETAIL_LONG: BookDetail = {

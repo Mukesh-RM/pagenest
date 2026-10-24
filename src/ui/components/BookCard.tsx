@@ -5,6 +5,7 @@ import { measure, rememberFlipOrigin, type RectLike } from '../utils/flip';
 import type { BookSummary } from '../types';
 import { BookCover } from './BookCover';
 import { Card } from './Card';
+import { FavoriteBadge } from './FavoriteBadge';
 import { ProgressBar } from './ProgressBar';
 
 export interface BookCardProps {
@@ -36,7 +37,7 @@ export function progressWords(book: Pick<BookSummary, 'progress' | 'audio'>): st
 export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'grid', className }: BookCardProps) {
   const coverRef = useRef<HTMLSpanElement>(null);
   const words = progressWords(book);
-  const label = [book.title, book.author].filter(Boolean).join(', ') + `. ${words}${book.audio ? '. Has audio' : ''}`;
+  const label = [book.title, book.author].filter(Boolean).join(', ') + `. ${words}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
   return (
     <Card
       flush
@@ -57,6 +58,7 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
             <Icon name="headphones" size={16} />
           </span>
         ) : null}
+        {book.favorite ? <FavoriteBadge /> : null}
         {book.progress >= 1 ? (
           <span className="pn-bookcard__badge pn-bookcard__badge--done" aria-hidden="true">
             <Icon name="check" size={16} />

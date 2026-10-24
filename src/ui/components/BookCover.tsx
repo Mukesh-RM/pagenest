@@ -1,5 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { cx } from '../utils/cx';
+import { FavoriteBadge } from './FavoriteBadge';
 
 /** Fixed, hand-checked pairs for generated title cards. Text on background is 4.5:1 or better in every pair. */
 export const TITLE_CARD_COLORS: ReadonlyArray<{ background: string; foreground: string }> = [
@@ -27,6 +28,8 @@ export interface BookCoverProps {
   src?: string;
   /** Eager loading for the first screen of covers (LCP); the default is lazy. */
   eager?: boolean;
+  /** Draws the small "Favorite" heart in the bottom-left corner. Off by default; cards draw their own badges. */
+  favorite?: boolean;
   className?: string;
 }
 
@@ -35,7 +38,7 @@ export interface BookCoverProps {
  * designed title card with the title in Literata and the author in Inter. Decorative for screen readers: the
  * title and author are announced by the card or sheet that contains it.
  */
-export function BookCover({ title, author, src, eager, className }: BookCoverProps) {
+export function BookCover({ title, author, src, eager, favorite, className }: BookCoverProps) {
   const [failed, setFailed] = useState<string | undefined>();
   const showImage = Boolean(src) && failed !== src;
   if (showImage) {
@@ -52,18 +55,20 @@ export function BookCover({ title, author, src, eager, className }: BookCoverPro
           draggable={false}
           onError={() => setFailed(src)}
         />
+        {favorite ? <FavoriteBadge /> : null}
       </span>
     );
   }
   const colors = TITLE_CARD_COLORS[titleCardIndex(title)]!;
   const style = { '--pn-cover-bg': colors.background, '--pn-cover-fg': colors.foreground } as CSSProperties;
   return (
-    <span className={cx('pn-cover', 'pn-cover--generated', className)} style={style} aria-hidden="true">
+    <span className={cx('pn-cover', 'pn-cover--generated', className)} style={style} aria-hidden={favorite ? undefined : 'true'}>
       <span className="pn-cover__inner">
         <span className="pn-cover__rule" />
         <span className="pn-cover__title">{title}</span>
         {author ? <span className="pn-cover__author">{author}</span> : null}
       </span>
+      {favorite ? <FavoriteBadge /> : null}
     </span>
   );
 }

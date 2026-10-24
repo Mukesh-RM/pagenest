@@ -8,10 +8,12 @@ export interface IconProps {
   /** Accessible name. Leave empty for decorative icons (they are hidden from screen readers). */
   label?: string;
   className?: string;
+  /** Fill the shape with the current color (a selected heart, for example). Default outline. */
+  filled?: boolean;
 }
 
 /** Lucide outline icon, 24 px grid, 2 px stroke, colored by `currentColor`. */
-export function Icon({ name, size = 24, label, className }: IconProps) {
+export function Icon({ name, size = 24, label, className, filled = false }: IconProps) {
   const nodes = ICON_NODES[name];
   const a11y = label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true };
   return (
@@ -20,7 +22,7 @@ export function Icon({ name, size = 24, label, className }: IconProps) {
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={filled ? 'currentColor' : 'none'}
       stroke="currentColor"
       strokeWidth={2}
       strokeLinecap="round"
