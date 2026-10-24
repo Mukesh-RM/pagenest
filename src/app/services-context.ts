@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { ProgressService, SampleBookProvider } from '@/app/contracts';
+import type { MiniPlayerSlot, ProgressService, SampleBookProvider } from '@/app/contracts';
 import type { DataClient } from '@/data/data-client';
 import type { PageNestDB } from '@/data/db';
 
@@ -14,6 +14,11 @@ export interface AppServices {
    * no sample card at all (see `SampleBookProvider`).
    */
   readonly sampleBook?: SampleBookProvider;
+  /**
+   * Optional persistent mini-player, supplied by the Audio owner. Without it the frame shows no
+   * mini-player and reserves no space for one (see `MiniPlayerSlot`).
+   */
+  readonly miniPlayerSlot?: MiniPlayerSlot;
 }
 
 export const ServicesContext = createContext<AppServices | undefined>(undefined);

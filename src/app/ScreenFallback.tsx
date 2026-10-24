@@ -19,3 +19,12 @@ export function ScreenFallback() {
 export function OnboardingFallback() {
   return <div className="min-h-full" aria-busy="true" />;
 }
+
+/** Fallback for the immersive book screens: the same skeleton with the page margins the frame does not add. */
+export function ImmersiveFallback() {
+  return (
+    <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
+      <ScreenFallback />
+    </div>
+  );
+}
