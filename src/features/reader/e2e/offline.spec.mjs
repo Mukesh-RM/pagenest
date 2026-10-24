@@ -33,7 +33,11 @@ async function firstPageDrawn(page, timeout = 30000) {
 }
 
 // (the small epub-engine and pdf-engine wrappers are precached; the big library chunks, the worker and the sample are runtime-cached)
-const EPUB_FILES = [/\/engine-foliate-[^/]+\.js$/, /\/peter-rabbit-[^/]+\.epub$/];
+const EPUB_FILES = [
+  /\/engine-foliate-[^/]+\.js$/,
+  /\/engine-foliate-formats-[^/]+\.js$/,
+  /\/peter-rabbit-[^/]+\.epub$/,
+];
 const PDF_FILES = [/\/engine-pdf-[^/]+\.js$/, /\/pdf\.worker\.min-[^/]+\.mjs$/];
 
 test('first visit, wait for idle, go offline, open the sample book: text shows (no reload first)', async ({ page, context }, info) => {
@@ -51,18 +55,43 @@ test('first visit, wait for idle, go offline, open the sample book: text shows (
   expect(errors.filter((e) => !/Failed to load resource|net::ERR_INTERNET_DISCONNECTED/.test(e))).toEqual([]);
 });
 
-test('first visit, wait for idle, go offline, reload the app: the sample book still opens and reads', async ({ page, context }) => {
+test('open the sample book first, go back, wait for the warm-up, go offline, reload: the sample still reads', async ({ page, context }, info) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Skip' }).click();
   await page.getByRole('button', { name: 'Add the sample book' }).click();
   await waitForBookText(page, { min: 100 });
+  const bookId = new URL(page.url()).pathname.split('/').pop();
   await page.goBack();
-  await waitForWarmUp(page, EPUB_FILES);
+  const warmMs = await waitForWarmUp(page, EPUB_FILES);
+  console.log(`[${info.project.name}] sample opened early: engines cached after warm-up in ${warmMs} ms`);
   await context.setOffline(true);
-  await page.goto('/');
-  await page.getByRole('link', { name: /Peter Rabbit/ }).or(page.getByText(/Peter Rabbit/).first()).first().click();
+  await page.reload();
+  await page.goto(`/read/${bookId}`);
   const text = await waitForBookText(page, { min: 100 });
   expect(text).toMatch(/Peter|Rabbit/i);
+});
+
+test('engine cache keeps one hashed build per chunk and drops stale names', async ({ page }, info) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Skip' }).click();
+  await waitForWarmUp(page, EPUB_FILES);
+  const stale = '/assets/engine-foliate-AAAAAAAA.js';
+  await page.evaluate(async (path) => {
+    const cache = await caches.open('pn-engines-v1');
+    await cache.put(`${location.origin}${path}`, new Response('// stale', { headers: { 'Content-Type': 'application/javascript' } }));
+  }, stale);
+  let files = await engineCache(page);
+  expect(files.some((f) => f.includes('AAAAAAAA'))).toBe(true);
+  await page.getByRole('button', { name: 'Add the sample book' }).click();
+  await waitForBookText(page, { min: 50 });
+  await page.goBack();
+  await waitForWarmUp(page, EPUB_FILES);
+  files = await engineCache(page);
+  const foliate = files.filter((f) => /\/engine-foliate-[^/]+\.js$/.test(f) && !f.includes('formats'));
+  expect(foliate.some((f) => f.includes('AAAAAAAA'))).toBe(false);
+  expect(foliate.length).toBeGreaterThanOrEqual(1);
+  expect(foliate.length).toBeLessThanOrEqual(2);
+  console.log(`[${info.project.name}] pruned stale engine-foliate entry; entries: ${foliate.join(', ')}`);
 });
 
 test('PDF: open it, go offline, reload, and read pages', async ({ page, context }, info) => {
