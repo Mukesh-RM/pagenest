@@ -1,0 +1,4 @@
+{
+  "_comment": "Explicit, reviewed exceptions for audit-licenses.mjs. Each entry needs name, version ('*' for any), license (the SPDX expression that was verified by reading the package's LICENSE) and a reason. Overrides are listed in docs/LICENSES.md. Keep this list empty unless a human reviewed the package.",
+  "overrides": []
+}
