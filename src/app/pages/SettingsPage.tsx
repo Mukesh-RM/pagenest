@@ -33,6 +33,8 @@ export function SettingsPage() {
   const { db } = useServices();
   const theme = useSettings((s) => s.themePreference);
   const customTheme = useSettings((s) => s.customTheme);
+  const contrastMode = useSettings((s) => s.contrastMode);
+  const setContrast = useSettings((s) => s.setContrastMode);
   const textSize = useSettings((s) => s.fontSizePx);
   const setTheme = useSettings((s) => s.setThemePreference);
   const setCustom = useSettings((s) => s.setCustomTheme);
@@ -69,6 +71,8 @@ export function SettingsPage() {
       onThemeChange={(value: ThemePreference) => void setTheme(db, value)}
       customTheme={customTheme}
       onCustomThemeChange={(colors: CustomThemeInput) => void setCustom(db, colors)}
+      contrastMode={contrastMode}
+      onContrastModeChange={(mode) => void setContrast(db, mode)}
       textSize={textSize}
       onTextSizeChange={(px) => void setSize(db, clampFontSize(px))}
       install={<InstallHelp />}

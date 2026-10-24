@@ -282,6 +282,19 @@ describe('theme, text size and install wiring (design system pieces)', () => {
     await waitFor(() => expect(document.documentElement.dataset['theme']).toBe('custom'));
   });
 
+  it('High contrast: choosing it in Settings sets data-contrast on the page and saves it; a saved choice is restored on start', async () => {
+    renderApp(services, { path: '/settings' });
+    fireEvent.click(await screen.findByRole('radio', { name: 'High contrast' }));
+    await waitFor(() => expect(document.documentElement.dataset['contrast']).toBe('high'));
+    await waitFor(async () => expect((await services.db.settings.get('contrastMode'))?.value).toBe('high'));
+    cleanup();
+    document.documentElement.removeAttribute('data-contrast');
+    resetSettings();
+    renderApp(services, { path: '/settings' });
+    await waitFor(() => expect(document.documentElement.dataset['contrast']).toBe('high'));
+    expect(await screen.findByRole('radio', { name: 'High contrast' })).toBeChecked();
+  });
+
   it('the text size control has working Smaller and Larger buttons that save the size', async () => {
     renderApp(services, { path: '/settings' });
     fireEvent.click(await screen.findByRole('button', { name: 'Larger text' }));
