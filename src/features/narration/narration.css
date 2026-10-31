@@ -48,6 +48,13 @@
   color: #fafaf7;
 }
 
+.pn-narration-voices__section-label {
+  margin: 12px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgb(var(--pn-text-rgb) / 0.72);
+}
+
 .pn-narration-voices {
   list-style: none;
   margin: 0;

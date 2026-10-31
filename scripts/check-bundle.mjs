@@ -34,6 +34,7 @@ export const ENGINE_CHUNK_BUDGETS_KB = [
   { pattern: /^engine-foliate-/, label: 'engine chunk (epub)', budget: 60 },
   { pattern: /^engine-tts-ort-/, label: 'engine chunk (onnxruntime-web)', budget: 130 },
   { pattern: /^piper\.worker-/, label: 'worker chunk (piper tts)', budget: 90 },
+  { pattern: /^clone\.worker-/, label: 'worker chunk (voice clone)', budget: 90 },
 ];
 
 const kb = (bytes) => bytes / 1000;
