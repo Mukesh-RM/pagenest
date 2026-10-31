@@ -10,14 +10,11 @@ export function DictionarySettingsPanel() {
   const { data } = useServices();
   const engine = useMemo(() => createDictionaryEngine({ data }), [data]);
   const [busy, setBusy] = useState<string | undefined>();
-  const [ready, setReady] = useState({ definitions: false, translateEnHi: false });
+  const [tick, setTick] = useState(0);
 
   const refresh = useCallback(async () => {
     await engine.hydrate();
-    setReady({
-      definitions: engine.isReady(),
-      translateEnHi: engine.isTranslationReady('translate-en-hi'),
-    });
+    setTick((n) => n + 1);
   }, [engine]);
 
   useEffect(() => {
@@ -34,44 +31,52 @@ export function DictionarySettingsPanel() {
     }
   };
 
+  void tick;
+
   return (
     <section className="pn-settings-card" aria-labelledby="pn-dict-settings-title">
       <h2 id="pn-dict-settings-title" className="pn-settings-card__title">
         Dictionary and translation
       </h2>
       <p className="pn-settings-card__lead">Free offline packs. Nothing is sent to a server.</p>
-      {engine.listDefinitionPacks().map((pack) => (
-        <div key={pack.id} className="pn-dict-settings__row">
-          <strong>{pack.name}</strong>
-          <span className="pn-dict-settings__meta">
-            {formatBytes(pack.sizeBytes)} · {pack.license}
-            {ready.definitions ? ' · On device' : ''}
-          </span>
-          <Button
-            variant="secondary"
-            disabled={busy === pack.id || ready.definitions}
-            onClick={() => void install(pack.id, () => engine.ensureDefinitionsPack())}
-          >
-            {ready.definitions ? 'Installed' : busy === pack.id ? 'Downloading…' : 'Download'}
-          </Button>
-        </div>
-      ))}
-      {engine.listTranslationPacks().map((pack) => (
-        <div key={pack.id} className="pn-dict-settings__row">
-          <strong>{pack.name}</strong>
-          <span className="pn-dict-settings__meta">
-            {formatBytes(pack.sizeBytes)} · {pack.license}
-            {engine.isTranslationReady(pack.id) ? ' · On device' : ''}
-          </span>
-          <Button
-            variant="secondary"
-            disabled={busy === pack.id || engine.isTranslationReady(pack.id)}
-            onClick={() => void install(pack.id, () => engine.ensureTranslationPack(pack.id))}
-          >
-            {engine.isTranslationReady(pack.id) ? 'Installed' : busy === pack.id ? 'Downloading…' : 'Download'}
-          </Button>
-        </div>
-      ))}
+      {engine.listDefinitionPacks().map((pack) => {
+        const installed = engine.isDefinitionPackReady(pack.id);
+        return (
+          <div key={pack.id} className="pn-dict-settings__row">
+            <strong>{pack.name}</strong>
+            <span className="pn-dict-settings__meta">
+              {formatBytes(pack.sizeBytes)} · {pack.license}
+              {installed ? ' · On device' : ''}
+            </span>
+            <Button
+              variant="secondary"
+              disabled={busy === pack.id || installed}
+              onClick={() => void install(pack.id, () => engine.ensureDefinitionsPack(pack.id))}
+            >
+              {installed ? 'Installed' : busy === pack.id ? 'Downloading…' : 'Download'}
+            </Button>
+          </div>
+        );
+      })}
+      {engine.listTranslationPacks().map((pack) => {
+        const installed = engine.isTranslationReady(pack.id);
+        return (
+          <div key={pack.id} className="pn-dict-settings__row">
+            <strong>{pack.name}</strong>
+            <span className="pn-dict-settings__meta">
+              {formatBytes(pack.sizeBytes)} · {pack.license}
+              {installed ? ' · On device' : ''}
+            </span>
+            <Button
+              variant="secondary"
+              disabled={busy === pack.id || installed}
+              onClick={() => void install(pack.id, () => engine.ensureTranslationPack(pack.id))}
+            >
+              {installed ? 'Installed' : busy === pack.id ? 'Downloading…' : 'Download'}
+            </Button>
+          </div>
+        );
+      })}
     </section>
   );
 }

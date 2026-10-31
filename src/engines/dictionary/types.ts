@@ -10,6 +10,12 @@ export interface DictionaryPackMeta {
   readonly url: string;
   readonly license: string;
   readonly attribution: string;
+  /** Pack encoding on disk / over the wire. */
+  readonly format?: 'json' | 'wnpk' | 'wnpk-gz';
+  /** Mozilla registry keys (e.g. `enes`, `esen`) downloaded for neural translation. */
+  readonly bergamotKeys?: readonly string[];
+  /** Instant word-level fallback JSON (always fetched with the pack). */
+  readonly lexiconUrl?: string;
 }
 
 export interface DefinitionSense {
@@ -41,7 +47,11 @@ export interface DictionaryEngine {
   readonly id: string;
   /** Whether a definitions pack is loaded and ready for sync lookup. */
   isReady(): boolean;
-  ensureDefinitionsPack(options?: { signal?: AbortSignal; onProgress?: (p: PackProgress) => void }): Promise<void>;
+  isDefinitionPackReady(packId: string): boolean;
+  ensureDefinitionsPack(
+    packId?: string,
+    options?: { signal?: AbortSignal; onProgress?: (p: PackProgress) => void },
+  ): Promise<void>;
   /** Sync after {@link ensureDefinitionsPack}; target under 1 ms for cached words. */
   define(word: string): DefinitionResult;
   listTranslationPacks(): readonly DictionaryPackMeta[];

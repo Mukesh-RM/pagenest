@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useServices } from '@/app/services-context';
-import { WORDNET_EN_CORE } from '@/engines/dictionary/wordnet/catalog';
-import { TRANSLATE_EN_HI } from '@/engines/dictionary/bergamot/catalog';
+import { PREFERRED_DEFINITION_PACK } from '@/engines/dictionary/wordnet/catalog';
+import { translationPackForLanguage } from '@/engines/dictionary/bergamot/catalog';
 import type { DefinitionResult, TranslationResult } from '@/engines/dictionary/types';
 import type { ReaderSelection } from '@/engines/reader/types';
 import { createDictionaryEngine } from './dictionary-engine-factory';
@@ -32,8 +32,12 @@ export default function DictionaryHost({
   onClose,
 }: DictionaryHostProps) {
   const { data } = useServices();
-  const engine = useMemo(() => createDictionaryEngine({ data, defaultTranslationPair: TRANSLATE_EN_HI.id }), [data]);
-  const [word, setWord] = useState('');
+  const translationPair = useMemo(() => translationPackForLanguage(bookLanguage), [bookLanguage]);
+  const engine = useMemo(
+    () => createDictionaryEngine({ data, defaultTranslationPair: translationPair.id }),
+    [data, translationPair.id],
+  );
+  const [query, setQuery] = useState('');
   const [anchor, setAnchor] = useState<DOMRect | undefined>();
   const [definition, setDefinition] = useState<DefinitionResult | undefined>();
   const [translation, setTranslation] = useState<TranslationResult | undefined>();
@@ -50,10 +54,11 @@ export default function DictionaryHost({
   }, [engine]);
 
   const runLookup = useCallback(
-    async (query: string, mode: 'define' | 'translate' | 'both', rect?: DOMRect) => {
-      const w = primaryWord(query);
-      if (!w) return;
-      setWord(w);
+    async (raw: string, mode: 'define' | 'translate' | 'both', rect?: DOMRect) => {
+      const defineWord = primaryWord(raw);
+      if (!defineWord && !raw.trim()) return;
+      const translateText = mode === 'translate' && selection?.text?.trim() ? selection.text.trim() : raw.trim();
+      setQuery(translateText || defineWord);
       setAnchor(rect);
       setDefinition(undefined);
       setTranslation(undefined);
@@ -64,24 +69,26 @@ export default function DictionaryHost({
         const needDef = mode === 'define' || mode === 'both';
         const needTr = mode === 'translate' || mode === 'both';
         if (needDef && !engine.isReady()) {
-          setDownloadLabel(`${formatSize(WORDNET_EN_CORE.sizeBytes)} · ${WORDNET_EN_CORE.license}`);
+          setDownloadLabel(`${formatSize(PREFERRED_DEFINITION_PACK.sizeBytes)} · ${PREFERRED_DEFINITION_PACK.license}`);
           setNeedsDownload(true);
           return;
         }
-        if (needTr && !engine.isTranslationReady(TRANSLATE_EN_HI.id)) {
-          setDownloadLabel(`${formatSize(TRANSLATE_EN_HI.sizeBytes)} · ${TRANSLATE_EN_HI.license}`);
+        if (needTr && !engine.isTranslationReady(translationPair.id)) {
+          setDownloadLabel(`${formatSize(translationPair.sizeBytes)} · ${translationPair.license}`);
           setNeedsDownload(true);
           return;
         }
-        if (needDef) setDefinition(engine.define(w));
+        if (needDef && defineWord) setDefinition(engine.define(defineWord));
         if (needTr) {
-          setTranslation(await engine.translate(w, TRANSLATE_EN_HI.id, bookLanguage?.slice(0, 2) ?? 'en'));
+          setTranslation(
+            await engine.translate(translateText, translationPair.id, bookLanguage?.slice(0, 2) ?? 'en'),
+          );
         }
       } finally {
         setLoading(false);
       }
     },
-    [bookLanguage, engine],
+    [bookLanguage, engine, selection?.text, translationPair],
   );
 
   const handleDownload = useCallback(async () => {
@@ -89,13 +96,13 @@ export default function DictionaryHost({
     setNeedsDownload(false);
     try {
       await engine.ensureDefinitionsPack();
-      await engine.ensureTranslationPack(TRANSLATE_EN_HI.id);
-      const mode = lookupMode === 'translate' ? 'translate' : 'both';
-      await runLookup(word, mode, anchor);
+      await engine.ensureTranslationPack(translationPair.id);
+      const mode = lookupMode === 'translate' ? 'translate' : lookupMode === 'define' ? 'define' : 'both';
+      await runLookup(query, mode, anchor);
     } finally {
       setLoading(false);
     }
-  }, [anchor, engine, lookupMode, runLookup, word]);
+  }, [anchor, engine, lookupMode, query, runLookup, translationPair.id]);
 
   useEffect(() => {
     if (!lookupToken || !lookupMode || !selection?.text) return;
@@ -129,11 +136,11 @@ export default function DictionaryHost({
     };
   }, [hostRef, runLookup, selection?.text]);
 
-  if (!word) return null;
+  if (!query) return null;
 
   return (
     <DictionaryPopup
-      word={word}
+      word={primaryWord(query) || query}
       {...(anchor ? { anchor } : {})}
       {...(definition ? { definition } : {})}
       {...(translation ? { translation } : {})}
@@ -142,7 +149,7 @@ export default function DictionaryHost({
       {...(downloadLabel ? { downloadLabel } : {})}
       onDownload={() => void handleDownload()}
       onClose={() => {
-        setWord('');
+        setQuery('');
         setAnchor(undefined);
         onClose();
       }}

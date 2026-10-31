@@ -8,10 +8,10 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 ## Summary
 
-- Installed packages audited: 753 (91 production, 662 development)
+- Installed packages audited: 754 (92 production, 662 development)
 - Source of data: package-lock.json + node_modules
-- QA toolchain (`tests/`, dev only, never shipped): 211 packages from package-lock.json; OK: 207, OK with note: 3, NOT OK: 1
-- OK: 724, OK with note: 29, NOT OK: 0
+- QA toolchain (`tests/`, dev only, never shipped): 211 packages from package-lock.json + node_modules; OK: 208, OK with note: 3, NOT OK: 0
+- OK: 724, OK with note: 30, NOT OK: 0
 - Planned assets with open risks: 6 (see Flagged items)
 
 ## Flagged items (GPL / non-commercial / unknown)
@@ -20,7 +20,6 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 
 | Kind | Name | License | Free replacement or next step |
 |---|---|---|---|
-| npm (dev) | @pagenest/e2e-port@unknown | UNKNOWN | Remove the dependency, pick a permissive alternative, or add a reviewed entry to scripts/audit-license-overrides.json. |
 | planned | Piper engine, OHF-Voice/piper1-gpl (piper-tts 1.3+) | GPL-3.0-or-later | Keep inference on archived rhasspy/piper (MIT) only for experiments, or adopt a non-GPL phonemizer plus ONNX Runtime Web; run GPL training tools outside the PWA. |
 | planned | espeak-ng (phonemizer inside Piper and Kokoro WASM stacks) | GPL-3.0-or-later | Rule-based or dictionary phonemizer (no eSpeak), or Web Speech API (Tier 0) until a permissive WASM phonemizer is vetted. |
 | planned | Piper voice models (each voice) | per voice, see MODEL_CARD | Ship only voices marked OK in scripts/audit-models.json (for example en_US-libritts-high, CC BY 4.0). |
@@ -130,6 +129,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @babel/traverse | 7.29.10 | dev | MIT | https://www.npmjs.com/package/@babel/traverse/v/7.29.10 | OK |
 | @babel/types | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/types/v/7.29.11 | OK |
 | @borewit/text-codec | 0.2.3 | prod | MIT | https://www.npmjs.com/package/@borewit/text-codec/v/0.2.3 | OK |
+| @browsermt/bergamot-translator | 0.4.9 | prod | MPL-2.0 | https://www.npmjs.com/package/@browsermt/bergamot-translator/v/0.4.9 | OK (note) |
 | @csstools/color-helpers | 5.1.0 | dev | MIT-0 | https://www.npmjs.com/package/@csstools/color-helpers/v/5.1.0 | OK |
 | @csstools/css-calc | 2.1.4 | dev | MIT | https://www.npmjs.com/package/@csstools/css-calc/v/2.1.4 | OK |
 | @csstools/css-color-parser | 3.1.0 | dev | MIT | https://www.npmjs.com/package/@csstools/css-color-parser/v/3.1.0 | OK |
@@ -788,6 +788,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 
 Notes:
 
+- **@browsermt/bergamot-translator@0.4.9**: Reviewed override (2026-10-31. Mozilla Bergamot / Firefox Translations browser runtime. Lazy-loaded (engine-bergamot chunk) for optional offline sentence translation; used unmodified. MPL-2.0 requires keeping the license notice (docs/LICENSES.md). CC-BY model weights download separately from Mozilla S3 into OPFS.). Declared: MPL-2.0.
 - **@img/sharp-darwin-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
 - **@img/sharp-darwin-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
 - **@img/sharp-freebsd-wasm32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
@@ -857,7 +858,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | @formatjs/icu-messageformat-parser | 2.11.4 | MIT | https://www.npmjs.com/package/@formatjs/icu-messageformat-parser/v/2.11.4 | OK |
 | @formatjs/icu-skeleton-parser | 1.8.16 | MIT | https://www.npmjs.com/package/@formatjs/icu-skeleton-parser/v/1.8.16 | OK |
 | @formatjs/intl-localematcher | 0.6.2 | MIT | https://www.npmjs.com/package/@formatjs/intl-localematcher/v/0.6.2 | OK |
-| @pagenest/e2e-port | unknown | UNKNOWN | https://www.npmjs.com/package/@pagenest/e2e-port | NOT OK |
+| @pagenest/e2e-port | unknown | MIT | https://www.npmjs.com/package/@pagenest/e2e-port | OK |
 | @paulirish/trace_engine | 0.0.19 | BSD-3-Clause | https://www.npmjs.com/package/@paulirish/trace_engine/v/0.0.19 | OK |
 | @puppeteer/browsers | 2.3.0 | Apache-2.0 | https://www.npmjs.com/package/@puppeteer/browsers/v/2.3.0 | OK |
 | @sentry/core | 6.19.7 | BSD-3-Clause | https://www.npmjs.com/package/@sentry/core/v/6.19.7 | OK |
@@ -1040,9 +1041,8 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 Notes:
 
 - **@axe-core/playwright@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
-- **@pagenest/e2e-port@unknown**: unknown (no license declared)
 - **axe-core@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
-- **parse-cache-control@1.0.1**: Reviewed override (2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped.). Declared: none.
+- **parse-cache-control@1.0.1**: Reviewed override (2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped.). Declared: BSD.
 
 ### Reviewed overrides
 
@@ -1054,6 +1054,7 @@ Notes:
 | @img/sharp-libvips-* | 1.3.4 | declared | dev only (fails if in prod tree, dist/ or public/) | 2026-10-24, Decision 9. LGPL-3.0-or-later prebuilt libvips binaries, installed only as optional dependencies of sharp@0.35.5. sharp is a devDependency used by one tool, scripts/pwa/generate-icons.mjs (renders the SVG icons to PNG). They are not in the production tree (npm ls --omit=dev), and dist/ and public/ contain no libvips code, no native binaries and no 'sharp' or 'libvips' strings. The committed PNG icons are the tool's output, hold only IHDR, pHYs, IDAT and IEND chunks (no embedded profile or text) and are not LGPL material. LGPL obligations apply to distributing the binaries, and InkQuiet does not. The audit fails if one of these appears in the production tree, in dist/ or in public/. |
 | duck | 0.1.12 | BSD-2-Clause | any | 2026-10-31. Transitive prod dependency (mammoth → lop → duck). package.json declares ambiguous "BSD"; the published LICENSE file is the 2-clause BSD license (Copyright 2013 Michael Fogel). |
 | @img/sharp-* | 0.35.5 | declared | dev only (fails if in prod tree, dist/ or public/) | 2026-10-24, Decision 9. Platform packages of sharp@0.35.5 (Apache-2.0; the wasm32 and win32 ones bundle LGPL libvips and say 'Apache-2.0 AND LGPL-3.0-or-later'). Same review as @img/sharp-libvips-*: optional dependencies of the devDependency sharp, used only by scripts/pwa/generate-icons.mjs, absent from the production tree and from dist/ and public/. Fails if one appears in the production tree, dist/ or public/. |
+| @browsermt/bergamot-translator | 0.4.9 | MPL-2.0 | any | 2026-10-31. Mozilla Bergamot / Firefox Translations browser runtime. Lazy-loaded (engine-bergamot chunk) for optional offline sentence translation; used unmodified. MPL-2.0 requires keeping the license notice (docs/LICENSES.md). CC-BY model weights download separately from Mozilla S3 into OPFS. |
 
 ## Fonts
 
@@ -1131,6 +1132,7 @@ Source: `scripts/audit-models.json`, procedure and per-voice evidence in `docs/M
 | Orpheus TTS 3B (canopylabs/orpheus-3b-0.1-ft) | apache-2.0 tag on a Llama 3.2 base | NOT OK |
 | CMU Pronouncing Dictionary (cmusphinx/cmudict) | BSD-2-Clause style (CMU) | OK |
 | WordNet 3.1 English gloss pack (Princeton) | WordNet License | OK |
+| WordNet 3.1 full English WNPK pack (Princeton) | WordNet License | OK |
 | Firefox Translations / Bergamot (Mozilla) | MPL-2.0 (engine) + CC-BY per model card (weights) | OK |
 | Wiktionary-derived bilingual lexicon sample | CC BY-SA 4.0 | OK |
 

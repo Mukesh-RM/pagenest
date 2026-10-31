@@ -13,6 +13,8 @@
     "build": "tsc -b && vite build && node scripts/check-bundle.mjs && node scripts/check-no-seed-in-dist.mjs",
     "postinstall": "node scripts/copy-ort-wasm.mjs",
     "build:seed-audio": "VITE_PN_SEED_AUDIO=1 npm run build",
+    "build:wordnet-full": "node scripts/build-wordnet-full-pack.mjs",
+    "build:bergamot-registry": "node scripts/build-bergamot-registry.mjs && node scripts/build-bergamot-catalog.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc -b",
@@ -32,6 +34,7 @@
     "playwright:install": "playwright install --with-deps"
   },
   "dependencies": {
+    "@browsermt/bergamot-translator": "^0.4.9",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "foliate-js": "^1.0.1",
