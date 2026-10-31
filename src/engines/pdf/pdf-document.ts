@@ -296,6 +296,10 @@ export class PdfReaderDocument implements ReaderDocumentExt {
     return this.#selection.on(listener);
   }
 
+  onWordTap(): Unsubscribe {
+    return () => undefined;
+  }
+
   onTap(listener: (zone: 'left' | 'center' | 'right') => void): Unsubscribe {
     return this.#taps.on(listener);
   }

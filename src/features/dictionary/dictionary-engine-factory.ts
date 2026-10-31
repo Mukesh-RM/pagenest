@@ -184,6 +184,7 @@ export function createDictionaryEngine(deps: {
     listDefinitionPacks: () => DEFINITION_PACKS,
     listTranslationPacks: () => TRANSLATION_PACKS,
     isTranslationReady: (pairId) => {
+      if (isMockBergamotMode()) return true;
       const meta = translationPackById(pairId);
       if (!meta) return false;
       if (!lexicons.has(pairId)) return false;

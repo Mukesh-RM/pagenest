@@ -1,41 +1,29 @@
 import { test, expect } from '@playwright/test';
 import { launch, gotoTab } from './support/app';
-
-async function openSampleInReader(page: import('@playwright/test').Page): Promise<void> {
-  await gotoTab(page, 'Library');
-  const add = page.getByRole('button', { name: 'Add the sample book' });
-  await add.scrollIntoViewIfNeeded();
-  await add.click({ timeout: 20_000 });
-  await expect(page).toHaveURL(/\/read\//, { timeout: 30_000 });
-  await waitForReflowText(page);
-}
-
-async function waitForReflowText(page: import('@playwright/test').Page): Promise<void> {
-  const deadline = Date.now() + 90_000;
-  for (;;) {
-    for (const frame of page.frames()) {
-      if (frame === page.mainFrame() || !frame.url().startsWith('blob:')) continue;
-      const len = await frame.evaluate(() => document.body?.innerText?.length ?? 0).catch(() => 0);
-      if (len >= 200) return;
-    }
-    if (Date.now() > deadline) throw new Error('Book text did not render in the reader.');
-    await page.waitForTimeout(50);
-  }
-}
-
-async function selectAllBookText(page: import('@playwright/test').Page): Promise<void> {
-  const frame = page.frames().find((f) => f.url().startsWith('blob:'));
-  if (!frame) throw new Error('Reflow frame not found.');
-  await frame.evaluate(() => {
-    const range = document.createRange();
-    range.selectNodeContents(document.body);
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
-  });
-}
+import {
+  installDictionaryStarterPacks,
+  installHindiTranslationPack,
+  openSampleBookInReader,
+  dismissReaderInterstitials,
+  selectPhraseInFoliate,
+  tapWordInFoliate,
+} from './support/foliate-reader';
 
 test.describe('Offline dictionary in reader', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem('pn.hint.ios-install-sheet', '1');
+        localStorage.setItem('pn.hint.install-banner', '1');
+      } catch {
+        /* storage blocked */
+      }
+    });
+  });
+
+  test.describe('Settings packs', () => {
+    test.describe.configure({ mode: 'serial' });
+
   test('settings show dictionary packs with download sizes', async ({ page }) => {
     await launch(page);
     await gotoTab(page, 'Settings');
@@ -59,45 +47,38 @@ test.describe('Offline dictionary in reader', () => {
     await expect(page.getByRole('button', { name: /^Installed$/i }).first()).toBeVisible({ timeout: 30_000 });
     await page.screenshot({ path: '../docs/screens/dictionary/pack-installed.png', fullPage: true });
   });
+  });
 
-  test.skip('reader define popup after installing WordNet starter', async ({ page }) => {
-    test.setTimeout(120_000);
+  test.describe('Reader dictionary UI', () => {
+    test.describe.configure({ mode: 'serial' });
+
+  test('reader tap-word define popup after installing WordNet starter', async ({ page }) => {
+    test.setTimeout(240_000);
     await launch(page);
-    await gotoTab(page, 'Settings');
-    await page.getByRole('heading', { name: /dictionary and translation/i }).waitFor({ timeout: 15_000 });
-    const starterRow = page
-      .getByText(/English definitions \(WordNet starter\)/i)
-      .locator('xpath=ancestor::div[contains(@class,"pn-dict-settings__row")]');
-    const starterBtn = starterRow.getByRole('button', { name: /^Download$/ });
-    if (await starterBtn.isEnabled()) await starterBtn.click();
-    await expect(starterRow.getByRole('button', { name: /^Installed$/i })).toBeVisible({ timeout: 30_000 });
-
-    await openSampleInReader(page);
-    await selectAllBookText(page);
-    const defineBtn = page.getByRole('button', { name: /^Define$/i });
-    await defineBtn.waitFor({ timeout: 10_000 });
-    await defineBtn.click();
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10_000 });
+    await installDictionaryStarterPacks(page);
+    await gotoTab(page, 'Library');
+    await openSampleBookInReader(page);
+    await dismissReaderInterstitials(page);
+    await tapWordInFoliate(page, 'Rabbit');
+    await expect(page.locator('.pn-dict-popup')).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { level: 2, name: /rabbit/i })).toBeVisible();
     await page.screenshot({ path: '../docs/screens/dictionary/reader-define-popup.png' });
   });
 
-  test.skip('reader selection translate shows offline sentence (mock Bergamot)', async ({ page }) => {
-    test.setTimeout(120_000);
+  test('reader selection translate shows offline sentence (mock Bergamot)', async ({ page }) => {
+    test.setTimeout(240_000);
     await launch(page);
-    await gotoTab(page, 'Settings');
-    await page.getByRole('heading', { name: /dictionary and translation/i }).waitFor({ timeout: 15_000 });
-    const hiRow = page.getByText(/English ↔ Hindi/i).locator('xpath=ancestor::div[contains(@class,"pn-dict-settings__row")]');
-    const hiBtn = hiRow.getByRole('button', { name: /^Download$/ });
-    if (await hiBtn.isEnabled()) await hiBtn.click();
-    await expect(hiRow.getByRole('button', { name: /^Installed$/i })).toBeVisible({ timeout: 30_000 });
-
-    await openSampleInReader(page);
-    await selectAllBookText(page);
-    const translateBtn = page.getByRole('button', { name: /^Translate$/i });
-    await translateBtn.waitFor({ timeout: 10_000 });
-    await translateBtn.click();
-    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 10_000 });
+    await installDictionaryStarterPacks(page);
+    await installHindiTranslationPack(page);
+    await gotoTab(page, 'Library');
+    await openSampleBookInReader(page);
+    await dismissReaderInterstitials(page);
+    await selectPhraseInFoliate(page, 'Peter Rabbit');
+    await page.getByRole('toolbar', { name: 'Selected text' }).scrollIntoViewIfNeeded();
+    await page.getByRole('button', { name: /Translate selection/i }).evaluate((el) => (el as HTMLElement).click());
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText(/\[offline\]/i)).toBeVisible({ timeout: 15_000 });
     await page.screenshot({ path: '../docs/screens/dictionary/reader-translate-sentence.png' });
+  });
   });
 });

@@ -30,6 +30,8 @@ export interface ReaderDocumentExt extends ReaderDocument {
   onFootnote(listener: (note: { text: string }) => void): Unsubscribe;
   /** A highlight was tapped. */
   onHighlightTap(listener: (id: string) => void): Unsubscribe;
+  /** Quick tap on a word in reflow text; `anchor` is in host coordinates for popovers. */
+  onWordTap(listener: (payload: { word: string; anchor: DOMRect }) => void): Unsubscribe;
   /** Jump to a range (search hit, highlight). Resolves once visible. */
   goToRange(range: TextRange): Promise<void>;
   /** Mark search hits on the page; pass `[]` to clear. */

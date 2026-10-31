@@ -298,7 +298,7 @@
   position: absolute;
   left: var(--pn-space-3);
   right: var(--pn-space-3);
-  bottom: var(--pn-space-3);
+  bottom: calc(var(--pn-space-3) + 5.5rem);
   z-index: 4;
   display: flex;
   flex-wrap: wrap;

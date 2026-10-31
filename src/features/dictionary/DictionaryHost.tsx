@@ -6,12 +6,14 @@ import type { DefinitionResult, TranslationResult } from '@/engines/dictionary/t
 import type { ReaderSelection } from '@/engines/reader/types';
 import { createDictionaryEngine } from './dictionary-engine-factory';
 import { DictionaryPopup } from './DictionaryPopup';
-import { primaryWord, wordAtPoint } from './word';
+import { primaryWord } from './word';
 import './dictionary.css';
 
 export interface DictionaryHostProps {
   readonly hostRef: React.RefObject<HTMLElement | null>;
   readonly selection: ReaderSelection | undefined;
+  readonly selectionAnchor?: DOMRect;
+  readonly wordTap?: { readonly token: number; readonly word: string; readonly anchor: DOMRect };
   readonly bookLanguage?: string;
   readonly lookupToken: number;
   readonly lookupMode: 'define' | 'translate' | undefined;
@@ -23,9 +25,18 @@ function formatSize(bytes: number): string {
   return `${(bytes / 1_000_000).toFixed(1)} MB`;
 }
 
+/** Foliate reports anchors in host coordinates; the popup is `position: fixed`. */
+function anchorInViewport(host: HTMLElement | null, rect: DOMRect | undefined): DOMRect | undefined {
+  if (!rect || !host) return rect;
+  const box = host.getBoundingClientRect();
+  return new DOMRect(box.left + rect.left, box.top + rect.top, rect.width, rect.height);
+}
+
 export default function DictionaryHost({
   hostRef,
   selection,
+  selectionAnchor,
+  wordTap,
   bookLanguage,
   lookupToken,
   lookupMode,
@@ -44,7 +55,6 @@ export default function DictionaryHost({
   const [loading, setLoading] = useState(false);
   const [needsDownload, setNeedsDownload] = useState(false);
   const [downloadLabel, setDownloadLabel] = useState<string | undefined>();
-  const tapRef = useRef<{ x: number; y: number; t: number } | undefined>();
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -74,9 +84,11 @@ export default function DictionaryHost({
           return;
         }
         if (needTr && !engine.isTranslationReady(translationPair.id)) {
-          setDownloadLabel(`${formatSize(translationPair.sizeBytes)} · ${translationPair.license}`);
-          setNeedsDownload(true);
-          return;
+          if (import.meta.env.VITE_PN_MOCK_BERGAMOT !== '1') {
+            setDownloadLabel(`${formatSize(translationPair.sizeBytes)} · ${translationPair.license}`);
+            setNeedsDownload(true);
+            return;
+          }
         }
         if (needDef && defineWord) setDefinition(engine.define(defineWord));
         if (needTr) {
@@ -106,35 +118,15 @@ export default function DictionaryHost({
 
   useEffect(() => {
     if (!lookupToken || !lookupMode || !selection?.text) return;
-    const rect = hostRef.current?.getBoundingClientRect();
+    const rect = anchorInViewport(hostRef.current, selectionAnchor) ?? hostRef.current?.getBoundingClientRect();
     void runLookup(selection.text, lookupMode === 'translate' ? 'translate' : 'define', rect);
-  }, [lookupToken, lookupMode, selection?.text, runLookup, hostRef]);
+  }, [lookupToken, lookupMode, selection?.text, selectionAnchor, runLookup, hostRef]);
 
   useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return undefined;
-    const onPointerDown = (e: PointerEvent) => {
-      if (e.button !== 0) return;
-      tapRef.current = { x: e.clientX, y: e.clientY, t: performance.now() };
-    };
-    const onPointerUp = (e: PointerEvent) => {
-      const start = tapRef.current;
-      tapRef.current = undefined;
-      if (!start || e.button !== 0) return;
-      if (performance.now() - start.t > 450) return;
-      if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 12) return;
-      if (selection?.text) return;
-      const hit = wordAtPoint(host.ownerDocument, e.clientX, e.clientY);
-      if (!hit) return;
-      void runLookup(hit, 'both', new DOMRect(e.clientX - 20, e.clientY - 8, 40, 16));
-    };
-    host.addEventListener('pointerdown', onPointerDown);
-    host.addEventListener('pointerup', onPointerUp);
-    return () => {
-      host.removeEventListener('pointerdown', onPointerDown);
-      host.removeEventListener('pointerup', onPointerUp);
-    };
-  }, [hostRef, runLookup, selection?.text]);
+    if (!wordTap?.token) return;
+    const rect = anchorInViewport(hostRef.current, wordTap.anchor) ?? wordTap.anchor;
+    void runLookup(wordTap.word, 'define', rect);
+  }, [wordTap?.token, wordTap?.word, wordTap?.anchor, runLookup, hostRef]);
 
   if (!query) return null;
 

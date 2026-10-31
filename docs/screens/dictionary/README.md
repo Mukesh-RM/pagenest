@@ -6,8 +6,8 @@ Captured by `tests/e2e/dictionary.spec.ts` (Playwright). E2E builds use `VITE_PN
 |---|---|
 | `settings-packs.png` | Settings: optional packs with sizes and licences |
 | `pack-installed.png` | After downloading the WordNet starter pack |
-| `reader-define-popup.png` | Reader Define popup (capture when foliate selection e2e is stable) |
-| `reader-translate-sentence.png` | Reader Translate on a sentence (capture when foliate selection e2e is stable) |
+| `reader-define-popup.png` | Reader: tap a word (foliate iframe) to open the Define popup |
+| `reader-translate-sentence.png` | Reader: select text and Translate (mock Bergamot shows `[offline]` prefix) |
 
 ## Pack sizes (declared in Settings, approximate)
 

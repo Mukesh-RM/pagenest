@@ -112,6 +112,7 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
   #closed = false;
   readonly #position = new Emitter<ReaderPosition>();
   readonly #selection = new Emitter<ReaderSelection | undefined>();
+  readonly #wordTap = new Emitter<{ word: string; anchor: DOMRect }>();
   readonly #taps = new Emitter<'left' | 'center' | 'right'>();
   readonly #keys = new Emitter<KeyboardLike>();
   readonly #hlTaps = new Emitter<string>();
@@ -124,6 +125,7 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
   readonly #cleanups: Array<() => void> = [];
   readonly #docs = new Set<Document>();
   #annotationTapAt = 0;
+  #wordTapAt = 0;
   #lastIndex: number | undefined;
   #relocateSeq = 0;
   #lastSelectionKey = '';
@@ -292,6 +294,10 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
     return this.#selection.on(listener);
   }
 
+  onWordTap(listener: (payload: { word: string; anchor: DOMRect }) => void): Unsubscribe {
+    return this.#wordTap.on(listener);
+  }
+
   onTap(listener: (zone: 'left' | 'center' | 'right') => void): Unsubscribe {
     return this.#taps.on(listener);
   }
@@ -334,13 +340,15 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
   }
 
   selectionRect(): DOMRect | undefined {
-    const content = this.#view.renderer.getContents()[0];
-    const sel = content?.doc.getSelection();
-    if (!content || !sel || sel.rangeCount === 0 || sel.isCollapsed) return undefined;
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
-    const frame = content.doc.defaultView?.frameElement?.getBoundingClientRect();
-    const host = this.#host.getBoundingClientRect();
-    return new DOMRect(rect.left + (frame?.left ?? 0) - host.left, rect.top + (frame?.top ?? 0) - host.top, rect.width, rect.height);
+    for (const content of this.#view.renderer.getContents()) {
+      const sel = content.doc.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) continue;
+      const rect = sel.getRangeAt(0).getBoundingClientRect();
+      const frame = content.doc.defaultView?.frameElement?.getBoundingClientRect();
+      const host = this.#host.getBoundingClientRect();
+      return new DOMRect(rect.left + (frame?.left ?? 0) - host.left, rect.top + (frame?.top ?? 0) - host.top, rect.width, rect.height);
+    }
+    return undefined;
   }
 
   clearSelection(): void {
@@ -358,7 +366,7 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
     }
     this.#book.destroy?.();
     this.#view.remove();
-    for (const e of [this.#position, this.#selection, this.#taps, this.#keys, this.#hlTaps, this.#images, this.#notes, this.#tocChange]) e.clear();
+    for (const e of [this.#position, this.#selection, this.#wordTap, this.#taps, this.#keys, this.#hlTaps, this.#images, this.#notes, this.#tocChange]) e.clear();
   }
 
   // ---- styles and layout ----
@@ -643,7 +651,7 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
       const zone = x < third ? 'left' : x > third * 2 ? 'right' : 'center';
       // Highlight taps are reported by foliate's overlayer in the same click; let that handler run first.
       window.setTimeout(() => {
-        if (performance.now() - this.#annotationTapAt < 60 || this.#closed) return;
+        if (performance.now() - this.#annotationTapAt < 60 || performance.now() - this.#wordTapAt < 400 || this.#closed) return;
         if (img && imgSrc && !this.#fixed) this.#images.emit({ src: img.currentSrc || img.src, alt: img.alt });
         else this.#taps.emit(zone);
       }, 0);
@@ -656,12 +664,47 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
       this.#lastSelectionKey = key;
       this.#selection.emit(sel);
     };
+    const onPointerUp = (e: PointerEvent): void => {
+      const start = downAt ?? { x: e.clientX, y: e.clientY, t: e.timeStamp };
+      if (e.button !== 0) return;
+      if (e.timeStamp - start.t > TAP_MAX_MS || Math.hypot(e.clientX - start.x, e.clientY - start.y) > 12) return;
+      const sel = doc.getSelection();
+      if (sel && !sel.isCollapsed) return;
+      const target = e.target as Element | null;
+      if (target?.closest('a[href]')) return;
+      let range = doc.caretRangeFromPoint?.(e.clientX, e.clientY) ?? caretRangeFromPoint(doc, e.clientX, e.clientY);
+      if (!range) {
+        const hit = doc.elementFromPoint(e.clientX, e.clientY);
+        const text = hit?.textContent ?? '';
+        if (hit && text.length >= 2) {
+          range = doc.createRange();
+          range.selectNodeContents(hit);
+          range.collapse(true);
+        }
+      }
+      if (!range) return;
+      const word = wordAtRange(range);
+      if (word.length < 2) return;
+      const rect = range.getBoundingClientRect();
+      const frame = win.frameElement?.getBoundingClientRect();
+      const host = this.#host.getBoundingClientRect();
+      const anchor = new DOMRect(
+        rect.left + (frame?.left ?? 0) - host.left,
+        rect.top + (frame?.top ?? 0) - host.top,
+        Math.max(rect.width, 24),
+        Math.max(rect.height, 16),
+      );
+      this.#wordTap.emit({ word, anchor });
+      this.#wordTapAt = performance.now();
+    };
     doc.addEventListener('pointerdown', onDown);
+    doc.addEventListener('pointerup', onPointerUp);
     doc.addEventListener('click', onClick);
     doc.addEventListener('keydown', onKey);
     doc.addEventListener('selectionchange', onSelection);
     this.#cleanups.push(() => {
       doc.removeEventListener('pointerdown', onDown);
+      doc.removeEventListener('pointerup', onPointerUp);
       doc.removeEventListener('click', onClick);
       doc.removeEventListener('keydown', onKey);
       doc.removeEventListener('selectionchange', onSelection);
@@ -673,13 +716,15 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
 
   #readSelection(): ReaderSelection | undefined {
     if (this.#fixed) return undefined;
-    const content = this.#view.renderer.getContents()[0];
-    const sel = content?.doc.getSelection();
-    if (!content || !sel || sel.rangeCount === 0 || sel.isCollapsed) return undefined;
-    const { start, end } = offsetsOfRange(content.doc, sel.getRangeAt(0));
-    const text = sel.toString().replace(/\s+/g, ' ').trim();
-    if (!text || end <= start) return undefined;
-    return { range: { start: reflowAt(content.index, start), end: reflowAt(content.index, end) }, text };
+    for (const content of this.#view.renderer.getContents()) {
+      const sel = content.doc.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) continue;
+      const { start, end } = offsetsOfRange(content.doc, sel.getRangeAt(0));
+      const text = sel.toString().replace(/\s+/g, ' ').trim();
+      if (!text || end <= start) continue;
+      return { range: { start: reflowAt(content.index, start), end: reflowAt(content.index, end) }, text };
+    }
+    return undefined;
   }
 
   // ---- overlays (highlights, search hits) ----
@@ -720,4 +765,26 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
     }
     return t;
   }
+}
+
+function caretRangeFromPoint(doc: Document, x: number, y: number): Range | undefined {
+  const direct = doc.caretRangeFromPoint?.(x, y);
+  if (direct) return direct;
+  const pos = doc.caretPositionFromPoint?.(x, y);
+  if (!pos) return undefined;
+  const range = doc.createRange();
+  range.setStart(pos.offsetNode, pos.offset);
+  range.collapse(true);
+  return range;
+}
+
+function wordAtRange(range: Range): string {
+  const node = range.startContainer;
+  if (node.nodeType !== Node.TEXT_NODE) return range.toString().trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}'-]+$/gu, '');
+  const text = node.textContent ?? '';
+  let start = range.startOffset;
+  let end = range.endOffset;
+  while (start > 0 && /[\p{L}\p{N}'-]/u.test(text[start - 1]!)) start--;
+  while (end < text.length && /[\p{L}\p{N}'-]/u.test(text[end]!)) end++;
+  return text.slice(start, end).trim().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}'-]+$/gu, '');
 }
