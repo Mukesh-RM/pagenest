@@ -34,7 +34,7 @@ describe('performance rules for src/app', () => {
     const offenders = files.filter((f) => staticImport.test(f.text)).map((f) => f.name);
     expect(offenders).toEqual([]);
     const screens = files.find((f) => f.name.endsWith('screens.ts'))?.text ?? '';
-    for (const page of ['LibraryRoute', 'CollectionsPage', 'StatsPage', 'SettingsPage', 'onboarding/Onboarding']) {
+    for (const page of ['LibraryRoute', 'CollectionsPage', 'StatsPage', 'SettingsPage', 'ReadRoute', 'ListenRoute', 'onboarding/Onboarding']) {
       expect(screens).toContain(`import('./${page.includes('/') ? page : `pages/${page}`}')`);
     }
   });
@@ -45,8 +45,9 @@ describe('performance rules for src/app', () => {
       'pages/CollectionsPage',
       'pages/StatsPage',
       'pages/SettingsPage',
+      'pages/ReadRoute',
+      'pages/ListenRoute',
       'pages/PlayerScreen',
-      'pages/BookRoute',
       'onboarding/Onboarding',
     ];
     for (const route of routes) {
@@ -65,6 +66,19 @@ describe('performance rules for src/app', () => {
     expect(offenders).toEqual([]);
     const services = files.find((f) => f.name.endsWith('src/app/services.tsx'))?.text ?? '';
     expect(services).toContain("from '@/features/library/provider'");
+  });
+
+  it('never imports the player feature barrel from shell services or PWA prompts', () => {
+    const barrel = /from '@\/features\/player'/;
+    const offenders = ['src/app/services.tsx', 'src/app/components/PwaPromptsHost.tsx'].filter((name) => {
+      const text = files.find((f) => f.name === name)?.text ?? '';
+      return barrel.test(text);
+    });
+    expect(offenders).toEqual([]);
+    const services = files.find((f) => f.name.endsWith('services.tsx'))?.text ?? '';
+    expect(services).toContain('./route-chrome');
+    const pwa = files.find((f) => f.name.endsWith('PwaPromptsHost.tsx'))?.text ?? '';
+    expect(pwa).toContain('../route-chrome');
   });
 
   it('keeps overlays (PWA prompts) out of the first-paint chunk: only dynamic imports', () => {

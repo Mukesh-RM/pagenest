@@ -1,16 +1,23 @@
-import { BookSummary, type BookScreenProps } from '../components/BookSummary';
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import '../screen-styles';
+import AudiobookPlayerScreen from '@/features/player/AudiobookPlayerScreen';
 
-/**
- * `/listen/:id` for audiobooks. This is the screen the audio player replaces: keep the default
- * export and the `BookScreenProps` (`book`, `position`), and see docs/READER_ROUTES.md.
- */
-export default function PlayerScreen({ book, position }: BookScreenProps) {
+type ProviderComponent = (props: { children: ReactNode }) => JSX.Element;
+
+export default function PlayerScreen(props: ComponentProps<typeof AudiobookPlayerScreen>): JSX.Element {
+  const [Provider, setProvider] = useState<ProviderComponent | null>(null);
+
+  useEffect(() => {
+    void import('@/features/player/PlayerProvider').then((m) => setProvider(() => m.PlayerProvider));
+  }, []);
+
+  if (!Provider) {
+    return <p className="px-[var(--pn-margin)] pt-[calc(1rem+var(--pn-safe-top))] text-muted">Loading player…</p>;
+  }
+
   return (
-    <BookSummary
-      book={book}
-      position={position}
-      note="The player arrives in a later release. Your place in this audiobook is saved on this device and will be used when it does."
-    />
+    <Provider>
+      <AudiobookPlayerScreen {...props} />
+    </Provider>
   );
 }

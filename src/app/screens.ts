@@ -10,8 +10,8 @@ const loaders = {
   collections: () => import('./pages/CollectionsPage').then((m) => ({ default: m.CollectionsPage })),
   stats: () => import('./pages/StatsPage').then((m) => ({ default: m.StatsPage })),
   settings: () => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
-  read: () => import('./pages/BookRoute').then((m) => ({ default: m.ReadRoute })),
-  listen: () => import('./pages/BookRoute').then((m) => ({ default: m.ListenRoute })),
+  read: () => import('./pages/ReadRoute').then((m) => ({ default: m.ReadRoute })),
+  listen: () => import('./pages/ListenRoute').then((m) => ({ default: m.ListenRoute })),
   onboarding: () => import('./onboarding/Onboarding').then((m) => ({ default: m.Onboarding })),
 } satisfies Record<string, () => Promise<{ default: ComponentType }>>;
 

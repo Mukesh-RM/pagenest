@@ -46,7 +46,7 @@ const webServer = external || process.env.PAGENEST_NO_SERVER === '1'
         timeout: 30_000,
       }
     : {
-        command: `${skipBuild ? '' : 'npm run build && '}node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${PORT} --strictPort`,
+        command: `${skipBuild ? '' : 'VITE_PN_SEED_AUDIO=1 npm run build && '}node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${PORT} --strictPort`,
         cwd: repoRoot,
         url: baseURL,
         reuseExistingServer: false, // never test a stale server from another run (it could serve an old build): the port must be free
