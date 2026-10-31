@@ -97,7 +97,7 @@ export { tintForTheme, useCoverTint, type CoverTint } from './hooks';
 export { extractCoverColor } from './utils/coverColor';
 export { formatClock, formatDuration, formatSpeed, timeLeftLabel } from './utils/time';
 export { flipTransform, measure, playFlip, type RectLike } from './utils/flip';
-export { preloadCriticalFonts, CRITICAL_FONT_URLS } from './fonts/preload';
+export { preloadCriticalFonts, preloadHeadingFonts, CRITICAL_FONT_URLS, HEADING_FONT_URLS } from './fonts/preload';
 
 /* Second design pass: pure helpers. The screens and their CSS live in './screens' (see README, "Entries"). */
 export {

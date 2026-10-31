@@ -13,7 +13,7 @@
 // Run it with `node --import tsx lighthouse/run.mjs` (npm run lighthouse does) so it can read the TypeScript budgets.
 // Lighthouse is pinned to 11.x because Lighthouse 12 removed the PWA category that blueprint 19 asks for.
 // Exit code 0 = all categories pass, 1 = a score is below the threshold, 2 = the audit could not run.
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +27,7 @@ import { resolveE2ePort } from '../../scripts/e2e/resolve-port.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const testsRoot = resolve(here, '..');
+const repoRoot = resolve(testsRoot, '..');
 
 function parseArgs(argv) {
   const out = { threshold: undefined, preset: 'mobile', port: undefined, spa: false };
@@ -50,6 +51,11 @@ async function waitForUrl(url, ms = 15000) {
 }
 
 const args = parseArgs(process.argv.slice(2));
+if (!args.url && !process.env.PAGENEST_BASE_URL && process.env.PAGENEST_LIGHTHOUSE_SKIP_BUILD !== '1') {
+  console.log('Building dist with VITE_PN_SEED_AUDIO=1 for Lighthouse (audio player route)…');
+  const built = spawnSync('npm', ['run', 'build:seed-audio'], { cwd: repoRoot, stdio: 'inherit', env: process.env });
+  if (built.status !== 0) process.exit(built.status ?? 1);
+}
 if (args.port === undefined && !args.url && !process.env.PAGENEST_BASE_URL) {
   args.port = await resolveE2ePort('PAGENEST_LIGHTHOUSE_PORT');
 }
@@ -69,7 +75,7 @@ const chromePath = process.env.CHROME_PATH || chromium.executablePath();
 const base = url.endsWith('/') ? url : `${url}/`;
 const screens = args.route
   ? [{ name: args.route, path: args.route }]
-  : BUDGETS.excellence.screens;
+  : [...BUDGETS.excellence.screens, ...BUDGETS.lighthouse.extraScreens];
 const minScore = args.threshold === undefined
   ? BUDGETS.lighthouse.minScore
   : { pwa: args.threshold, accessibility: args.threshold, performance: args.threshold };
@@ -93,6 +99,59 @@ async function skipOnboardingInProfile(port) {
     await page.close();
   } finally {
     await browser.close(); // disconnects only; Chrome stays up for Lighthouse
+  }
+}
+
+/** Returns the URL Lighthouse should audit after in-app navigation (Reader, audio player, Voice Studio). */
+async function preparedAuditUrl(chromePort, base, screen) {
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chromePort}`);
+  try {
+    const context = browser.contexts()[0] ?? (await browser.newContext());
+    const page = await context.newPage();
+    await page.goto(base);
+    await page.getByRole('navigation').first().waitFor({ timeout: 15000 });
+
+    if (screen.name === 'Reader') {
+      await page.evaluate(() => new Promise((resolve) => {
+        if (typeof requestIdleCallback === 'function') requestIdleCallback(() => resolve(), { timeout: 2000 });
+        else setTimeout(() => resolve(), 100);
+      }));
+      const card = page.getByRole('region', { name: /try a sample book/i });
+      await card.getByRole('button', { name: /add the sample book/i }).click({ timeout: 20_000 });
+      const opened = await page.waitForURL(/\/read\//, { timeout: 30_000 }).then(() => true, () => false);
+      if (!opened) {
+        await page.locator('main li, main [role=listitem]').first().waitFor({ timeout: 30_000 });
+        await page.locator('main li, main [role=listitem]').first().click();
+        await page.waitForURL(/\/read\//, { timeout: 30_000 });
+      }
+      await page.getByRole('button', { name: 'Back to library' }).waitFor({ timeout: 60_000 });
+      const url = page.url();
+      await page.close();
+      return url;
+    }
+
+    if (screen.name === 'Audio player') {
+      const target = new URL(screen.path.replace(/^\//, ''), base).toString();
+      await page.goto(target, { waitUntil: 'domcontentloaded' });
+      await page.getByRole('region', { name: 'Audio player' }).waitFor({ timeout: 90_000 });
+      const url = page.url();
+      await page.close();
+      return url;
+    }
+
+    if (screen.name === 'Voice Studio') {
+      await page.goto(new URL('settings', base).toString());
+      await page.locator('#pn-set-voices').scrollIntoViewIfNeeded();
+      await page.getByRole('heading', { name: 'Voice Studio' }).waitFor({ timeout: 25_000 });
+      const url = page.url();
+      await page.close();
+      return url;
+    }
+
+    await page.close();
+    return new URL(screen.path.replace(/^\//, ''), base).toString();
+  } finally {
+    await browser.close();
   }
 }
 
@@ -151,6 +210,19 @@ async function auditTarget(chrome, config, { title, target, slug, storageReset }
   console.log(`  metrics: FCP ${m('first-contentful-paint')}, LCP ${m('largest-contentful-paint')}, TBT ${m('total-blocking-time')}, CLS ${m('cumulative-layout-shift')}, TTI ${m('interactive')}`);
 }
 
+/** One in-app visit so the next Lighthouse run hits a warm shell (same Chrome profile). */
+async function warmShellVisit(chromePort, target) {
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chromePort}`);
+  try {
+    const page = await (browser.contexts()[0] ?? (await browser.newContext())).newPage();
+    await page.goto(target, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('navigation').first().waitFor({ timeout: 15000 }).catch(() => undefined);
+    await page.close();
+  } finally {
+    await browser.close();
+  }
+}
+
 let chrome;
 let fresh;
 try {
@@ -163,8 +235,13 @@ try {
   chrome = await chromeLauncher.launch({ chromePath, chromeFlags });
   await skipOnboardingInProfile(chrome.port);
   for (const screen of args.scenarios === 'only' ? [] : screens) {
+    const needsPrep = ['Reader', 'Audio player', 'Voice Studio'].includes(screen.name);
+    const target = needsPrep
+      ? await preparedAuditUrl(chrome.port, base, screen)
+      : new URL(screen.path.replace(/^\//, ''), base).toString();
+    if (screen.path === '/') await warmShellVisit(chrome.port, target);
     await auditTarget(chrome, config, {
-      title: screen.name, target: new URL(screen.path.replace(/^\//, ''), base).toString(),
+      title: screen.name, target,
       slug: screen.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), storageReset: false,
     });
   }

@@ -23,6 +23,7 @@ import {
   type RectLike,
   type SheetCloseReason,
 } from '@/ui';
+import { whenIdle } from '@/app/idle';
 import { ImportProvider } from '../context';
 import type { ImportItem } from '@/workers/import/protocol';
 import { PREFS_KEY } from '../prefs';
@@ -43,7 +44,7 @@ import { Toolbar } from './Toolbar';
 /** The design system's book detail sheet loads when the first book is tapped, not with the list. */
 const BookDetailSheet = lazy(() => import('@/ui/screens/BookDetailSheet'));
 
-const SKELETON_CARDS = 8;
+const SKELETON_CARDS = 4;
 
 function SkeletonGrid({ view }: { view: ViewMode }) {
   return (
@@ -113,7 +114,7 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
   const [params, setParams] = useSearchParams();
 
   const [prefs, setPrefsState] = useState<LibraryPrefs>(DEFAULT_PREFS);
-  const [prefsReady, setPrefsReady] = useState(false);
+  const [prefsReady, setPrefsReady] = useState(true);
   useEffect(() => {
     let live = true;
     void getSetting<unknown>(db, PREFS_KEY).then(
@@ -289,6 +290,16 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
   );
 
   const provider = useMemo(() => sampleBook ?? createSampleBookProvider(), [sampleBook]);
+  const [sampleCardReady, setSampleCardReady] = useState(false);
+  const [emptyArtReady, setEmptyArtReady] = useState(false);
+  useEffect(() => {
+    const cancelSample = whenIdle(() => setSampleCardReady(true));
+    const cancelArt = whenIdle(() => setEmptyArtReady(true));
+    return () => {
+      cancelSample();
+      cancelArt();
+    };
+  }, []);
   const filtered = text.trim() !== '' || filter !== 'all';
   const showEmptyLibrary = ready && libraryCount === 0 && !shelfId && !preset;
 
@@ -337,12 +348,12 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
         />
       ) : showEmptyLibrary ? (
         <EmptyState
-          art={<Illustration name="books" />}
+          art={emptyArtReady ? <Illustration name="books" /> : 'bookOpen'}
           title="Your library is empty"
           description="Add an EPUB, PDF or audiobook from your device. Everything stays on this device."
           action={{ label: 'Add books', icon: 'plus', onClick: () => setAdding(true) }}
           extra={
-            provider.available() ? (
+            provider.available() && sampleCardReady ? (
               <SampleBookCard provider={provider} onImported={(r) => navigate(pathForBook({ id: r.bookId, kind: r.kind }))} />
             ) : undefined
           }

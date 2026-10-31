@@ -12,6 +12,12 @@ export const BUDGETS = {
     maxCls: 0.1,
     /** Extra scenarios audited besides the screens: a mid-size library (books seeded into IndexedDB) and a true first launch (onboarding visible). */
     scenarios: { libraryBooks: 250 },
+    /** Immersive or nested surfaces audited by Lighthouse only (excellence tab walks stay on the four tabs). */
+    extraScreens: [
+      { name: 'Reader', path: '/read/' },
+      { name: 'Audio player', path: '/listen/pn-review-seed-audiobook?pn_seed_audio=1' },
+      { name: 'Voice Studio', path: '/settings' },
+    ],
   },
 
   /** QA choice. Blueprint 16 allows 3 MB for the whole shell; the first-load JavaScript must stay far below that. */

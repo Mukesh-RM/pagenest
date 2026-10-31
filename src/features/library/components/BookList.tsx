@@ -40,7 +40,7 @@ export function BookList({ books, selection, selecting, view, onOpen, onSelect }
           book={book}
           selected={selecting ? selection.has(book.id) : undefined}
           view={view}
-          eager={index < 6}
+          eager={index < 2}
           onOpen={onOpen}
           onSelect={onSelect}
         />

@@ -41,19 +41,34 @@ const e2eProjects = [
 const gatesEnv = (name) => ({ ...process.env, PLAYWRIGHT_JSON_OUTPUT_NAME: `qa-reports/${name}.json` });
 const reporter = process.env.CI ? '--reporter=list,html,json' : '--reporter=list,json';
 
-const stable = [
-  ['Playwright: unit, e2e on the real app, accessibility, offline', ['npx', 'playwright', 'test', ...e2eProjects], { env: process.env }],
-  ['Lighthouse: PWA, accessibility, performance on every screen', ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'none'], { env: process.env }],
+const lighthouseScreens = [
+  'Lighthouse: PWA, accessibility, performance on every screen',
+  ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'none'],
+  { env: process.env },
 ];
-// Two separate runs, so the timing-sensitive performance gates never share the machine with the excellence tests.
+const playwrightStable = [
+  'Playwright: unit, e2e on the real app, accessibility, offline',
+  ['npx', 'playwright', 'test', ...e2eProjects],
+  { env: process.env },
+];
+// Two separate Playwright runs so timing-sensitive performance gates never share the machine with excellence tests.
+const lighthouseScenarios = [
+  'Lighthouse scenarios: mid-size library and first launch',
+  ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'only'],
+  { env: process.env },
+];
 const gates = [
   ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile', '--retries=0', reporter], gatesEnv('gates-excellence')],
   ['Playwright: performance gates (one worker)', ['npx', 'playwright', 'test', '--project=perf-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-perf')],
-  // Cold first launch and a 250-book library (Performance >= 90, CLS < 0.1 each). The first launch is the strictest page: nothing cached yet.
-  ['Lighthouse scenarios: mid-size library and first launch', ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'only'], { env: process.env }],
+  lighthouseScenarios,
 ];
+// Lighthouse is CPU-sensitive: run every Lighthouse step before Playwright's parallel projects.
 const core =
-  mode === 'stable' ? stable : mode === 'gates' ? gates : [stable[0], ...gates, stable[1]];
+  mode === 'stable'
+    ? [lighthouseScreens, playwrightStable]
+    : mode === 'gates'
+      ? gates
+      : [lighthouseScreens, lighthouseScenarios, playwrightStable, ...gates.slice(0, -1)];
 const steps = [...vitestStep, ...core];
 
 let failed = 0;

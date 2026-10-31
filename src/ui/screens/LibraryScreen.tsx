@@ -217,7 +217,7 @@ export function LibraryScreen({
             renderItem={(book, index) => (
               <BookCard
                 book={book}
-                eager={index < 6}
+                eager={index < 2}
                 layout={view}
                 selected={selectedIds.length ? selectedIds.includes(book.id) : undefined}
                 onOpen={onOpenBook}
@@ -231,7 +231,7 @@ export function LibraryScreen({
               <li key={book.id} className="pn-library__item">
                 <BookCard
                   book={book}
-                  eager={index < 6}
+                  eager={index < 2}
                   layout={view}
                   selected={selectedIds.length ? selectedIds.includes(book.id) : undefined}
                   onOpen={onOpenBook}
