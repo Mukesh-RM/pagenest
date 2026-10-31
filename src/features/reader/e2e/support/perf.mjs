@@ -1,10 +1,11 @@
 // First launch to real book text on the production build: fresh browser profile, Skip, "Add the sample book".
 // Usage: node support/perf.mjs [runs] [baseURL]. Prints one line per run and the median and worst.
 import { chromium, devices } from '@playwright/test';
+import { resolveE2ePort } from '../../../../scripts/e2e/resolve-port.mjs';
 import { openSampleFromFirstLaunch, waitForBookText } from './app.mjs';
 
 const runs = Number(process.argv[2] ?? 10);
-const baseURL = process.argv[3] ?? 'http://127.0.0.1:4175';
+const baseURL = process.argv[3] ?? `http://127.0.0.1:${await resolveE2ePort('PAGENEST_READER_PORT')}/`;
 const browser = await chromium.launch();
 const results = [];
 for (const [name, use] of [['laptop', { viewport: { width: 1280, height: 800 } }], ['phone', devices['Pixel 7']]]) {

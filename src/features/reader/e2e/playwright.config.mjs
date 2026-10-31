@@ -3,9 +3,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveE2ePort } from '../../../../scripts/e2e/resolve-port.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
-const port = Number(process.env.PAGENEST_READER_PORT ?? 4175);
+const port = await resolveE2ePort('PAGENEST_READER_PORT');
 
 export default defineConfig({
   testDir: '.',

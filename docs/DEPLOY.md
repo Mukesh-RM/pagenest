@@ -13,6 +13,7 @@ type check, unit tests, build, then Playwright smoke tests (Chromium only) once
 `playwright.config.*` and a `test:e2e` script exist. Missing npm scripts are
 skipped (`--if-present`). Superseded runs on pull requests and other branches are cancelled (runs on `main` are never cancelled; each main push has its own concurrency group keyed on the commit SHA) and npm and Playwright
 downloads are cached, to stay inside the free GitHub Actions allowance.
+E2E port and base URL variables for CI jobs are documented in [TESTING.md](./TESTING.md).
 CI never needs Cloudflare credentials and never deploys.
 
 ## Manual deploy (after merging to `main`)

@@ -7,10 +7,11 @@
 import { createServer } from 'node:http';
 import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
+import { resolveE2ePort } from '../../../../scripts/e2e/resolve-port.mjs';
 import { LARGE_PDF, ensureLargePdf, FIXTURE_DIR } from './fixtures.mjs';
 
 const dist = resolve(process.argv[2] ?? 'dist');
-const port = Number(process.argv[3] ?? 4175);
+const port = process.argv[3] !== undefined ? Number(process.argv[3]) : await resolveE2ePort('PAGENEST_READER_PORT');
 const root = resolve(dist, '..');
 
 const types = {

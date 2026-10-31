@@ -59,7 +59,10 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@pagenest/e2e-port': fileURLToPath(new URL('./scripts/e2e/resolve-port.mjs', import.meta.url)),
+    },
   },
   test: {
     environment: 'jsdom',

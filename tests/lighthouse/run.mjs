@@ -7,7 +7,8 @@
 //   node lighthouse/run.mjs --dir fixtures/reference-app   serve and audit another folder
 //   Besides every screen it audits two scenarios (--scenarios none: screens only; --scenarios only: just the scenarios): a mid-size library (BUDGETS.lighthouse.scenarios.libraryBooks
 //   books seeded into IndexedDB) and a first launch in a fresh profile (onboarding visible). Each needs Performance >= 90 and CLS < BUDGETS.lighthouse.maxCls.
-//   flags: --route /settings (one screen only; default is every screen in perf/budgets.ts)  --threshold 90 (one minimum for every category; default is perf/budgets.ts)  --preset mobile|desktop  --port 4174  --spa
+//   flags: --route /settings (one screen only; default is every screen in perf/budgets.ts)  --threshold 90 (one minimum for every category; default is perf/budgets.ts)  --preset mobile|desktop  --port <n>  --spa
+//   Port: `PAGENEST_LIGHTHOUSE_PORT` → `PAGENEST_E2E_PORT` → free port (see docs/TESTING.md). `--port` overrides env.
 //
 // Run it with `node --import tsx lighthouse/run.mjs` (npm run lighthouse does) so it can read the TypeScript budgets.
 // Lighthouse is pinned to 11.x because Lighthouse 12 removed the PWA category that blueprint 19 asks for.
@@ -22,19 +23,20 @@ import lighthouse from 'lighthouse';
 import { BUDGETS } from '../perf/budgets.ts';
 import { seedLibrary } from '../e2e/support/library.ts';
 import { RESUME_BOOK, seedResumeBook } from '../e2e/support/resume.ts';
+import { resolveE2ePort } from '../../scripts/e2e/resolve-port.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const testsRoot = resolve(here, '..');
 
 function parseArgs(argv) {
-  const out = { threshold: undefined, preset: 'mobile', port: 4174, spa: false };
+  const out = { threshold: undefined, preset: 'mobile', port: undefined, spa: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--spa') out.spa = true;
     else if (a.startsWith('--')) out[a.slice(2)] = argv[++i];
   }
   if (out.threshold !== undefined) out.threshold = Number(out.threshold);
-  out.port = Number(out.port);
+  if (out.port !== undefined) out.port = Number(out.port);
   return out;
 }
 
@@ -48,6 +50,9 @@ async function waitForUrl(url, ms = 15000) {
 }
 
 const args = parseArgs(process.argv.slice(2));
+if (args.port === undefined && !args.url && !process.env.PAGENEST_BASE_URL) {
+  args.port = await resolveE2ePort('PAGENEST_LIGHTHOUSE_PORT');
+}
 let server;
 let url = args.url ?? process.env.PAGENEST_BASE_URL;
 if (!url) {

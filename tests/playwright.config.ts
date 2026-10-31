@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveE2ePort, isE2ePortExplicit } from '@pagenest/e2e-port';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -21,7 +22,7 @@ const here = dirname(fileURLToPath(import.meta.url));
  *
  * Service workers only run in production builds, so the real app is always built, never run with `vite dev`.
  */
-const PORT = Number(process.env.PAGENEST_PORT ?? 4173);
+const PORT = await resolveE2ePort('PAGENEST_PORT');
 const external = process.env.PAGENEST_BASE_URL;
 const useFixture = process.env.PAGENEST_TARGET === 'fixture';
 const repoRoot = resolve(here, '..');
@@ -46,7 +47,7 @@ const webServer = external || process.env.PAGENEST_NO_SERVER === '1'
         timeout: 30_000,
       }
     : {
-        command: `${skipBuild ? '' : 'VITE_PN_SEED_AUDIO=1 npm run build && '}node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${PORT} --strictPort`,
+        command: `${skipBuild ? '' : 'VITE_PN_SEED_AUDIO=1 npm run build && '}node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${PORT}${isE2ePortExplicit('PAGENEST_PORT') ? ' --strictPort' : ''}`,
         cwd: repoRoot,
         url: baseURL,
         reuseExistingServer: false, // never test a stale server from another run (it could serve an old build): the port must be free

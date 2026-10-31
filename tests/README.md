@@ -18,6 +18,7 @@ npm ci                                     # repo root: the app and Playwright
 cd tests
 npm ci
 npx playwright install chromium webkit     # first time only (on Linux: sudo npx playwright install-deps webkit)
+# Or from the repo root: npm run playwright:install  (installs all browsers + OS deps)
 
 npm test                                   # builds the real app from the repo root, runs `vite preview`, runs all projects
 npm run test:unit                          # contrast maths only, needs no app
@@ -34,7 +35,9 @@ npm run lighthouse                         # audits ../dist (run `npm run build`
 node lighthouse/run.mjs --url https://xyz.pages.dev/ --threshold 90
 ```
 
-Environment variables: `PAGENEST_BASE_URL`, `PAGENEST_TARGET=fixture`, `PAGENEST_NO_SERVER=1` (start no server; `npm run test:unit` sets it), `PAGENEST_PORT` (default 4173), `PAGENEST_PHASE` (default 0; set to 1 to also enforce the Share Target manifest check), `PAGENEST_LAUNCH_BUDGET_MS` (default 1000, the offline launch budget from blueprint section 20), `CHROME_PATH` for Lighthouse.
+Environment variables for ports and deployed targets are listed in [docs/TESTING.md](../docs/TESTING.md). Common QA vars: `PAGENEST_BASE_URL`, `PAGENEST_TARGET=fixture`, `PAGENEST_NO_SERVER=1` (start no server; `npm run test:unit` sets it), `PAGENEST_PORT` or shared `PAGENEST_E2E_PORT`, `PAGENEST_PHASE` (default 0; set to 1 to also enforce the Share Target manifest check), `PAGENEST_LAUNCH_BUDGET_MS` (default 1000, the offline launch budget from blueprint section 20), `CHROME_PATH` for Lighthouse.
+
+At the repo root, install browsers once with `npm run playwright:install` (same as `npx playwright install --with-deps`).
 
 Service workers only run in production builds, so the suite always uses `vite preview` on a built app, never `vite dev`.
 
@@ -120,7 +123,7 @@ From Mukeshh's bar (`/workspace/pagenest-excellence-bar.txt`). Thresholds are in
 
 First launch shows onboarding. `launch()` in `e2e/support/app.ts` clicks Skip (which stores `onboardingDone`) so every test starts on the Library; only `e2e/onboarding.spec.ts` looks at onboarding itself (`launchFresh`).
 
-Local runs share the machine with other tools, so use your own port: `PAGENEST_PORT=4391 npm run qa`. The real-app server is never reused (a stale one could serve an old build) and is started with `node .../vite.js preview`.
+Local runs share the machine with other tools, so pin a port when needed: `PAGENEST_E2E_PORT=4391 npm run qa` (or `PAGENEST_PORT=4391`; see [docs/TESTING.md](../docs/TESTING.md)). The real-app server is never reused (a stale one could serve an old build) and is started with `node .../vite.js preview`.
 
 ## CI (`.github/workflows/ci.yml`)
 

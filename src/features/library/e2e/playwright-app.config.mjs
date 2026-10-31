@@ -4,9 +4,10 @@
 import { defineConfig, devices } from '@playwright/test';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveE2ePort, isE2ePortExplicit } from '../../../../scripts/e2e/resolve-port.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
-const port = Number(process.env.PAGENEST_LIBRARY_APP_PORT ?? 4395);
+const port = await resolveE2ePort('PAGENEST_LIBRARY_APP_PORT');
 
 export default defineConfig({
   testDir: '.',
@@ -22,7 +23,7 @@ export default defineConfig({
     launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
   },
   webServer: {
-    command: `npx vite build && node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${port} --strictPort`,
+    command: `npx vite build && node node_modules/vite/bin/vite.js preview --host 127.0.0.1 --port ${port}${isE2ePortExplicit('PAGENEST_LIBRARY_APP_PORT') ? ' --strictPort' : ''}`,
     cwd: root,
     url: `http://127.0.0.1:${port}/`,
     reuseExistingServer: Boolean(process.env.PAGENEST_LIBRARY_APP_REUSE), // set to iterate against a server you started (vite preview)

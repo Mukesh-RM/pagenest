@@ -24,10 +24,11 @@ Requirements: Node.js 20+, npm 10+, git.
 git clone https://github.com/Mukesh-RM/pagenest.git
 cd pagenest
 npm install
+npx playwright install --with-deps   # first time (or npm run playwright:install); browsers for root and feature e2e
 npm run dev        # start the Vite dev server
 npm run build      # production build into dist/
 npm test           # unit tests (Vitest)
-npm run test:e2e   # end-to-end tests (Playwright)
+npm run test:e2e   # end-to-end tests (Playwright; ports in docs/TESTING.md)
 ```
 
 ## Repository layout

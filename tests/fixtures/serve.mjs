@@ -4,9 +4,10 @@ import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { extname, join, normalize, resolve, sep } from 'node:path';
+import { resolveE2ePort } from '../../scripts/e2e/resolve-port.mjs';
 
 const root = resolve(process.argv[2] ?? 'fixtures/reference-app');
-const port = Number(process.argv[3] ?? 4173);
+const port = process.argv[3] !== undefined ? Number(process.argv[3]) : await resolveE2ePort('PAGENEST_PORT');
 // Static hosts (Cloudflare Pages, Netlify, ...) compress text assets. Without this the audited transfer size is 3x too big and
 // Lighthouse reports a text-compression defect that production does not have.
 const compressible = new Set(['.html', '.js', '.css', '.svg', '.webmanifest', '.json']);
