@@ -16,8 +16,9 @@ import type { ReaderDocumentExt } from '../core/ext-types';
 import { openStoredBook } from '../core/registry';
 import { welcomeBackFor, chapterNumber, type WelcomeBack } from '../core/welcome';
 import { getReaderRegistry } from '../registry-instance';
-import { addBookmark, addHighlight, applyHighlights, loadBookmarks, loadHighlights, setHighlightNote } from './marks';
+import { addBookmark, addHighlight, applyHighlights, clearHighlightNote, deleteHighlight, highlightsWithNotes, loadBookmarks, loadHighlights, setHighlightNote } from './marks';
 import { MarksSheet } from './MarksSheet';
+import { NoteEditorSheet } from './NoteEditorSheet';
 import { Scrubber } from './Scrubber';
 import { SearchSheet } from './SearchSheet';
 import { SelectionBar } from './SelectionBar';
@@ -82,6 +83,9 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const [tocOpen, setTocOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [marksOpen, setMarksOpen] = useState(false);
+  const [marksPanel, setMarksPanel] = useState<'bookmarks' | 'highlights' | 'notes'>('bookmarks');
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false);
+  const [noteTarget, setNoteTarget] = useState<HighlightRecord>();
   const [selection, setSelection] = useState<ReaderSelection>();
   const [highlights, setHighlights] = useState<readonly HighlightRecord[]>([]);
   const [bookmarks, setBookmarks] = useState<readonly BookmarkRecord[]>([]);
@@ -217,6 +221,13 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book.id, book.format, book.fileRef, db, progress, attempt]);
 
+  const notes = useMemo(() => highlightsWithNotes(highlights), [highlights]);
+
+  const openNoteEditor = useCallback((row: HighlightRecord) => {
+    setNoteTarget(row);
+    setNoteEditorOpen(true);
+  }, []);
+
   useEffect(() => {
     if (!doc) {
       setSelection(undefined);
@@ -286,7 +297,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   );
   const keyHandler = useRef<(key: { key: string; shiftKey: boolean; ctrlKey: boolean; metaKey: boolean; altKey: boolean; preventDefault(): void }, target: EventTarget | null) => void>(() => undefined);
   keyHandler.current = (e, target) => {
-    if (!doc || settingsOpen || tocOpen || searchOpen || marksOpen) return;
+    if (!doc || settingsOpen || tocOpen || searchOpen || marksOpen || noteEditorOpen) return;
     if (target instanceof HTMLElement && (EDITABLE.test(target.tagName) || target.isContentEditable)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const flip = doc.direction === 'rtl';
@@ -452,6 +463,9 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         onClose={() => setMarksOpen(false)}
         bookmarks={bookmarks}
         highlights={highlights}
+        notes={notes}
+        panel={marksPanel}
+        onPanelChange={setMarksPanel}
         onGoToBookmark={(row) => {
           setMarksOpen(false);
           void doc?.goTo(row.locator);
@@ -461,9 +475,37 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
           void doc?.goToRange(row.range);
         }}
         onEditNote={(row) => {
-          const note = window.prompt('Note for this highlight', row.note ?? '');
-          if (note === null) return;
-          void setHighlightNote(db, row, note).then((next) => setHighlights((list) => list.map((h) => (h.id === next.id ? next : h))));
+          openNoteEditor(row);
+        }}
+      />
+      <NoteEditorSheet
+        open={noteEditorOpen}
+        highlight={noteTarget}
+        onClose={() => setNoteEditorOpen(false)}
+        onSave={(text) => {
+          if (!noteTarget) return;
+          void setHighlightNote(db, noteTarget, text).then((next) => {
+            setHighlights((list) => list.map((h) => (h.id === next.id ? next : h)));
+            setNoteTarget(next);
+            setNoteEditorOpen(false);
+            setMarksPanel('notes');
+          });
+        }}
+        onDeleteNote={() => {
+          if (!noteTarget) return;
+          void clearHighlightNote(db, noteTarget).then((next) => {
+            setHighlights((list) => list.map((h) => (h.id === next.id ? next : h)));
+            setNoteTarget(next);
+            setNoteEditorOpen(false);
+          });
+        }}
+        onDeleteHighlight={() => {
+          if (!noteTarget || !doc) return;
+          void deleteHighlight(db, doc, noteTarget).then(() => {
+            setHighlights((list) => list.filter((h) => h.id !== noteTarget.id));
+            setNoteEditorOpen(false);
+            setNoteTarget(undefined);
+          });
         }}
       />
     </ReaderScreen>

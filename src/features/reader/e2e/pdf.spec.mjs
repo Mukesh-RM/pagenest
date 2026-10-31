@@ -63,6 +63,6 @@ test('a 50 MB scanned PDF opens fast and shows its first page', async ({ page },
   const ms = Date.now() - t0;
   console.log(`[${info.project.name}] 50 MB PDF to first drawn page: ${ms} ms`);
   await expect(page.locator('.pn-live__state')).toHaveCount(0, { timeout: 3000 });
-  expect(ms).toBeLessThan(3000);
+  expect(ms).toBeLessThan(1500);
   expect(errors).toEqual([]);
 });
