@@ -94,13 +94,13 @@ describe('what is warmed', () => {
 
   afterEach(() => vi.unstubAllGlobals());
 
-  it('is the sample book, fetched from our own origin and read through, only when the sample is available', async () => {
+  it('is the sample book (only when it is available), then the EPUB and PDF engines; the sample is fetched from our own origin and read through', async () => {
     const fetchMock = vi.fn(async () => new Response(new Uint8Array(4)));
     vi.stubGlobal('fetch', fetchMock);
-    expect(offlineWarmTasks({})).toEqual([]);
-    expect(offlineWarmTasks({ sampleBook: provider(false) })).toEqual([]);
+    expect(offlineWarmTasks({}).map((t) => t.name)).toEqual(['epub-engine', 'pdf-engine']);
+    expect(offlineWarmTasks({ sampleBook: provider(false) }).map((t) => t.name)).toEqual(['epub-engine', 'pdf-engine']);
     const tasks = offlineWarmTasks({ sampleBook: provider(true) });
-    expect(tasks.map((t) => t.name)).toEqual(['sample-book']);
+    expect(tasks.map((t) => t.name)).toEqual(['sample-book', 'epub-engine', 'pdf-engine']);
     await tasks[0]?.run();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];

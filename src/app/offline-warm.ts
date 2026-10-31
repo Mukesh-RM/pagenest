@@ -63,14 +63,32 @@ export function scheduleOfflineWarm(
 ): () => void {
   if (startedThisLoad) return () => {};
   let cancelIdle = (): void => {};
-  const timer = window.setTimeout(() => {
+  let waitingForController = false;
+
+  const tryRun = (): void => {
+    if (startedThisLoad) return;
+    const e = env();
+    if (!e.online || e.saveData || !e.swControlled) return;
+    startedThisLoad = true;
+    void Promise.resolve(tasks()).then(runWarmTasks);
+  };
+
+  const attemptWhenIdle = (): void => {
+    cancelIdle();
     cancelIdle = whenIdle(() => {
-      const e = env();
-      if (startedThisLoad || !e.online || e.saveData || !e.swControlled) return;
-      startedThisLoad = true;
-      void Promise.resolve(tasks()).then(runWarmTasks);
+      tryRun();
+      if (startedThisLoad || waitingForController) return;
+      if (!('serviceWorker' in navigator)) return;
+      waitingForController = true;
+      const onController = (): void => {
+        whenIdle(() => tryRun());
+      };
+      navigator.serviceWorker.addEventListener('controllerchange', onController, { once: true });
+      void navigator.serviceWorker.ready.then(() => whenIdle(() => tryRun()));
     });
-  }, delayMs);
+  };
+
+  const timer = window.setTimeout(attemptWhenIdle, delayMs);
   return () => {
     window.clearTimeout(timer);
     cancelIdle();

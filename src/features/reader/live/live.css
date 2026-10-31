@@ -28,6 +28,7 @@
 }
 
 .pn-live {
+  position: relative;
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -274,4 +275,93 @@
 
 :root[data-reduce-motion="true"] .pn-live__welcome {
   animation: none;
+}
+
+.pn-live__tools {
+  position: absolute;
+  top: calc(var(--pn-space-2) + env(safe-area-inset-top, 0px));
+  right: calc(var(--pn-space-3) + env(safe-area-inset-right, 0px));
+  z-index: 3;
+  display: flex;
+  gap: var(--pn-space-1);
+  pointer-events: none;
+}
+
+.pn-live__tools > * {
+  pointer-events: auto;
+}
+
+.pn-live-select {
+  position: absolute;
+  left: var(--pn-space-3);
+  right: var(--pn-space-3);
+  bottom: var(--pn-space-3);
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--pn-space-2);
+  padding: var(--pn-space-3);
+  border-radius: var(--pn-radius-lg);
+  background: rgb(var(--pn-surface-raised) / 0.96);
+  box-shadow: var(--pn-shadow-md);
+}
+
+.pn-live-select__preview {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--pn-text-sm);
+  color: rgb(var(--pn-muted));
+}
+
+.pn-live-select__colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pn-space-2);
+}
+
+.pn-live-search__form {
+  display: flex;
+  gap: var(--pn-space-2);
+  margin-bottom: var(--pn-space-4);
+}
+
+.pn-live-search__input {
+  flex: 1 1 auto;
+  min-height: var(--pn-touch);
+  padding: var(--pn-space-2) var(--pn-space-3);
+  border: 1px solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-md);
+  font: inherit;
+  background: rgb(var(--pn-page));
+  color: rgb(var(--pn-text));
+}
+
+.pn-live-search__hint {
+  margin: 0;
+  color: rgb(var(--pn-muted));
+}
+
+.pn-live-search__excerpt mark {
+  background: rgb(var(--pn-accent) / 0.25);
+  color: inherit;
+}
+
+.pn-live-marks__heading {
+  margin: var(--pn-space-4) 0 var(--pn-space-2);
+  font-size: var(--pn-text-sm);
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-live-marks__hl {
+  display: flex;
+  align-items: stretch;
+  gap: var(--pn-space-1);
+}
+
+.pn-live-marks__note {
+  display: block;
+  margin-top: var(--pn-space-1);
+  font-size: var(--pn-text-sm);
+  color: rgb(var(--pn-muted));
 }
