@@ -37,7 +37,7 @@ export const BUDGETS = {
   /** QA choice: long tasks (PerformanceObserver "longtask", over 50 ms by definition) block input. */
   jank: {
     /** No main-thread task may reach this length while scrolling, loading or filtering. */
-    maxLongTaskMs: 100,
+    maxLongTaskMs: 50,
     /** Fling scroll: share of frames slower than 2 vsyncs (33.4 ms), i.e. visibly dropped. */
     maxDroppedFrameRatio: 0.05,
     /** Fling scroll: the 95th percentile frame time (60 fps = 16.7 ms). */

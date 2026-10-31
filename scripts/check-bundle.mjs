@@ -32,6 +32,8 @@ export const ENGINE_CHUNK_BUDGETS_KB = [
   { pattern: /^docx-core-/, label: 'engine chunk (docx)', budget: 100 },
   { pattern: /^docx\.worker-/, label: 'engine worker (docx)', budget: 100 },
   { pattern: /^engine-foliate-/, label: 'engine chunk (epub)', budget: 60 },
+  // Loaded only when OPFS is blocked: shares import + cache-backed storage with the data client (WebKit/Linux CI).
+  { pattern: /^in-process-import-/, label: 'OPFS fallback import service', budget: 56 },
 ];
 
 const kb = (bytes) => bytes / 1000;

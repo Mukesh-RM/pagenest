@@ -89,7 +89,7 @@ All thresholds live in one file, `perf/budgets.ts`. Change a number there and no
 | First-load JavaScript | at most 200 KiB gzip (level 9), all scripts of a cold load, service worker blocked | `perf/js-budget.spec.ts` | QA choice (blueprint 16 allows 3 MB for the whole shell) |
 | Tap response | p95 at most 100 ms, pointerdown to the first painted frame showing the change; 24 samples for tabs and themes, 10 for the sheet | `perf/interaction.spec.ts` | blueprint 3: every action within 100 ms |
 | CPU for all perf tests | 4x slowdown (mid-range phone) | `throttleCpu` in `e2e/support/perf.ts` | blueprint 16 |
-| Long tasks (PerformanceObserver) | none over 100 ms during load, tab use, library open and scroll | `perf/*.spec.ts` | QA choice |
+| Long tasks (PerformanceObserver) | none over 50 ms during load, tab use, library open and scroll | `perf/*.spec.ts` | QA choice |
 | Scroll jank, 5,000 books | fling 3000 px/s for 2.5 s: p95 frame at most 33.4 ms, dropped frames (over 33.4 ms) at most 5 %, no frame over 100 ms | `perf/library.spec.ts` | blueprint 16: 60 fps scrolling |
 | Library open, 1,000 books | at most 2000 ms from reload to the first card (wall clock, so it includes about 50 ms of test overhead) | `perf/library.spec.ts` | blueprint 16 (later launches under 1 s) plus QA headroom for 1,000 books |
 | Library search, 1,000 books | at most 100 ms from the last keystroke to the narrowed list | `perf/library.spec.ts` | blueprint 3 |
