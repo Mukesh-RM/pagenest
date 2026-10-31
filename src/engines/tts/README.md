@@ -22,6 +22,13 @@ PageNest does **not** ship GPL phonemizers or blocked stacks:
 - ARPAbet → IPA **character mapping** for Piper `phoneme_id_map` (no espeak-ng code)
 - Voices from `piper/voices.ts` only; each id is marked **OK** in `scripts/audit-models.json` (default `en_US-libritts-high`, LibriTTS CC BY 4.0)
 
-**Tier 2:** `kokoro/kokoro-engine.ts` — stub only until a non-GPL phonemizer exists (Kokoro **weights** are Apache-2.0 but `kokoro-js` is excluded).
+**Tier 2 (My voice):** `helper/` — clone from Voice Studio recordings (consent-gated):
+
+- Speaker embedding: `t-neethesh/spkrec-xvect-voxceleb-onnx` (Apache-2.0, lazy ONNX ~2 MB)
+- Synthesis: lite tier applies your reference timbre via on-device spectral colorization (no GPL, no LGPL deps)
+- Full SpeechT5 neural tier (MIT weights) is gated behind a future ONNX-only loader — `@huggingface/transformers` is excluded because it pulls LGPL sharp into the production dependency tree
+- Consent enforced in `helper/consent-gate.ts`; synthesis refuses voices without verified live consent in OPFS manifest
+
+**Tier 2 (future):** `kokoro/kokoro-engine.ts` — stub only until a non-GPL phonemizer exists (Kokoro **weights** are Apache-2.0 but `kokoro-js` is excluded).
 
 Run `node scripts/audit-models.mjs --check` before adding voices or Hugging Face URLs.

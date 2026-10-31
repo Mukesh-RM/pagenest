@@ -6,6 +6,7 @@ export interface NarrationControlsProps {
   readonly settings: NarrationSettings;
   readonly playing: boolean;
   readonly preparing: boolean;
+  readonly prepMessage?: string;
   readonly onPlayPause: () => void;
   readonly onSpeed: (speed: number) => void;
   readonly onVoice: () => void;
@@ -18,6 +19,7 @@ export function NarrationControls({
   settings,
   playing,
   preparing,
+  prepMessage,
   onPlayPause,
   onSpeed,
   onVoice,
@@ -33,7 +35,7 @@ export function NarrationControls({
           disabled={preparing}
           onClick={onPlayPause}
         >
-          {playing ? 'Pause' : preparing ? 'Loading voice…' : 'Read aloud'}
+          {playing ? 'Pause' : preparing ? prepMessage ?? 'Loading voice…' : 'Read aloud'}
         </Button>
         <Button variant="secondary" aria-label="Choose voice" onClick={onVoice}>
           Voice

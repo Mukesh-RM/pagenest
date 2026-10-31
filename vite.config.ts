@@ -29,6 +29,7 @@ export default defineConfig({
           '**/assets/docx-core-*.js',
           '**/assets/docx.worker-*.js',
           '**/assets/piper.worker-*.js',
+          '**/assets/clone.worker-*.js',
           '**/assets/engine-tts-*.js',
           '**/assets/pdf.worker*.mjs',
         ],

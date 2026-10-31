@@ -44,7 +44,13 @@ export class NarrationSession {
     }
   }
 
-  async prepare(bookId: string, title: string, chapterText: string, startSentence = 0): Promise<void> {
+  async prepare(
+    bookId: string,
+    title: string,
+    chapterText: string,
+    startSentence = 0,
+    onPrepMessage?: (message: string) => void,
+  ): Promise<void> {
     this.stopInternal(false);
     this.bookId = bookId;
     this.title = title;
@@ -55,7 +61,18 @@ export class NarrationSession {
     this.preparing = true;
     this.abort = new AbortController();
     try {
-      await this.deps.engine.prepareVoice(this.settings.voiceId, { allowDownload: true, signal: this.abort.signal });
+      await this.deps.engine.prepareVoice(this.settings.voiceId, {
+        allowDownload: true,
+        signal: this.abort.signal,
+        onProgress: (p) => {
+          if (p.total) {
+            const pct = Math.round((p.done / p.total) * 100);
+            onPrepMessage?.(`Preparing voice… ${pct}%`);
+          } else {
+            onPrepMessage?.('Preparing your voice…');
+          }
+        },
+      });
       await this.ensureBuffer(startSentence);
       void this.prefetch(startSentence + 1);
       void this.prefetch(startSentence + 2);
