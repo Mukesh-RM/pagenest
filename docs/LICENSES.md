@@ -1054,6 +1054,8 @@ Source: `scripts/audit-models.json`, procedure and per-voice evidence in `docs/M
 | diffusionstudio/piper-wasm and similar browser ports | none stated; build script compiles rhasspy/espeak-ng | NOT OK |
 | Kokoro-82M weights (hexgrad/Kokoro-82M, onnx-community/Kokoro-82M-v1.0-ONNX) | Apache-2.0 | OK |
 | Chatterbox (ResembleAI/chatterbox) | MIT | OK |
+| Xenova/speecht5_tts + Xenova/speecht5_hifigan | MIT | OK |
+| t-neethesh/spkrec-xvect-voxceleb-onnx | Apache-2.0 | OK |
 | Orpheus TTS 3B (canopylabs/orpheus-3b-0.1-ft) | apache-2.0 tag on a Llama 3.2 base | NOT OK |
 | CMU Pronouncing Dictionary (cmusphinx/cmudict) | BSD-2-Clause style (CMU) | OK |
 

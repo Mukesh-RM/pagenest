@@ -24,6 +24,18 @@
   {
    "repo": "canopylabs/*",
    "component": "orpheus-3b"
+  },
+  {
+   "repo": "t-neethesh/spkrec-xvect-voxceleb-onnx",
+   "component": "spkrec-xvect-onnx"
+  },
+  {
+   "repo": "Xenova/speecht5_tts",
+   "component": "speecht5-xenova"
+  },
+  {
+   "repo": "Xenova/speecht5_hifigan",
+   "component": "speecht5-xenova"
   }
  ],
  "components": [
@@ -183,10 +195,56 @@
    "name": "Chatterbox (ResembleAI/chatterbox)",
    "license": "MIT",
    "verdict": "OK",
-   "reason": "Hugging Face tag license:mit (sha 5bb1f6ee); resemble-ai/chatterbox repo license MIT. Output is watermarked with Resemble's PerTh watermark (README). Training data is not documented on the card; Voice Helper only, never shipped in the PWA.",
+   "reason": "Hugging Face tag license:mit (sha 5bb1f6ee); resemble-ai/chatterbox repo license MIT. Output is watermarked with Resemble's PerTh watermark (README). Optional heavy tier; lazy-download only with verified consent.",
    "evidence": [
     "https://huggingface.co/ResembleAI/chatterbox",
     "https://github.com/resemble-ai/chatterbox"
+   ]
+  },
+  {
+   "id": "speecht5-xenova",
+   "kind": "weights",
+   "name": "Xenova/speecht5_tts + Xenova/speecht5_hifigan",
+   "license": "MIT",
+   "verdict": "OK",
+   "reason": "Transformers.js ONNX ports of microsoft/speecht5_tts (MIT). Full neural clone tier via direct onnxruntime-web loader (no transformers.js).",
+   "files": [
+    "decoder_model.onnx",
+    "encoder_model.onnx",
+    "model.onnx",
+    "encoder_model_quantized.onnx",
+    "decoder_model_merged_quantized.onnx",
+    "decoder_postnet_and_vocoder_quantized.onnx",
+    "speecht5_encoder_quantized.onnx",
+    "speecht5_decoder_merged_quantized.onnx",
+    "speecht5_postnet_vocoder_quantized.onnx",
+    "speecht5_tokenizer.json"
+   ],
+   "evidence": [
+    "https://huggingface.co/Xenova/speecht5_tts",
+    "https://huggingface.co/Xenova/speecht5_hifigan"
+   ],
+   "match": [
+    "speecht5_tts",
+    "speecht5_hifigan"
+   ]
+  },
+  {
+   "id": "spkrec-xvect-onnx",
+   "kind": "weights",
+   "name": "t-neethesh/spkrec-xvect-voxceleb-onnx",
+   "license": "Apache-2.0",
+   "verdict": "OK",
+   "reason": "ONNX export of speechbrain/spkrec-xvect-voxceleb (Apache-2.0). Builds 512-dim speaker embeddings from the user's consent-verified recordings only.",
+   "files": [
+    "model.onnx",
+    "xvect.onnx"
+   ],
+   "evidence": [
+    "https://huggingface.co/t-neethesh/spkrec-xvect-voxceleb-onnx"
+   ],
+   "match": [
+    "spkrec-xvect"
    ]
   },
   {
