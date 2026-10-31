@@ -20,3 +20,5 @@ listed (document width 360 px); layout shift and axe results are in the QA gate 
 | `11-stats.png` | Stats (the design system's screen) |
 
 `../wiring/` holds the earlier set; its Onboarding, Collections and Settings shots are superseded by this folder.
+
+For store-style ordering, captions, and optional shots, see [../../STORE_SCREENSHOTS.md](../../STORE_SCREENSHOTS.md).
