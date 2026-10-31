@@ -10,6 +10,8 @@ import {
   type Unsubscribe,
 } from '@/app/contracts';
 import type { PageNestDB } from './db';
+import { isDatabaseClosedError } from './db-errors';
+import type { ProgressRow } from './schema';
 
 /** Default write interval from blueprint section 8.1 (position saved every 5 seconds). */
 export const DEFAULT_SAVE_INTERVAL_MS = 5000;
@@ -57,14 +59,25 @@ export class DexieProgressService implements ProgressService {
   async get(bookId: EntityId, mode: ProgressMode): Promise<ProgressRecord | undefined> {
     const pending = this.pending.get(keyOf(bookId, mode));
     if (pending) return this.toRecord(pending);
-    await this.writeChain;
-    const row = await this.db.progress.get([bookId, mode]);
-    return row && isLocator(row.locator) ? row : undefined;
+    await this.writeChain.catch(() => undefined);
+    try {
+      const row = await this.db.progress.get([bookId, mode]);
+      return row && isLocator(row.locator) ? row : undefined;
+    } catch (error) {
+      if (isDatabaseClosedError(error)) return undefined;
+      throw error;
+    }
   }
 
   async getLatest(bookId: EntityId): Promise<ProgressRecord | undefined> {
-    await this.writeChain;
-    const rows = await this.db.progress.where('bookId').equals(bookId).toArray();
+    await this.writeChain.catch(() => undefined);
+    let rows: ProgressRow[];
+    try {
+      rows = await this.db.progress.where('bookId').equals(bookId).toArray();
+    } catch (error) {
+      if (isDatabaseClosedError(error)) return undefined;
+      throw error;
+    }
     const candidates: ProgressRecord[] = rows.filter((r) => isLocator(r.locator));
     for (const p of this.pending.values()) {
       if (p.bookId === bookId) candidates.push(this.toRecord(p));
@@ -107,16 +120,35 @@ export class DexieProgressService implements ProgressService {
       clearTimeout(this.timer);
       this.timer = undefined;
     }
-    await Promise.all(batch.map((p) => this.write(p)));
-    await this.writeChain;
+    await Promise.all(batch.map((p) => this.write(p).catch((error) => {
+      if (isDatabaseClosedError(error)) return this.toRecord(p);
+      throw error;
+    })));
+    await this.writeChain.catch(() => undefined);
   }
 
   async clear(bookId: EntityId): Promise<void> {
     for (const [key, p] of this.pending) {
       if (p.bookId === bookId) this.pending.delete(key);
     }
-    await this.writeChain;
-    await this.db.progress.where('bookId').equals(bookId).delete();
+    await this.writeChain.catch(() => undefined);
+    try {
+      await this.db.progress.where('bookId').equals(bookId).delete();
+    } catch (error) {
+      if (isDatabaseClosedError(error)) return;
+      throw error;
+    }
+  }
+
+  /** Tests and teardown: stop timers and wait for in-flight writes without touching the database again. */
+  async dispose(): Promise<void> {
+    if (this.timer !== undefined) {
+      clearTimeout(this.timer);
+      this.timer = undefined;
+    }
+    this.pending.clear();
+    await this.writeChain.catch(() => undefined);
+    this.listeners.clear();
   }
 
   subscribe(listener: (record: ProgressRecord) => void): Unsubscribe {
@@ -139,15 +171,23 @@ export class DexieProgressService implements ProgressService {
   private write(p: Pending): Promise<ProgressRecord> {
     const record = this.toRecord(p);
     const run = async (): Promise<ProgressRecord> => {
-      await this.db.transaction('rw', this.db.progress, this.db.books, async () => {
-        await this.db.progress.put(record);
-        await this.db.books.where('id').equals(record.bookId).modify({ lastOpenedAt: record.updatedAt });
-      });
+      try {
+        await this.db.transaction('rw', this.db.progress, this.db.books, async () => {
+          await this.db.progress.put(record);
+          await this.db.books.where('id').equals(record.bookId).modify({ lastOpenedAt: record.updatedAt });
+        });
+      } catch (error) {
+        if (isDatabaseClosedError(error)) throw error;
+        throw error;
+      }
       for (const listener of [...this.listeners]) listener(record);
       return record;
     };
     const result = this.writeChain.then(run, run);
-    this.writeChain = result.catch(() => undefined);
+    this.writeChain = result.catch((error) => {
+      if (isDatabaseClosedError(error)) return undefined;
+      return undefined;
+    });
     return result;
   }
 }

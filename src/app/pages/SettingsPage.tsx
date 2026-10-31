@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { formatBytes, getStorageStatus, requestPersistentStorage, type StorageStatus } from '@/data/storage';
+import { whenIdle } from '@/app/idle';
 import { InstallHelp } from '@/ui';
 import { SettingsScreen, type SettingsStorage } from '@/ui/screens';
 import type { CustomThemeInput } from '@/ui/theme/custom';
@@ -46,6 +47,11 @@ export function SettingsPage() {
   const setCustom = useSettings((s) => s.setCustomTheme);
   const setSize = useSettings((s) => s.setFontSizePx);
   const [status, setStatus] = useState<StorageStatus | undefined>();
+  const [deferPanels, setDeferPanels] = useState(false);
+
+  useEffect(() => {
+    return whenIdle(() => setDeferPanels(true), 0);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -84,15 +90,25 @@ export function SettingsPage() {
       install={<InstallHelp />}
       storage={storage}
     >
-      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
-        <VoiceStudioSettingsPanel />
-      </Suspense>
-      <Suspense fallback={<div aria-hidden="true" style={{ height: '14rem' }} />}>
-        <DictionarySettingsPanel />
-      </Suspense>
-      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
-        <LibrarySettingsPanels />
-      </Suspense>
+      {deferPanels ? (
+        <>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+            <VoiceStudioSettingsPanel />
+          </Suspense>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: '14rem' }} />}>
+            <DictionarySettingsPanel />
+          </Suspense>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+            <LibrarySettingsPanels />
+          </Suspense>
+        </>
+      ) : (
+        <>
+          <div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />
+          <div aria-hidden="true" style={{ height: '14rem' }} />
+          <div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />
+        </>
+      )}
     </SettingsScreen>
   );
 }
