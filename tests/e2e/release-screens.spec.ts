@@ -1,13 +1,13 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { copyFileSync, existsSync } from 'node:fs';
 import { chooseTheme, launch, gotoTab, skipOnboarding } from './support/app';
 
 const OUT = join(process.cwd(), '..', 'docs', 'screens', 'release');
 const VIEW = { width: 360, height: 740 };
 
-async function setTheme(page: import('@playwright/test').Page, theme: 'Light' | 'Dark'): Promise<void> {
+async function setTheme(page: Page, theme: 'Light' | 'Dark'): Promise<void> {
   await chooseTheme(page, theme);
 }
 

@@ -6,6 +6,7 @@ import { useChromePlayerStore } from './chrome-store';
 import { useEnginePlayerStore } from './engine-store';
 import { chromeSnapshotFromAudioState, resetChromeCoverCacheForTests } from './sync-chrome-from-engine';
 import { attachPlayerKeyboard } from './keyboard-shortcuts';
+import { SleepShakeBridge } from '@/features/playback/SleepShakeBridge';
 
 const AudioControllerContext = createContext<AudioController | undefined>(undefined);
 
@@ -92,5 +93,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  return <AudioControllerContext.Provider value={controller}>{children}</AudioControllerContext.Provider>;
+  return (
+    <AudioControllerContext.Provider value={controller}>
+      <SleepShakeBridge />
+      {children}
+    </AudioControllerContext.Provider>
+  );
 }

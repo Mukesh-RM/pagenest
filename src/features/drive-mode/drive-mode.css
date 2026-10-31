@@ -1,0 +1,118 @@
+.pn-drive {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  padding: max(16px, var(--pn-safe-top)) max(16px, var(--pn-safe-right)) max(16px, var(--pn-safe-bottom))
+    max(16px, var(--pn-safe-left));
+  background: rgb(var(--pn-page));
+  color: var(--pn-text);
+}
+
+.pn-drive__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pn-drive__titles {
+  min-width: 0;
+  flex: 1;
+}
+
+.pn-drive__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.pn-drive__meta {
+  margin: 8px 0 0;
+  font-size: clamp(1.125rem, 3.5vw, 1.5rem);
+  color: rgb(var(--pn-text-rgb) / 0.85);
+}
+
+.pn-drive__exit {
+  flex-shrink: 0;
+  min-width: 96px;
+  min-height: 96px;
+  font-size: 1.125rem;
+}
+
+.pn-drive__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 4vh, 32px);
+  min-height: 0;
+}
+
+.pn-drive__transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 3vw, 24px);
+}
+
+.pn-drive__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  min-height: 96px;
+  padding: 12px 20px;
+  border-radius: 20px;
+  border: 2px solid rgb(var(--pn-accent-rgb) / 0.45);
+  background: rgb(var(--pn-surface));
+  color: var(--pn-text);
+  font-size: clamp(1.125rem, 3vw, 1.375rem);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pn-drive__btn:focus-visible {
+  outline: 3px solid rgb(var(--pn-accent-rgb));
+  outline-offset: 3px;
+}
+
+.pn-drive__btn--primary {
+  min-width: 120px;
+  min-height: 120px;
+  border-color: rgb(var(--pn-accent-rgb));
+  background: rgb(var(--pn-accent-rgb));
+  color: rgb(var(--pn-on-accent));
+}
+
+.pn-drive__btn--ghost {
+  background: transparent;
+}
+
+.pn-drive__speed {
+  min-width: 120px;
+}
+
+@media (orientation: landscape) and (min-height: 360px) {
+  .pn-drive__main {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (forced-colors: active) {
+  .pn-drive__btn {
+    border: 2px solid ButtonText;
+  }
+  .pn-drive__btn--primary {
+    background: Highlight;
+    color: HighlightText;
+    border-color: Highlight;
+  }
+}

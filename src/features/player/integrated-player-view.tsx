@@ -7,6 +7,7 @@ import { useCoverUrl } from '@/app/library-hooks';
 import { useAudioController } from './PlayerProvider';
 import { usePlayerStore } from './audio-store';
 import { useAudioPlayerController, type PlayerSheet } from './useAudioPlayerController';
+import { DriveModeOverlay } from '@/features/drive-mode/DriveModeOverlay';
 import { ChaptersSheet, SleepTimerSheet } from './player-sheets';
 
 const AudioPlayerScreen = lazy(() =>
@@ -30,6 +31,7 @@ export function IntegratedPlayerView({ book, welcome }: { book: BookRecord; welc
   const navigate = useNavigate();
   const state = usePlayerStore((s) => s.state);
   const [sheet, setSheet] = useState<PlayerSheet>(null);
+  const [driveOpen, setDriveOpen] = useState(false);
   const openSheet = useCallback((s: Exclude<PlayerSheet, null>) => setSheet(s), []);
   const playerController = useAudioPlayerController(controller, openSheet);
 
@@ -54,8 +56,15 @@ export function IntegratedPlayerView({ book, welcome }: { book: BookRecord; welc
   return (
     <>
       <Suspense fallback={<p className="px-[var(--pn-margin)] pt-[calc(1rem+var(--pn-safe-top))] text-muted">Loading player…</p>}>
-        <AudioPlayerScreen book={summary} chapter={chapter} controller={playerController} onCollapse={onCollapse} />
+        <AudioPlayerScreen
+          book={summary}
+          chapter={chapter}
+          controller={playerController}
+          onCollapse={onCollapse}
+          onDriveMode={() => setDriveOpen(true)}
+        />
       </Suspense>
+      <DriveModeOverlay open={driveOpen} controller={controller} onClose={() => setDriveOpen(false)} />
       <SleepTimerSheet open={sheet === 'sleep'} onClose={() => setSheet(null)} controller={controller} />
       <ChaptersSheet open={sheet === 'chapters'} onClose={() => setSheet(null)} controller={controller} />
       {state.errorMessage ? (

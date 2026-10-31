@@ -37,6 +37,8 @@ export interface AudioPlayerController {
   cycleSpeed: () => void;
   openSleep: () => void;
   openChapters: () => void;
+  /** Opens full-screen drive mode (lazy-loaded). */
+  openDriveMode?: () => void;
   /** Length of the Back and Forward buttons in seconds (the engine's `AudioOptions.skipBackSec` / `skipForwardSec`). */
   skipBackSeconds?: number;
   skipForwardSeconds?: number;
@@ -96,6 +98,8 @@ export interface AudioPlayerScreenProps {
   onSpeedClick?: () => void;
   onSleepClick?: () => void;
   onChaptersClick?: () => void;
+  /** Opens drive mode when the user taps the Drive mode control. */
+  onDriveMode?: () => void;
   /** Minimize to the mini-player. */
   onCollapse: () => void;
   /**
@@ -173,6 +177,7 @@ export function AudioPlayerScreen({
   const onSpeedClick = controller?.cycleSpeed ?? individual.onSpeedClick ?? noop;
   const onSleepClick = controller?.openSleep ?? individual.onSleepClick ?? noop;
   const onChaptersClick = controller?.openChapters ?? individual.onChaptersClick ?? noop;
+  const onDriveMode = controller?.openDriveMode ?? individual.onDriveMode;
   const skipBackSeconds = controller?.skipBackSeconds ?? individual.skipBackSeconds ?? 15;
   const skipForwardSeconds = controller?.skipForwardSeconds ?? individual.skipForwardSeconds ?? 30;
   const onSkipIntervalChange = controller?.setSkipInterval ?? individual.onSkipIntervalChange;
@@ -271,6 +276,16 @@ export function AudioPlayerScreen({
           </div>
 
           <div className="pn-player__chips">
+            {onDriveMode ? (
+              <Chip
+                icon="headphones"
+                onClick={onDriveMode}
+                aria-label="Open drive mode"
+                data-testid="player-drive-mode"
+              >
+                Drive mode
+              </Chip>
+            ) : null}
             <Chip icon="gauge" onClick={onSpeedClick} aria-label={`Speed ${formatSpeed(speed)}. Change speed`}>
               {formatSpeed(speed)}
             </Chip>
