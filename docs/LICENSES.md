@@ -10,7 +10,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 - Installed packages audited: 753 (91 production, 662 development)
 - Source of data: package-lock.json + node_modules
-- QA toolchain (`tests/`, dev only, never shipped): 210 packages from package-lock.json + node_modules; OK: 207, OK with note: 3, NOT OK: 0
+- QA toolchain (`tests/`, dev only, never shipped): 211 packages from package-lock.json + node_modules; OK: 207, OK with note: 3, NOT OK: 1
 - OK: 724, OK with note: 29, NOT OK: 0
 - Planned assets with open risks: 6 (see Flagged items)
 
@@ -20,6 +20,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 
 | Kind | Name | License | Free replacement or next step |
 |---|---|---|---|
+| npm (dev) | @pagenest/e2e-port@unknown | UNKNOWN | Remove the dependency, pick a permissive alternative, or add a reviewed entry to scripts/audit-license-overrides.json. |
 | planned | Piper engine, OHF-Voice/piper1-gpl (piper-tts 1.3+) | GPL-3.0-or-later | Keep inference on archived rhasspy/piper (MIT) only for experiments, or adopt a non-GPL phonemizer plus ONNX Runtime Web; run GPL training tools outside the PWA. |
 | planned | espeak-ng (phonemizer inside Piper and Kokoro WASM stacks) | GPL-3.0-or-later | Rule-based or dictionary phonemizer (no eSpeak), or Web Speech API (Tier 0) until a permissive WASM phonemizer is vetted. |
 | planned | Piper voice models (each voice) | per voice, see MODEL_CARD | Ship only voices marked OK in scripts/audit-models.json (for example en_US-libritts-high, CC BY 4.0). |
@@ -856,6 +857,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | @formatjs/icu-messageformat-parser | 2.11.4 | MIT | https://www.npmjs.com/package/@formatjs/icu-messageformat-parser/v/2.11.4 | OK |
 | @formatjs/icu-skeleton-parser | 1.8.16 | MIT | https://www.npmjs.com/package/@formatjs/icu-skeleton-parser/v/1.8.16 | OK |
 | @formatjs/intl-localematcher | 0.6.2 | MIT | https://www.npmjs.com/package/@formatjs/intl-localematcher/v/0.6.2 | OK |
+| @pagenest/e2e-port | unknown | UNKNOWN | https://www.npmjs.com/package/@pagenest/e2e-port | NOT OK |
 | @paulirish/trace_engine | 0.0.19 | BSD-3-Clause | https://www.npmjs.com/package/@paulirish/trace_engine/v/0.0.19 | OK |
 | @puppeteer/browsers | 2.3.0 | Apache-2.0 | https://www.npmjs.com/package/@puppeteer/browsers/v/2.3.0 | OK |
 | @sentry/core | 6.19.7 | BSD-3-Clause | https://www.npmjs.com/package/@sentry/core/v/6.19.7 | OK |
@@ -1038,6 +1040,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 Notes:
 
 - **@axe-core/playwright@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
+- **@pagenest/e2e-port@unknown**: unknown (no license declared)
 - **axe-core@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
 - **parse-cache-control@1.0.1**: Reviewed override (2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped.). Declared: BSD.
 
