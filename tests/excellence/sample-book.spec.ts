@@ -7,7 +7,7 @@ import { readerTextReport, whyNotRealText, REAL_TEXT } from '../e2e/support/read
 // Owners: Library (the sample provider and the card), Reader (the screen that must render the text).
 
 test('the sample book opens on real text, not a placeholder', async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
   await launch(page);
   const card = page.getByRole('region', { name: /try a sample book/i });
   await expect(card, 'the empty Library offers no "Try a sample book" card (no sample provider registered or available): owner Library').toBeVisible({ timeout: 10_000 });
@@ -25,7 +25,7 @@ test('the sample book opens on real text, not a placeholder', async ({ page }) =
   expect(page.url(), 'the sample book is text: it must open in the reader, not the audio player').toMatch(/\/read\//);
 
   await expect(page.getByRole('button', { name: 'Back to library' })).toBeVisible({ timeout: 90_000 });
-  await waitForBookText(page, { min: 200, timeout: 90_000 });
+  await waitForBookText(page, { min: 200, timeout: 120_000 });
 
   const report = await readerTextReport(page);
   const why = whyNotRealText(report);

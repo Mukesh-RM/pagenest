@@ -29,6 +29,21 @@ function shotPath(screen: string, width: number, theme: string): string {
   return join(OUT, `${screen}-${width}-${theme}.png`);
 }
 
+async function waitForSettingsStore(page: Page): Promise<void> {
+  await page.waitForFunction(async () => {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
+      const req = indexedDB.open('pagenest');
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => resolve(req.result);
+    });
+    try {
+      return db.objectStoreNames.contains('settings');
+    } finally {
+      db.close();
+    }
+  }, null, { timeout: 30_000 });
+}
+
 async function setAppTheme(page: Page, theme: (typeof THEMES)[number], opts?: { onboarding?: boolean }): Promise<void> {
   if (theme === 'custom') {
     if (opts?.onboarding) {
@@ -63,6 +78,7 @@ async function setAppTheme(page: Page, theme: (typeof THEMES)[number], opts?: { 
     await expect(page.getByRole('heading', { name: /^library$/i })).toBeVisible();
     return;
   }
+  await waitForSettingsStore(page);
   await page.evaluate(async (t) => {
     const open = indexedDB.open('pagenest');
     const db = await new Promise<IDBDatabase>((resolve, reject) => {
