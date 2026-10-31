@@ -24,7 +24,7 @@ vite-plugin-pwa, workbox-precaching, workbox-routing, workbox-window (MIT); shar
 Composer was requested for all work. Bots report they cannot select a model from inside their sessions, so this cannot be enforced from here; flagged to Mukeshh.
 
 ## Decision 8 (Oct 24, 2026, amended) Speech engine licensing (Auditor finding)
-Amended after the Narration Piper spike and the Auditor's voice vetting (docs/MODEL_VETTING.md). There is no GPL relicense: PageNest stays MIT.
+Amended after the Narration Piper spike and the Auditor's voice vetting (docs/MODEL_VETTING.md). There is no GPL relicense: InkQuiet stays MIT.
 - Engine: Piper voices run through onnxruntime-web (MIT), with CMUdict (BSD-style licence, keep its copyright, conditions and disclaimer in the licenses screen) for grapheme-to-phoneme conversion.
 - Not allowed in the bundle: eSpeak NG, piper-phonemize, piper1-gpl and kokoro-js (it depends on a phonemizer that embeds GPL eSpeak NG). Nothing GPL is added to main.
 - Voice rule: every voice is checked per voice. en_US-lessac (Blizzard 2013, no commercial use) is NOT allowed. The earlier line "prefer libritts_r" was WRONG: en_US-libritts_r-medium is fine-tuned from lessac. Use en_US-libritts-high (trained from scratch, CC BY 4.0).
@@ -45,3 +45,12 @@ The bar lives in the owner's instructions and is applied to every screen: taps r
 
 ## Decision 13 (Oct 24, 2026) File type detection by content
 Import detects the file type from content (magic bytes), never from the file name or extension. A book named `book.epub__1_` or with no extension still opens as EPUB, PDF, DOCX or another supported format.
+
+## Decision 14 (Oct 24, 2026) Worker bundle budget and Phase 1 data layer scope
+Casey approved the Architect's proposal on feature/data-phase1-prep. Bundle budgets: first-load JS stays at 120 kB gzip and first-load CSS at 12 kB. Web Worker chunks (`*.worker-*.js`) get their own budget of 55 kB gzip, because each worker carries its own copy of Dexie (about 30 kB); screens and other lazy chunks stay at 40 kB. The budgets live in `scripts/check-bundle.mjs` and `docs/PERFORMANCE.md`. Data layer: no tags field and no schema change (search covers title, author, narrator and series); no import-job store (the importer keeps job state in memory, and re-adding a folder after a restart skips books already imported by fingerprint); `cleanupOrphans()` runs exactly once at startup before any import and refuses with `cleanup-not-allowed` otherwise (docs/DATA_LAYER.md).
+
+## Decision 15 (Oct 24, 2026) Lazy engine budgets and runtime cache for the Reader engines
+Casey approved explicit per-chunk exceptions for the Reader's LAZY engines only; first-load JS stays at 120 kB gzip, first-load CSS at 12 kB, other lazy chunks at 40 kB and other workers at 55 kB. Limits (gzip): the pdf.js chunk (`engine-pdf-*`) 125 kB, `docx-core-*` 100 kB, `docx.worker-*` 100 kB, the EPUB engine (`engine-foliate-*`, foliate-js) 60 kB. They live in `scripts/check-bundle.mjs` (`ENGINE_CHUNK_BUDGETS_KB`) with tests in `src/app/bundle-budget.test.ts`, and the chunks get these names from `manualChunks` in `vite.config.ts`. These engine chunks and workers (including `pdf.worker*.mjs`) are NOT in the service worker precache (the precache file cap stays 1 MB). The service worker caches them at runtime, cache first, the first time a book of that format opens, so that format works offline from then on. To make the first book work offline too, the app fetches the sample book (and the EPUB engine once it ships) into that cache when the browser is idle shortly after the first Library render (`src/app/offline-warm.ts`; our own assets only, never offline or on save-data, no layout shift). The import worker and the import parsers stay precached (Decision 10 is unchanged: the sample is not precached). Details: docs/DEPLOY.md, docs/PERFORMANCE.md.
+
+## Decision 16 (Oct 31, 2026) pdf.js security upgrade and engine-pdf budget
+Casey approved raising the lazy `engine-pdf-*` chunk budget from 125 kB to **131 kB gzip** when upgrading `pdfjs-dist` to **6.4.299** (security patch). First-load JS remains **120 kB gzip hard**; only the on-demand pdf.js engine chunk grows. Budgets and rationale: `scripts/check-bundle.mjs`, `docs/PERFORMANCE.md`, `src/app/bundle-budget.test.ts`.

@@ -1,25 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DAY_MS, type StatsSummary } from '@/data/stats';
-import { EmptyState } from '@/ui';
-import { PageHeader } from '../components/PageHeader';
+import { StatsScreen } from '@/ui/screens';
 import { useServices } from '../services-context';
+import '../screen-styles';
 
-/** Reading and listening time. Simple bars, no clutter (blueprint 5.6). */
+const EMPTY: StatsSummary = { minutesPerDay: Array<number>(7).fill(0), sessionCount: 0, finishedBooks: 0 };
+
+/**
+ * Stats (route `/stats`): the design system's `StatsScreen` (four plain numbers and one bar chart,
+ * no streaks). The numbers are added up in the data worker, so a long history never blocks scrolling
+ * or taps; they refresh when you come back to the app after a reading session.
+ */
 export function StatsPage() {
   const { data } = useServices();
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<StatsSummary | undefined>();
 
-  // The numbers are added up in a worker, so a long history never blocks scrolling or taps.
   useEffect(() => {
     let current = true;
     const load = (): void => {
       data.stats(Date.now()).then(
         (next) => current && setSummary(next),
-        () => current && setSummary({ minutesPerDay: Array<number>(7).fill(0), sessionCount: 0, finishedBooks: 0 }),
+        () => current && setSummary(EMPTY),
       );
     };
     load();
-    // Refresh when coming back to the app, e.g. after a reading session.
     const onVisible = (): void => {
       if (document.visibilityState === 'visible') load();
     };
@@ -31,44 +37,21 @@ export function StatsPage() {
   }, [data]);
 
   const days = summary?.minutesPerDay;
-  const labels = useMemo(
-    () => (days ?? []).map((_, i) => new Date(Date.now() - (6 - i) * DAY_MS).toLocaleDateString(undefined, { weekday: 'short' })),
-    [days],
-  );
-
-  if (summary === undefined || days === undefined) return <PageHeader title="Stats" />;
-  const max = Math.max(1, ...days);
+  const { dayLabels, dayNames } = useMemo(() => {
+    const day = (i: number, weekday: 'short' | 'long'): string => new Date(Date.now() - (6 - i) * DAY_MS).toLocaleDateString(undefined, { weekday });
+    const list = days ?? EMPTY.minutesPerDay;
+    return { dayLabels: list.map((_, i) => day(i, 'short')), dayNames: list.map((_, i) => day(i, 'long')) };
+  }, [days]);
 
   return (
-    <>
-      <PageHeader title="Stats" />
-      {summary.sessionCount === 0 ? (
-        <EmptyState
-          art="stats"
-          title="Nothing to count yet"
-          description="Your reading and listening time will show up here, a little each day. There is no pressure and no streak to keep."
-        />
-      ) : (
-        <section aria-label="Last 7 days" className="rounded-card bg-surface p-4">
-          <p className="mb-4 text-sm text-muted">
-            Minutes per day, last 7 days. Finished books: {summary.finishedBooks}.
-          </p>
-          <ul className="flex h-40 items-end gap-2">
-            {days.map((minutes, i) => (
-              <li key={i} className="flex flex-1 flex-col items-center justify-end gap-1">
-                <span className="text-xs text-muted">{minutes}</span>
-                <div
-                  className="w-full rounded-t bg-accent"
-                  style={{ height: `${Math.max(2, (minutes / max) * 100)}px` }}
-                  role="img"
-                  aria-label={`${labels[i]}: ${minutes} minutes`}
-                />
-                <span className="text-xs">{labels[i]}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-    </>
+    <StatsScreen
+      loading={summary === undefined}
+      minutesPerDay={days ?? EMPTY.minutesPerDay}
+      dayLabels={dayLabels}
+      dayNames={dayNames}
+      sessionCount={summary?.sessionCount ?? 0}
+      finishedBooks={summary?.finishedBooks ?? 0}
+      emptyAction={{ label: 'Open your library', icon: 'library', onClick: () => navigate('/') }}
+    />
   );
 }

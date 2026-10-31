@@ -24,9 +24,14 @@ export async function overflowProblems(page: Page): Promise<Problem[]> {
         while (scroller) { const o = getComputedStyle(scroller).overflowX; if ((o === 'auto' || o === 'scroll') && scroller.scrollWidth > scroller.clientWidth) { inside = true; break; } scroller = scroller.parentElement; }
         if (!inside) out.push({ what: 'element extends past the right edge', where: `${describe(el)} right=${Math.round(r.right)} viewport=${de.clientWidth}` });
       }
+      // aria-hidden text is a decorative duplicate (for example a generated cover repeating the title shown in the card body)
+      if (el.closest('[aria-hidden="true"]')) continue;
       const hasOwnText = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim());
       const clips = cs.overflowX === 'hidden' || cs.overflowX === 'clip';
-      const lineClamped = cs.getPropertyValue('-webkit-line-clamp') !== 'none' && cs.getPropertyValue('-webkit-line-clamp') !== '';
+      // line-clamp (ellipsis) is deliberate truncation, not clipping. Current Chromium reports it as `line-clamp` or on the legacy
+      // -webkit-box layout, not always under -webkit-line-clamp, so accept all three forms.
+      const clampValue = (n: string) => { const v = cs.getPropertyValue(n); return v !== '' && v !== 'none' && v !== 'auto'; };
+      const lineClamped = clampValue('-webkit-line-clamp') || clampValue('line-clamp') || (cs.display === '-webkit-box' && cs.overflowY !== 'visible');
       if (hasOwnText && clips && !lineClamped && el.scrollWidth > el.clientWidth + 1 && cs.textOverflow !== 'ellipsis') {
         out.push({ what: 'text clipped horizontally', where: `${describe(el)} scrollWidth ${el.scrollWidth} > ${el.clientWidth}` });
       }
@@ -55,7 +60,7 @@ export async function smallTargets(page: Page, minPx: number): Promise<Problem[]
       let r = el.getBoundingClientRect();
       // Native radios and checkboxes: the whole label is the tap target, so measure the label when it is larger than the input.
       const label = (el as HTMLInputElement).labels?.[0];
-      if (label && (el as HTMLInputElement).type !== 'text') { const lr = label.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
+      if (label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type)) { const lr = label.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
       if (r.width === 0 && r.height === 0) continue;
       if (el.tagName === 'A' && el.closest('p, li > span, dd')) { const p = el.closest('p'); if (p && (p.textContent ?? '').trim() !== (el.textContent ?? '').trim()) continue; }
       if (r.width < minPx - 0.5 || r.height < minPx - 0.5) {
@@ -73,16 +78,48 @@ export async function expectTargetsBigEnough(page: Page, minPx: number, label: s
 
 /** Every visible control can be scrolled into view and is not covered by something else at its centre. */
 export async function unreachableControls(page: Page): Promise<Problem[]> {
+  // A sheet that is still sliding in has its footer below the fold for a moment: wait until the dialog stops moving.
+  await page.evaluate(async () => {
+    const dlg = () => document.querySelector('[role="dialog"][aria-modal="true"], dialog[open]');
+    let last = '';
+    for (let i = 0; i < 120; i++) {
+      const r = dlg()?.getBoundingClientRect();
+      const now = r ? `${Math.round(r.top)},${Math.round(r.height)}` : '';
+      if (now === last) return;
+      last = now;
+      await new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 50)));
+    }
+  });
   return page.evaluate(() => {
     const out: { what: string; where: string }[] = [];
     const sel = 'button, a[href], input:not([type="hidden"]), select, textarea, [role="button"], [role="radio"], [role="tab"], [role="switch"], [role="checkbox"]';
-    for (const el of document.querySelectorAll(sel)) {
+    // With a modal dialog open, everything behind it is meant to be covered by the scrim: judge only the controls inside the dialog.
+    const modal = [...document.querySelectorAll('[role="dialog"][aria-modal="true"], dialog[open]')].find((d) => !d.closest('[aria-hidden="true"]') && d.getAttribute('aria-hidden') !== 'true' && d.getBoundingClientRect().height > 0);
+    for (const el of (modal ?? document).querySelectorAll(sel)) {
       const cs = getComputedStyle(el);
       if (cs.display === 'none' || cs.visibility === 'hidden') continue;
       const label = (el as HTMLInputElement).labels?.[0];
       if (!label && (el.getBoundingClientRect().width === 0 || el.getBoundingClientRect().height === 0)) continue; // not rendered (for example the tablet rail on a phone)
-      const probe: Element = label && (el as HTMLInputElement).type !== 'text' ? label : el;
-      probe.scrollIntoView({ block: 'center', inline: 'center' });
+      const probe: Element = label && ['radio', 'checkbox'].includes((el as HTMLInputElement).type) ? label : el;
+      // A control already on screen and not covered stays where it is: centering it would also scroll overflow:hidden ancestors
+      // (a sheet with a fixed footer button would be pushed off screen by the check itself).
+      const hit = (q: Element) => { const b = q.getBoundingClientRect(); const px = b.left + b.width / 2; const py = b.top + b.height / 2; const t = px >= 0 && py >= 0 && px <= innerWidth && py <= innerHeight ? document.elementFromPoint(px, py) : null; return !!t && (q === t || q.contains(t) || t.contains(q)); };
+      if (!hit(probe)) {
+        // Scroll the way a user can: the scrollable (auto/scroll) ancestors, then the page. scrollIntoView would also move
+        // overflow:hidden ancestors (the dialog itself), which no user can do, and push other controls off screen.
+        for (let p: Element | null = probe.parentElement; p; p = p.parentElement) {
+          const csP = getComputedStyle(p);
+          const oy = csP.overflowY;
+          if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight && p !== document.documentElement && p !== document.body) {
+            p.scrollTop += (probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2) - (p.getBoundingClientRect().top + p.getBoundingClientRect().height / 2);
+          }
+          const ox = csP.overflowX;
+          if ((ox === 'auto' || ox === 'scroll') && p.scrollWidth > p.clientWidth && p !== document.documentElement && p !== document.body) {
+            p.scrollLeft += (probe.getBoundingClientRect().left + probe.getBoundingClientRect().width / 2) - (p.getBoundingClientRect().left + p.getBoundingClientRect().width / 2);
+          }
+        }
+        window.scrollBy(0, probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2 - innerHeight / 2);
+      }
       const r = probe.getBoundingClientRect();
       const x = r.left + r.width / 2; const y = r.top + r.height / 2;
       const name = `${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 30)}"`;
@@ -100,28 +137,49 @@ export async function expectControlsReachable(page: Page, label: string): Promis
   expect(problems, `${label}\n${fmt(problems)}`).toEqual([]);
 }
 
-/** Layout-shift recorder, installed before navigation. CLS is the sum of shifts without recent input. */
+export interface Shift { value: number; at: number; sources: string[] }
+
+/**
+ * Layout-shift recorder, installed before navigation (survives reloads). CLS is the sum of shifts without recent input.
+ * Each shift names the elements that moved ("tag.class "text"" with the box before -> after), described when the shift
+ * happens because the node may be gone by the time the test reads it.
+ */
 export async function recordLayoutShift(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    const w = window as unknown as { __cls?: number; __shifts?: { value: number; sources: string[] }[] };
+    const w = window as unknown as { __cls?: number; __shifts?: Shift[] };
+    interface Shift { value: number; at: number; sources: string[] }
     w.__cls = 0; w.__shifts = [];
+    const describe = (n: Node | null | undefined) => {
+      const el = n instanceof Element ? n : n?.parentElement;
+      if (!el) return '?';
+      const cls = typeof el.className === 'string' ? el.className.trim().split(/\s+/).slice(0, 2).join('.') : '';
+      return `${el.tagName.toLowerCase()}${cls ? `.${cls}` : ''} "${(el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 28)}"`;
+    };
+    const box = (r: DOMRectReadOnly) => `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)}`;
     try {
       new PerformanceObserver((list) => {
-        for (const e of list.getEntries() as unknown as { value: number; hadRecentInput: boolean; sources?: { node?: Node }[] }[]) {
+        for (const e of list.getEntries() as unknown as { value: number; startTime: number; hadRecentInput: boolean; sources?: { node?: Node; previousRect: DOMRectReadOnly; currentRect: DOMRectReadOnly }[] }[]) {
           if (e.hadRecentInput) continue;
           w.__cls! += e.value;
-          w.__shifts!.push({ value: e.value, sources: (e.sources ?? []).map((s) => (s.node as Element | undefined)?.nodeName ?? '?') });
+          w.__shifts!.push({ value: e.value, at: Math.round(e.startTime), sources: (e.sources ?? []).map((s) => `${describe(s.node)} ${box(s.previousRect)} -> ${box(s.currentRect)}`) });
         }
       }).observe({ type: 'layout-shift', buffered: true });
     } catch { /* Chromium only */ }
   });
 }
 
-export function readCls(page: Page): Promise<{ cls: number; shifts: { value: number; sources: string[] }[] }> {
+export function readCls(page: Page): Promise<{ cls: number; shifts: Shift[] }> {
   return page.evaluate(() => {
-    const w = window as unknown as { __cls?: number; __shifts?: { value: number; sources: string[] }[] };
+    const w = window as unknown as { __cls?: number; __shifts?: Shift[] };
+    interface Shift { value: number; at: number; sources: string[] }
     return { cls: w.__cls ?? 0, shifts: w.__shifts ?? [] };
   });
+}
+
+/** The shifts that made CLS what it is, worst first, for a failure message. */
+export function describeShifts(shifts: Shift[], top = 5): string {
+  return [...shifts].sort((a, b) => b.value - a.value).slice(0, top)
+    .map((s) => `  - ${s.value.toFixed(3)} at ${s.at} ms: ${s.sources.length ? s.sources.join('; ') : 'no source reported'}`).join('\n') || '  (no shifts)';
 }
 
 /** Longest transition or animation currently defined or running, in ms, with the element responsible. */
@@ -190,18 +248,94 @@ export async function expectUsableLayout(
   }
 }
 
+export interface TextScaleResult {
+  /** Root (html) font size in px before and after, and the body font size before and after. */
+  baseRootPx: number; rootPx: number; baseBodyPx: number; bodyPx: number;
+  /** Font-size tokens (custom properties holding a px, rem or em length) and how each one ended up scaled. */
+  tokens: { name: string; beforePx: number; afterPx: number; how: 'follows root font size (rem/em)' | 'overridden (px)' }[];
+  /** Visible text elements whose rendered font size did NOT grow with the scale: text that ignores the user's text size. */
+  unscaledText: string[];
+  sampled: number;
+}
+
 /**
- * Emulates a 200% system text size for apps whose root size is driven by CSS variables set in px (PageNest sets
- * --pn-font-size and --pn-text-*): every such px variable on the root is multiplied by `scale`, exactly what an OS text
- * scale does to px text. Returns the resulting body font size.
+ * Emulates a system text size of `scale` (2 = 200%) for any app, whatever unit it uses:
+ *  1. the root font size is scaled (inline `font-size ... !important` on <html>, which is what an OS or browser text size
+ *     does to rem/em text);
+ *  2. every font-size custom property (name contains "font" or "text", value is a px/rem/em length, found by walking the
+ *     style sheets) is measured through a probe element before and after. A token that already grew with the root (rem, em)
+ *     is left alone; a token that did not (fixed px) is overridden to before x scale, because that is what an OS text
+ *     scale does to px text;
+ *  3. every visible text element's font size is compared before and after, so text that ignores the setting is reported
+ *     (`unscaledText`) instead of passing silently.
+ * Nothing is hard-coded to InkQuiet's token names or to a unit.
  */
-export async function applyTextScale(page: Page, scale: number): Promise<number> {
+export async function applyTextScale(page: Page, scale: number): Promise<TextScaleResult> {
   return page.evaluate((scale) => {
     const root = document.documentElement;
-    const names = ['--pn-font-size', '--pn-text-xs', '--pn-text-sm', '--pn-text-md', '--pn-text-lg', '--pn-text-xl'];
-    const cs = getComputedStyle(root);
-    const bases = names.map((n) => parseFloat(cs.getPropertyValue(n)));
-    names.forEach((n, i) => { if (Number.isFinite(bases[i])) root.style.setProperty(n, `${bases[i]! * scale}px`); });
-    return parseFloat(getComputedStyle(document.body).fontSize);
+    const rootStyle = getComputedStyle(root);
+    const baseRootPx = parseFloat(rootStyle.fontSize);
+    const baseBodyPx = parseFloat(getComputedStyle(document.body).fontSize);
+    // 1. discover the length-valued font tokens
+    const names = new Set<string>();
+    const collect = (style: CSSStyleDeclaration) => { for (let i = 0; i < style.length; i++) { const n = style[i]!; if (n.startsWith('--') && /font|text/i.test(n)) names.add(n); } };
+    const walk = (rules: CSSRuleList) => {
+      for (const rule of Array.from(rules)) {
+        if ('style' in rule && (rule as CSSStyleRule).style) collect((rule as CSSStyleRule).style);
+        if ('cssRules' in rule && (rule as CSSGroupingRule).cssRules) walk((rule as CSSGroupingRule).cssRules);
+      }
+    };
+    for (const sheet of Array.from(document.styleSheets)) { try { walk(sheet.cssRules); } catch { /* cross-origin sheet */ } }
+    collect(root.style);
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;height:0;overflow:hidden;padding:0;border:0';
+    root.appendChild(probe);
+    const lengthTokens = [...names].filter((n) => /^-?[\d.]+(px|rem|em)$/.test(rootStyle.getPropertyValue(n).trim()) || /(calc|clamp|min|max)\(.*(px|rem|em)/.test(rootStyle.getPropertyValue(n).trim()));
+    const measure = (n: string) => { probe.style.width = `var(${n})`; return parseFloat(getComputedStyle(probe).width); };
+    const before = new Map(lengthTokens.map((n) => [n, measure(n)]));
+    // text elements before
+    const texts: { el: Element; px: number }[] = [];
+    for (const el of document.querySelectorAll('body *')) {
+      const cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+      const r = el.getBoundingClientRect();
+      if (r.width <= 2 || r.height <= 2) continue;
+      if (![...el.childNodes].some((c) => c.nodeType === 3 && (c.textContent ?? '').trim())) continue;
+      texts.push({ el, px: parseFloat(cs.fontSize) });
+    }
+    // 2. scale the root, then fix whatever px tokens did not follow
+    root.style.setProperty('font-size', `${baseRootPx * scale}px`, 'important');
+    const tokens: TextScaleResult['tokens'] = [];
+    for (const n of lengthTokens) {
+      const b = before.get(n)!; let a = measure(n);
+      let how: TextScaleResult['tokens'][number]['how'] = 'follows root font size (rem/em)';
+      if (!(a >= b * scale * 0.97)) { root.style.setProperty(n, `${b * scale}px`); a = measure(n); how = 'overridden (px)'; }
+      tokens.push({ name: n, beforePx: Math.round(b * 100) / 100, afterPx: Math.round(a * 100) / 100, how });
+    }
+    probe.remove();
+    // 3. did the text actually grow?
+    const need = 1 + (scale - 1) * 0.9;
+    const unscaledText = texts.filter(({ el, px }) => !(parseFloat(getComputedStyle(el).fontSize) >= px * need))
+      .map(({ el, px }) => `${el.tagName.toLowerCase()} "${(el.textContent ?? '').trim().slice(0, 30)}" ${px}px -> ${parseFloat(getComputedStyle(el).fontSize)}px`);
+    return {
+      baseRootPx, rootPx: parseFloat(getComputedStyle(root).fontSize), baseBodyPx, bodyPx: parseFloat(getComputedStyle(document.body).fontSize),
+      tokens, unscaledText, sampled: texts.length,
+    };
   }, scale);
+}
+
+/**
+ * The text-size gate on the current page: the scale really took effect (so the checks below are not run on an unscaled
+ * page), then nothing overflows or is clipped and every control is reachable. Throws (via expect) on any problem.
+ */
+export async function expectTextScaleOk(page: Page, label: string, scale: number): Promise<TextScaleResult> {
+  const r = await applyTextScale(page, scale);
+  expect(r.rootPx / r.baseRootPx, `${label}: root font size did not scale (${r.baseRootPx} -> ${r.rootPx} px); the gate would test nothing`).toBeGreaterThanOrEqual(scale * 0.99);
+  expect(r.bodyPx / r.baseBodyPx, `${label}: body text did not scale (${r.baseBodyPx} -> ${r.bodyPx} px); the gate would test nothing`).toBeGreaterThanOrEqual(scale * 0.97);
+  expect(r.sampled, `${label}: no visible text found to scale`).toBeGreaterThan(0);
+  // soft: report it, but keep running the overflow and reachability checks below so one run shows everything that is wrong
+  expect.soft(r.unscaledText.length / r.sampled, `${label}: text that ignores the text size (${r.unscaledText.length} of ${r.sampled}):\n${r.unscaledText.slice(0, 8).map((t) => `  - ${t}`).join('\n')}`).toBeLessThanOrEqual(0.1);
+  await expectNoOverflow(page, label);
+  await expectControlsReachable(page, label);
+  return r;
 }

@@ -1,8 +1,8 @@
 name: CI
 
 # Runs on every pull request and every push. Free-tier friendly:
-# npm and Playwright browser caches, cancel superseded runs, Chromium only
-# (WebKit only when PAGENEST_WEBKIT=1), short timeouts.
+# npm and Playwright browser caches, cancel superseded runs, short timeouts.
+# verify always installs Chromium + WebKit before e2e; webkit-iphone runs only when PAGENEST_WEBKIT=1.
 #
 # The product (repo root) and the QA suite (tests/, its own package) each have
 # their own package.json and lockfile.
@@ -37,8 +37,10 @@ permissions:
 
 env:
   CI: "true"
-  # PageNest never sends telemetry; keep tooling quiet too.
+  # InkQuiet never sends telemetry; keep tooling quiet too.
   WRANGLER_SEND_METRICS: "false"
+  # Space-separated QA port env var names: each gets a distinct free port at runtime (see Allocate ephemeral QA ports).
+  PAGENEST_CI_PORT_VARS: PAGENEST_E2E_PORT PAGENEST_LIBRARY_PORT PAGENEST_LIGHTHOUSE_PORT
 
 jobs:
   verify:
@@ -119,9 +121,13 @@ jobs:
         # Dev-only tooling advisories (for example vitest's tinypool) are tracked separately and do not ship to users.
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Repository audits (licenses, privacy, models, secrets)
+      - name: License audit (npm, fonts, models registry in docs)
         if: steps.detect.outputs.has_app == 'true'
-        run: npm run audit --if-present
+        run: scripts/check-licenses
+
+      - name: Repository audits (privacy, models in code, secrets)
+        if: steps.detect.outputs.has_app == 'true'
+        run: node scripts/audit-privacy.mjs && node scripts/audit-models.mjs --check && node scripts/audit-secrets.mjs
 
       - name: Build (includes the bundle size budget)
         if: steps.detect.outputs.has_build == 'true'
@@ -147,42 +153,67 @@ jobs:
         working-directory: tests
         run: npm ci
 
-      - name: Choose Playwright browsers
-        if: steps.detect.outputs.has_e2e == 'true'
-        id: browsers
-        run: |
-          if [ "${PAGENEST_WEBKIT:-}" = "1" ]; then
-            echo "list=chromium webkit" >> "$GITHUB_OUTPUT"
-          else
-            echo "list=chromium" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          PAGENEST_WEBKIT: ${{ vars.PAGENEST_WEBKIT }}
-
       - name: Cache Playwright browsers
         if: steps.detect.outputs.has_e2e == 'true'
-        id: pw-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.browsers.outputs.list }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('tests/package-lock.json') }}
 
       - name: Install Playwright browsers
         if: steps.detect.outputs.has_e2e == 'true'
-        run: |
-          if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
-            # Browsers came from the cache; only the OS libraries are missing.
-            npx playwright install-deps ${{ steps.browsers.outputs.list }}
-          else
-            npx playwright install --with-deps ${{ steps.browsers.outputs.list }}
-          fi
+        working-directory: tests
+        # Always install before e2e (fast when ~/.cache/ms-playwright was restored). Never skip on cache hit.
+        run: npx playwright install --with-deps chromium webkit
 
-      - name: Stable QA gates (unit, e2e on the real app, Lighthouse on every screen)
+      - name: Allocate ephemeral QA ports
+        if: steps.detect.outputs.has_e2e == 'true'
+        env:
+          PORT_VAR_NAMES: ${{ env.PAGENEST_CI_PORT_VARS }}
+        run: |
+          node <<'NODE'
+          const net = require('node:net');
+          const fs = require('node:fs');
+          const names = (process.env.PORT_VAR_NAMES ?? '')
+            .split(/\s+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          if (names.length === 0) {
+            console.error('PORT_VAR_NAMES is empty; set PAGENEST_CI_PORT_VARS at workflow env.');
+            process.exit(1);
+          }
+          const pick = () =>
+            new Promise((resolve, reject) => {
+              const s = net.createServer();
+              s.listen(0, '127.0.0.1', () => {
+                const port = s.address().port;
+                s.close((err) => (err ? reject(err) : resolve(port)));
+              });
+              s.on('error', reject);
+            });
+          (async () => {
+            const envFile = process.env.GITHUB_ENV;
+            const assigned = [];
+            for (const name of names) {
+              const port = await pick();
+              fs.appendFileSync(envFile, `${name}=${port}\n`);
+              assigned.push(`${name}=${port}`);
+            }
+            console.log(assigned.join(' '));
+          })().catch((e) => {
+            console.error(e);
+            process.exit(1);
+          });
+          NODE
+
+      - name: Stable QA gates (Vitest, unit, e2e on the real app, Lighthouse on every screen)
         if: steps.detect.outputs.has_e2e == 'true'
         working-directory: tests
-        # Runs the e2e projects, then Lighthouse (PWA, Accessibility, Performance >= 90 per screen); fails if either fails.
+        # Same gates as `npm run qa:stable` (Vitest, Playwright, Lighthouse on every screen); runtime ports in env below.
         run: npm run qa:stable
         env:
+          # Until playwright.config.ts reads PAGENEST_E2E_PORT, mirror the shared e2e port.
+          PAGENEST_PORT: ${{ env.PAGENEST_E2E_PORT }}
           PAGENEST_WEBKIT: ${{ vars.PAGENEST_WEBKIT }}
 
       - name: Upload e2e and Lighthouse reports on failure
@@ -205,9 +236,8 @@ jobs:
     if: ${{ always() && needs.verify.outputs.built == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # Report-only until Casey sets the repository variable QA_GATES_ENFORCED to 1: a failing gate then does not fail
-    # the workflow. With QA_GATES_ENFORCED=1 this is false and any gate failure fails the build.
-    continue-on-error: ${{ vars.QA_GATES_ENFORCED != '1' }}
+    # Enforced on integrate branches: any gate failure fails the build.
+    continue-on-error: false
     env:
       QA_GATES_ENFORCED: ${{ vars.QA_GATES_ENFORCED }}
     steps:
@@ -237,25 +267,61 @@ jobs:
         run: npm ci
 
       - name: Cache Playwright browsers
-        id: pw-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-chromium-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('tests/package-lock.json') }}
 
-      - name: Install Playwright Chromium
+      - name: Install Playwright browsers
+        working-directory: tests
+        run: npx playwright install --with-deps chromium webkit
+
+      - name: Allocate ephemeral QA ports
+        env:
+          PORT_VAR_NAMES: ${{ env.PAGENEST_CI_PORT_VARS }}
         run: |
-          if [ "${{ steps.pw-cache.outputs.cache-hit }}" = "true" ]; then
-            npx playwright install-deps chromium
-          else
-            npx playwright install --with-deps chromium
-          fi
+          node <<'NODE'
+          const net = require('node:net');
+          const fs = require('node:fs');
+          const names = (process.env.PORT_VAR_NAMES ?? '')
+            .split(/\s+/)
+            .map((s) => s.trim())
+            .filter(Boolean);
+          if (names.length === 0) {
+            console.error('PORT_VAR_NAMES is empty; set PAGENEST_CI_PORT_VARS at workflow env.');
+            process.exit(1);
+          }
+          const pick = () =>
+            new Promise((resolve, reject) => {
+              const s = net.createServer();
+              s.listen(0, '127.0.0.1', () => {
+                const port = s.address().port;
+                s.close((err) => (err ? reject(err) : resolve(port)));
+              });
+              s.on('error', reject);
+            });
+          (async () => {
+            const envFile = process.env.GITHUB_ENV;
+            const assigned = [];
+            for (const name of names) {
+              const port = await pick();
+              fs.appendFileSync(envFile, `${name}=${port}\n`);
+              assigned.push(`${name}=${port}`);
+            }
+            console.log(assigned.join(' '));
+          })().catch((e) => {
+            console.error(e);
+            process.exit(1);
+          });
+          NODE
 
       - name: Run the excellence and performance gates
         id: gates
         working-directory: tests
         # Strict: exits non-zero on any failure. Whether that fails the build is decided by `continue-on-error` above.
         run: npm run qa:gates
+        env:
+          PAGENEST_PORT: ${{ env.PAGENEST_E2E_PORT }}
 
       - name: Summarise the gates
         if: always()
@@ -272,5 +338,6 @@ jobs:
             tests/test-results/
             tests/qa-reports/
             tests/artifacts/
+            tests/lighthouse/reports/
           if-no-files-found: ignore
           retention-days: 14

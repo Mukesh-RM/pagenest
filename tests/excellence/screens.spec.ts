@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { TABS, chooseTheme, gotoTab, launch, openSheet, primaryNav, sheet, tab, themeOption, themeRadio, waitForServiceWorkerControl, type TabName } from '../e2e/support/app';
 import { expectNoA11yViolations, expectNoContrastViolations } from '../e2e/support/axe';
 import {
-  applyTextScale, expectControlsReachable, expectNoOverflow, expectUsableLayout, expectTargetsBigEnough, longestMotion, readCls, recordLayoutShift,
+  applyTextScale, expectControlsReachable, expectNoOverflow, expectTextScaleOk, expectUsableLayout, expectTargetsBigEnough, longestMotion, readCls, recordLayoutShift,
 } from '../e2e/support/layout';
 import { BUDGETS } from '../perf/budgets';
 
@@ -61,13 +61,11 @@ test.describe('200% text size', () => {
     test(`${name}: nothing clipped, no horizontal scroll, controls reachable, axe clean`, async ({ page }) => {
       await launch(page);
       await gotoTab(page, name);
-      const bodyPx = await applyTextScale(page, X.textScalePercent / 100);
-      expect(bodyPx, 'body font size after scaling (16 px x 2)').toBeGreaterThanOrEqual(31);
       const label = `${name} at ${X.textScalePercent}% text`;
-      await expectNoOverflow(page, label);
+      // expectTextScaleOk scales root rem AND px tokens, proves it took effect, then checks overflow, clipping and reachability
+      await expectTextScaleOk(page, label, X.textScalePercent / 100);
       await expect(primaryNav(page), 'navigation stays visible').toBeVisible();
       await expect(tab(page, name), 'current tab stays reachable').toBeInViewport();
-      await expectControlsReachable(page, label);
       await expectNoA11yViolations(page, label);
     });
   }
@@ -86,7 +84,8 @@ test.describe('200% text size', () => {
 
   test('the Install help sheet works at 200% text size', async ({ page }) => {
     await launch(page);
-    await applyTextScale(page, X.textScalePercent / 100);
+    const scaled = await applyTextScale(page, X.textScalePercent / 100);
+    expect(scaled.bodyPx / scaled.baseBodyPx, 'the text scale took effect; otherwise this test checks nothing').toBeGreaterThanOrEqual(1.94);
     await openSheet(page);
     await expectNoOverflow(page, 'install sheet at 200% text');
     const box = await sheet(page).boundingBox();

@@ -10,7 +10,7 @@ test.describe('phase 0 smoke', () => {
     page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`); });
 
     await launch(page);
-    await expect(page).toHaveTitle(/PageNest/);
+    await expect(page).toHaveTitle(/InkQuiet/);
     await expect(page.locator('html')).toHaveAttribute('lang', /.+/);
     expect(errors, errors.join('\n')).toEqual([]);
   });
@@ -79,7 +79,9 @@ test.describe('phase 0 smoke', () => {
     await launch(page);
     await openSheet(page);
     await expect(sheet(page)).toBeVisible();
-    await sheet(page).getByRole('button', { name: /close|done/i }).click();
+    // The sheet may offer a header "Close" icon button AND a footer "Done" button; both close it. Exact names (not a
+    // substring match) and the first in DOM order, which is the header Close, so the click is never ambiguous.
+    await sheet(page).getByRole('button', { name: /^(close|done)$/i }).first().click();
     await expect(sheet(page)).toBeHidden();
     await expect(installHelpButton(page)).toBeFocused();
   });

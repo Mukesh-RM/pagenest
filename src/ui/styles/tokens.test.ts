@@ -36,7 +36,8 @@ describe('layout tokens', () => {
   });
 
   it('type scale is 12 / 14 / 16 / 20 / 28', () => {
-    expect(['xs', 'sm', 'md', 'lg', 'xl'].map((s) => px(root[`--pn-text-${s}`]))).toEqual([12, 14, 16, 20, 28]);
+    expect(['xs', 'sm', 'md', 'lg', 'xl'].map((s) => px(root[`--pn-text-${s}`]) * 16)).toEqual([12, 14, 16, 20, 28]);
+    for (const s of ['xs', 'sm', 'md', 'lg', 'xl']) expect(root[`--pn-text-${s}`], s).toMatch(/rem$/);
   });
 });
 
@@ -100,8 +101,25 @@ describe('touch targets (44 px)', () => {
     expect(declarationsFor(components, '.pn-btn--icon')['width']).toBe('var(--pn-touch)');
   });
 
-  it('the large button is taller than 44 px, on the grid', () => {
-    expect(declarationsFor(components, '.pn-btn--lg')['min-height']).toBe('calc(var(--pn-touch) + var(--pn-space-2))');
+  it('every button shares one height, radius and type size (no size variants)', () => {
+    const btn = declarationsFor(components, '.pn-btn');
+    expect(btn['min-height']).toBe('var(--pn-touch)');
+    expect(btn['border-radius']).toBe('var(--pn-radius-button)');
+    expect(btn['font-size']).toBe('var(--pn-text-md)');
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-solid']) {
+      const d = declarationsFor(components, `.pn-btn--${variant}`);
+      for (const prop of ['height', 'min-height', 'padding', 'font-size', 'border-radius']) {
+        expect(d[prop], `${variant} ${prop}`).toBeUndefined();
+      }
+    }
+    expect(components.some((r) => r.selector.includes('pn-btn--lg'))).toBe(false);
+  });
+
+  it('secondary buttons are soft tinted without an outline; destructive is quiet text', () => {
+    expect(declarationsFor(components, '.pn-btn--secondary')['background']).toBe('rgb(var(--pn-accent-soft))');
+    expect(declarationsFor(components, '.pn-btn--secondary')['border']).toBeUndefined();
+    expect(declarationsFor(components, '.pn-btn--danger')['background']).toBeUndefined();
+    expect(declarationsFor(components, '.pn-btn--danger-solid')['background']).toBe('rgb(var(--pn-danger))');
   });
 
   it('every interactive class also has a visible :focus-visible rule', () => {
@@ -109,7 +127,8 @@ describe('touch targets (44 px)', () => {
     for (const selector of ['.pn-btn', '.pn-chip', '.pn-card--interactive', '.pn-nav__item', '.pn-snackbar__action']) {
       expect(css, selector).toContain(`${selector}:focus-visible`);
     }
-    expect(css).toContain('outline: 2px solid rgb(var(--pn-focus-ring))');
+    expect(css).toContain('outline: var(--pn-focus-width) solid rgb(var(--pn-focus-ring))');
+    expect(root['--pn-focus-width']).toBe('2px');
   });
 });
 

@@ -1,0 +1,268 @@
+/*
+ * Library screen styles. Colors, spacing, radii and type come from the design tokens in
+ * src/ui/styles/tokens.css (--pn-*); sizes sit on the 4 px grid. Nothing here sets a color value.
+ */
+
+/* ---------- Dock: import status and selection bar, above the tab bar ---------- */
+.pn-lib-dock {
+  position: fixed;
+  inset-inline: 0;
+  bottom: var(--pn-bottom-chrome);
+  z-index: var(--pn-z-nav);
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+  padding: 0 var(--pn-space-2) var(--pn-space-2);
+  pointer-events: none;
+}
+
+.pn-lib-dock > * {
+  pointer-events: auto;
+}
+
+@media (min-width: 768px) {
+  .pn-lib-dock {
+    inset-inline-start: var(--pn-rail-width);
+  }
+}
+
+.pn-lib-status,
+.pn-lib-selbar {
+  display: flex;
+  align-items: center;
+  gap: var(--pn-space-2);
+  padding: var(--pn-space-2) var(--pn-space-3);
+  border: 1px solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface-raised));
+  box-shadow: var(--pn-shadow-raised);
+  color: rgb(var(--pn-text));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-lib-status__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+  min-width: 0;
+}
+
+.pn-lib-selbar {
+  flex-wrap: wrap;
+}
+
+.pn-lib-selbar__count {
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-lib-selbar__spacer {
+  flex: 1 1 auto;
+}
+
+.pn-lib-problems {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pn-lib-problems li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-1);
+}
+
+.pn-lib-problems__name {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Sheets and forms ---------- */
+.pn-lib-sheet-note {
+  margin: 0 0 var(--pn-space-4);
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+  line-height: var(--pn-leading-normal);
+}
+
+.pn-lib-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-3);
+  margin-bottom: var(--pn-space-4);
+}
+
+.pn-lib-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+}
+
+.pn-lib-form > label {
+  font-size: var(--pn-text-sm);
+  font-weight: var(--pn-weight-medium);
+}
+
+.pn-lib-field {
+  min-height: var(--pn-touch);
+  padding: 0 var(--pn-space-4);
+  border: 1px solid rgb(var(--pn-border-strong));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface));
+  color: rgb(var(--pn-text));
+  font: inherit;
+}
+
+.pn-lib-error {
+  margin: 0;
+  color: rgb(var(--pn-danger));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-lib-shelfpick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+  margin: 0 0 var(--pn-space-4);
+  padding: 0;
+  list-style: none;
+}
+
+.pn-lib-shelfpick__btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pn-space-3);
+  width: 100%;
+  min-height: var(--pn-touch);
+  padding: var(--pn-space-2) var(--pn-space-4);
+  border: 1px solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface));
+  color: rgb(var(--pn-text));
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* ---------- Drop overlay ---------- */
+.pn-lib-drop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--pn-z-sheet);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(var(--pn-scrim) / var(--pn-scrim-opacity));
+}
+
+.pn-lib-drop__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--pn-space-3);
+  padding: var(--pn-space-10) var(--pn-space-12);
+  border: 2px dashed rgb(var(--pn-accent));
+  border-radius: var(--pn-radius-sheet);
+  background: rgb(var(--pn-surface-raised));
+  color: rgb(var(--pn-text));
+  font-size: var(--pn-text-lg);
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-lib-drop__card p {
+  margin: 0;
+}
+
+/* ---------- Collections and settings panels ---------- */
+.pn-lib-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-3);
+  padding: var(--pn-space-4);
+  border: 1px solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface));
+}
+
+.pn-lib-panel h2,
+.pn-lib-panel h3 {
+  margin: 0;
+  font-size: var(--pn-text-md);
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-lib-panel p {
+  margin: 0;
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+  line-height: var(--pn-leading-normal);
+}
+
+.pn-lib-shelves {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pn-lib-shelfrow {
+  display: flex;
+  align-items: center;
+  gap: var(--pn-space-2);
+}
+
+.pn-lib-shelfrow > .pn-card {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pn-lib-shelfrow__name {
+  display: block;
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-lib-breakdown {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--pn-space-2) var(--pn-space-4);
+  margin: 0;
+  font-size: var(--pn-text-sm);
+}
+
+.pn-lib-breakdown dt {
+  color: rgb(var(--pn-muted));
+}
+
+.pn-lib-breakdown dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pn-lib-headactions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--pn-space-2);
+}
+
+.pn-lib-sectiontitle {
+  margin: var(--pn-space-4) 0 var(--pn-space-2);
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-lib-shelfskel {
+  display: block;
+  height: var(--pn-space-16);
+  border-radius: var(--pn-radius-card);
+}
+
+.pn-lib-field:focus-visible {
+  outline: 2px solid rgb(var(--pn-focus-ring));
+  outline-offset: 2px;
+}

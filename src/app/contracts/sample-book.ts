@@ -31,7 +31,7 @@ export interface SampleBookInfo {
 }
 
 /**
- * Lets a person try PageNest with no file of their own: one small public-domain book that opens
+ * Lets a person try InkQuiet with no file of their own: one small public-domain book that opens
  * in a few seconds. The Library owner implements it; the app only talks to this interface.
  *
  * Rules for an implementation:

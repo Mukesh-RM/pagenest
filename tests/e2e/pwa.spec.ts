@@ -25,7 +25,7 @@ test.describe('pwa installability', () => {
   test('manifest has name, standalone display, start URL and colours', async ({ page }) => {
     await launch(page);
     const { manifest } = await loadManifest(page);
-    expect(manifest.name).toMatch(/pagenest/i);
+    expect(manifest.name).toMatch(/inkquiet/i);
     expect(manifest.short_name, 'short_name').toBeTruthy();
     expect(manifest.short_name!.length, 'short_name should fit under a home-screen icon').toBeLessThanOrEqual(12);
     expect(manifest.display).toBe('standalone');

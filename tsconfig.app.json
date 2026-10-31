@@ -20,7 +20,7 @@
     "skipLibCheck": true,
     "types": ["vite/client", "vitest/globals"],
     "baseUrl": ".",
-    "paths": { "@/*": ["src/*"] }
+    "paths": { "@/*": ["src/*"], "@pagenest/e2e-port": ["scripts/e2e/resolve-port.mjs"] }
   },
-  "include": ["src", "vitest.setup.ts"]
+  "include": ["src", "vitest.setup.ts", "scripts/e2e/resolve-port.d.ts"]
 }

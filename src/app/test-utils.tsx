@@ -1,14 +1,19 @@
 import { render, type RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
+import { CoverUrlCache } from '@/data/cover-url';
 import { createDataClient } from '@/data/data-client';
 import { PageNestDB } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
+import { DEFAULT_CUSTOM_THEME } from '@/ui/theme/custom';
 import { AppRoutes } from './routes';
 import { ServicesProvider } from './services';
 import type { AppServices } from './services-context';
 import { useSettings } from './settings-store';
 import { ThemeProvider } from './ThemeProvider';
+
+// The Library's windowed list lays rows out from the width of its container; jsdom reports 0, so a phone width is used.
+Object.defineProperty(HTMLElement.prototype, 'clientWidth', { configurable: true, get: () => 360 });
 
 let counter = 0;
 
@@ -16,12 +21,13 @@ let counter = 0;
 export function makeServices(prefix = 'pagenest-test'): AppServices {
   counter += 1;
   const db = new PageNestDB(`${prefix}-${counter}`);
-  return { db, progress: new DexieProgressService(db), data: createDataClient({ db, workerFactory: () => undefined }) };
+  const data = createDataClient({ db, workerFactory: () => undefined });
+  return { db, progress: new DexieProgressService(db), data, covers: new CoverUrlCache({ load: (id) => data.books.getCover(id) }) };
 }
 
 /** Put the settings store back to its first-run defaults. */
 export function resetSettings(): void {
-  useSettings.setState({ loaded: false, themePreference: 'system', fontSizePx: 16, onboardingDone: false });
+  useSettings.setState({ loaded: false, themePreference: 'system', customTheme: { ...DEFAULT_CUSTOM_THEME }, contrastMode: 'system', fontSizePx: 16, onboardingDone: false });
 }
 
 /**

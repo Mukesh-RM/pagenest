@@ -29,7 +29,13 @@
         "@img/sharp",
         "sharp-libvips"
       ],
-      "reason": "2026-10-24, Decision 9. LGPL-3.0-or-later prebuilt libvips binaries, installed only as optional dependencies of sharp@0.35.5. sharp is a devDependency used by one tool, scripts/pwa/generate-icons.mjs (renders the SVG icons to PNG). They are not in the production tree (npm ls --omit=dev), and dist/ and public/ contain no libvips code, no native binaries and no 'sharp' or 'libvips' strings. The committed PNG icons are the tool's output, hold only IHDR, pHYs, IDAT and IEND chunks (no embedded profile or text) and are not LGPL material. LGPL obligations apply to distributing the binaries, and PageNest does not. The audit fails if one of these appears in the production tree, in dist/ or in public/."
+      "reason": "2026-10-24, Decision 9. LGPL-3.0-or-later prebuilt libvips binaries, installed only as optional dependencies of sharp@0.35.5. sharp is a devDependency used by one tool, scripts/pwa/generate-icons.mjs (renders the SVG icons to PNG). They are not in the production tree (npm ls --omit=dev), and dist/ and public/ contain no libvips code, no native binaries and no 'sharp' or 'libvips' strings. The committed PNG icons are the tool's output, hold only IHDR, pHYs, IDAT and IEND chunks (no embedded profile or text) and are not LGPL material. LGPL obligations apply to distributing the binaries, and InkQuiet does not. The audit fails if one of these appears in the production tree, in dist/ or in public/."
+    },
+    {
+      "name": "duck",
+      "version": "0.1.12",
+      "license": "BSD-2-Clause",
+      "reason": "2026-10-31. Transitive prod dependency (mammoth → lop → duck). package.json declares ambiguous \"BSD\"; the published LICENSE file is the 2-clause BSD license (Copyright 2013 Michael Fogel)."
     },
     {
       "name": "@img/sharp-*",

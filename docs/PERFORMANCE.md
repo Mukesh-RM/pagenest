@@ -1,4 +1,4 @@
-# PageNest performance rules
+# InkQuiet performance rules
 
 Mukeshh's rule: **nobody should ever feel lag.** This page lists how `src/app` and `src/data`
 keep to it, the numbers we hold ourselves to, and the checks that fail when someone breaks them.
@@ -14,6 +14,8 @@ The main thread draws, handles taps and runs React. It does **not** do heavy wor
 | Reading and writing book files in OPFS (including sync access handles) | Web Worker (`src/data/data.worker.ts`) |
 | Hashing a file for duplicate detection (`computeFingerprint`) | Web Worker |
 | Adding up reading sessions for the Stats screen (`computeStats`) | Web Worker |
+| Adding a book (copying its file and cover into OPFS, then one database transaction), deleting, undo, clean-up | Web Worker (`data.books.*`) or the import worker |
+| Searching, filtering, sorting and paging the library (`data.library.query`) | Web Worker; the screen receives one page |
 | Small settings reads and writes, live queries that show one screen of rows | Main thread (Dexie, a few rows) |
 
 How the worker is used:
@@ -35,6 +37,12 @@ How the worker is used:
   (`React.lazy`, `src/app/screens.ts`). The first paint only needs the shell, router, theme and settings.
 * The Library chunk starts downloading at once; the other tabs are fetched when the browser is
   idle (`requestIdleCallback`), so switching tabs does not wait.
+* The reader and player screens are fetched when idle too (they are small and open on a tap).
+* Overlays are not part of first paint: the PWA prompts (`LazyPwaPrompts`) mount when idle, and the
+  book detail sheet (`LazyBookDetailHost`) is prefetched when idle after the grid is up. Both render
+  nothing in the page flow, so nothing shifts. The file-store code (`src/data/opfs.ts`) is only
+  loaded in the no-Worker fallback. `src/app/perf-rules.test.ts` fails if any of these becomes a
+  static import again. Initial JS went from 114.49 to 109.49 kB gzip (budget stays 120).
 * While a chunk loads, a fallback with the same header height and a skeleton block is shown, so
   the page does not jump (no layout shift).
 * The dev-only `/ui-kit` demo is behind `import.meta.env.DEV` and is not in the production build.
@@ -50,7 +58,10 @@ How the worker is used:
 * Contexts are split by purpose (services, theme) and their values are memoized. Callbacks passed
   to the design system are `useCallback`.
 * Live queries are narrow: Collections reads shelf counts in one keys-only pass; Stats reads only
-  the last 7 days through the `startedAt` index.
+  the last 7 days through the `startedAt` index. The Library never reads whole tables on the main
+  thread: it asks the data worker for one page (`useLibraryPage`, `docs/DATA_LAYER.md`) and only
+  counts rows to know when to ask again (`useLibraryRevision`). Covers are `blob:` URLs shared and
+  reference-counted by `CoverUrlCache`, so 5,000 covers never mean 5,000 live URLs.
 * Progress writes stay throttled (5 s, see `docs/PROGRESS_SERVICE.md`). The text size slider
   changes the screen on every tick but writes to IndexedDB once, 250 ms after it rests, and
   immediately when the page is hidden or onboarding ends.
@@ -82,14 +93,23 @@ How the worker is used:
 
 | What | Budget | Measured (this branch) |
 | --- | --- | --- |
-| First-load JS (index.html's module script + modulepreloads) | **120 kB** | 103.4 kB |
-| First-load CSS | **12 kB** | 7.1 kB |
-| Any single lazy chunk (tab, onboarding, data worker) | **40 kB** | largest: data worker 35.0 kB; biggest tab 3.5 kB |
+| First-load JS (index.html's module script + modulepreloads) | **120 kB** | measure on branch (audio engine is lazy; chrome store only on first paint) |
+| First-load CSS | **12 kB** | 7.2 kB |
+| Any single lazy chunk (tab, onboarding, in-process data service) | **48 kB** | largest: mp4box metadata split 45.0 kB; in-process data service 5.6 kB |
+| A Web Worker chunk (`*.worker-*.js`; carries its own Dexie) | **55 kB** (every worker, the Library's import worker included) | data worker 40.6 kB; import worker 52.4 kB; audio tag worker 36.2 kB |
 
 Why 120 kB and not 150 kB: react-dom, the router and Dexie are about 100 kB of the first load and
 are not going away, so 120 kB leaves room for roughly one small feature before someone has to
 justify it. If a feature genuinely needs more, raise the number in `scripts/check-bundle.mjs`
 **and** this table in the same commit, and say why in the commit message.
+
+The worker budget was added with the Phase 1 data layer: the data worker went from 35.0 to 39.9 kB
+gzip (books, collections and the search service), which left 0.1 kB under the old 40 kB cap that was
+meant for screens. About 30 kB of a worker is Dexie itself, which every worker pays once. The
+import worker (Library) will be a second worker with the same cost, so 55 kB is for the worker
+type, not a free pass: keep adding code to the worker only when it must run off the main thread.
+The in-process fallback loads the data service on demand (a separate 5.6 kB chunk), so
+browsers that have Workers never download it and the first-load JS did not grow by it.
 
 Fonts (two Inter variable files, 133 kB) are not JavaScript and do not count here, but they cost
 bytes on a first visit; see risks below.
@@ -101,10 +121,10 @@ source rules above are tested in `src/app/perf-rules.test.ts`.
 
 | | Before (design system merged, all pages static) | After |
 | --- | --- | --- |
-| First-load JS, gzip | 106.7 kB (322.7 kB raw) | 103.4 kB (312.7 kB raw) |
+| First-load JS, gzip | 106.7 kB (322.7 kB raw) | 105.8 kB (with route chrome, resume card and library hooks) |
 | First-load CSS, gzip | 7.03 kB | 7.06 kB |
 | JS needed for the first screen | everything, including Settings, Stats, Collections | shell + Library only |
-| Data worker | n/a | 35.0 kB gzip, loads on first use |
+| Data worker | n/a | 39.9 kB gzip, loads on first use |
 
 The first-load total moved little because Dexie, React and the router dominate it; the win is that
 every screen is now separate and heavy work is off the main thread, with a hard cap that cannot
@@ -140,14 +160,17 @@ These were noticed, not changed, because the files belong to other roles.
 * A new data worker URL appears with each build (hashed name); the precache manifest handles that,
   a hand-written list will not.
 
-**Library, readers, audio (not built yet)**
+**Library, readers, audio**
 
-* The Library lists every book from `books.toArray()` and has no virtualization. Past a few
-  hundred books, use a windowed list (and a paged or indexed query).
-* `useLiveQuery` on the whole `progress` table reruns on every progress write. Fine for a few
-  hundred rows; for more, query progress per visible book.
-* Importing, cover extraction and EPUB parsing must go through the worker (`DataService`) and
-  never block on `File.arrayBuffer()` of a whole book on the main thread.
+* Done in `src/data` and the placeholder `LibraryPage`: paged, searchable queries in the worker and no
+  whole-table reads on the main thread. The **real** Library screen still needs a windowed list
+  (virtualisation) for thousands of books; the data layer pages with `limit`/`offset` and caps a page
+  at 500. The placeholder shows the first 500 and says "Showing 500 of N books."
+* Importing, cover extraction and EPUB parsing must go through a worker (`src/workers/import`) and
+  never block on `File.arrayBuffer()` of a whole book on the main thread. Use `BookRepository.add`
+  for the writes; it takes `Blob`s and never reads them into memory itself.
+* Cover images should be decoded at thumbnail size when they are extracted (a 3000 px cover as a grid
+  tile costs memory even with `decoding="async"`). That is the importer's job.
 * Audio and TTS engines should run decoding and model work off the main thread too.
 
 **QA**
@@ -155,3 +178,62 @@ These were noticed, not changed, because the files belong to other roles.
 * E2E tests that expect the Library on first load now meet onboarding first. Click **Skip** or seed
   the `onboardingDone` setting.
 * Add a Lighthouse or trace-based interaction check once the library has real data.
+
+## Status of each item in `src/app` and `src/data` (checked on `feature/data-phase1-prep`)
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| Files, hashing, stats off the main thread | Fixed | `data-client.test.ts` runs them through a real `MessageChannel` |
+| Books, search, covers off the main thread | Fixed (new) | `data-client.test.ts` "library APIs through the client" |
+| Tabs lazy, no static page import | Fixed | `perf-rules.test.ts` |
+| Idle prefetch of tabs | Fixed, test added | `idle-preload.test.ts` (waits for idle, 3 s timeout, 1.5 s timer fallback, cancel) |
+| Zustand selectors only | Fixed | `perf-rules.test.ts` |
+| Memoized book tile, plain values | Fixed, test added | `library-page.test.tsx`: same values render 0 times, a progress write renders 1 tile |
+| Library read the whole `books` and `progress` tables on the main thread | **Was open, now fixed** | `LibraryPage` uses `useLibraryPage`; test spies `progress.toArray` |
+| Library list unbounded | Fixed for the placeholder (500 cap + honest count); real windowed list is the Library's | `library-page.test.tsx` "Showing 500 of 520" |
+| Animations only `transform`/`opacity`; reduced motion | Fixed, test added | `perf-rules.test.ts` ("motion preferences") |
+| Text size writes once; progress writes throttled to 5 s | Fixed | `settings-store.test.ts`, `progress-service.test.ts` |
+| Services context memoized | Fixed | `ServicesProvider` `useMemo` |
+| No layout shift on tab load | Fixed in code; **no automatic test** (needs a real browser layout) | Same-height fallback in `ScreenFallback`; QA to add a trace check |
+| First-load budget | Fixed, enforced | `bundle-budget.test.ts`, `npm run build` |
+| Whole-table `progress` read for the `reading`/`listening` filters | Open (small): rows are one per book and mode, read in the worker only when that chip is used | `DATA_LAYER.md` |
+| Snapshot re-read after any `books` change | **Was open, now fixed** (measured 41 ms median at 5,000 books in Chrome, now 0.5–2 ms) | `docs/DATA_LAYER.md` "Cost of a change"; `library-query-patch.test.ts` counts rows read; `scripts/bench-library.mjs` |
+
+Everything under "Risks to watch" for `src/ui`, `src/sw`, the Library feature and QA is for those
+owners and was not touched.
+
+## integrate-2: first launch, Library layout shift, startup, taps
+
+Measured on the production build (`vite preview`), Pixel 7 profile, 4x CPU throttle, Lighthouse 11.7.1 mobile (simulated slow 4G).
+
+| | Before | After |
+| --- | --- | --- |
+| First launch, Lighthouse Performance | 75-77 | 93-95 (3 runs; FCP 1.7-1.9 s, LCP 2.9-3.1 s, TBT 30-70 ms, CLS 0) |
+| Library after onboarding, 300 books and a resume card, CLS | 0.20 | 0 (Performance 94-96) |
+| Initial JS / CSS, gzip | 116.05 / 9.3 kB | 116.85 / 9.32 kB (budget 120 / 12) |
+| Entry evaluation at 4x CPU (long tasks over 50 ms, first launch, 6 runs) | 5 of 6 runs, 57-72 ms | 2 of 6 runs, 54-58 ms (react-dom, dexie and the router are now chunks of their own) |
+| Tab switch p95 / open-book sheet p95 at 4x | 91-211 ms (shared box, noisy) / 77-148 ms | 79-96 ms / 78-80 ms in the quiet runs |
+
+What changed, in short: a static boot screen in `index.html` (the first paint no longer waits for JavaScript), the first screen's chunk is
+fetched by a device hint (`pn.onboarded` in localStorage; the database stays the source of truth), the other tabs are fetched 2 s after
+the first paint, the Library is drawn only once the resume query has answered (the card is already in the header slot, so nothing moves),
+a position at 0 % is never offered, and the vendor chunks are split. Lighthouse is limited by the ~117 kB gzip entry (react-dom, router,
+Dexie); going lower needs a smaller entry, not more deferral.
+
+## Lazy engine budgets and the runtime cache (Decision 15)
+
+| Chunk (lazy, never in the first load) | Budget, gzip |
+| --- | --- |
+| `engine-pdf-*` (pdf.js) | 131 kB |
+| `docx-core-*`, `docx.worker-*` | 100 kB each |
+| `engine-foliate-*` (foliate-js) | 60 kB |
+| every other lazy chunk / every other worker | 40 kB / 55 kB |
+| first-load JS / CSS | 120 kB / 12 kB (unchanged, hard) |
+
+The engines are not precached (`globIgnores` in `vite.config.ts`), so the precache stays small and the 1 MB per-file cap stays. The service
+worker caches them at runtime, cache first, after the first time that format opens; the app warms the sample book into that cache when idle
+after the first Library render (`src/app/offline-warm.ts`). See docs/DEPLOY.md for the service worker rule and DECISIONS.md, Decision 15.
+
+The pdf.js budget was raised from 125 kB to 131 kB gzip when `pdfjs-dist` was upgraded to ≥6.2.108 for
+[GHSA-hq66-cqwq-w95j](https://github.com/advisories/GHSA-hq66-cqwq-w95j) (`enableScripting` stays off in `PdfEngine`). The built
+`engine-pdf-*` chunk measures about 131 kB gzip on 6.4.299; it does not fit the old 125 kB cap.

@@ -1,4 +1,5 @@
 import { Skeleton, SkeletonGroup } from '@/ui';
+import { Screen } from './components/PageHeader';
 
 /**
  * Fallback for a tab while its chunk loads: the same header height and a skeleton block, so the
@@ -6,12 +7,14 @@ import { Skeleton, SkeletonGroup } from '@/ui';
  */
 export function ScreenFallback() {
   return (
-    <SkeletonGroup label="Loading">
-      <div className="mb-4 flex min-h-touch items-center">
-        <Skeleton variant="text" width="45%" height="1.75rem" />
-      </div>
-      <Skeleton variant="rect" height="9rem" className="w-full" />
-    </SkeletonGroup>
+    <Screen>
+      <SkeletonGroup label="Loading">
+        <div className="mb-4 flex min-h-touch items-center">
+          <Skeleton variant="text" width="45%" height="1.75rem" />
+        </div>
+        <Skeleton variant="rect" height="9rem" className="w-full" />
+      </SkeletonGroup>
+    </Screen>
   );
 }
 
@@ -20,11 +23,7 @@ export function OnboardingFallback() {
   return <div className="min-h-full" aria-busy="true" />;
 }
 
-/** Fallback for the immersive book screens: the same skeleton with the page margins the frame does not add. */
+/** Fallback for the immersive book screens: the same skeleton in the same page frame. */
 export function ImmersiveFallback() {
-  return (
-    <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
-      <ScreenFallback />
-    </div>
-  );
+  return <ScreenFallback />;
 }

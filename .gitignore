@@ -35,3 +35,4 @@ Thumbs.db
 tests/lighthouse/reports/
 tests/playwright-report/
 tests/test-results/
+src/features/voice-studio/e2e/dist-e2e/

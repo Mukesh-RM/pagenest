@@ -2,7 +2,7 @@
   "name": "pagenest-tests",
   "private": true,
   "version": "0.0.0",
-  "description": "PageNest QA: Playwright end-to-end, axe accessibility, contrast and Lighthouse checks",
+  "description": "InkQuiet QA: Playwright end-to-end, axe accessibility, contrast and Lighthouse checks",
   "license": "MIT",
   "type": "module",
   "engines": {
@@ -20,10 +20,12 @@
     "lighthouse": "node --import tsx lighthouse/run.mjs",
     "typecheck": "tsc --noEmit",
     "qa:stable": "node run-qa.mjs stable",
-    "qa:gates": "node run-qa.mjs gates"
+    "qa:gates": "node run-qa.mjs gates",
+    "gate": "node run-qa.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@pagenest/e2e-port": "file:../scripts/e2e",
     "@types/node": "^26.6.5",
     "chrome-launcher": "^1.2.2",
     "lighthouse": "^11.7.1",

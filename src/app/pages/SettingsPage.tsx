@@ -1,96 +1,92 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { formatBytes, getStorageStatus, requestPersistentStorage, type StorageStatus } from '@/data/storage';
-import { Button, IosInstallSheet } from '@/ui';
-import { FontSizeControl } from '../components/FontSizeControl';
-import { PageHeader } from '../components/PageHeader';
-import { ThemeSwatches } from '../components/ThemeSwatches';
+import { InstallHelp } from '@/ui';
+import { SettingsScreen, type SettingsStorage } from '@/ui/screens';
+import type { CustomThemeInput } from '@/ui/theme/custom';
+import { clampFontSize } from '../font-size';
+import { useServices } from '../services-context';
+import { useSettings } from '../settings-store';
+import type { ThemePreference } from '../themes';
+import '../screen-styles';
 
-/** Settings: Appearance, Install help and Storage today; the other groups from blueprint 5.6 arrive with their features. */
+// Backup, restore and the storage breakdown come from the Library; they are loaded with the screen, not with the app shell.
+const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
+const VoiceStudioSettingsPanel = lazy(() =>
+  import('../components/VoiceStudioSettingsPanel').then((m) => ({ default: m.VoiceStudioSettingsPanel })),
+);
+
+/**
+ * Height kept for the Library's two groups only while their code loads (in `rem`, so it follows the text
+ * size), so the About group below does not move.
+ */
+const PANELS_RESERVE_REM = 36; // measured: 36.9 rem at 360 px wide, 33 rem at 1024 px, 38 rem at 200 % text
+
+function usageText(storage: StorageStatus): string {
+  if (storage.usageBytes === undefined) return 'Your browser does not say how much space InkQuiet uses.';
+  const used = `InkQuiet uses ${formatBytes(storage.usageBytes)}`;
+  return storage.quotaBytes === undefined ? `${used}.` : `${used} of about ${formatBytes(storage.quotaBytes)} available.`;
+}
+
+/**
+ * Settings: the design system's `SettingsScreen` (Appearance with theme cards, Custom colors and text
+ * size to 200 %, Install help, Storage used, About) bound to the saved settings, plus the Library's
+ * Backup and restore and Storage on this device groups between Storage and About.
+ */
 export function SettingsPage() {
-  const [storage, setStorage] = useState<StorageStatus | undefined>();
-  const [installHelpOpen, setInstallHelpOpen] = useState(false);
+  const { db } = useServices();
+  const theme = useSettings((s) => s.themePreference);
+  const customTheme = useSettings((s) => s.customTheme);
+  const contrastMode = useSettings((s) => s.contrastMode);
+  const setContrast = useSettings((s) => s.setContrastMode);
+  const textSize = useSettings((s) => s.fontSizePx);
+  const setTheme = useSettings((s) => s.setThemePreference);
+  const setCustom = useSettings((s) => s.setCustomTheme);
+  const setSize = useSettings((s) => s.setFontSizePx);
+  const [status, setStatus] = useState<StorageStatus | undefined>();
 
   useEffect(() => {
     let active = true;
     void getStorageStatus().then((s) => {
-      if (active) setStorage(s);
+      if (active) setStatus(s);
     });
     return () => {
       active = false;
     };
   }, []);
 
-  async function keepMyData(): Promise<void> {
+  const keepMyData = useCallback(async () => {
     await requestPersistentStorage();
-    setStorage(await getStorageStatus());
-  }
+    setStatus(await getStorageStatus());
+  }, []);
+
+  const storage: SettingsStorage | undefined =
+    status === undefined
+      ? undefined
+      : {
+          usageText: usageText(status),
+          ...(status.persisted === undefined ? {} : { persisted: status.persisted }),
+          onKeepData: () => void keepMyData(),
+        };
 
   return (
-    <>
-      <PageHeader title="Settings" />
-
-      <section aria-labelledby="appearance" className="mb-8">
-        <h2 id="appearance" className="mb-2 text-xl font-semibold">
-          Appearance
-        </h2>
-        <ThemeSwatches />
-        <div className="mt-4 max-w-sm">
-          <FontSizeControl />
-        </div>
-      </section>
-
-      <section aria-labelledby="install" className="mb-8">
-        <h2 id="install" className="mb-2 text-xl font-semibold">
-          Install help
-        </h2>
-        <p className="mb-2 text-muted">
-          Put PageNest on your home screen so it opens like an app. On Android, open the browser menu and choose Install
-          app, or Add to Home screen.
-        </p>
-        <Button variant="secondary" onClick={() => setInstallHelpOpen(true)}>
-          Install help
-        </Button>
-        <IosInstallSheet open={installHelpOpen} onClose={() => setInstallHelpOpen(false)} />
-      </section>
-
-      <section aria-labelledby="storage" className="mb-8">
-        <h2 id="storage" className="mb-2 text-xl font-semibold">
-          Storage used
-        </h2>
-        {storage === undefined ? (
-          <p className="text-muted">Checking…</p>
-        ) : (
-          <>
-            <p>
-              {storage.usageBytes === undefined
-                ? 'Your browser does not say how much space PageNest uses.'
-                : `PageNest uses ${formatBytes(storage.usageBytes)}${
-                    storage.quotaBytes === undefined ? '.' : ` of about ${formatBytes(storage.quotaBytes)} available.`
-                  }`}
-            </p>
-            {storage.persisted === true ? (
-              <p className="text-muted">Your browser will keep your books and progress.</p>
-            ) : storage.persisted === false ? (
-              <>
-                <p className="mb-2 text-muted">
-                  Your browser may clear your books if space runs low. Asking it to keep them helps.
-                </p>
-                <Button onClick={() => void keepMyData()}>Keep my data</Button>
-              </>
-            ) : null}
-          </>
-        )}
-      </section>
-
-      <section aria-labelledby="about">
-        <h2 id="about" className="mb-2 text-xl font-semibold">
-          About
-        </h2>
-        <p className="text-muted">
-          PageNest collects nothing. Your books, notes and settings stay on this device. There is no account, no ads and
-          no tracking.
-        </p>
-      </section>
-    </>
+    <SettingsScreen
+      theme={theme}
+      onThemeChange={(value: ThemePreference) => void setTheme(db, value)}
+      customTheme={customTheme}
+      onCustomThemeChange={(colors: CustomThemeInput) => void setCustom(db, colors)}
+      contrastMode={contrastMode}
+      onContrastModeChange={(mode) => void setContrast(db, mode)}
+      textSize={textSize}
+      onTextSizeChange={(px) => void setSize(db, clampFontSize(px))}
+      install={<InstallHelp />}
+      storage={storage}
+    >
+      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+        <VoiceStudioSettingsPanel />
+      </Suspense>
+      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+        <LibrarySettingsPanels />
+      </Suspense>
+    </SettingsScreen>
   );
 }

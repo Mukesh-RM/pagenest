@@ -58,3 +58,55 @@ describe('font size saving', () => {
     expect(await getSetting(db, 'onboardingDone')).toBe(true);
   });
 });
+
+describe('theme preference and the custom theme', () => {
+  it('saves the Custom preference and its three colors, and a fresh store reads them back', async () => {
+    const colors = { page: '#102030', text: '#f0f0f0', accent: '#ffcc00' };
+    await useSettings.getState().setThemePreference(db, 'custom');
+    await useSettings.getState().setCustomTheme(db, colors);
+    expect(await getSetting(db, 'appTheme')).toBe('custom');
+    expect(await getSetting(db, 'customTheme')).toEqual(colors);
+
+    resetSettings();
+    expect(useSettings.getState().themePreference).toBe('system');
+    await useSettings.getState().load(db);
+    expect(useSettings.getState().themePreference).toBe('custom');
+    expect(useSettings.getState().customTheme).toEqual(colors);
+  });
+
+  it('keeps the default colors when the saved custom theme is damaged, and rejects an unknown preference', async () => {
+    const defaults = useSettings.getState().customTheme;
+    await db.settings.bulkPut([
+      { key: 'appTheme', value: 'neon' },
+      { key: 'customTheme', value: { page: 'red', text: 3 } },
+    ]);
+    await useSettings.getState().load(db);
+    expect(useSettings.getState().themePreference).toBe('system');
+    expect(useSettings.getState().customTheme).toEqual(defaults);
+  });
+
+  it('reaches 200 %: a saved 32 px is kept and 40 px is clamped to 32', async () => {
+    await useSettings.getState().setFontSizePx(db, 40);
+    expect(useSettings.getState().fontSizePx).toBe(32);
+    await flushSettings();
+    expect(await getSetting(db, 'fontSizePx')).toBe(32);
+  });
+});
+
+describe('contrast mode', () => {
+  it('defaults to following the device, saves a change at once, and a fresh store reads it back', async () => {
+    expect(useSettings.getState().contrastMode).toBe('system');
+    await useSettings.getState().setContrastMode(db, 'high');
+    expect(useSettings.getState().contrastMode).toBe('high');
+    expect(await getSetting(db, 'contrastMode')).toBe('high');
+    resetSettings();
+    await useSettings.getState().load(db);
+    expect(useSettings.getState().contrastMode).toBe('high');
+  });
+
+  it('ignores a saved value that is not a contrast mode', async () => {
+    await db.settings.put({ key: 'contrastMode', value: 'extreme' });
+    await useSettings.getState().load(db);
+    expect(useSettings.getState().contrastMode).toBe('system');
+  });
+});

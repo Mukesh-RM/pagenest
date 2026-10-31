@@ -7,7 +7,7 @@
       "license": "OFL-1.1",
       "source": "https://github.com/rsms/inter",
       "status": "OK-NOTE",
-      "note": "Interface font (5.3). Self-host; ship OFL text and copyright with the font files."
+      "note": "Interface font (5.3). Bundled in src/ui/fonts/inter-latin-wght-normal.woff2 with OFL-Inter.txt (subset from @fontsource-variable/inter 5.x)."
     },
     {
       "name": "Literata",
@@ -15,7 +15,7 @@
       "license": "OFL-1.1",
       "source": "https://github.com/googlefonts/literata",
       "status": "OK-NOTE",
-      "note": "Reading font. Ship OFL text. Check Reserved Font Name before subsetting or converting."
+      "note": "Reading font. Bundled in src/ui/fonts/literata-latin-wght-*.woff2 with OFL-Literata.txt (subset from @fontsource-variable/literata 5.x). No Reserved Font Name in the OFL text."
     },
     {
       "name": "Source Serif 4",
@@ -71,7 +71,7 @@
       "license": "user's own",
       "source": "user device",
       "status": "OK",
-      "note": "Stays on the device, never uploaded or redistributed by PageNest."
+      "note": "Stays on the device, never uploaded or redistributed by InkQuiet."
     }
   ],
   "icons": [
@@ -195,15 +195,15 @@
       "license": "MIT",
       "source": "https://www.npmjs.com/package/minisearch",
       "status": "OK",
-      "note": ""
+      "note": "Planned only: not yet in package.json or the lockfile on any branch (checked Oct 24, 2026); latest 7.2.0 is MIT with no dependencies."
     },
     {
       "name": "music-metadata",
-      "version": "latest",
+      "version": "^11.16.1",
       "license": "MIT",
       "source": "https://www.npmjs.com/package/music-metadata",
       "status": "OK",
-      "note": "Browser build."
+      "note": "Prod dependency of the import worker (audio tags). Its runtime dependencies (@borewit/text-codec, @tokenizer/*, content-type, debug, file-type, ieee754, media-typer, ms, strtok3, token-types, uint8array-extras, win-guid) are all MIT or BSD-3-Clause."
     },
     {
       "name": "mp4box",
@@ -227,7 +227,7 @@
       "license": "MIT OR GPL-3.0-or-later",
       "source": "https://www.npmjs.com/package/jszip",
       "status": "OK-NOTE",
-      "note": "Dual license; PageNest uses it under MIT. State this choice in the license notices."
+      "note": "Dual license; InkQuiet uses it under MIT. State this choice in the license notices."
     },
     {
       "name": "vitest",
@@ -277,7 +277,8 @@
       "license": "GPL-3.0-or-later",
       "source": "https://github.com/OHF-Voice/piper1-gpl",
       "status": "NOT-OK",
-      "note": "GPL since v1.3.0 (espeak-ng embedded). Do not bundle or link into the MIT web app. Allowed only as a separate tool the user runs (for example the training script), never shipped inside the PWA."
+      "note": "GPL since v1.3.0 (espeak-ng embedded). Do not bundle or link into the MIT web app. Allowed only as a separate tool the user runs (for example the training script), never shipped inside the PWA.",
+      "replacement": "Keep inference on archived rhasspy/piper (MIT) only for experiments, or adopt a non-GPL phonemizer plus ONNX Runtime Web; run GPL training tools outside the PWA."
     },
     {
       "name": "espeak-ng (phonemizer inside Piper and Kokoro WASM stacks)",
@@ -285,7 +286,8 @@
       "license": "GPL-3.0-or-later",
       "source": "https://github.com/espeak-ng/espeak-ng",
       "status": "NOT-OK",
-      "note": "OPEN RISK. Browser Piper builds and the 'phonemizer' npm package (declared Apache-2.0) embed eSpeak NG compiled to WASM. Shipping it in the PWA means distributing GPL-3.0 code. Needs an owner decision: non-GPL phonemizer (dictionary/rule based), or accept GPL for that component with corresponding source and notices. audit-licenses.mjs flags the known packages even though they declare a permissive license."
+      "note": "OPEN RISK. Browser Piper builds and the 'phonemizer' npm package (declared Apache-2.0) embed eSpeak NG compiled to WASM. Shipping it in the PWA means distributing GPL-3.0 code. Needs an owner decision: non-GPL phonemizer (dictionary/rule based), or accept GPL for that component with corresponding source and notices. audit-licenses.mjs flags the known packages even though they declare a permissive license.",
+      "replacement": "Rule-based or dictionary phonemizer (no eSpeak), or Web Speech API (Tier 0) until a permissive WASM phonemizer is vetted."
     },
     {
       "name": "Piper voice models (each voice)",
@@ -293,7 +295,8 @@
       "license": "per voice, see MODEL_CARD",
       "source": "https://huggingface.co/rhasspy/piper-voices",
       "status": "VERIFY",
-      "note": "License is per voice and records the training DATASET only; whether weights inherit it is not settled upstream. Most voices are fine-tuned from en_US-lessac (research-only) or en_US-ryan (CC BY-NC-SA) and are treated as NOT OK. See docs/MODEL_VETTING.md and scripts/audit-models.json for the verdict of each of 178 voices; only voices marked OK there may be added."
+      "note": "License is per voice and records the training DATASET only; whether weights inherit it is not settled upstream. Most voices are fine-tuned from en_US-lessac (research-only) or en_US-ryan (CC BY-NC-SA) and are treated as NOT OK. See docs/MODEL_VETTING.md and scripts/audit-models.json for the verdict of each of 178 voices; only voices marked OK there may be added.",
+      "replacement": "Ship only voices marked OK in scripts/audit-models.json (for example en_US-libritts-high, CC BY 4.0)."
     },
     {
       "name": "Piper voice en_US-lessac (low/medium/high)",
@@ -301,7 +304,8 @@
       "license": "Blizzard 2013 (research only)",
       "source": "https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html",
       "status": "NOT-OK",
-      "note": "Dataset license excludes commercial use and voice synthesis products. About 78 other voices are fine-tuned from it and are NOT OK too (docs/MODEL_VETTING.md). Do not add."
+      "note": "Dataset license excludes commercial use and voice synthesis products. About 78 other voices are fine-tuned from it and are NOT OK too (docs/MODEL_VETTING.md). Do not add.",
+      "replacement": "en_US-libritts-high (LibriTTS, CC BY 4.0) or another voice marked OK in audit-models.json."
     },
     {
       "name": "ONNX Runtime WASM binaries",
@@ -341,7 +345,8 @@
       "license": "Apache-2.0 (declared) on Llama-3.2-3B",
       "source": "https://github.com/canopyai/Orpheus-TTS",
       "status": "VERIFY",
-      "note": "Built on Llama 3.2, so Meta's Llama 3.2 Community License also applies (Built with Llama notice, acceptable-use policy, 'Llama' model-name rule). Not an OSI open license; prefer a different model unless the owner accepts it."
+      "note": "Built on Llama 3.2, so Meta's Llama 3.2 Community License also applies (Built with Llama notice, acceptable-use policy, 'Llama' model-name rule). Not an OSI open license; prefer a different model unless the owner accepts it.",
+      "replacement": "Chatterbox (MIT code, Voice Helper only) or Kokoro-82M (Apache-2.0 weights) after checking the Hugging Face license tag."
     },
     {
       "name": "Voice Helper training script / Colab notebook (My Voice Pack)",
@@ -349,7 +354,8 @@
       "license": "to be chosen",
       "source": "to be created",
       "status": "VERIFY",
-      "note": "Must itself use permissive dependencies only (check Piper training stack: piper1-gpl training is GPL). Audit its requirements file with audit-licenses.mjs --root before release."
+      "note": "Must itself use permissive dependencies only (check Piper training stack: piper1-gpl training is GPL). Audit its requirements file with audit-licenses.mjs --root before release.",
+      "replacement": "Document a Colab or local script whose requirements.txt passes scripts/check-licenses; avoid piper1-gpl in anything users run to produce weights for the app."
     }
   ],
   "sections": [
@@ -357,11 +363,22 @@
       "title": "Speech engine licensing",
       "paragraphs": [
         "Summary of DECISIONS.md, Decision 8 (Oct 24, 2026). Nothing GPL is in the repository today; the rows above marked NOT OK are planned risks only.",
-        "- **The problem:** eSpeak NG (GPL-3.0-or-later) is embedded by browser Piper stacks and by the `phonemizer` package used by `kokoro-js`. Piper itself has been GPL-3.0 since v1.3 (the archived `rhasspy/piper` is MIT). PageNest is MIT, so shipping GPL code needs a deliberate choice.",
-        "- **The plan:** Phase 4 starts with a spike on a non-GPL phonemizer and a non-GPL engine path. If none gives acceptable quality, the fallback is to relicense the PageNest repository to GPL-3.0 (still free and open, still consistent with the product rules) and flag it to Mukeshh. Nothing GPL is added to `main` before that decision is recorded in DECISIONS.md.",
+        "- **The problem:** eSpeak NG (GPL-3.0-or-later) is embedded by browser Piper stacks and by the `phonemizer` package used by `kokoro-js`. Piper itself has been GPL-3.0 since v1.3 (the archived `rhasspy/piper` is MIT). InkQuiet is MIT, so shipping GPL code needs a deliberate choice.",
+        "- **The plan:** Phase 4 starts with a spike on a non-GPL phonemizer and a non-GPL engine path. If none gives acceptable quality, the fallback is to relicense the InkQuiet repository to GPL-3.0 (still free and open, still consistent with the product rules) and flag it to Mukeshh. Nothing GPL is added to `main` before that decision is recorded in DECISIONS.md.",
         "- **Voice rule:** every Piper voice is checked per voice. `en_US-lessac` (Blizzard 2013, research only) is NOT allowed; prefer `en_US-libritts-high` (trained from scratch, CC BY 4.0). `en_US-libritts_r-medium` is fine-tuned from lessac and is NOT OK (docs/MODEL_VETTING.md). Orpheus 3B is excluded (Llama 3.2 Community License). Kokoro-82M (Apache-2.0) and Chatterbox (MIT) need the Hugging Face weight license tag checked before use.",
         "- **Enforcement:** `audit-licenses.mjs` fails when an installed package is `phonemizer`, `espeak*`, `piper-wasm`, `piper-phonemize*` or similar, even if it declares a permissive license, unless a reviewed entry is added to `scripts/audit-license-overrides.json` after the decision is recorded.",
         "- **Related, Decision 9 (dev-only licenses):** MPL-2.0 dev-only tools (`axe-core`, `@axe-core/playwright`) are accepted. LGPL libvips binaries shipped with `sharp` are accepted only as dev-only and never bundled; the audit flags them if shipped."
+      ]
+    },
+    {
+      "title": "Bundled content (sample book)",
+      "paragraphs": [
+        "- **The Tale of Peter Rabbit, by Beatrix Potter** (EPUB, 1.5 MB, `src/features/library/sample/peter-rabbit.epub`): Project Gutenberg ebook 14838, https://www.gutenberg.org/ebooks/14838. The file is the official EPUB3 with images, downloaded unmodified from https://www.gutenberg.org/ebooks/14838.epub3.images (redirects to https://www.gutenberg.org/cache/epub/14838/pg14838-images-3.epub), 1,510,461 bytes, SHA-256 `fa91774a0e841557f4d33e63f13aab7f7dcfb8cf05ca4eb8733308eeb40e69c5` (verified on Oct 24, 2026). License wording in the app: \"Public domain in the USA\", as on the Project Gutenberg catalog entry (checked against gutenberg.org on Oct 24, 2026: catalog entry \"Copyright: Public domain in the USA\", release date Jan 30, 2005, last update May 23, 2026, credits Robert Cicconetti, Ronald Holder and the PG Online Distributed Proofreading Team).",
+        "- **Copyright:** the text and the illustrations are by Beatrix Potter (1866-1943). The book was first published in 1902, so its United States copyright has expired. The copyright term of life + 70 years ended on Dec 31, 2013 in the UK and the EU. Some countries have a longer term, so \"public domain\" is not true everywhere; Project Gutenberg itself says people outside the United States must check their own law. Project Gutenberg claims no copyright in the markup or formatting of the EPUB.",
+        "- **Other trademarks:** copyright expiry does not remove trademarks. Frederick Warne & Co. (Penguin Random House) holds trademarks on the PETER RABBIT name and on some character designs (Frederick Warne & Co. v. Book Sales, Inc., 481 F. Supp. 1191, S.D.N.Y. 1979). The EPUB shows the original publisher's marks (\"F. Warne & Co.\" on the cover and title page) as part of the 1902 book. Use them only as the content of this one book; do not use the name or the artwork as InkQuiet branding (icon, store listing, marketing) or in a way that suggests Warne or Penguin back the app.",
+        "- **Project Gutenberg name and license:** the EPUB carries Project Gutenberg's header, the \"Project Gutenberg License\" and the trademark text. While those stay in the file, the Project Gutenberg License (https://www.gutenberg.org/policy/license.html, paragraphs 1.E.1 to 1.E.7) applies: the file must be a verbatim copy of the official file (a change of file format is allowed, a change of content is not), the license must stay attached, and nothing may be charged for access without following paragraph 1.E.8 (20% royalty) or getting permission. InkQuiet is free, so no royalty applies. The other way out is to remove every reference to Project Gutenberg from the file (header, license, footer, and the gutenberg.org identifier and source in the OPF metadata); then the trademark terms no longer apply, but the file is no longer the official file and the \"Project Gutenberg, ebook 14838\" line in the app is the only credit. Credits in the app (with a link, if possible) are fine either way: Project Gutenberg's permission page says crediting needs no permission.",
+        "- **Resolved:** the earlier 435 KB copy had scaled-down images and was not the official file. It was replaced on Oct 24, 2026 by the official file above, byte for byte, so the Project Gutenberg header and license may stay on it (paragraphs 1.E.1 to 1.E.6). A test (`src/features/library/sample.test.ts`) fails if the file's size or SHA-256 ever differs. Re-verified independently by the audit on Oct 24, 2026 against a fresh download of https://www.gutenberg.org/ebooks/14838.epub3.images (same size and SHA-256). Status: OK.",
+        "- **Use:** shown on the Library's \"Try a sample book\" card, which reads \"Public domain in the USA. Project Gutenberg, ebook 14838.\" The card's own heading and button say \"Try a sample book\" and \"Add the sample book\"; the book's title appears only as the name of the book offered, never as InkQuiet branding. The file is fetched from our own origin (`credentials: 'same-origin'`, Content-Security-Policy `connect-src 'self'`) only when a person taps the card; the service worker precache pattern lists no `.epub` (so it is never precached), and nothing downloads it at start-up. The EPUB loads no external resource (its only `http(s)` references are links to gutenberg.org that do nothing until tapped)."
       ]
     }
   ]

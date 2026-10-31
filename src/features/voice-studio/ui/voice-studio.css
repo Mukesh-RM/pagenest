@@ -1,0 +1,187 @@
+.pn-voice-studio {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-4);
+  padding: var(--pn-space-4);
+  max-width: 40rem;
+  margin-inline: auto;
+}
+
+.pn-voice-studio__hero {
+  display: flex;
+  gap: var(--pn-space-3);
+  align-items: flex-start;
+  color: rgb(var(--pn-accent));
+}
+
+.pn-voice-studio__lede {
+  margin: var(--pn-space-1) 0 0;
+  color: rgb(var(--pn-muted));
+  max-width: 48ch;
+}
+
+.pn-voice-studio__section-title {
+  margin: 0 0 var(--pn-space-2);
+  font-size: var(--pn-text-lg);
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-voice-studio__empty {
+  margin: 0;
+  color: rgb(var(--pn-muted));
+}
+
+.pn-voice-studio__voice-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+}
+
+.pn-voice-studio__voice-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+  padding: var(--pn-space-3);
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-surface));
+}
+
+@media (min-width: 36rem) {
+  .pn-voice-studio__voice-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.pn-voice-studio__voice-name {
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-voice-studio__voice-sub {
+  display: block;
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-voice-studio__voice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pn-space-2);
+}
+
+.pn-voice-studio__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+  margin-top: var(--pn-space-2);
+}
+
+.pn-voice-studio__fine-print {
+  margin: 0;
+  font-size: var(--pn-text-sm);
+  color: rgb(var(--pn-muted));
+  max-width: 48ch;
+}
+
+.pn-voice-studio__step-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--pn-space-2);
+}
+
+.pn-voice-studio__phrase {
+  margin: 0;
+  padding: var(--pn-space-4);
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-accent-soft));
+  color: rgb(var(--pn-ink));
+  font-family: var(--pn-font-reading, Literata, Georgia, serif);
+  font-size: var(--pn-text-xl);
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+}
+
+.pn-voice-studio__prompt-text {
+  margin: 0;
+  font-family: var(--pn-font-reading, Literata, Georgia, serif);
+  font-size: var(--pn-text-lg);
+  line-height: 1.5;
+}
+
+.pn-voice-studio__meter {
+  height: 0.5rem;
+  border-radius: var(--pn-radius-pill);
+  background: rgb(var(--pn-line));
+  overflow: hidden;
+}
+
+.pn-voice-studio__meter-fill {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: rgb(var(--pn-accent));
+  transition: transform 80ms linear;
+}
+
+.pn-voice-studio__callout,
+.pn-voice-studio__error {
+  margin: 0;
+  padding: var(--pn-space-3);
+  border-radius: var(--pn-radius-card);
+  background: rgb(var(--pn-danger-soft, 254 226 226));
+  color: rgb(var(--pn-danger, 185 28 28));
+}
+
+.pn-voice-studio__success {
+  margin: 0;
+  color: rgb(var(--pn-accent));
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-voice-studio__progress {
+  margin: 0;
+  color: rgb(var(--pn-muted));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-voice-studio__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-1);
+}
+
+.pn-voice-studio__field-label {
+  font-size: var(--pn-text-sm);
+  font-weight: var(--pn-weight-semibold);
+}
+
+.pn-voice-studio__input {
+  min-height: var(--pn-touch);
+  padding: var(--pn-space-2) var(--pn-space-3);
+  border-radius: var(--pn-radius-control);
+  border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
+  background: rgb(var(--pn-surface));
+  color: rgb(var(--pn-ink));
+  font-size: var(--pn-text-md);
+}
+
+.pn-voice-studio__input:focus-visible {
+  outline: 2px solid rgb(var(--pn-accent));
+  outline-offset: 2px;
+}
+
+.pn-voice-studio__checklist {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: rgb(var(--pn-muted));
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+  max-width: 48ch;
+}

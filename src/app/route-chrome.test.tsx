@@ -165,11 +165,9 @@ describe('resolveChrome', () => {
   });
 });
 
-describe('the CSS that hides the frame', () => {
+describe('the frame follows the chrome prop, not app CSS', () => {
   const css = readFileSync(join(process.cwd(), 'src', 'app', 'theme.css'), 'utf8');
-  it('hides the rail and the bottom bar only for immersive, and does not affect layout itself', () => {
-    expect(css).toMatch(/\.pn-chrome-scope\s*\{\s*display:\s*contents;/);
-    expect(css).toMatch(/\[data-chrome='immersive'\] \.pn-rail,\s*\n\.pn-chrome-scope\[data-chrome='immersive'\] \.pn-shell__bottom\s*\{\s*display:\s*none;/);
-    expect(css).not.toMatch(/data-chrome='full'/);
+  it('has no rules of its own for the rail, the bottom bar or the chrome attribute', () => {
+    expect(css).not.toMatch(/pn-rail|pn-shell__bottom|data-chrome|pn-chrome-scope/);
   });
 });

@@ -25,7 +25,7 @@ export function InstallBanner({
   open = true,
   onInstall,
   onDismiss,
-  title = 'Install PageNest',
+  title = 'Install InkQuiet',
   description = 'Add it to your home screen to open it like an app and keep playing with the screen off.',
   installLabel = 'Install',
   dismissLabel = 'Not now',

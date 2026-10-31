@@ -1,7 +1,7 @@
 import '../test/setup';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
 import { Chip, ChipGroup } from './Chip';
@@ -29,7 +29,8 @@ describe('Button', () => {
     expect(screen.getByText('Two')).toHaveClass('pn-btn--secondary');
     expect(screen.getByText('Three')).toHaveClass('pn-btn--ghost');
     expect(screen.getByText('Four')).toHaveClass('pn-btn--danger');
-    expect(screen.getByText('Five')).toHaveClass('pn-btn--lg', 'pn-btn--block');
+    expect(screen.getByText('Five')).toHaveClass('pn-btn--block')
+    expect(screen.getByText('Five')).not.toHaveClass('pn-btn--lg');
   });
 
   it('icon-only buttons use the 44 px icon class and are named by aria-label', () => {

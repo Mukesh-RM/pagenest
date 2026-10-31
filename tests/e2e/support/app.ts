@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import type { ThemeName } from './contrast';
 
 /**
- * Selector contract for the PageNest shell. Everything is found through ARIA roles and visible names
+ * Selector contract for the InkQuiet shell. Everything is found through ARIA roles and visible names
  * (blueprint section 5.5, 5.6 and 5.8), never through CSS classes, so the app can restyle freely.
  * The contract is documented in tests/README.md and is what the reference fixture implements.
  */
@@ -98,6 +98,26 @@ export async function openSheet(page: Page): Promise<void> {
   await gotoTab(page, 'Settings');
   await installHelpButton(page).click();
   await expect(sheet(page)).toBeVisible();
+}
+
+/**
+ * Wait until foliate has rendered real book text in a blob document frame (see reader e2e support/app.mjs).
+ */
+export async function waitForBookText(page: Page, opts?: { needle?: string; min?: number; timeout?: number }): Promise<string> {
+  const min = opts?.min ?? 200;
+  const timeout = opts?.timeout ?? 60_000;
+  const deadline = Date.now() + timeout;
+  for (;;) {
+    for (const f of page.frames()) {
+      if (f === page.mainFrame()) continue;
+      const text = await f.evaluate(() => document.body?.innerText ?? '').catch(() => '');
+      if (text.length >= min && (!opts?.needle || text.includes(opts.needle))) return text;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(`No book text appeared within ${timeout} ms${opts?.needle ? ` (looking for "${opts.needle}")` : ''}`);
+    }
+    await page.waitForTimeout(50);
+  }
 }
 
 /**

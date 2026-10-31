@@ -19,6 +19,8 @@ export interface EmptyStateProps {
   art?: IconName | ReactNode;
   /** The one clear next step (blueprint 5.1: no dead ends). */
   action?: EmptyStateAction;
+  /** Extra content under the action (more buttons). */
+  extra?: ReactNode;
   /** Heading level of the title. Default 2. */
   headingLevel?: 2 | 3 | 4;
   className?: string;
@@ -30,6 +32,7 @@ export function EmptyState({
   description,
   art = 'bookOpen',
   action,
+  extra,
   headingLevel = 2,
   className,
 }: EmptyStateProps) {
@@ -37,7 +40,7 @@ export function EmptyState({
   const Heading = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
   return (
     <section aria-labelledby={titleId} className={cx('pn-empty', className)}>
-      <div className="pn-empty__art" aria-hidden="true">
+      <div className={cx('pn-empty__art', typeof art !== 'string' && 'pn-empty__art--custom')} aria-hidden="true">
         {typeof art === 'string' ? <Icon name={art as IconName} size={32} /> : art}
       </div>
       <Heading id={titleId} className="pn-empty__title">
@@ -49,6 +52,7 @@ export function EmptyState({
           {action.label}
         </Button>
       ) : null}
+      {extra}
     </section>
   );
 }

@@ -1,7 +1,7 @@
 import '../test/setup';
 import { useState } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetSheetHistoryForTests } from '../utils/sheetHistory';
 import { BottomSheet } from './BottomSheet';
@@ -14,6 +14,7 @@ afterEach(() => {
   resetSheetHistoryForTests();
 });
 
+const nextFrame = () => act(async () => new Promise<void>((r) => requestAnimationFrame(() => r())));
 const settle = () => act(async () => new Promise((r) => setTimeout(r, 30)));
 
 function Harness({ onClose = vi.fn(), startOpen = true }: { onClose?: (r: string) => void; startOpen?: boolean }) {
@@ -148,6 +149,27 @@ describe('BottomSheet closing', () => {
     expect(onClose).toHaveBeenCalledWith('escape');
   });
 
+  it('does not undo the screen\'s own navigation when the sheet unmounts after a route change', async () => {
+    window.history.replaceState({ idx: 1 }, '', '/library');
+    const { unmount } = render(<Harness />);
+    expect(window.location.pathname).toBe('/library');
+    // The screen navigates while the sheet is open (a router push), then the screen and sheet unmount.
+    act(() => window.history.pushState({ idx: 2 }, '', '/book/42'));
+    unmount();
+    await settle();
+    expect(window.location.pathname).toBe('/book/42');
+    expect(window.history.state).toMatchObject({ idx: 2 });
+  });
+
+  it('still pops its own entry when it is the current history entry', async () => {
+    window.history.replaceState({ idx: 1 }, '', '/library');
+    const { unmount } = render(<Harness />);
+    expect(window.history.state).toMatchObject({ idx: 1, pnSheet: expect.any(Number) });
+    unmount();
+    await waitFor(() => expect(window.history.state?.pnSheet).toBeUndefined());
+    expect(window.history.state).toMatchObject({ idx: 1 });
+  });
+
   it('keeps other history state (router keys) when pushing its entry', () => {
     window.history.replaceState({ idx: 3, key: 'abc' }, '', '/');
     render(<Harness />);
@@ -243,33 +265,69 @@ describe('BottomSheet swipe down', () => {
     });
   }
 
-  it('a long downward swipe on the handle closes with reason "swipe"', () => {
+  it('a long downward swipe on the handle closes with reason "swipe"', async () => {
     const onClose = vi.fn();
     render(<BottomSheet open title="Swipe" onClose={onClose} />);
     const handle = screen.getByTestId('pn-sheet-drag');
     pointer('pointerdown', handle, 100, 1000);
     pointer('pointermove', handle, 220, 1200);
+    await nextFrame();
     expect(screen.getByRole('dialog').style.getPropertyValue('--pn-sheet-drag')).toBe('120px');
     pointer('pointerup', handle, 220, 1400);
     expect(onClose).toHaveBeenCalledWith('swipe');
   });
 
-  it('a short slow drag snaps back without closing', () => {
+  it('dragging writes the transform from requestAnimationFrame and never re-renders the sheet per move', async () => {
+    let renders = 0;
+    function Probe() {
+      renders += 1;
+      return <p>probe</p>;
+    }
+    render(
+      <BottomSheet open title="Swipe" onClose={() => undefined}>
+        <Probe />
+      </BottomSheet>,
+    );
+    const handle = screen.getByTestId('pn-sheet-drag');
+    const dialog = screen.getByRole('dialog');
+    pointer('pointerdown', handle, 100, 1000);
+    const afterStart = renders;
+    for (let y = 101; y <= 160; y += 1) pointer('pointermove', handle, y, 1000 + y);
+    // Many moves in one frame produce one write of the latest position, not 60 renders.
+    expect(dialog.style.getPropertyValue('--pn-sheet-drag')).toBe('0px');
+    await nextFrame();
+    expect(dialog.style.getPropertyValue('--pn-sheet-drag')).toBe('60px');
+    expect(renders).toBe(afterStart);
+    expect(dialog).toHaveClass('pn-sheet--moving');
+    pointer('pointerup', handle, 160, 2400);
+    await waitFor(() => expect(dialog.style.getPropertyValue('--pn-sheet-drag')).toBe('0px'));
+  });
+
+  it('keeps will-change off while the sheet is at rest', async () => {
+    render(<BottomSheet open title="Rest" onClose={() => undefined} />);
+    expect(screen.getByRole('dialog')).toHaveClass('pn-sheet--moving');
+    await act(async () => new Promise((r) => setTimeout(r, 400)));
+    expect(screen.getByRole('dialog')).not.toHaveClass('pn-sheet--moving');
+  });
+
+  it('a short slow drag snaps back without closing', async () => {
     const onClose = vi.fn();
     render(<BottomSheet open title="Swipe" onClose={onClose} />);
     const handle = screen.getByTestId('pn-sheet-drag');
     pointer('pointerdown', handle, 100, 1000);
     pointer('pointermove', handle, 130, 1600);
+    await nextFrame();
     pointer('pointerup', handle, 130, 2200);
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog').style.getPropertyValue('--pn-sheet-drag')).toBe('0px');
   });
 
-  it('upward movement never lifts the sheet', () => {
+  it('upward movement never lifts the sheet', async () => {
     render(<BottomSheet open title="Swipe" onClose={() => undefined} />);
     const handle = screen.getByTestId('pn-sheet-drag');
     pointer('pointerdown', handle, 100, 1000);
     pointer('pointermove', handle, 40, 1100);
+    await nextFrame();
     expect(screen.getByRole('dialog').style.getPropertyValue('--pn-sheet-drag')).toBe('0px');
   });
 });

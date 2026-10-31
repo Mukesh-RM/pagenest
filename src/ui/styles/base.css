@@ -38,7 +38,7 @@
   border: 0;
 }
 
-/* Visible keyboard focus on every interactive PageNest control */
+/* Visible keyboard focus on every interactive InkQuiet control */
 .pn-btn:focus-visible,
 .pn-chip:focus-visible,
 .pn-card--interactive:focus-visible,
@@ -47,12 +47,19 @@
 .pn-snackbar__action:focus-visible,
 .pn-sheet:focus-visible,
 .pn-focus-target:focus-visible {
-  outline: 2px solid rgb(var(--pn-focus-ring));
-  outline-offset: 2px;
+  outline: var(--pn-focus-width) solid rgb(var(--pn-focus-ring));
+  outline-offset: var(--pn-focus-offset);
+}
+
+/* Every other interactive element inside a themed scope: hints, choices, player controls, ranges, links */
+[data-theme] :is(a[href], button, input, select, textarea, summary, [role="button"], [role="radio"], [role="tab"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: var(--pn-focus-width, 2px) solid rgb(var(--pn-focus-ring));
+  outline-offset: var(--pn-focus-offset, 2px);
 }
 
 .pn-sheet:focus-visible {
-  outline-offset: -2px;
+  /* The sheet itself is only focused by script (tabindex -1) so screen readers read its title: no ring around it */
+  outline: none;
 }
 
 /* Windows high contrast mode: keep borders and focus visible */

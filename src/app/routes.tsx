@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { SnackbarProvider } from '@/ui';
 import { AppShell } from './AppShell';
+import { isReturningDevice } from './first-run-hint';
 import { FirstRunGate } from './onboarding/FirstRunGate';
 import { RouteChrome } from './RouteChrome';
 import { LISTEN_ROUTE, READ_ROUTE } from './route-paths';
@@ -17,8 +19,11 @@ import {
   preloadScreensWhenIdle,
 } from './screens';
 
-// Start the home screen's download now, in parallel with reading saved settings.
-preloadScreens(['library']);
+// Start the first screen's download now, in parallel with reading saved settings.
+preloadScreens([isReturningDevice() ? 'library' : 'onboarding']);
+
+/** How long after start the other tabs are fetched: past the first paint of the first screen. */
+const TAB_PRELOAD_DELAY_MS = 2000;
 
 /**
  * Design-system demo page, development only. `import.meta.env.DEV` is a build-time constant, so
@@ -33,7 +38,7 @@ function screen(element: JSX.Element, fallback: JSX.Element = <ScreenFallback />
 
 function AppScreens() {
   // When the browser is idle, fetch the other tabs so switching is instant (and works offline).
-  useEffect(() => preloadScreensWhenIdle(['collections', 'stats', 'settings']), []);
+  useEffect(() => preloadScreensWhenIdle(['library', 'collections', 'stats', 'settings'], TAB_PRELOAD_DELAY_MS), []);
   return (
     <FirstRunGate
       onboarding={
@@ -65,23 +70,25 @@ function AppScreens() {
 }
 
 /**
- * Route table. The four tabs sit behind first-run onboarding. `/ui-kit` (development only)
+ * Route table, inside the snackbar host ("Removed. Undo", "Added to your library"). The four tabs sit behind first-run onboarding. `/ui-kit` (development only)
  * is outside it, so the demo opens straight away.
  */
 export function AppRoutes() {
   return (
-    <Routes>
-      {UiKitDemo ? (
-        <Route
-          path="ui-kit"
-          element={
-            <Suspense fallback={null}>
-              <UiKitDemo />
-            </Suspense>
-          }
-        />
-      ) : null}
-      <Route path="*" element={<AppScreens />} />
-    </Routes>
+    <SnackbarProvider>
+      <Routes>
+        {UiKitDemo ? (
+          <Route
+            path="ui-kit"
+            element={
+              <Suspense fallback={null}>
+                <UiKitDemo />
+              </Suspense>
+            }
+          />
+        ) : null}
+        <Route path="*" element={<AppScreens />} />
+      </Routes>
+    </SnackbarProvider>
   );
 }

@@ -1,8 +1,8 @@
-import { Link } from 'react-router-dom';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
-import { Card, ProgressBar } from '@/ui';
-import { PageHeader } from './PageHeader';
+import { Link } from 'react-router-dom';
+import { BookCover, Card, Icon, ProgressBar } from '@/ui';
+import { PageHeader, Screen } from './PageHeader';
 
 export interface BookScreenProps {
   /** The book, already loaded from the database. */
@@ -17,26 +17,35 @@ function heading(position: ResumeInfo | undefined): string {
 }
 
 /**
- * What a book's page shows until its reader or player exists: who it is, where the person
- * stands, and a plain note that opening it comes in a later release. No buttons that do nothing.
+ * What an audiobook's page shows until its player exists: the cover, who it is, where the person
+ * stands, and a plain note that playing comes in a later release. No buttons that do nothing;
+ * the one button leaves for the Library.
  */
 export function BookSummary({ book, position, note }: BookScreenProps & { note: string }) {
   const percent = Math.round(position?.percent ?? 0);
   return (
-    <div className="px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]">
-      <Link to="/" className="inline-flex min-h-touch items-center text-accent">
-        Back to Library
-      </Link>
+    <Screen>
+      <div>
+        <Link to="/" className="inline-flex min-h-touch items-center gap-2 font-semibold text-[rgb(var(--pn-link))]">
+          <Icon name="arrowLeft" size={20} />
+          Back to Library
+        </Link>
+      </div>
       <PageHeader title={book.title} />
-      <p className="mb-4 min-h-[24px] text-muted">
-        {book.author ? `${book.author} · ` : ''}
-        <span className="uppercase">{book.format}</span>
-      </p>
-      <section aria-label="Your place" className="mb-4">
+      <div className="flex items-start gap-4">
+        <div className="w-24 shrink-0">
+          <BookCover title={book.title} author={book.author} eager />
+        </div>
+        <p className="min-h-[1.5rem] min-w-0 text-muted">
+          {book.author ? `${book.author} · ` : ''}
+          <span className="uppercase">{book.format}</span>
+        </p>
+      </div>
+      <section aria-label="Your place">
         <Card>
-          <div className="min-h-[88px] p-4">
+          <div className="min-h-[5.5rem] p-4">
             <p className="font-semibold">{heading(position)}</p>
-            <p className="line-clamp-1 min-h-[24px] text-sm text-muted">{position?.chapterTitle ?? ''}</p>
+            <p className="line-clamp-1 min-h-[1.5rem] text-sm text-muted">{position?.chapterTitle ?? ''}</p>
             <div className="mt-2">
               <ProgressBar value={percent / 100} label={`Progress for ${book.title}`} />
             </div>
@@ -47,6 +56,6 @@ export function BookSummary({ book, position, note }: BookScreenProps & { note: 
       <p role="note" className="text-muted">
         {note}
       </p>
-    </div>
+    </Screen>
   );
 }

@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AppShell as DesignAppShell } from '@/ui';
+import { LazyPwaPrompts } from './components/LazyPwaPrompts';
 import { MiniPlayerHost } from './MiniPlayerHost';
 import { useCurrentChrome } from './route-chrome';
 import { useServices } from './services-context';
@@ -8,12 +9,14 @@ import { NAV_ITEMS, tabForPath } from './tabs';
 
 /**
  * Router layout for every screen. It always renders the design system's responsive frame (bottom
- * tab bar on phones, left rail from 768 px) so the screen underneath is never remounted; whether
- * the tab bar, rail and mini-player are visible follows the route's chrome (`data-chrome`, see
- * `docs/ROUTE_CHROME.md`). Tabs are real links, so middle-click and long-press work.
+ * tab bar on phones, left rail from 768 px) so the screen underneath is never remounted. Which
+ * chrome shows follows the route's chrome (`docs/ROUTE_CHROME.md`) and is passed to the frame's
+ * `chrome` prop: the design system takes the rail, tab bar and mini-player out of the layout and
+ * applies the safe-area insets itself on immersive routes.
  *
- * - `full` (the four tabs): padded content, tab bar or rail, mini-player when one is registered.
- * - `immersive` (reader, player): no padding and no chrome; the screen owns the whole window.
+ * - `full` (the four tabs): tab bar or rail, mini-player when one is registered. Screens bring
+ *   their own page padding (`pn-screen`); the frame only adds the top safe-area inset.
+ * - `immersive` (reader, player): no navigation; the screen owns the whole window.
  */
 export function AppShell() {
   const { pathname } = useLocation();
@@ -29,17 +32,17 @@ export function AppShell() {
   );
   const full = chrome === 'full';
   return (
-    <div data-chrome={chrome} className="pn-chrome-scope">
-      <DesignAppShell
-        items={NAV_ITEMS}
-        value={tabForPath(pathname)}
-        onSelect={onSelect}
-        miniPlayer={full && miniPlayerSlot ? <MiniPlayerHost slot={miniPlayerSlot} /> : null}
-      >
-        <div className={full ? 'px-[var(--pn-margin)] pb-6 pt-[calc(1rem+var(--pn-safe-top))]' : undefined}>
-          <Outlet />
-        </div>
-      </DesignAppShell>
-    </div>
+    <DesignAppShell
+      items={NAV_ITEMS}
+      value={tabForPath(pathname)}
+      onSelect={onSelect}
+      chrome={chrome}
+      miniPlayer={miniPlayerSlot ? <MiniPlayerHost slot={miniPlayerSlot} /> : null}
+    >
+      <div className={full ? 'pt-[var(--pn-safe-top)]' : undefined}>
+        <Outlet />
+      </div>
+      <LazyPwaPrompts />
+    </DesignAppShell>
   );
 }

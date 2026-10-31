@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// PageNest secret scan. Dependency-free; uses gitleaks when it is installed.
+// InkQuiet secret scan. Dependency-free; uses gitleaks when it is installed.
 //
 //   node scripts/audit-secrets.mjs               scan the working tree (tracked + untracked, not ignored files)
 //   node scripts/audit-secrets.mjs --history     also scan every commit on every branch (added lines + file names)
@@ -282,7 +282,7 @@ export function run(argv, { cwd = process.cwd(), log = console.log, errLog = con
     log(JSON.stringify({ root, engines, scanned, findings }, null, 2));
     return exit;
   }
-  log('PageNest secret scan');
+  log('InkQuiet secret scan');
   log(`  project: ${root}`);
   log(`  engine: ${engines.join('; ')}`);
   log(`  scanned ${scanned} text file(s)${args.history ? ' + git history' : ' (add --history to scan past commits)'}`);

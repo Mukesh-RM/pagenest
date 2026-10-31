@@ -39,12 +39,22 @@ interface RpcFailure {
   readonly error: { readonly name: string; readonly message: string; readonly code?: string };
 }
 
-/** Every method of `T` as an async method with the same arguments. */
+/**
+ * Every method of `T` as an async method with the same arguments. Plain objects inside `T`
+ * (for example `books: { add(...): ... }`) become nested objects of async methods.
+ */
 export type Remote<T> = {
-  [K in keyof T as T[K] extends (...args: never[]) => unknown ? K : never]: T[K] extends (...args: infer A) => infer R
+  [K in keyof T as T[K] extends (...args: never[]) => unknown ? K : T[K] extends object ? K : never]: T[K] extends (
+    ...args: infer A
+  ) => infer R
     ? (...args: A) => Promise<Awaited<R>>
-    : never;
+    : Remote<T[K]>;
 };
+
+/** Dotted names of every method in `T`: `'fingerprint' | 'books.add' | ...`. */
+export type MethodPath<T> = {
+  [K in keyof T & string]: T[K] extends (...args: never[]) => unknown ? K : T[K] extends object ? `${K}.${MethodPath<T[K]>}` : never;
+}[keyof T & string];
 
 /** Error raised on the calling side when the worker's method threw. */
 export class RpcError extends Error {
@@ -64,16 +74,27 @@ function isResponse(data: unknown): data is RpcSuccess | RpcFailure {
   return typeof data === 'object' && data !== null && (data as { pnRpc?: unknown }).pnRpc === 'response';
 }
 
+/** Names nobody may call over the port: anything every object has (`constructor`, `toString`, `__proto__`, ...) and `prototype`. */
+const isForbidden = (part: string): boolean => part === 'prototype' || part in Object.prototype;
+
 /** Answer calls arriving on `port` using the methods of `impl`. Returns a function that stops serving. */
 export function serveRpc<T extends object>(port: RpcPort, impl: T): () => void {
   const listener = (event: MessageEvent): void => {
     const request: unknown = event.data;
     if (!isRequest(request)) return;
-    const method = (impl as Record<string, unknown>)[request.method];
     void (async () => {
       try {
-        if (typeof method !== 'function') throw new TypeError(`Unknown method "${request.method}".`);
-        const value: unknown = await (method as (...a: unknown[]) => unknown).apply(impl, [...request.args]);
+        // "books.add" calls impl.books.add with `this` set to impl.books.
+        const path = request.method.split('.');
+        const name = path.pop() ?? '';
+        if ([...path, name].some(isForbidden)) throw new TypeError(`Unknown method "${request.method}".`);
+        let owner: unknown = impl;
+        for (const part of path) owner = (owner as Record<string, unknown> | undefined)?.[part];
+        const method = (owner as Record<string, unknown> | undefined)?.[name];
+        if (typeof method !== 'function') {
+          throw new TypeError(`Unknown method "${request.method}".`);
+        }
+        const value: unknown = await (method as (...a: unknown[]) => unknown).apply(owner, [...request.args]);
         port.postMessage({ pnRpc: 'response', id: request.id, ok: true, value } satisfies RpcSuccess);
       } catch (error) {
         const e = error instanceof Error ? error : new Error(String(error));
@@ -103,7 +124,7 @@ export interface RpcClient<T> {
  * Build a client for the worker on the other end of `port`. `methods` lists the method names
  * (the type `T` is erased at runtime, so they must be named once here).
  */
-export function createRpcClient<T extends object>(port: RpcPort, methods: readonly (keyof Remote<T> & string)[]): RpcClient<T> {
+export function createRpcClient<T extends object>(port: RpcPort, methods: readonly MethodPath<T>[]): RpcClient<T> {
   let nextId = 1;
   const waiting = new Map<number, { resolve: (v: unknown) => void; reject: (e: unknown) => void }>();
 
@@ -121,12 +142,17 @@ export function createRpcClient<T extends object>(port: RpcPort, methods: readon
 
   const api: Record<string, unknown> = {};
   for (const method of methods) {
-    api[method] = (...args: unknown[]): Promise<unknown> =>
+    const call = (...args: unknown[]): Promise<unknown> =>
       new Promise((resolve, reject) => {
         const id = nextId++;
         waiting.set(id, { resolve, reject });
         port.postMessage({ pnRpc: 'request', id, method, args } satisfies RpcRequest);
       });
+    const path = method.split('.');
+    const name = path.pop() ?? method;
+    let target = api;
+    for (const part of path) target = (target[part] ??= {}) as Record<string, unknown>;
+    target[name] = call;
   }
 
   return {

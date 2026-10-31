@@ -1,4 +1,3 @@
 # engines/emotion
 
-Owner: **Narration** bot. Emotion tagger and delivery planner. Emits `Emotion` and `DeliveryPlan` values defined in `src/engines/tts/types.ts`.
-Nothing is implemented here yet (Phase 5).
+Segmenter, rule-based emotion tagger and delivery planner (blueprint 9.2 steps 2–4). Used by read-aloud in `src/features/narration`.

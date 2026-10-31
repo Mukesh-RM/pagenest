@@ -28,7 +28,7 @@ import { useInstall, useUpdatePrompt } from '@/sw';
 
 const { ui, applyUpdate, dismiss } = useUpdatePrompt(isPlaying); // isPlaying comes from the audio controller
 // ui.kind === 'refresh'     -> quiet snackbar "New version ready, refresh" with a Refresh button (onClick: applyUpdate)
-// ui.kind === 'next-launch' -> "New version ready. It will apply the next time you open PageNest." with NO button
+// ui.kind === 'next-launch' -> "New version ready. It will apply the next time you open InkQuiet." with NO button
 // ui.kind === 'none'        -> render nothing
 
 const { canInstall, showIosSteps, installed, install } = useInstall();
@@ -45,7 +45,7 @@ const { canInstall, showIosSteps, installed, install } = useInstall();
 
 ## Update rules (blueprint 14)
 
-1. A new worker installs and waits. It never calls `skipWaiting()` on install and never claims open pages.
+1. A new worker installs and waits. It never calls `skipWaiting()` on install and does not claim pages that already depend on an older worker. The one exception is the very first install: `clients.claim()` on activate so the first visit can cache lazy engines and the sample book without a reload.
 2. The page shows the notice; Refresh posts `SKIP_WAITING` and reloads once. While audio plays there is no Refresh button.
 3. If the notice is ignored, the new version applies by itself the next time the app is launched.
 

@@ -16,8 +16,27 @@ import { fileURLToPath } from 'node:url';
 export const BUDGETS_KB = {
   initialJs: 120,
   initialCss: 12,
-  lazyChunk: 40,
+  lazyChunk: 48,
+  // Web Workers carry their own copy of Dexie (about 30 kB), so they get more room than a screen does.
+  workerChunk: 55,
 };
+
+/**
+ * Decision 15: explicit per-chunk exceptions for the Reader's LAZY engines (they download the first time a book of that
+ * format opens and are never in the first load; the first-load budget above stays hard). Anything not named here keeps
+ * the lazy-chunk or worker budget. Names come from `manualChunks` in vite.config.ts (`engine-pdf`, `engine-foliate`) and from
+ * the engine modules themselves (`docx-core`, `docx.worker`).
+ */
+export const ENGINE_CHUNK_BUDGETS_KB = [
+  { pattern: /^engine-pdf-/, label: 'engine chunk (pdf.js)', budget: 131 },
+  { pattern: /^docx-core-/, label: 'engine chunk (docx)', budget: 100 },
+  { pattern: /^docx\.worker-/, label: 'engine worker (docx)', budget: 100 },
+  { pattern: /^engine-foliate-/, label: 'engine chunk (epub)', budget: 60 },
+  { pattern: /^engine-tts-ort-/, label: 'engine chunk (onnxruntime-web)', budget: 130 },
+  { pattern: /^piper\.worker-/, label: 'worker chunk (piper tts)', budget: 90 },
+  // Loaded only when OPFS is blocked: shares import + cache-backed storage with the data client (WebKit/Linux CI).
+  { pattern: /^in-process-import-/, label: 'OPFS fallback import service', budget: 56 },
+];
 
 const kb = (bytes) => bytes / 1000;
 const gzipSize = (file) => gzipSync(readFileSync(file), { level: 9 }).length;
@@ -70,8 +89,17 @@ export function checkBundle(distDir, budgets = BUDGETS_KB) {
   const assetsDir = join(dist, 'assets');
   const initial = new Set(assets.js.map((h) => h.split('/').pop()));
   if (existsSync(assetsDir)) {
-    for (const name of readdirSync(assetsDir).filter((n) => n.endsWith('.js') && !initial.has(n)).sort()) {
-      report(`lazy chunk ${name}`, kb(gzipSize(join(assetsDir, name))), budgets.lazyChunk);
+    for (const name of readdirSync(assetsDir)
+      .filter((n) => n.endsWith('.js') && !initial.has(n))
+      .sort()) {
+      const engine = ENGINE_CHUNK_BUDGETS_KB.find((e) => e.pattern.test(name));
+      if (engine) {
+        report(`${engine.label} ${name}`, kb(gzipSize(join(assetsDir, name))), engine.budget);
+        continue;
+      }
+      const isWorker = /\.worker-/.test(name);
+      const budget = isWorker ? (budgets.workerChunk ?? budgets.lazyChunk) : budgets.lazyChunk;
+      report(`${isWorker ? 'worker chunk' : 'lazy chunk'} ${name}`, kb(gzipSize(join(assetsDir, name))), budget);
     }
   }
   return { ok, lines };

@@ -20,6 +20,7 @@ const config: Config = {
       borderRadius: { card: '12px', sheet: '20px' },
       fontFamily: {
         sans: ['var(--pn-font-sans)'],
+        serif: ['var(--pn-font-serif)'],
       },
       spacing: { touch: '44px' },
     },

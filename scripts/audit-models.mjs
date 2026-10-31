@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// PageNest model audit: every voice, model or model host referenced in the app must be vetted.
+// InkQuiet model audit: every voice, model or model host referenced in the app must be vetted.
 //
 //   node scripts/audit-models.mjs                 scan src/, public/, index.html, configs against the registry
 //   node scripts/audit-models.mjs --voice ID      print the verdict for one Piper voice (for example en_US-lessac-medium)
@@ -16,7 +16,12 @@
 //   - links a Hugging Face repo that is not in the registry, or an Orpheus, eSpeak, piper-phonemize, phonemizer,
 //     kokoro-js or other component the registry marks NOT-OK (Decision 8)
 //   - names a model file (.onnx, .gguf, .safetensors, .ckpt, .pt) that is neither a registered voice nor a registered file name
-// WARN when a model URL is built at run time (template strings): the code must check the registry itself.
+// WARN when a model URL is built at run time (template strings) and cannot be resolved. A template is resolved
+//   (no warning) when its host and repo are fixed text, the repo is a registered Piper voice repo, the revision is
+//   fixed text, every placeholder is a plain identifier after /resolve/<revision>/, and the same file names at least
+//   one voice literal (every such literal is checked against the registry like any other). Limit: the scanner does not
+//   prove which value reaches the placeholder at run time; the file must keep its closed list of approved voices.
+//   A dynamic host or repo, an unregistered or non-voice repo, or an expression placeholder always warns.
 // Silence one reviewed line with a comment: audit-ignore: <reason>. Owner: Auditor.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -92,7 +97,33 @@ export function summarize(reg) {
 const VOICE_ID_RE = /(?<![A-Za-z0-9_])([a-z]{2,3}_[A-Z]{2})-([A-Za-z0-9_]+)-(x_low|low|medium|high)(?![A-Za-z0-9_])/g;
 const VOICE_PATH_RE = /(?<![A-Za-z0-9_])([a-z]{2,3})\/([a-z]{2,3}_[A-Z]{2})\/([A-Za-z0-9_]+)\/(x_low|low|medium|high)(?![A-Za-z0-9_])/g;
 const HF_URL_RE = /(?:https?:)?\/\/(?:www\.)?(?:huggingface\.co|hf\.co)\/(?:(datasets|spaces)\/)?([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)(?:\/(?:resolve|blob|raw)\/([^/\s'"`)]+)\/([^\s'"`?#)]*))?/g;
-const HF_DYNAMIC_RE = /(?:huggingface\.co|hf\.co)\/[^\s'"`]*\$\{/g;
+const HF_DYNAMIC_RE = /(?:huggingface\.co|hf\.co)\/[^\s'"`]*\$\{/;
+const SIMPLE_PLACEHOLDER_RE = /^\$\{\s*[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*\s*\}$/;
+
+/**
+ * Judge a template-literal Hugging Face URL. Returns null when there is nothing dynamic, otherwise
+ * { resolvable, why }. Resolvable only when the host and the repo are fixed text, the repo is a registered
+ * Piper voice repo, the revision segment is fixed text and every placeholder is a plain identifier or
+ * property access that sits after "/resolve/<revision>/" (so it can only select a file inside that repo).
+ * Whether the selected voice is vetted is then decided by the caller (the file must carry a closed set of
+ * registry-OK voice literals).
+ */
+export function analyzeTemplateUrl(line, reg) {
+  const m = line.match(/`(?:https?:)?\/\/(?:www\.)?(?:huggingface\.co|hf\.co)\/([^`]*)`/);
+  if (!m || !m[1].includes('${')) return null;
+  const parts = m[1].split('/');
+  const [org, repo, kind, rev] = parts;
+  if (!org || !repo || org.includes('${') || repo.includes('${')) return { resolvable: false, why: 'the repository part of the URL is dynamic' };
+  const rule = repoRule(reg, `${org}/${repo}`);
+  if (!rule) return { resolvable: false, why: `repo ${org}/${repo} is not in the registry` };
+  if (rule.kind !== 'piper-voices') return { resolvable: false, why: `repo ${org}/${repo} is not a Piper voice repo with a per-voice registry` };
+  if (!['resolve', 'blob', 'raw'].includes(kind || '') || !rev || rev.includes('${')) return { resolvable: false, why: 'the URL is not of the form /<org>/<repo>/resolve/<fixed revision>/<file>' };
+  const rest = parts.slice(4).join('/');
+  const placeholders = rest.match(/\$\{[^}]*\}/g) || [];
+  if (rest.replace(/\$\{[^}]*\}/g, '').includes('$')) return { resolvable: false, why: 'unsupported template syntax' };
+  if (!placeholders.length || !placeholders.every((x) => SIMPLE_PLACEHOLDER_RE.test(x))) return { resolvable: false, why: 'a placeholder is an expression, not a plain identifier' };
+  return { resolvable: true, why: 'fixed host, registered repo and fixed revision; only the file path is dynamic' };
+}
 const MODEL_FILE_RE = /(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]+\.(?:onnx|gguf|safetensors|ckpt|pt))(?![A-Za-z0-9_-])/g;
 
 function isCommentLine(line) {
@@ -120,6 +151,8 @@ export function scanText(text, rel, reg) {
   const fileNames = new Set((reg.components || []).flatMap((c) => c.files || []));
   const compMatchers = (reg.components || []).filter((c) => c.verdict !== 'OK' && Array.isArray(c.match)).map((c) => [c, c.match.map((m) => new RegExp(m, 'i'))]);
   const lines = text.split(/\r?\n/);
+  const literalVoices = new Set();
+  const pendingTemplates = [];
   const add = (level, rule, i, detail) => findings.push({ level, rule, file: rel, line: i + 1, detail, text: truncate(lines[i].trim(), 160) });
 
   const voiceCheck = (id, i) => {
@@ -133,6 +166,7 @@ export function scanText(text, rel, reg) {
     const seenVoices = new Set();
     for (const m of line.matchAll(VOICE_ID_RE)) {
       const id = `${m[1]}-${m[2]}-${m[3]}`;
+      literalVoices.add(id);
       if (!seenVoices.has(id)) {
         seenVoices.add(id);
         voiceCheck(id, i);
@@ -140,6 +174,7 @@ export function scanText(text, rel, reg) {
     }
     for (const m of line.matchAll(VOICE_PATH_RE)) {
       const id = `${m[2]}-${m[3]}-${m[4]}`;
+      literalVoices.add(id);
       if (!seenVoices.has(id)) {
         seenVoices.add(id);
         voiceCheck(id, i);
@@ -158,8 +193,11 @@ export function scanText(text, rel, reg) {
         if (c && c.verdict !== 'OK') add('fail', 'hf-repo-not-ok', i, `Hugging Face repo ${repo} belongs to ${c.id}, which is ${c.verdict}: ${truncate(c.reason, 160)}`);
       }
     }
-    if (HF_DYNAMIC_RE.test(line)) add('warn', 'dynamic-model-url', i, 'Hugging Face URL built at run time: the code must only build URLs for voices that the registry marks OK');
-    HF_DYNAMIC_RE.lastIndex = 0;
+    if (HF_DYNAMIC_RE.test(line)) {
+      const t = analyzeTemplateUrl(line, reg);
+      if (t && t.resolvable) pendingTemplates.push(i);
+      else add('warn', 'dynamic-model-url', i, `Hugging Face URL built at run time (${t ? t.why : 'cannot be analysed'}): the code must only build URLs for voices that the registry marks OK`);
+    }
     for (const m of line.matchAll(MODEL_FILE_RE)) {
       const name = m[1];
       const stem = name.replace(/\.(onnx|gguf|safetensors|ckpt|pt)$/, '');
@@ -171,6 +209,12 @@ export function scanText(text, rel, reg) {
       if (res.some((re) => re.test(line))) add('fail', 'component-not-ok', i, `${c.name} is ${c.verdict}: ${truncate(c.reason, 180)}`);
     }
   });
+  // A resolvable template is accepted when this file carries a closed set of voice literals (ids or paths) and every
+  // one of them was just checked against the registry (a NOT-OK, VERIFY or unknown literal is already a failure).
+  // With no voice literal in the file the selected voice is unknown, so warn.
+  for (const i of pendingTemplates) {
+    if (literalVoices.size === 0) add('warn', 'dynamic-model-url', i, 'Hugging Face URL built at run time from a registered Piper repo, but this file lists no voice ids to check: the code must only build URLs for voices that the registry marks OK');
+  }
   return dedupe(findings);
 }
 
@@ -376,7 +420,7 @@ export function run(argv, { cwd = process.cwd(), log = console.log, errLog = con
     log(JSON.stringify({ root, scanned: result.scanned, registry: summarize(reg), problems, findings: result.findings }, null, 2));
   } else {
     const s = summarize(reg);
-    log('PageNest model audit');
+    log('InkQuiet model audit');
     log(`  project: ${root}`);
     log(`  registry: ${s.voices} Piper voices (OK ${s.ok}, NOT OK ${s.notOk}, VERIFY ${s.verify}), ${s.components} components`);
     log(`  scanned ${result.scanned} file(s) in: src/, public/, index.html, configs, package.json`);

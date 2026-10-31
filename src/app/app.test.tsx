@@ -6,7 +6,6 @@ import { useSettings } from './settings-store';
 import { minutesPerDay } from '@/data/stats';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 
-
 let db: PageNestDB;
 let services: AppServices;
 
@@ -34,14 +33,14 @@ describe('app shell', () => {
     expect(bar).toHaveAccessibleName('Main navigation');
     const labels = Array.from(bar.querySelectorAll('a')).map((a) => a.textContent);
     expect(labels).toEqual(['Library', 'Collections', 'Stats', 'Settings']);
-    expect(screen.getByTestId('pn-rail')).toBeInTheDocument();
+    expect(screen.queryByTestId('pn-rail')).toBeNull(); // phone width: only the tab bar is in the DOM
     expect(within(bar).getByRole('link', { name: 'Library' })).toHaveAttribute('aria-current', 'page');
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty', {}, { timeout: 5000 });
   });
 
   it.each([
-    ['/', 'Library', 'Your shelf is waiting'],
-    ['/collections', 'Collections', 'No shelves yet'],
+    ['/', 'Library', 'Your library is empty'],
+    ['/collections', 'Collections', 'No collections yet'],
     ['/stats', 'Stats', 'Nothing to count yet'],
   ])('%s shows its heading and a plain empty state', async (path, heading, empty) => {
     renderAt(path);
@@ -53,13 +52,13 @@ describe('app shell', () => {
     renderAt('/settings');
     expect(await screen.findByRole('heading', { level: 1, name: 'Settings' })).toBeInTheDocument();
     expect(screen.getByRole('group', { name: 'Theme' })).toBeInTheDocument();
-    expect(await screen.findByText(/does not say how much space|PageNest uses/)).toBeInTheDocument();
+    expect(await screen.findByText(/does not say how much space|InkQuiet uses/)).toBeInTheDocument();
     expect(screen.getByText(/collects nothing/)).toBeInTheDocument();
   });
 
   it('sends unknown addresses to the library', async () => {
     renderAt('/nowhere/at/all');
-    expect(await screen.findByText('Your shelf is waiting')).toBeInTheDocument();
+    expect(await screen.findByText('Your library is empty')).toBeInTheDocument();
   });
 
   it('lists books from the database with progress', async () => {
@@ -75,26 +74,35 @@ describe('app shell', () => {
       favorite: false,
       finished: false,
     });
-    await db.progress.put({ bookId: id, mode: 'read', locator: { kind: 'reflow', section: 0, textOffset: 0 }, percent: 40, updatedAt: 1 });
+    await db.progress.put({
+      bookId: id,
+      mode: 'read',
+      locator: { kind: 'reflow', section: 0, textOffset: 0 },
+      percent: 40,
+      updatedAt: 1,
+    });
     renderAt('/');
     expect((await screen.findAllByText('Persuasion')).length).toBeGreaterThan(0);
-    expect(screen.getByText('Welcome back')).toBeInTheDocument();
-    expect(screen.getByText('Jane Austen')).toBeInTheDocument();
-    await waitFor(() =>
-      expect(screen.getByRole('progressbar', { name: 'Progress for Persuasion' })).toHaveAttribute('aria-valuenow', '40'),
-    );
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.getAllByText('Jane Austen').length).toBeGreaterThan(0);
+    expect(await screen.findByRole('button', { name: /^Persuasion, Jane Austen\. 40% read/ })).toBeInTheDocument();
   });
 });
 
-describe('collections', () => {
-  it('creates a shelf that persists', async () => {
+describe('collections (the Library CollectionsScreen on /collections)', () => {
+  it('creates a collection that persists, from the empty state to the saved row', async () => {
     renderAt('/collections');
-    const input = await screen.findByLabelText('Shelf name');
-    fireEvent.change(input, { target: { value: '  Summer reading ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Add shelf' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Make a collection' }));
+    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: '  Summer reading ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('Summer reading')).toBeInTheDocument();
-    expect(await screen.findByText('0 books')).toBeInTheDocument();
-    expect((await db.collections.toArray()).map((c) => c.name)).toEqual(['Summer reading']);
+    await waitFor(async () => expect((await db.collections.toArray()).map((c) => c.name)).toEqual(['Summer reading']));
+  });
+
+  it('shows the saved collections of the database on arrival', async () => {
+    await db.collections.add({ id: 'c1', name: 'Bedtime stories', order: 0 });
+    renderAt('/collections');
+    expect(await screen.findByText('Bedtime stories')).toBeInTheDocument();
   });
 });
 

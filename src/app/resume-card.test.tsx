@@ -1,10 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { SnackbarProvider } from '@/ui';
 import { MemoryRouter } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ResumeInfo } from '@/data/resume';
-import { ResumeCard, ResumeCardSkeleton } from './components/ResumeCard';
-import { hadResumeCard, rememberResumeCard } from './resume-hint';
-import { LibraryPage } from './pages/LibraryPage';
+import { LibraryResume } from './components/LibraryResume';
+import { LibraryRoute } from './pages/LibraryRoute';
 import { ServicesProvider } from './services';
 import { makeServices, renderApp, resetSettings } from './test-utils';
 import { setSetting } from '@/data/settings';
@@ -23,57 +23,46 @@ const info: ResumeInfo = {
   updatedAt: 1,
 };
 
-describe('ResumeCard', () => {
+describe('LibraryResume (design system Welcome back card)', () => {
   it('says Welcome back with the chapter, book and progress', () => {
-    render(<ResumeCard info={info} />);
-    expect(screen.getByRole('region', { name: 'Welcome back' })).toBeInTheDocument();
-    expect(screen.getByText('Welcome back, chapter 7')).toBeInTheDocument();
-    expect(screen.getByText('The Storm · The Long Road Home')).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: 'Continue position in The Long Road Home' })).toBeInTheDocument();
+    render(<LibraryResume info={info} onResume={() => undefined} onDismiss={() => undefined} />);
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.getByText(/chapter 7/)).toBeInTheDocument();
+    expect(screen.getByText('The Long Road Home', { selector: '.pn-resume__title' })).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Reading progress' })).toHaveAttribute('aria-valuenow', '61');
   });
 
-  it('has no control at all when there is no route to open (information only, nothing dead)', () => {
-    render(<ResumeCard info={info} />);
-    expect(screen.queryByRole('button')).toBeNull();
-    expect(screen.queryByRole('link')).toBeNull();
-  });
-
-  it('is a real link when it is given a route', () => {
+  it('names the place by percent when the book has no chapter info', () => {
     render(
-      <MemoryRouter>
-        <ResumeCard info={info} href="/read/b1" />
-      </MemoryRouter>,
+      <LibraryResume
+        info={
+          {
+            ...info,
+            chapterNumber: undefined,
+            chapterTitle: undefined,
+          } as unknown as ResumeInfo
+        }
+        onResume={() => undefined}
+        onDismiss={() => undefined}
+      />,
     );
-    expect(screen.getByRole('link', { name: /Welcome back, chapter 7/ })).toHaveAttribute('href', '/read/b1');
+    expect(screen.getByText(/61%/)).toBeInTheDocument();
   });
 
-  it('drops the chapter when unknown', () => {
-    render(<ResumeCard info={{ ...info, chapterNumber: undefined, chapterTitle: undefined } as unknown as ResumeInfo} />);
-    expect(screen.getByText('Welcome back')).toBeInTheDocument();
-    expect(screen.getByText('The Long Road Home')).toBeInTheDocument();
+  it('has exactly two controls and both work: Keep reading resumes, Not now dismisses', () => {
+    const onResume = vi.fn();
+    const onDismiss = vi.fn();
+    render(<LibraryResume info={info} onResume={onResume} onDismiss={onDismiss} />);
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Keep reading', 'Not now']);
+    fireEvent.click(screen.getByRole('button', { name: 'Keep reading' }));
+    expect(onResume).toHaveBeenCalledWith(info);
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
-  it('uses the headphones for listening', () => {
-    const { container } = render(<ResumeCard info={{ ...info, mode: 'listen' }} />);
-    expect(container.querySelector('svg')).not.toBeNull();
-  });
-
-  it('skeleton has the same fixed height as the card', () => {
-    const { container: a } = render(<ResumeCardSkeleton />);
-    const { container: b } = render(<ResumeCard info={info} />);
-    expect(a.innerHTML).toContain('min-h-[88px]');
-    expect(b.innerHTML).toContain('min-h-[88px]');
-  });
-});
-
-describe('resume hint', () => {
-  beforeEach(() => localStorage.clear());
-  it('round-trips', () => {
-    expect(hadResumeCard()).toBe(false);
-    rememberResumeCard(true);
-    expect(hadResumeCard()).toBe(true);
-    rememberResumeCard(false);
-    expect(hadResumeCard()).toBe(false);
+  it('uses listening words for a listening position', () => {
+    render(<LibraryResume info={{ ...info, mode: 'listen', kind: 'audio' }} onResume={() => undefined} onDismiss={() => undefined} />);
+    expect(screen.getByRole('button', { name: 'Keep listening' })).toBeInTheDocument();
   });
 });
 
@@ -93,51 +82,93 @@ describe('Library resume card', () => {
   it('is hidden when there is nothing to resume', async () => {
     const services = await launch();
     renderApp(services);
-    await screen.findByText('Your shelf is waiting');
+    await screen.findByText('Your library is empty');
     expect(screen.queryByText(/Welcome back/)).toBeNull();
     services.db.close();
   });
 
   it('shows the last-read book and chapter from the saved progress, linking to its real route', async () => {
     const services = await launch();
-    await services.db.books.add({ id: 'b1', fingerprint: 'f', kind: 'ebook', format: 'epub', title: 'The Long Road Home', addedAt: 1, favorite: false, finished: false });
+    await services.db.books.add({
+      id: 'b1',
+      fingerprint: 'f',
+      kind: 'ebook',
+      format: 'epub',
+      title: 'The Long Road Home',
+      addedAt: 1,
+      favorite: false,
+      finished: false,
+    });
     await services.db.chapters.bulkAdd([
       { bookId: 'b1', index: 0, title: 'Start', locator: { kind: 'reflow', section: 0, textOffset: 0 } },
       { bookId: 'b1', index: 6, title: 'The Storm', locator: { kind: 'reflow', section: 6, textOffset: 0 } },
     ]);
     await services.progress.save('b1', 'read', { kind: 'reflow', section: 6, textOffset: 20 }, 55);
     renderApp(services);
-    expect(await screen.findByText('Welcome back, chapter 7')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Welcome back, chapter 7/ })).toHaveAttribute('href', '/read/b1');
-    await waitFor(() => expect(hadResumeCard()).toBe(true));
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    expect(screen.getByText(/chapter 7/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep reading' }));
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'The Long Road Home',
+      }),
+    ).toBeInTheDocument();
     services.db.close();
   });
 
   it('appears when progress is saved while the Library is open, and goes when the book is finished', async () => {
     const services = await launch();
-    await services.db.books.add({ id: 'b1', fingerprint: 'f', kind: 'ebook', format: 'epub', title: 'Quiet Book', addedAt: 1, favorite: false, finished: false });
+    await services.db.books.add({
+      id: 'b1',
+      fingerprint: 'f',
+      kind: 'ebook',
+      format: 'epub',
+      title: 'Quiet Book',
+      addedAt: 1,
+      favorite: false,
+      finished: false,
+    });
     renderApp(services);
-    await screen.findByText('Quiet Book');
+    await screen.findAllByText('Quiet Book');
     expect(screen.queryByText(/Welcome back/)).toBeNull();
     await services.progress.save('b1', 'read', { kind: 'reflow', section: 0, textOffset: 5 }, 12);
-    expect(await screen.findByText('Welcome back')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     await services.db.books.update('b1', { finished: true });
     await waitFor(() => expect(screen.queryByText(/Welcome back/)).toBeNull());
     services.db.close();
   });
 
-  it('reserves the card space with a skeleton while loading when the last visit had a card', async () => {
-    rememberResumeCard(true);
+  it('draws the Library and the Welcome back card in the same frame: the title and toolbar never move when the card arrives', async () => {
     const services = await launch();
+    await services.db.books.add({ id: 'b9', fingerprint: 'f9', kind: 'ebook', format: 'epub', title: 'Steady Book', addedAt: 1, favorite: false, finished: false });
+    await services.progress.save('b9', 'read', { kind: 'reflow', section: 0, textOffset: 5 }, 30);
     const { container } = render(
       <MemoryRouter>
         <ServicesProvider services={services}>
-          <LibraryPage />
+          <SnackbarProvider>
+            <LibraryRoute />
+          </SnackbarProvider>
         </ServicesProvider>
       </MemoryRouter>,
     );
-    expect(container.innerHTML).toContain('min-h-[88px]');
-    await screen.findByText('Your shelf is waiting');
+    // Before the saved position is read there is only the skeleton: no Library title that could be pushed down.
+    expect(screen.queryByRole('heading', { level: 1, name: 'Library' })).toBeNull();
+    expect(container.querySelector('[aria-busy="true"], [role="status"]')).not.toBeNull();
+    const title = await screen.findByRole('heading', { level: 1, name: 'Library' });
+    // The moment the title exists, the card is already there.
+    expect(title).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
+    services.db.close();
+  });
+
+  it('does not offer to resume a book that was opened but not read yet (0 %)', async () => {
+    const services = await launch();
+    await services.db.books.add({ id: 'z0', fingerprint: 'z0', kind: 'ebook', format: 'epub', title: 'Not Started Yet', addedAt: 1, favorite: false, finished: false });
+    await services.progress.save('z0', 'read', { kind: 'reflow', section: 0, textOffset: 0 }, 0);
+    renderApp(services);
+    await screen.findAllByText('Not Started Yet');
+    expect(screen.queryByText(/Welcome back/)).toBeNull();
     services.db.close();
   });
 });

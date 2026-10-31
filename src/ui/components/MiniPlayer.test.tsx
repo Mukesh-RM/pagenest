@@ -1,6 +1,6 @@
 import '../test/setup';
 import { act, render, screen } from '@testing-library/react';
-import userEvent from '../test/user';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { MiniPlayer } from './MiniPlayer';
 
@@ -44,12 +44,12 @@ describe('MiniPlayer', () => {
     const onSkipBack = vi.fn();
     const { rerender } = render(<MiniPlayer {...base} onSkipBack={onSkipBack} />);
     const back = screen.getByRole('button', { name: 'Back 15 seconds' });
-    expect(back).toHaveClass('pn-btn--icon');
+    expect(back).toHaveClass('pn-miniplayer__skip');
     await user.click(back);
     expect(onSkipBack).toHaveBeenCalledTimes(1);
     rerender(<MiniPlayer {...base} skipBackSeconds={30} />);
     expect(screen.getByRole('button', { name: 'Back 30 seconds' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('pn-btn--icon');
+    expect(screen.getByRole('button', { name: 'Play' })).toHaveClass('pn-miniplayer__play');
   });
 
   it('tap on the cover/title area expands, and it is keyboard operable', async () => {
