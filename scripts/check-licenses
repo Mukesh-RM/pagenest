@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# CI entry point: fail on disallowed npm licenses or stale docs/LICENSES.md.
+#
+#   scripts/check-licenses              run after npm ci at the repo root
+#   scripts/check-licenses --json       same as audit-licenses.mjs --check --json
+#
+# Audits every package in package-lock.json (production and development trees),
+# fonts and models listed in scripts/audit-planned.json, and reviewed overrides.
+# Production violations and stale LICENSES.md exit 1. Planned NOT-OK rows are
+# reported in docs/LICENSES.md but do not fail this script until the package is installed.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+if [[ ! -f package-lock.json ]]; then
+  echo "check-licenses: missing package-lock.json at repo root" >&2
+  exit 1
+fi
+
+exec node scripts/audit-licenses.mjs --check "$@"

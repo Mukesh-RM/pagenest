@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { analyzePackages, collectPackages, declaredLicense, detectLicenseText, evaluateLicense, run } from './audit-licenses.mjs';
+import { SCRIPTS_DIR } from './audit-lib.mjs';
 
 const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'pn-lic-'));
 const write = (root, rel, content) => {
@@ -248,6 +249,18 @@ test('generated doc contains the Speech engine licensing section', async () => {
   assert.match(doc, /## Speech engine licensing/);
   assert.match(doc, /eSpeak NG/);
   assert.match(doc, /Decision 8/);
+  assert.match(doc, /## Flagged items/);
+  assert.match(doc, /en_US-libritts-high/);
+});
+
+test('scripts/check-licenses exits 0 when audit passes', async () => {
+  const root = tmp();
+  write(root, 'package.json', { name: 'app' });
+  write(root, 'package-lock.json', { name: 'app', lockfileVersion: 3, packages: { '': { name: 'app' } } });
+  await capture(['--root', root, '--write']);
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(path.join(SCRIPTS_DIR, 'check-licenses'), [], { cwd: root, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr || r.stdout);
 });
 
 test('tests/ QA toolchain is audited too (violations fail, doc has its table)', async () => {
