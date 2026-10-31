@@ -10,7 +10,7 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 - Installed packages audited: 753 (91 production, 662 development)
 - Source of data: package-lock.json + node_modules
-- QA toolchain (`tests/`, dev only, never shipped): 210 packages from package-lock.json + node_modules; OK: 207, OK with note: 3, NOT OK: 0
+- QA toolchain (`tests/`, dev only, never shipped): 211 packages from package-lock.json; OK: 208, OK with note: 3, NOT OK: 0
 - OK: 724, OK with note: 29, NOT OK: 0
 - Planned assets with open risks: 6 (see Flagged items)
 
@@ -856,6 +856,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | @formatjs/icu-messageformat-parser | 2.11.4 | MIT | https://www.npmjs.com/package/@formatjs/icu-messageformat-parser/v/2.11.4 | OK |
 | @formatjs/icu-skeleton-parser | 1.8.16 | MIT | https://www.npmjs.com/package/@formatjs/icu-skeleton-parser/v/1.8.16 | OK |
 | @formatjs/intl-localematcher | 0.6.2 | MIT | https://www.npmjs.com/package/@formatjs/intl-localematcher/v/0.6.2 | OK |
+| @pagenest/e2e-port | unknown | MIT | https://www.npmjs.com/package/@pagenest/e2e-port | OK |
 | @paulirish/trace_engine | 0.0.19 | BSD-3-Clause | https://www.npmjs.com/package/@paulirish/trace_engine/v/0.0.19 | OK |
 | @puppeteer/browsers | 2.3.0 | Apache-2.0 | https://www.npmjs.com/package/@puppeteer/browsers/v/2.3.0 | OK |
 | @sentry/core | 6.19.7 | BSD-3-Clause | https://www.npmjs.com/package/@sentry/core/v/6.19.7 | OK |
@@ -1039,7 +1040,7 @@ Notes:
 
 - **@axe-core/playwright@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
 - **axe-core@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
-- **parse-cache-control@1.0.1**: Reviewed override (2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped.). Declared: BSD.
+- **parse-cache-control@1.0.1**: Reviewed override (2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped.). Declared: none.
 
 ### Reviewed overrides
 
@@ -1125,6 +1126,8 @@ Source: `scripts/audit-models.json`, procedure and per-voice evidence in `docs/M
 | diffusionstudio/piper-wasm and similar browser ports | none stated; build script compiles rhasspy/espeak-ng | NOT OK |
 | Kokoro-82M weights (hexgrad/Kokoro-82M, onnx-community/Kokoro-82M-v1.0-ONNX) | Apache-2.0 | OK |
 | Chatterbox (ResembleAI/chatterbox) | MIT | OK |
+| Xenova/speecht5_tts + Xenova/speecht5_hifigan | MIT | OK |
+| t-neethesh/spkrec-xvect-voxceleb-onnx | Apache-2.0 | OK |
 | Orpheus TTS 3B (canopylabs/orpheus-3b-0.1-ft) | apache-2.0 tag on a Llama 3.2 base | NOT OK |
 | CMU Pronouncing Dictionary (cmusphinx/cmudict) | BSD-2-Clause style (CMU) | OK |
 

@@ -1,5 +1,7 @@
 import { decodeWavMono } from './wav-decode';
 import { buildReferencePcm, colorizeWithReference } from './lite-vc';
+import { loadSpeechT5Tokenizer } from './speecht5-tokenizer';
+import { createSpeechT5Stack, type SpeechT5Stack } from './speecht5-onnx';
 
 export type CloneTier = 'full' | 'lite';
 
@@ -11,7 +13,12 @@ export interface CloneWorkerApi {
     xvectModel?: ArrayBuffer;
     allowDownload: boolean;
   }): Promise<{ embedding: Float32Array; referencePcm: Float32Array; tier: CloneTier }>;
-  warmSpeechT5(): Promise<void>;
+  warmSpeechT5(payload: {
+    encoderModel: ArrayBuffer;
+    decoderModel: ArrayBuffer;
+    postnetModel: ArrayBuffer;
+    tokenizerJson: ArrayBuffer;
+  }): Promise<void>;
   synthesize(payload: {
     text: string;
     embedding: Float32Array;
@@ -84,6 +91,7 @@ async function runXVectorOnnx(model: ArrayBuffer, pcm16k: Float32Array): Promise
   const key = session.outputNames[0] ?? Object.keys(out)[0]!;
   const tensor = out[key] as { data: Float32Array | number[] };
   const data = tensor.data instanceof Float32Array ? tensor.data : new Float32Array(tensor.data as ArrayLike<number>);
+  await session.release();
   return l2Normalize(data.slice(0, 512));
 }
 
@@ -97,17 +105,41 @@ function resample(samples: Float32Array, rate: number): Float32Array {
   return out;
 }
 
+const NEURAL_SAMPLE_RATE = 16_000;
+
 /** Shared clone inference used by the worker and unit tests. */
 export function createCloneRuntime(): CloneWorkerApi {
   let tier: CloneTier = 'full';
   let mock = shouldMock();
+  let speechStack: SpeechT5Stack | undefined;
+
+  async function synthesizeLite(payload: {
+    text: string;
+    embedding: Float32Array;
+    referencePcm: Float32Array;
+    rate: number;
+  }) {
+    const rate = payload.rate || 1;
+    const base = mockCloneTone(payload.text, payload.embedding, 22_050);
+    let samples = colorizeWithReference(base.samples, payload.referencePcm);
+    if (rate !== 1) samples = resample(samples, rate);
+    return { samples, sampleRate: 22_050, durationSec: samples.length / 22_050 };
+  }
 
   return {
     async setTier(next) {
       tier = next;
     },
-    async warmSpeechT5() {
-      /* Full-tier SpeechT5 weights are reserved for a future ONNX-only loader (no transformers.js). */
+    async warmSpeechT5(payload) {
+      if (mock) return;
+      if (speechStack) await speechStack.dispose();
+      const tokenizer = loadSpeechT5Tokenizer(payload.tokenizerJson);
+      speechStack = await createSpeechT5Stack({
+        encoderModel: payload.encoderModel,
+        decoderModel: payload.decoderModel,
+        postnetModel: payload.postnetModel,
+        tokenizer,
+      });
     },
     async prepareProfile(payload) {
       mock = shouldMock();
@@ -144,13 +176,28 @@ export function createCloneRuntime(): CloneWorkerApi {
     async synthesize(payload) {
       mock = shouldMock();
       const rate = payload.rate || 1;
-      const base = mockCloneTone(payload.text, payload.embedding, 22_050);
-      let samples = colorizeWithReference(base.samples, payload.referencePcm);
-      if (rate !== 1) samples = resample(samples, rate);
-      return { samples, sampleRate: 22_050, durationSec: samples.length / 22_050 };
+      const useNeural =
+        !mock && payload.stackReady && payload.tier === 'full' && speechStack !== undefined;
+      if (useNeural && speechStack) {
+        try {
+          let samples = await speechStack.synthesize(payload.text, payload.embedding);
+          if (rate !== 1) samples = resample(samples, rate);
+          return {
+            samples,
+            sampleRate: NEURAL_SAMPLE_RATE,
+            durationSec: samples.length / NEURAL_SAMPLE_RATE,
+          };
+        } catch {
+          /* fall back to lite colorization */
+        }
+      }
+      return synthesizeLite(payload);
     },
     async dispose() {
-      /* no-op */
+      if (speechStack) {
+        await speechStack.dispose();
+        speechStack = undefined;
+      }
     },
   };
 }

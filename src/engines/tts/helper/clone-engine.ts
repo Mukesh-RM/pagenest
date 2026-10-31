@@ -15,6 +15,8 @@ import { listOwnVoices, openVoiceSample, readVoiceManifest } from '@/features/vo
 import { assertOwnVoiceConsent } from './consent-gate';
 import {
   CLONE_STACK_ID,
+  SPEECHT5_CACHE_FILES,
+  SPEECHT5_STACK_MARKER,
   SPEECHT5_TTS_MODEL,
   XVECTOR_MODEL,
   cloneModelPath,
@@ -89,7 +91,13 @@ export function createCloneEngine(deps: {
   const ensureWorker = () => {
     if (!worker) {
       rawWorker = deps.createWorker();
-      worker = createRpcClient<CloneWorkerApi>(rawWorker, ['setTier', 'prepareProfile', 'synthesize', 'warmSpeechT5', 'dispose']);
+      worker = createRpcClient<CloneWorkerApi>(rawWorker, [
+        'setTier',
+        'prepareProfile',
+        'synthesize',
+        'warmSpeechT5',
+        'dispose',
+      ]);
     }
     return worker.api;
   };
@@ -153,6 +161,23 @@ export function createCloneEngine(deps: {
       if (tier === 'full' && options?.allowDownload && !isMockTtsMode()) {
         options.onProgress?.({ done: 4, total: 10 });
         stackReady = await ensureSpeechT5Cached(options);
+        if (stackReady) {
+          const enc = await deps.readCloneModel(SPEECHT5_CACHE_FILES.encoder.file);
+          const dec = await deps.readCloneModel(SPEECHT5_CACHE_FILES.decoder.file);
+          const post = await deps.readCloneModel(SPEECHT5_CACHE_FILES.postnet.file);
+          const tok = await deps.readCloneModel(SPEECHT5_CACHE_FILES.tokenizer.file);
+          if (enc && dec && post && tok) {
+            await ensureWorker().warmSpeechT5({
+              encoderModel: enc,
+              decoderModel: dec,
+              postnetModel: post,
+              tokenizerJson: tok,
+            });
+            await deps.writeCloneModel(SPEECHT5_STACK_MARKER, new TextEncoder().encode('1').buffer);
+          } else {
+            stackReady = false;
+          }
+        }
       }
 
       options?.onProgress?.({ done: 7, total: 10 });
@@ -222,12 +247,45 @@ export function createCloneEngine(deps: {
     const refFile = await deps.files.open(voiceReferencePath(voiceId));
     const embedding = new Float32Array(await fileToArrayBuffer(embFile));
     const referencePcm = new Float32Array(await fileToArrayBuffer(refFile));
-    const marker = await deps.readCloneModel('stack-ready.txt');
-    return { embedding, referencePcm, tier: detectTier(), stackReady: Boolean(marker) };
+    const marker = await deps.readCloneModel(SPEECHT5_STACK_MARKER);
+    const tier = detectTier();
+    let stackReady = Boolean(marker) && tier === 'full';
+    if (stackReady) {
+      const enc = await deps.readCloneModel(SPEECHT5_CACHE_FILES.encoder.file);
+      const dec = await deps.readCloneModel(SPEECHT5_CACHE_FILES.decoder.file);
+      const post = await deps.readCloneModel(SPEECHT5_CACHE_FILES.postnet.file);
+      const tok = await deps.readCloneModel(SPEECHT5_CACHE_FILES.tokenizer.file);
+      if (enc && dec && post && tok) {
+        await ensureWorker().warmSpeechT5({
+          encoderModel: enc,
+          decoderModel: dec,
+          postnetModel: post,
+          tokenizerJson: tok,
+        });
+      } else {
+        stackReady = false;
+      }
+    }
+    return { embedding, referencePcm, tier, stackReady };
   }
 
-  async function ensureSpeechT5Cached(_options?: PrepareOptions): Promise<boolean> {
-    return false;
+  async function ensureSpeechT5Cached(options?: PrepareOptions): Promise<boolean> {
+    const files = [
+      SPEECHT5_CACHE_FILES.encoder,
+      SPEECHT5_CACHE_FILES.decoder,
+      SPEECHT5_CACHE_FILES.postnet,
+      SPEECHT5_CACHE_FILES.tokenizer,
+    ];
+    let ok = true;
+    for (const spec of files) {
+      let buf = await deps.readCloneModel(spec.file);
+      if (!buf && options?.allowDownload) {
+        buf = await downloadUrl(spec.url, options.signal, options.onProgress);
+        await deps.writeCloneModel(spec.file, buf);
+      }
+      if (!buf) ok = false;
+    }
+    return ok;
   }
 }
 

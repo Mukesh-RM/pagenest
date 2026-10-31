@@ -207,11 +207,18 @@
    "name": "Xenova/speecht5_tts + Xenova/speecht5_hifigan",
    "license": "MIT",
    "verdict": "OK",
-   "reason": "Transformers.js ONNX ports of microsoft/speecht5_tts (MIT). Reserved for a future full neural clone tier via a direct ONNX loader (not transformers.js).",
+   "reason": "Transformers.js ONNX ports of microsoft/speecht5_tts (MIT). Full neural clone tier via direct onnxruntime-web loader (no transformers.js).",
    "files": [
     "decoder_model.onnx",
     "encoder_model.onnx",
-    "model.onnx"
+    "model.onnx",
+    "encoder_model_quantized.onnx",
+    "decoder_model_merged_quantized.onnx",
+    "decoder_postnet_and_vocoder_quantized.onnx",
+    "speecht5_encoder_quantized.onnx",
+    "speecht5_decoder_merged_quantized.onnx",
+    "speecht5_postnet_vocoder_quantized.onnx",
+    "speecht5_tokenizer.json"
    ],
    "evidence": [
     "https://huggingface.co/Xenova/speecht5_tts",

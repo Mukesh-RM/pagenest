@@ -12,11 +12,13 @@ export const XVECTOR_MODEL = {
   dim: 512,
 } as const;
 
+const HF_TTS = 'https://huggingface.co/Xenova/speecht5_tts/resolve/main';
+
 export const SPEECHT5_TTS_MODEL = {
   id: 'Xenova/speecht5_tts',
   license: 'MIT',
   repo: 'https://huggingface.co/Xenova/speecht5_tts',
-  approxBytes: 120_000_000,
+  approxBytes: 180_000_000,
 } as const;
 
 export const SPEECHT5_VOCODER_MODEL = {
@@ -25,6 +27,32 @@ export const SPEECHT5_VOCODER_MODEL = {
   repo: 'https://huggingface.co/Xenova/speecht5_hifigan',
   approxBytes: 55_000_000,
 } as const;
+
+/** Lazy OPFS filenames + HF URLs (quantized ONNX, MIT). */
+export const SPEECHT5_CACHE_FILES = {
+  encoder: {
+    file: 'speecht5_encoder_quantized.onnx',
+    url: `${HF_TTS}/onnx/encoder_model_quantized.onnx`,
+    sizeBytes: 88_402_301,
+  },
+  decoder: {
+    file: 'speecht5_decoder_merged_quantized.onnx',
+    url: `${HF_TTS}/onnx/decoder_model_merged_quantized.onnx`,
+    sizeBytes: 71_087_100,
+  },
+  postnet: {
+    file: 'speecht5_postnet_vocoder_quantized.onnx',
+    url: `${HF_TTS}/onnx/decoder_postnet_and_vocoder_quantized.onnx`,
+    sizeBytes: 18_251_672,
+  },
+  tokenizer: {
+    file: 'speecht5_tokenizer.json',
+    url: `${HF_TTS}/tokenizer.json`,
+    sizeBytes: 12_000,
+  },
+} as const;
+
+export const SPEECHT5_STACK_MARKER = 'stack-ready.txt';
 
 export function cloneModelPath(fileName: string): string {
   return `models/${CLONE_STACK_ID}/${fileName}`;
