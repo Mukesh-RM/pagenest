@@ -69,7 +69,7 @@ createServer((req, res) => {
       res.writeHead(404).end();
       return;
     }
-    if (file === LARGE_PDF) ensureLargePdf(); // built on first request, so the other tests never need python
+    if (file === LARGE_PDF) ensureLargePdf(); // built on first request via the Node fixture tool
     send(req, res, file, { 'Cache-Control': 'no-store' });
     return;
   }

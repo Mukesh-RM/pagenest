@@ -8,10 +8,10 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 ## Summary
 
-- Installed packages audited: 753 (91 production, 662 development)
+- Installed packages audited: 684 (90 production, 594 development)
 - Source of data: package-lock.json + node_modules
-- QA toolchain (`tests/`, dev only, never shipped): 211 packages from package-lock.json + node_modules; OK: 207, OK with note: 3, NOT OK: 1
-- OK: 724, OK with note: 29, NOT OK: 0
+- QA toolchain (`tests/`, dev only, never shipped): 211 packages from package-lock.json + node_modules; OK: 208, OK with note: 3, NOT OK: 0
+- OK: 677, OK with note: 7, NOT OK: 0
 - Planned assets with open risks: 6 (see Flagged items)
 
 ## Flagged items (GPL / non-commercial / unknown)
@@ -20,7 +20,6 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 
 | Kind | Name | License | Free replacement or next step |
 |---|---|---|---|
-| npm (dev) | @pagenest/e2e-port@unknown | UNKNOWN | Remove the dependency, pick a permissive alternative, or add a reviewed entry to scripts/audit-license-overrides.json. |
 | planned | Piper engine, OHF-Voice/piper1-gpl (piper-tts 1.3+) | GPL-3.0-or-later | Keep inference on archived rhasspy/piper (MIT) only for experiments, or adopt a non-GPL phonemizer plus ONNX Runtime Web; run GPL training tools outside the PWA. |
 | planned | espeak-ng (phonemizer inside Piper and Kokoro WASM stacks) | GPL-3.0-or-later | Rule-based or dictionary phonemizer (no eSpeak), or Web Speech API (Tier 0) until a permissive WASM phonemizer is vetted. |
 | planned | Piper voice models (each voice) | per voice, see MODEL_CARD | Ship only voices marked OK in scripts/audit-models.json (for example en_US-libritts-high, CC BY 4.0). |
@@ -135,33 +134,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @csstools/css-color-parser | 3.1.0 | dev | MIT | https://www.npmjs.com/package/@csstools/css-color-parser/v/3.1.0 | OK |
 | @csstools/css-parser-algorithms | 3.0.5 | dev | MIT | https://www.npmjs.com/package/@csstools/css-parser-algorithms/v/3.0.5 | OK |
 | @csstools/css-tokenizer | 3.0.4 | dev | MIT | https://www.npmjs.com/package/@csstools/css-tokenizer/v/3.0.4 | OK |
-| @emnapi/runtime | 1.11.3 | dev (optional) | MIT | https://www.npmjs.com/package/@emnapi/runtime/v/1.11.3 | OK |
-| @esbuild/aix-ppc64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/aix-ppc64/v/0.28.2 | OK |
-| @esbuild/android-arm | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/android-arm/v/0.28.2 | OK |
-| @esbuild/android-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/android-arm64/v/0.28.2 | OK |
-| @esbuild/android-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/android-x64/v/0.28.2 | OK |
-| @esbuild/darwin-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/darwin-arm64/v/0.28.2 | OK |
-| @esbuild/darwin-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/darwin-x64/v/0.28.2 | OK |
-| @esbuild/freebsd-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/freebsd-arm64/v/0.28.2 | OK |
-| @esbuild/freebsd-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/freebsd-x64/v/0.28.2 | OK |
-| @esbuild/linux-arm | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-arm/v/0.28.2 | OK |
-| @esbuild/linux-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-arm64/v/0.28.2 | OK |
-| @esbuild/linux-ia32 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-ia32/v/0.28.2 | OK |
-| @esbuild/linux-loong64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-loong64/v/0.28.2 | OK |
-| @esbuild/linux-mips64el | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-mips64el/v/0.28.2 | OK |
-| @esbuild/linux-ppc64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-ppc64/v/0.28.2 | OK |
-| @esbuild/linux-riscv64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-riscv64/v/0.28.2 | OK |
-| @esbuild/linux-s390x | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-s390x/v/0.28.2 | OK |
 | @esbuild/linux-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/linux-x64/v/0.28.2 | OK |
-| @esbuild/netbsd-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/netbsd-arm64/v/0.28.2 | OK |
-| @esbuild/netbsd-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/netbsd-x64/v/0.28.2 | OK |
-| @esbuild/openbsd-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/openbsd-arm64/v/0.28.2 | OK |
-| @esbuild/openbsd-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/openbsd-x64/v/0.28.2 | OK |
-| @esbuild/openharmony-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/openharmony-arm64/v/0.28.2 | OK |
-| @esbuild/sunos-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/sunos-x64/v/0.28.2 | OK |
-| @esbuild/win32-arm64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/win32-arm64/v/0.28.2 | OK |
-| @esbuild/win32-ia32 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/win32-ia32/v/0.28.2 | OK |
-| @esbuild/win32-x64 | 0.28.2 | dev (optional) | MIT | https://www.npmjs.com/package/@esbuild/win32-x64/v/0.28.2 | OK |
 | @eslint-community/eslint-utils | 4.10.1 | dev | MIT | https://www.npmjs.com/package/@eslint-community/eslint-utils/v/4.10.1 | OK |
 | @eslint-community/regexpp | 4.12.2 | dev | MIT | https://www.npmjs.com/package/@eslint-community/regexpp/v/4.12.2 | OK |
 | @eslint/config-array | 0.21.2 | dev | Apache-2.0 | https://www.npmjs.com/package/@eslint/config-array/v/0.21.2 | OK |
@@ -177,32 +150,10 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @humanwhocodes/module-importer | 1.0.1 | dev | Apache-2.0 | https://www.npmjs.com/package/@humanwhocodes/module-importer/v/1.0.1 | OK |
 | @humanwhocodes/retry | 0.4.3 | dev | Apache-2.0 | https://www.npmjs.com/package/@humanwhocodes/retry/v/0.4.3 | OK |
 | @img/colour | 1.1.0 | dev | MIT | https://www.npmjs.com/package/@img/colour/v/1.1.0 | OK |
-| @img/sharp-darwin-arm64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-darwin-arm64/v/0.35.5 | OK (note) |
-| @img/sharp-darwin-x64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-darwin-x64/v/0.35.5 | OK (note) |
-| @img/sharp-freebsd-wasm32 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-freebsd-wasm32/v/0.35.5 | OK (note) |
-| @img/sharp-libvips-darwin-arm64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-darwin-arm64/v/1.3.4 | OK (note) |
-| @img/sharp-libvips-darwin-x64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-darwin-x64/v/1.3.4 | OK (note) |
-| @img/sharp-libvips-linux-arm | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-arm/v/1.3.4 | OK (note) |
-| @img/sharp-libvips-linux-arm64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-arm64/v/1.3.4 | OK (note) |
-| @img/sharp-libvips-linux-ppc64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-ppc64/v/1.3.4 | OK (note) |
-| @img/sharp-libvips-linux-riscv64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-riscv64/v/1.3.4 | OK (note) |
-| @img/sharp-libvips-linux-s390x | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-s390x/v/1.3.4 | OK (note) |
 | @img/sharp-libvips-linux-x64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linux-x64/v/1.3.4 | OK (note) |
-| @img/sharp-libvips-linuxmusl-arm64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linuxmusl-arm64/v/1.3.4 | OK (note) |
 | @img/sharp-libvips-linuxmusl-x64 | 1.3.4 | dev (optional) | LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-libvips-linuxmusl-x64/v/1.3.4 | OK (note) |
-| @img/sharp-linux-arm | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-arm/v/0.35.5 | OK (note) |
-| @img/sharp-linux-arm64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-arm64/v/0.35.5 | OK (note) |
-| @img/sharp-linux-ppc64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-ppc64/v/0.35.5 | OK (note) |
-| @img/sharp-linux-riscv64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-riscv64/v/0.35.5 | OK (note) |
-| @img/sharp-linux-s390x | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-s390x/v/0.35.5 | OK (note) |
 | @img/sharp-linux-x64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linux-x64/v/0.35.5 | OK (note) |
-| @img/sharp-linuxmusl-arm64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linuxmusl-arm64/v/0.35.5 | OK (note) |
 | @img/sharp-linuxmusl-x64 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-linuxmusl-x64/v/0.35.5 | OK (note) |
-| @img/sharp-wasm32 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later AND MIT | https://www.npmjs.com/package/@img/sharp-wasm32/v/0.35.5 | OK (note) |
-| @img/sharp-webcontainers-wasm32 | 0.35.5 | dev (optional) | Apache-2.0 | https://www.npmjs.com/package/@img/sharp-webcontainers-wasm32/v/0.35.5 | OK (note) |
-| @img/sharp-win32-arm64 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-win32-arm64/v/0.35.5 | OK (note) |
-| @img/sharp-win32-ia32 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-win32-ia32/v/0.35.5 | OK (note) |
-| @img/sharp-win32-x64 | 0.35.5 | dev (optional) | Apache-2.0 AND LGPL-3.0-or-later | https://www.npmjs.com/package/@img/sharp-win32-x64/v/0.35.5 | OK (note) |
 | @isaacs/cliui | 9.0.0 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/@isaacs/cliui/v/9.0.0 | OK |
 | @jridgewell/gen-mapping | 0.3.13 | dev | MIT | https://www.npmjs.com/package/@jridgewell/gen-mapping/v/0.3.13 | OK |
 | @jridgewell/remapping | 2.3.5 | dev | MIT | https://www.npmjs.com/package/@jridgewell/remapping/v/2.3.5 | OK |
@@ -210,22 +161,24 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @jridgewell/source-map | 0.3.11 | dev | MIT | https://www.npmjs.com/package/@jridgewell/source-map/v/0.3.11 | OK |
 | @jridgewell/sourcemap-codec | 1.6.0 | dev | MIT | https://www.npmjs.com/package/@jridgewell/sourcemap-codec/v/1.6.0 | OK |
 | @jridgewell/trace-mapping | 0.3.31 | dev | MIT | https://www.npmjs.com/package/@jridgewell/trace-mapping/v/0.3.31 | OK |
-| @napi-rs/canvas | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas/v/0.1.100 | OK |
-| @napi-rs/canvas-android-arm64 | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-android-arm64/v/0.1.100 | OK |
-| @napi-rs/canvas-darwin-arm64 | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-darwin-arm64/v/0.1.100 | OK |
-| @napi-rs/canvas-darwin-x64 | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-darwin-x64/v/0.1.100 | OK |
-| @napi-rs/canvas-linux-arm-gnueabihf | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-arm-gnueabihf/v/0.1.100 | OK |
-| @napi-rs/canvas-linux-arm64-gnu | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-arm64-gnu/v/0.1.100 | OK |
-| @napi-rs/canvas-linux-arm64-musl | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-arm64-musl/v/0.1.100 | OK |
-| @napi-rs/canvas-linux-riscv64-gnu | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-riscv64-gnu/v/0.1.100 | OK |
-| @napi-rs/canvas-linux-x64-gnu | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-x64-gnu/v/0.1.100 | OK |
-| @napi-rs/canvas-linux-x64-musl | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-x64-musl/v/0.1.100 | OK |
-| @napi-rs/canvas-win32-arm64-msvc | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-win32-arm64-msvc/v/0.1.100 | OK |
-| @napi-rs/canvas-win32-x64-msvc | 0.1.100 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-win32-x64-msvc/v/0.1.100 | OK |
+| @napi-rs/canvas | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas/v/1.1.0 | OK |
+| @napi-rs/canvas-android-arm64 | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-android-arm64/v/1.1.0 | OK |
+| @napi-rs/canvas-darwin-arm64 | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-darwin-arm64/v/1.1.0 | OK |
+| @napi-rs/canvas-darwin-x64 | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-darwin-x64/v/1.1.0 | OK |
+| @napi-rs/canvas-linux-arm-gnueabihf | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-arm-gnueabihf/v/1.1.0 | OK |
+| @napi-rs/canvas-linux-arm64-gnu | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-arm64-gnu/v/1.1.0 | OK |
+| @napi-rs/canvas-linux-arm64-musl | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-arm64-musl/v/1.1.0 | OK |
+| @napi-rs/canvas-linux-riscv64-gnu | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-riscv64-gnu/v/1.1.0 | OK |
+| @napi-rs/canvas-linux-x64-gnu | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-x64-gnu/v/1.1.0 | OK |
+| @napi-rs/canvas-linux-x64-musl | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-linux-x64-musl/v/1.1.0 | OK |
+| @napi-rs/canvas-win32-arm64-msvc | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-win32-arm64-msvc/v/1.1.0 | OK |
+| @napi-rs/canvas-win32-x64-msvc | 1.1.0 | prod (optional) | MIT | https://www.npmjs.com/package/@napi-rs/canvas-win32-x64-msvc/v/1.1.0 | OK |
 | @napi-rs/lzma-linux-x64-gnu | 1.5.1 | dev (optional) | MIT | https://www.npmjs.com/package/@napi-rs/lzma-linux-x64-gnu/v/1.5.1 | OK |
 | @nodelib/fs.scandir | 2.1.5 | dev | MIT | https://www.npmjs.com/package/@nodelib/fs.scandir/v/2.1.5 | OK |
 | @nodelib/fs.stat | 2.0.5 | dev | MIT | https://www.npmjs.com/package/@nodelib/fs.stat/v/2.0.5 | OK |
 | @nodelib/fs.walk | 1.2.8 | dev | MIT | https://www.npmjs.com/package/@nodelib/fs.walk/v/1.2.8 | OK |
+| @pdf-lib/standard-fonts | 1.0.0 | dev | MIT | https://www.npmjs.com/package/@pdf-lib/standard-fonts/v/1.0.0 | OK |
+| @pdf-lib/upng | 1.0.1 | dev | MIT | https://www.npmjs.com/package/@pdf-lib/upng/v/1.0.1 | OK |
 | @playwright/test | 1.64.1 | dev | Apache-2.0 | https://www.npmjs.com/package/@playwright/test/v/1.64.1 | OK |
 | @protobufjs/aspromise | 1.1.2 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/aspromise/v/1.1.2 | OK |
 | @protobufjs/base64 | 1.1.2 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/base64/v/1.1.2 | OK |
@@ -242,31 +195,8 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @rollup/plugin-replace | 6.0.3 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-replace/v/6.0.3 | OK |
 | @rollup/plugin-terser | 1.0.2 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-terser/v/1.0.2 | OK |
 | @rollup/pluginutils | 5.5.1 | dev | MIT | https://www.npmjs.com/package/@rollup/pluginutils/v/5.5.1 | OK |
-| @rollup/rollup-android-arm-eabi | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-android-arm-eabi/v/4.65.0 | OK |
-| @rollup/rollup-android-arm64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-android-arm64/v/4.65.0 | OK |
-| @rollup/rollup-darwin-arm64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-darwin-arm64/v/4.65.0 | OK |
-| @rollup/rollup-darwin-x64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-darwin-x64/v/4.65.0 | OK |
-| @rollup/rollup-freebsd-arm64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-freebsd-arm64/v/4.65.0 | OK |
-| @rollup/rollup-freebsd-x64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-freebsd-x64/v/4.65.0 | OK |
-| @rollup/rollup-linux-arm-gnueabihf | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-arm-gnueabihf/v/4.65.0 | OK |
-| @rollup/rollup-linux-arm-musleabihf | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-arm-musleabihf/v/4.65.0 | OK |
-| @rollup/rollup-linux-arm64-gnu | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-arm64-gnu/v/4.65.0 | OK |
-| @rollup/rollup-linux-arm64-musl | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-arm64-musl/v/4.65.0 | OK |
-| @rollup/rollup-linux-loong64-gnu | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-loong64-gnu/v/4.65.0 | OK |
-| @rollup/rollup-linux-loong64-musl | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-loong64-musl/v/4.65.0 | OK |
-| @rollup/rollup-linux-ppc64-gnu | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-ppc64-gnu/v/4.65.0 | OK |
-| @rollup/rollup-linux-ppc64-musl | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-ppc64-musl/v/4.65.0 | OK |
-| @rollup/rollup-linux-riscv64-gnu | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-riscv64-gnu/v/4.65.0 | OK |
-| @rollup/rollup-linux-riscv64-musl | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-riscv64-musl/v/4.65.0 | OK |
-| @rollup/rollup-linux-s390x-gnu | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-s390x-gnu/v/4.65.0 | OK |
 | @rollup/rollup-linux-x64-gnu | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-x64-gnu/v/4.65.0 | OK |
 | @rollup/rollup-linux-x64-musl | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-linux-x64-musl/v/4.65.0 | OK |
-| @rollup/rollup-openbsd-x64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-openbsd-x64/v/4.65.0 | OK |
-| @rollup/rollup-openharmony-arm64 | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-openharmony-arm64/v/4.65.0 | OK |
-| @rollup/rollup-win32-arm64-msvc | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-win32-arm64-msvc/v/4.65.0 | OK |
-| @rollup/rollup-win32-ia32-msvc | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-win32-ia32-msvc/v/4.65.0 | OK |
-| @rollup/rollup-win32-x64-gnu | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-win32-x64-gnu/v/4.65.0 | OK |
-| @rollup/rollup-win32-x64-msvc | 4.65.0 | dev (optional) | MIT | https://www.npmjs.com/package/@rollup/rollup-win32-x64-msvc/v/4.65.0 | OK |
 | @testing-library/dom | 10.4.2 | dev | MIT | https://www.npmjs.com/package/@testing-library/dom/v/10.4.2 | OK |
 | @testing-library/jest-dom | 6.9.1 | dev | MIT | https://www.npmjs.com/package/@testing-library/jest-dom/v/6.9.1 | OK |
 | @testing-library/react | 16.3.3 | dev | MIT | https://www.npmjs.com/package/@testing-library/react/v/16.3.3 | OK |
@@ -449,7 +379,6 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | foreground-child | 3.3.1 | dev | ISC | https://www.npmjs.com/package/foreground-child/v/3.3.1 | OK |
 | fraction.js | 5.3.4 | dev | MIT | https://www.npmjs.com/package/fraction.js/v/5.3.4 | OK |
 | fs-extra | 9.1.0 | dev | MIT | https://www.npmjs.com/package/fs-extra/v/9.1.0 | OK |
-| fsevents | 2.3.3 | dev (optional) | MIT | https://www.npmjs.com/package/fsevents/v/2.3.3 | OK |
 | function-bind | 1.1.2 | dev | MIT | https://www.npmjs.com/package/function-bind/v/1.1.2 | OK |
 | function.prototype.name | 1.2.0 | dev | MIT | https://www.npmjs.com/package/function.prototype.name/v/1.2.0 | OK |
 | functions-have-names | 1.2.3 | dev | MIT | https://www.npmjs.com/package/functions-have-names/v/1.2.3 | OK |
@@ -528,6 +457,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | jackspeak | 4.2.3 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/jackspeak/v/4.2.3 | OK |
 | jake | 10.9.4 | dev | Apache-2.0 | https://www.npmjs.com/package/jake/v/10.9.4 | OK |
 | jiti | 1.21.7 | dev | MIT | https://www.npmjs.com/package/jiti/v/1.21.7 | OK |
+| jpeg-js | 0.4.4 | dev | BSD-3-Clause | https://www.npmjs.com/package/jpeg-js/v/0.4.4 | OK |
 | js-tokens | 4.0.0 | prod | MIT | https://www.npmjs.com/package/js-tokens/v/4.0.0 | OK |
 | js-tokens | 9.0.1 | dev | MIT | https://www.npmjs.com/package/js-tokens/v/9.0.1 | OK |
 | js-yaml | 4.3.2 | dev | MIT | https://www.npmjs.com/package/js-yaml/v/4.3.2 | OK |
@@ -576,7 +506,6 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | mz | 2.7.0 | dev | MIT | https://www.npmjs.com/package/mz/v/2.7.0 | OK |
 | nanoid | 3.3.20 | dev | MIT | https://www.npmjs.com/package/nanoid/v/3.3.20 | OK |
 | natural-compare | 1.4.0 | dev | MIT | https://www.npmjs.com/package/natural-compare/v/1.4.0 | OK |
-| node-readable-to-web-readable-stream | 0.4.2 | prod (optional) | MIT | https://www.npmjs.com/package/node-readable-to-web-readable-stream/v/0.4.2 | OK |
 | node-releases | 2.0.60 | dev | MIT | https://www.npmjs.com/package/node-releases/v/2.0.60 | OK |
 | normalize-path | 3.0.0 | dev | MIT | https://www.npmjs.com/package/normalize-path/v/3.0.0 | OK |
 | nwsapi | 2.2.28 | dev | MIT | https://www.npmjs.com/package/nwsapi/v/2.2.28 | OK |
@@ -602,7 +531,8 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | path-scurry | 2.0.2 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/path-scurry/v/2.0.2 | OK |
 | pathe | 2.0.3 | dev | MIT | https://www.npmjs.com/package/pathe/v/2.0.3 | OK |
 | pathval | 2.0.1 | dev | MIT | https://www.npmjs.com/package/pathval/v/2.0.1 | OK |
-| pdfjs-dist | 5.6.205 | prod | Apache-2.0 | https://www.npmjs.com/package/pdfjs-dist/v/5.6.205 | OK |
+| pdf-lib | 1.17.1 | dev | MIT | https://www.npmjs.com/package/pdf-lib/v/1.17.1 | OK |
+| pdfjs-dist | 6.4.299 | prod | Apache-2.0 | https://www.npmjs.com/package/pdfjs-dist/v/6.4.299 | OK |
 | picocolors | 1.1.1 | dev | ISC | https://www.npmjs.com/package/picocolors/v/1.1.1 | OK |
 | picomatch | 2.3.2 | dev | MIT | https://www.npmjs.com/package/picomatch/v/2.3.2 | OK |
 | picomatch | 4.0.7 | dev | MIT | https://www.npmjs.com/package/picomatch/v/4.0.7 | OK |
@@ -722,7 +652,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | tr46 | 5.1.1 | dev | MIT | https://www.npmjs.com/package/tr46/v/5.1.1 | OK |
 | ts-api-utils | 2.5.0 | dev | MIT | https://www.npmjs.com/package/ts-api-utils/v/2.5.0 | OK |
 | ts-interface-checker | 0.1.13 | dev | Apache-2.0 | https://www.npmjs.com/package/ts-interface-checker/v/0.1.13 | OK |
-| tslib | 2.8.1 | dev (optional) | 0BSD | https://www.npmjs.com/package/tslib/v/2.8.1 | OK |
+| tslib | 1.14.1 | dev | 0BSD | https://www.npmjs.com/package/tslib/v/1.14.1 | OK |
 | type-check | 0.4.0 | dev | MIT | https://www.npmjs.com/package/type-check/v/0.4.0 | OK |
 | type-fest | 0.16.0 | dev | (MIT OR CC0-1.0) | https://www.npmjs.com/package/type-fest/v/0.16.0 | OK |
 | typed-array-buffer | 1.0.3 | dev | MIT | https://www.npmjs.com/package/typed-array-buffer/v/1.0.3 | OK |
@@ -788,32 +718,10 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 
 Notes:
 
-- **@img/sharp-darwin-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-darwin-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-freebsd-wasm32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-libvips-darwin-arm64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-libvips-darwin-x64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-libvips-linux-arm@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-libvips-linux-arm64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-libvips-linux-ppc64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-libvips-linux-riscv64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-libvips-linux-s390x@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
 - **@img/sharp-libvips-linux-x64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-libvips-linuxmusl-arm64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
 - **@img/sharp-libvips-linuxmusl-x64@1.3.4**: Dev-only override (see Reviewed overrides: @img/sharp-libvips-* 1.3.4). Declared: LGPL-3.0-or-later.
-- **@img/sharp-linux-arm@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-linux-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-linux-ppc64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-linux-riscv64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-linux-s390x@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
 - **@img/sharp-linux-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-linuxmusl-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
 - **@img/sharp-linuxmusl-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-wasm32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later AND MIT.
-- **@img/sharp-webcontainers-wasm32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0.
-- **@img/sharp-win32-arm64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later.
-- **@img/sharp-win32-ia32@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later.
-- **@img/sharp-win32-x64@0.35.5**: Dev-only override (see Reviewed overrides: @img/sharp-* 0.35.5). Declared: Apache-2.0 AND LGPL-3.0-or-later.
 - **argparse@2.0.1**: Reviewed override (2026-10-24, Decision 9. Dev-only: js-yaml@4.3.2 <- @eslint/eslintrc <- eslint, used by its CLI only; not in the production tree and not in dist/. Python-2.0 (PSF license) is permissive and GPL-compatible: it only requires keeping the copyright notice and license text when redistributing, and the package is never redistributed with the app.). Declared: Python-2.0.
 - **caniuse-lite@1.0.30001819**: Reviewed override (2026-10-24, Decision 9. Dev-only: pulled in by autoprefixer and browserslist at build time; not in the production dependency tree and not in dist/ (checked the built bundle). CC-BY-4.0 requires attribution (author, license link, indication of changes) only when the data itself is shared; the compiled app does not include it. If caniuse-lite or browserslist data is ever bundled into the app, add the attribution 'caniuse-lite data by Alexis Deveria and contributors (caniuse.com), CC BY 4.0' to the licenses screen first.). Declared: CC-BY-4.0.
 - **duck@0.1.12**: Reviewed override (2026-10-31. Transitive prod dependency (mammoth → lop → duck). package.json declares ambiguous "BSD"; the published LICENSE file is the 2-clause BSD license (Copyright 2013 Michael Fogel).). Declared: BSD.
@@ -857,7 +765,7 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 | @formatjs/icu-messageformat-parser | 2.11.4 | MIT | https://www.npmjs.com/package/@formatjs/icu-messageformat-parser/v/2.11.4 | OK |
 | @formatjs/icu-skeleton-parser | 1.8.16 | MIT | https://www.npmjs.com/package/@formatjs/icu-skeleton-parser/v/1.8.16 | OK |
 | @formatjs/intl-localematcher | 0.6.2 | MIT | https://www.npmjs.com/package/@formatjs/intl-localematcher/v/0.6.2 | OK |
-| @pagenest/e2e-port | unknown | UNKNOWN | https://www.npmjs.com/package/@pagenest/e2e-port | NOT OK |
+| @pagenest/e2e-port | unknown | MIT | https://www.npmjs.com/package/@pagenest/e2e-port | OK |
 | @paulirish/trace_engine | 0.0.19 | BSD-3-Clause | https://www.npmjs.com/package/@paulirish/trace_engine/v/0.0.19 | OK |
 | @puppeteer/browsers | 2.3.0 | Apache-2.0 | https://www.npmjs.com/package/@puppeteer/browsers/v/2.3.0 | OK |
 | @sentry/core | 6.19.7 | BSD-3-Clause | https://www.npmjs.com/package/@sentry/core/v/6.19.7 | OK |
@@ -1040,7 +948,6 @@ Separate project in `tests/package.json` (Playwright, axe, Lighthouse). Nothing 
 Notes:
 
 - **@axe-core/playwright@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
-- **@pagenest/e2e-port@unknown**: unknown (no license declared)
 - **axe-core@4.13.0**: Weak copyleft (file level): changes to MPL files must be shared; allowed unmodified.
 - **parse-cache-control@1.0.1**: Reviewed override (2026-10-24. Declares no license field (only a legacy 'licenses' URL), but the package LICENSE file is the 3-clause BSD license (Copyright Walmart and contributors). Dev-only: lives in the tests/ QA toolchain (lighthouse), never shipped.). Declared: BSD.
 

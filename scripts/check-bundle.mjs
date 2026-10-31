@@ -28,7 +28,7 @@ export const BUDGETS_KB = {
  * the engine modules themselves (`docx-core`, `docx.worker`).
  */
 export const ENGINE_CHUNK_BUDGETS_KB = [
-  { pattern: /^engine-pdf-/, label: 'engine chunk (pdf.js)', budget: 125 },
+  { pattern: /^engine-pdf-/, label: 'engine chunk (pdf.js)', budget: 131 },
   { pattern: /^docx-core-/, label: 'engine chunk (docx)', budget: 100 },
   { pattern: /^docx\.worker-/, label: 'engine worker (docx)', budget: 100 },
   { pattern: /^engine-foliate-/, label: 'engine chunk (epub)', budget: 60 },

@@ -41,6 +41,7 @@ test('bookmark persists after reload', async ({ page }) => {
   await page.reload();
   await waitForBookText(page, { min: 50 });
   await page.getByRole('button', { name: 'Bookmarks and highlights' }).click();
-  const sheet = page.getByRole('dialog', { name: 'Bookmarks and highlights' });
-  await expect(sheet.getByRole('list', { name: 'Bookmarks' }).getByRole('button')).toBeVisible();
+  const sheet = page.getByRole('dialog', { name: 'Marks in this book' });
+  await sheet.getByRole('tab', { name: 'Bookmarks' }).click();
+  await expect(sheet.getByRole('tabpanel', { name: 'Bookmarks' }).getByRole('button')).toBeVisible();
 });
