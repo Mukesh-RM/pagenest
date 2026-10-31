@@ -239,7 +239,10 @@ try {
     const target = needsPrep
       ? await preparedAuditUrl(chrome.port, base, screen)
       : new URL(screen.path.replace(/^\//, ''), base).toString();
-    if (screen.path === '/') await warmShellVisit(chrome.port, target);
+    if (screen.path === '/') {
+      await warmShellVisit(chrome.port, target);
+      await warmShellVisit(chrome.port, target);
+    }
     await auditTarget(chrome, config, {
       title: screen.name, target,
       slug: screen.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), storageReset: false,
@@ -260,6 +263,8 @@ try {
       });
       await page.close();
     } finally { await browser.close(); }
+    await warmShellVisit(chrome.port, base);
+    await warmShellVisit(chrome.port, base);
     await auditTarget(chrome, config, { title: `Library with ${books}+ books`, target: base, slug: 'library-seeded', storageReset: false });
 
     // Scenario 1b: the same library with a "Welcome back" resume card (a book read to RESUME_BOOK.percent %, saved just now).
