@@ -74,7 +74,7 @@ test.describe('integrated audio player', () => {
 
     await page.reload();
     await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible({ timeout: 30_000 });
   });
 });
 

@@ -232,7 +232,7 @@ test.describe(`Design Review 3 screenshots (${phase})`, () => {
         const add = page.getByRole('button', { name: 'Add the sample book' });
         await expect(add).toBeVisible({ timeout: 20_000 });
         await add.click();
-        await expect(page.getByRole('button', { name: 'Back to library' })).toBeVisible({ timeout: 90_000 });
+        await expect(page.getByRole('button', { name: 'Back to library' }).first()).toBeVisible({ timeout: 90_000 });
         await capture(page, 'reader-chrome', width, theme);
       });
 

@@ -290,16 +290,8 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
   );
 
   const provider = useMemo(() => sampleBook ?? createSampleBookProvider(), [sampleBook]);
-  const [sampleCardReady, setSampleCardReady] = useState(false);
   const [emptyArtReady, setEmptyArtReady] = useState(false);
-  useEffect(() => {
-    const cancelSample = whenIdle(() => setSampleCardReady(true));
-    const cancelArt = whenIdle(() => setEmptyArtReady(true));
-    return () => {
-      cancelSample();
-      cancelArt();
-    };
-  }, []);
+  useEffect(() => whenIdle(() => setEmptyArtReady(true)), []);
   const filtered = text.trim() !== '' || filter !== 'all';
   const showEmptyLibrary = ready && libraryCount === 0 && !shelfId && !preset;
 
@@ -353,7 +345,7 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
           description="Add an EPUB, PDF or audiobook from your device. Everything stays on this device."
           action={{ label: 'Add books', icon: 'plus', onClick: () => setAdding(true) }}
           extra={
-            provider.available() && sampleCardReady ? (
+            provider.available() ? (
               <SampleBookCard provider={provider} onImported={(r) => navigate(pathForBook({ id: r.bookId, kind: r.kind }))} />
             ) : undefined
           }
