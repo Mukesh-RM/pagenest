@@ -200,7 +200,7 @@ describe('first launch to the sample book', () => {
         name: 'Pride and Prejudice',
       }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back to library' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Back to library' }).length).toBeGreaterThan(0);
     expect(provider.importSample).toHaveBeenCalledTimes(1);
     await waitFor(async () => expect((await services.db.settings.get('onboardingDone'))?.value).toBe(true));
   });

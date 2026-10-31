@@ -24,6 +24,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@pagenest/e2e-port": "file:../scripts/e2e",
     "@types/node": "^26.6.5",
     "chrome-launcher": "^1.2.2",
     "lighthouse": "^11.7.1",

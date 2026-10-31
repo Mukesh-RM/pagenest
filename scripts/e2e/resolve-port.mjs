@@ -31,6 +31,9 @@ export function resolveE2ePortFromEnv(suiteEnvVar) {
   return undefined;
 }
 
+/** Env key: ephemeral port chosen once per process tree (Playwright reloads config in workers). */
+const EPHEMERAL_ENV = 'PAGENEST_RESOLVED_EPHEMERAL_PORT';
+
 /**
  * Port for Playwright `webServer`, static e2e servers, and `vite preview`.
  * Resolution order: `suiteEnvVar` (if provided) → {@link SHARED_E2E_PORT_ENV} → ephemeral free port on `host`.
@@ -42,7 +45,14 @@ export function resolveE2ePortFromEnv(suiteEnvVar) {
 export async function resolveE2ePort(suiteEnvVar, host = '127.0.0.1') {
   const fromEnv = resolveE2ePortFromEnv(suiteEnvVar);
   if (fromEnv !== undefined) return fromEnv;
-  return pickFreePort(host);
+  const cached = process.env[EPHEMERAL_ENV];
+  if (cached !== undefined && cached !== '') {
+    const port = Number(cached);
+    if (Number.isInteger(port) && port >= 1 && port <= 65535) return port;
+  }
+  const port = await pickFreePort(host);
+  process.env[EPHEMERAL_ENV] = String(port);
+  return port;
 }
 
 /** True when the suite env or {@link SHARED_E2E_PORT_ENV} is set (use `--strictPort` on preview/vite). */

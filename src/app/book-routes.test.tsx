@@ -48,7 +48,7 @@ describe('/read/:id', () => {
     });
     expect(title).toHaveClass('pn-reader__title');
     expect(container.querySelector('.pn-reader')).toHaveAttribute('data-theme');
-    expect(screen.getByRole('progressbar', { name: 'Progress through the book' })).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Position in the book' })).toBeInTheDocument();
   });
 
   it('shows the saved percent and chapter from resume data', async () => {
@@ -61,7 +61,7 @@ describe('/read/:id', () => {
     renderApp(services, { path: '/read/b1' });
     expect(await screen.findByText('Chapter 7: The Storm')).toBeInTheDocument();
     expect(screen.getByText('61% through the book')).toBeInTheDocument();
-    expect(screen.getByRole('progressbar', { name: 'Progress through the book' })).toHaveAttribute('aria-valuenow', '61');
+    expect(screen.getByRole('slider', { name: 'Position in the book' })).toHaveAttribute('aria-valuetext', '61 percent');
   });
 
   it('shows a not-found state for an unknown id, with a way home', async () => {
@@ -81,9 +81,9 @@ describe('/read/:id', () => {
     await services.db.books.add(book('b1'));
     renderApp(services, { path: '/read/b1' });
     await screen.findByRole('heading', { level: 1, name: 'Title b1' });
-    expect(screen.getByRole('button', { name: 'Back to library' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Back to library' }).length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Reading settings' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Back to library' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Back to library' })[0]!);
     expect(await screen.findByRole('heading', { level: 1, name: 'Library' })).toBeInTheDocument();
   });
 

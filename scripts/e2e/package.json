@@ -1,0 +1,6 @@
+{
+  "name": "@pagenest/e2e-port",
+  "private": true,
+  "type": "module",
+  "exports": "./resolve-port.mjs"
+}

@@ -11,6 +11,9 @@ import '../screen-styles';
 
 // Backup, restore and the storage breakdown come from the Library; they are loaded with the screen, not with the app shell.
 const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
+const VoiceStudioSettingsPanel = lazy(() =>
+  import('../components/VoiceStudioSettingsPanel').then((m) => ({ default: m.VoiceStudioSettingsPanel })),
+);
 
 /**
  * Height kept for the Library's two groups only while their code loads (in `rem`, so it follows the text
@@ -78,6 +81,9 @@ export function SettingsPage() {
       install={<InstallHelp />}
       storage={storage}
     >
+      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+        <VoiceStudioSettingsPanel />
+      </Suspense>
       <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
         <LibrarySettingsPanels />
       </Suspense>

@@ -8,7 +8,7 @@ import { useServices } from '@/app/services-context';
 import { createFileStore, newId } from '@/data';
 import type { BookmarkRecord, HighlightRecord } from '@/data/schema';
 import type { HighlightColor, ReaderPosition, ReaderSelection } from '@/engines/reader/types';
-import { Button, EmptyState, useTheme, type ReaderSettings } from '@/ui';
+import { Button, useTheme, type ReaderSettings } from '@/ui';
 import { ReaderScreen } from '@/ui/screens';
 import { frameThrottle } from '../core/emitter';
 import { isReaderError, toReaderError } from '../core/errors';
@@ -18,11 +18,10 @@ import { welcomeBackFor, chapterNumber, type WelcomeBack } from '../core/welcome
 import { getReaderRegistry } from '../registry-instance';
 import { addBookmark, addHighlight, applyHighlights, loadBookmarks, loadHighlights, setHighlightNote } from './marks';
 import { MarksSheet } from './MarksSheet';
-import { Scrubber } from './Scrubber';
 import { SearchSheet } from './SearchSheet';
 import { SelectionBar } from './SelectionBar';
 import { settingsToAppearance } from './settings-map';
-import { TocSheet } from './TocSheet';
+import { currentReaderTocId, locatorForReaderTocId, readerTocFromEngine } from './toc-map';
 import './live.css';
 
 const ReaderNarrationHost = lazy(() => import('@/features/narration/ReaderNarrationHost'));
@@ -68,10 +67,6 @@ function describe(error: unknown): Phase {
 
 /**
  * `/read/:id`: the design system's reader screen with a real book in it.
- *
- * The engine is chosen from the book's stored `format` (detected from the file's bytes by the Library) and never from the
- * file name. The saved spot comes in as `position.locator` and every move is reported to ProgressService, so the book
- * reopens on the exact same line. Appearance comes from the saved reader settings edited in the Aa sheet.
  */
 export default function LiveReader({ book, position: resume }: BookScreenProps) {
   useRouteChrome('immersive');
@@ -99,7 +94,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   settingsRef.current = settings;
   const appliedRef = useRef<ReaderSettings>();
 
-  // ---- open the book ----
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return undefined;
@@ -127,7 +121,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       try {
         slowTimer = window.setTimeout(() => setPhase({ status: 'loading', message: 'Still opening. Large files take a moment.' }), SLOW_OPEN_MS);
         const fileRef = book.fileRef;
-        // Both reads start together; the saved settings apply even when the file turns out to be missing.
         const filePromise = fileRef ? createFileStore().then((store) => store.open(fileRef)) : Promise.reject(new Error('no file'));
         filePromise.catch(() => undefined);
         const saved = await loadReaderSettings(db, { ...DEFAULT_READER_SETTINGS, theme: appTheme });
@@ -145,7 +138,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         });
         if (abort.signal.aborted) return;
 
-        // Only a reading position can be used here (the newest saved position may be an audio one).
         const start: Locator | undefined = resume && isLocatorForMode(resume.locator, 'read') ? resume.locator : undefined;
         const document_ = await openStoredBook(
           getReaderRegistry(),
@@ -159,15 +151,12 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
           return;
         }
         opened = document_;
-        // A book opened for the first time starts at its text: past a cover or title image, at the first chapter.
         const firstChapter = document_.toc[0]?.locator;
         if (!start && firstChapter?.kind === 'reflow' && firstChapter.section > 0) await document_.goTo(firstChapter);
         if (abort.signal.aborted) return;
         window.clearTimeout(slowTimer);
         const publish = frameThrottle((p: ReaderPosition) => setPosition(p));
         cleanups.push(() => publish.cancel());
-        // ProgressService batches saves every 5 s; a tab closed sooner would lose the spot, because writes started
-        // while the page unloads are not reliable. So the spot is also flushed once the reader has stopped moving.
         let settleFlush: number | undefined;
         cleanups.push(() => window.clearTimeout(settleFlush));
         cleanups.push(
@@ -207,7 +196,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       window.clearTimeout(slowTimer);
       document.removeEventListener('visibilitychange', onVisibility);
       for (const c of cleanups) c();
-      if (activeSince) activeMs += performance.now() - activeSince;
       void progress.flush(book.id).catch(() => undefined);
       const seconds = Math.round(activeMs / 1000);
       if (opened && seconds >= MIN_SESSION_SEC) {
@@ -215,7 +203,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       }
       void opened?.close();
     };
-    // `resume` and the theme are read once, when the book opens: later changes must not reopen the book.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book.id, book.format, book.fileRef, db, progress, attempt]);
 
@@ -258,7 +245,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     [book.id, db, doc, selection],
   );
 
-  // ---- settings: apply live, keep saved ----
   const onSettingsChange = useCallback(
     (next: ReaderSettings) => {
       setSettings(next);
@@ -273,7 +259,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     void doc.applyAppearance(settingsToAppearance(settings));
   }, [doc, settings]);
 
-  // ---- page turns, keys, taps ----
   const say = useCallback((text: string) => {
     setAnnounce('');
     window.setTimeout(() => setAnnounce(text), 30);
@@ -336,26 +321,34 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   }, []);
   useEffect(() => {
     if (!doc) return undefined;
-    const flip = doc.direction === 'rtl';
-    const offs = [
-      doc.onKey((e) => keyHandler.current(e, null)),
-      doc.onTap((zone) => {
-        if (zone !== 'center') void turn(zone === 'left' ? (flip ? 1 : -1) : flip ? -1 : 1);
-      }),
-      doc.onTocChange(() => setTocVersion((v) => v + 1)),
-    ];
+    const offs = [doc.onKey((e) => keyHandler.current(e, null)), doc.onTocChange(() => setTocVersion((v) => v + 1))];
     return () => {
       for (const off of offs) off();
     };
-  }, [doc, turn]);
+  }, [doc]);
 
-  const toc = useMemo(() => doc?.toc ?? [], [doc, tocVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+  const engineToc = useMemo(() => doc?.toc ?? [], [doc, tocVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { tree: readerToc, flat: tocEntries } = useMemo(() => readerTocFromEngine(engineToc), [engineToc]);
+  const engineTocFlat = useMemo(() => {
+    const flat: { item: (typeof engineToc)[number] }[] = [];
+    const walk = (items: typeof engineToc): void => {
+      for (const item of items) {
+        flat.push({ item });
+        if (item.children?.length) walk(item.children);
+      }
+    };
+    walk(engineToc);
+    return flat;
+  }, [engineToc]);
+
   const ticks = useMemo(() => doc?.chapterTicks() ?? [], [doc, tocVersion]); // eslint-disable-line react-hooks/exhaustive-deps
   const fraction = Math.min(1, Math.max(0, (position?.percent ?? resume?.percent ?? 0) / 100));
   const pages = position?.pageCount;
   const shown = preview ?? fraction;
   const scrubText = doc?.layout === 'fixed' && pages ? `Page ${Math.min(pages, Math.round(shown * (pages - 1)) + 1)} of ${pages}` : `${Math.round(shown * 100)} percent`;
   const minutes = doc && doc.layout === 'reflow' && position ? doc.minutesLeft() : undefined;
+  const tocCurrentId = currentReaderTocId(engineTocFlat, position, tocEntries);
+  const flip = doc?.direction === 'rtl';
 
   return (
     <ReaderScreen
@@ -368,8 +361,39 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       settingsOpen={settingsOpen}
       onSettingsOpenChange={setSettingsOpen}
       onBack={() => navigate('/')}
-      {...(doc && toc.length ? { onOpenContents: () => setTocOpen(true) } : {})}
       {...(minutes !== undefined ? { minutesLeftInChapter: minutes } : {})}
+      immersiveChrome
+      onPagePrev={() => void turn(flip ? 1 : -1)}
+      onPageNext={() => void turn(flip ? -1 : 1)}
+      chapterTicks={ticks}
+      progressLabel={scrubText}
+      scrubDisabled={!doc}
+      onScrubPreview={setPreview}
+      onScrubCommit={(f) => {
+        setPreview(undefined);
+        void doc?.goToFraction(f);
+      }}
+      toc={readerToc.length ? readerToc : undefined}
+      tocOpen={tocOpen}
+      onTocOpenChange={setTocOpen}
+      {...(tocCurrentId ? { tocCurrentId } : {})}
+      onTocSelect={(item) => {
+        const locator = locatorForReaderTocId(tocEntries, item.id);
+        if (locator) void doc?.goTo(locator);
+      }}
+      paginated
+      twoColumn={phase.status === 'ready' && doc?.layout === 'reflow'}
+      loading={phase.status === 'loading' ? { message: phase.message } : undefined}
+      error={
+        phase.status === 'error'
+          ? {
+              title: phase.title,
+              message: phase.message,
+              ...(phase.retry ? { onRetry: () => setAttempt((n) => n + 1), retryLabel: 'Try again' } : {}),
+            }
+          : undefined
+      }
+      statusMessage={announce}
     >
       <div className="pn-live">
         <div className="pn-live__tools" aria-label="Reader tools">
@@ -384,67 +408,14 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
             <SelectionBar selection={selection} onHighlight={saveHighlight} onDismiss={() => { doc?.clearSelection(); setSelection(undefined); }} />
           ) : null}
           <div ref={hostRef} className="pn-live__host" tabIndex={-1} role="region" aria-label={`Reading ${book.title}`} />
-          {phase.status === 'loading' ? (
-            <div className="pn-live__state" role="status" aria-live="polite">
-              <div className="pn-live__lines" aria-hidden="true">
-                <span className="pn-skeleton pn-skeleton--text" style={{ width: '60%' }} />
-                <span className="pn-skeleton pn-skeleton--text" />
-                <span className="pn-skeleton pn-skeleton--text" />
-                <span className="pn-skeleton pn-skeleton--text" style={{ width: '85%' }} />
-                <span className="pn-skeleton pn-skeleton--text" />
-              </div>
-              <p className="pn-live__message">{phase.message}</p>
-            </div>
-          ) : null}
-          {phase.status === 'error' ? (
-            <div className="pn-live__state" role="alert">
-              <EmptyState
-                art="alert"
-                title={phase.title}
-                description={phase.message}
-                action={{ label: 'Back to Library', onClick: () => navigate('/') }}
-              />
-              {phase.retry ? (
-                <Button variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
-                  Try again
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
           {welcome ? <WelcomeCard welcome={welcome} onDismiss={() => setWelcome(undefined)} /> : null}
-        </div>
-        <div className="pn-live__scrub">
-          <Scrubber
-            value={fraction}
-            ticks={ticks}
-            valueText={scrubText}
-            disabled={!doc}
-            onPreview={setPreview}
-            onCommit={(f) => {
-              setPreview(undefined);
-              void doc?.goToFraction(f);
-            }}
-          />
         </div>
         {phase.status === 'ready' && doc && doc.layout === 'reflow' ? (
           <Suspense fallback={null}>
             <ReaderNarrationHost book={book} doc={doc} hostRef={hostRef} />
           </Suspense>
         ) : null}
-        <div className="pn-visually-hidden" role="status" aria-live="polite">
-          {announce}
-        </div>
       </div>
-      <TocSheet
-        open={tocOpen}
-        onClose={() => setTocOpen(false)}
-        toc={toc}
-        position={position}
-        onGoTo={(locator) => {
-          setTocOpen(false);
-          void doc?.goTo(locator);
-        }}
-      />
       <SearchSheet
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
@@ -477,7 +448,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   );
 }
 
-/** Quiet card shown for a few seconds when a book opens where the reader left off. Not modal; announced politely. */
 function WelcomeCard({ welcome, onDismiss }: { welcome: WelcomeBack; onDismiss: () => void }) {
   useEffect(() => {
     const t = window.setTimeout(onDismiss, 5000);

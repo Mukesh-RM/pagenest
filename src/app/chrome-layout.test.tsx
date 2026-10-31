@@ -85,7 +85,7 @@ describe('app frame per route', () => {
     const { container } = renderApp(services, { path: '/read/b1' });
     await screen.findByRole('heading', { level: 1, name: 'Title b1' });
     const frame = container.querySelector('.pn-shell');
-    fireEvent.click(screen.getByRole('button', { name: 'Back to library' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Back to library' })[0]!);
     await screen.findByRole('heading', { level: 1, name: 'Library' });
     expect(container.querySelector('.pn-shell')).toBe(frame);
     expect(scope(container)).toHaveAttribute('data-chrome', 'full');
@@ -142,7 +142,7 @@ describe('mini-player slot', () => {
     await services.db.books.add(book('b1'));
     renderApp(services, { path: '/read/b1' });
     await screen.findByRole('heading', { level: 1, name: 'Title b1' });
-    fireEvent.click(screen.getByRole('button', { name: 'Back to library' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Back to library' })[0]!);
     expect(await screen.findByTestId('mini-player-slot')).toBeInTheDocument();
   });
 
