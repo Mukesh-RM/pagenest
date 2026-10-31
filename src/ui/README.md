@@ -119,7 +119,7 @@ If the bundler is ever told `sideEffects: false` in `package.json`, keep `*.css`
   the empty library, `starter?: StarterBookOffer` shows the first-run starter card, `sort` and `view` props as before.
 * `AudioPlayerScreen`: optional `controller?: AudioPlayerController` (`playing, position, duration, speed, sleepLabel,
   toggle(), seek(s), skip(d), cycleSpeed(), openSleep(), openChapters()`). It wins over the individual props, which still work.
-* `ReaderScreen`: optional `minutesLeftInChapter` ("8 min left in chapter" above the book progress, always visible).
+* `ReaderScreen`: optional `minutesLeftInChapter` ("8 min left in chapter" above the book progress, always visible). Optional immersive chrome (`immersiveChrome`, `chromeVisible`, `onChromeVisibleChange`): tap the center of the page to show or hide the bar and footer; left/right thirds call `onPagePrev` / `onPageNext` when given. Pass `onScrubCommit` (and optional `chapterTicks`, `progressLabel`, `onScrubPreview`, `scrubDisabled`) to replace the thin `ProgressBar` with `ReaderScrubber`. Built-in contents: `toc`, `tocOpen`, `onTocOpenChange`, `tocCurrentId`, `onTocSelect` (or legacy `onOpenContents`). Overlays: `loading`, `error`. Layout: `paginated` (one viewport for the engine host), `twoColumn` (newspaper columns from 1024 px), `pageAffordance`, `statusMessage`.
 * `BookDetailSheet`: `onRemove` now appears as "Remove from library" inside a "More options" (⋯) menu, never as a loose red button.
 * `ErrorNotice`: DRM, damaged and unsupported files never show "Try again" (`canRetry(kind)`); they add one plain help line.
 
@@ -176,6 +176,19 @@ and `src/data/schema.ts` (`BookmarkRecord { id, label, locator: { kind: 'audio',
 * App wiring: pass `controller` (or the props) from the audio store: `skipBackSeconds: options.skipBackSec`, `skipForwardSeconds: options.skipForwardSec`,
   `setSkipInterval: (d, s) => engine.setOptions(d === 'back' ? { skipBackSec: s } : { skipForwardSec: s })` (persist it in settings), `bookmarks` from the bookmarks store mapped to `PlayerBookmark`,
   `addBookmark: (sec) => …create a BookmarkRecord at the locator for sec (label '')` plus a snackbar with Undo, `removeBookmark` with Undo.
+
+### Reader polish (`feature/ui-reader-audio-polish`)
+
+Matches the live reader on `origin/feature/reader-live` (position, `chapterTicks`, TOC, scrubber, loading/error) without importing engine types into `src/ui`.
+
+* **`ReaderScrubber`**: exported from `@/ui/screens` (and types from `@/ui`). Chapter ticks, settle-on-drag, Page Up/Down jump by a tenth.
+* **Footer**: with `onScrubCommit`, the footer uses the scrubber; `progressLabel` is both `aria-valuetext` and the quiet line beside "% through the book". Without it, the old `ProgressBar` stays.
+* **Immersive chrome**: default on. Tap center toggles bar + footer (`chromeVisible` / `onChromeVisibleChange` for control). Left/right taps invoke `onPagePrev` / `onPageNext`.
+* **`ReaderTocSheet`**: pass `toc: ReaderTocItem[]` (`{ id, title, children? }`), `tocOpen`, `onTocOpenChange`, `tocCurrentId`, `onTocSelect`. Map engine `TocItem` to stable ids in the app.
+* **`loading` / `error`**: full-page overlays; use with `paginated` so the engine host keeps a fixed viewport. `error.onRetry` shows "Try again".
+* **`paginated`**: frame is one viewport tall; children are the engine host (absolute fill via app CSS or inline). **`twoColumn`**: CSS columns from 1024 px for reflow demos.
+* Gallery: `reader`, `reader-scrub`, `reader-loading`, `reader-error`.
+* **App wiring (`LiveReader`)**: move scrubber, `TocSheet`, loading/error out of `children` into the new props; map `doc.toc` to `ReaderTocItem` and `goToFraction` to `onScrubCommit`; keep `.pn-live__host` styles or drop `pn-live` wrapper once `paginated` is set. Re-use `ReaderScrubber` in the feature by importing from `@/ui/screens` and delete the duplicate `Scrubber.tsx` when wired.
 
 ### Collections and Stats (wire-ready, presentational)
 
@@ -264,7 +277,7 @@ the app. `TEXT_TOKEN_PX` is gone. Tab bar labels are the full `--pn-text-xs` (12
 |---|---|
 | `LibraryScreen` | `books: BookSummary[]` (already filtered), `loading`, `filter` + `onFilterChange`, `query` + `onQueryChange`, `onOpenBook(book, coverRect)`, `onAdd?`, `emptyActions?`, `starter?`, slots `resume`, `hint`, `notice` |
 | `BookDetailSheet` | `open`, `book: BookDetail`, `onClose`, `originRect` (the cover grows out of its card), `onRead`, `onListen`, `onEdit?` (adds "Edit details" to the ⋯ menu), `onRemove` (the app answers with a `ConfirmDialog`). Tinted from the cover. Bottom sheet on phones, two panes from 1024 px |
-| `ReaderScreen` + `ReaderSettingsSheet` | title, chapter, progress, `settings: ReaderSettings`, `fonts`, `onSettingsChange`, `settingsOpen` (the "Aa" sheet: size, font, page color, line spacing, margins, with a live sample), children = the page |
+| `ReaderScreen` + `ReaderSettingsSheet` | title, chapter, progress, optional scrubber (`onScrubCommit`, `chapterTicks`, `progressLabel`), contents (`toc` + `onTocOpenChange` or `onOpenContents`), immersive chrome, `loading` / `error`, `paginated`, `twoColumn`, `settings: ReaderSettings`, `fonts`, `onSettingsChange`, `settingsOpen` (the "Aa" sheet: size, font, page color, line spacing, margins, with a live sample), children = the page (or the engine host when `paginated`) |
 | `AudioPlayerScreen` | `book`, then either `controller` or `playing`, `position`, `duration`, `speed`, `sleepLabel`, handlers. Time left is shown at the chosen speed ("4 h 28 min left at 1.25×"). Tinted from the cover |
 | `VoiceStudioScreen` | `voices: VoiceOption[]`, `selectedId`, `onSelect`, `onPreview`, `onNext` (step 1 of 3, Next pinned to the bottom) |
 | `OnboardingScreen`, `SettingsScreen` | see "Typed props of the new screens" above |

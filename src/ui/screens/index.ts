@@ -14,6 +14,8 @@ export { LibraryScreen, type LibraryScreenProps, type LibraryView } from './Libr
 export { DEFAULT_LIBRARY_FILTERS, DEFAULT_LIBRARY_SORTS, LIBRARY_VIRTUALIZE_ABOVE, type LibraryFilterOption, type LibrarySortOption } from './libraryOptions';
 export { BookDetailSheet, type BookDetailSheetProps } from './BookDetailSheet';
 export { ReaderScreen, type ReaderScreenProps } from './ReaderScreen';
+export { ReaderTocSheet, type ReaderTocSheetProps } from './ReaderTocSheet';
+export { ReaderScrubber, type ReaderScrubberProps } from '../components/ReaderScrubber';
 export { ReaderSettingsSheet, type ReaderSettingsSheetProps } from './ReaderSettingsSheet';
 export { LINE_HEIGHT, MARGIN_PX, READER_MAX_FONT, READER_MIN_FONT } from './readerOptions';
 export { AudioPlayerScreen, type AudioPlayerController, type AudioPlayerScreenProps } from './AudioPlayerScreen';

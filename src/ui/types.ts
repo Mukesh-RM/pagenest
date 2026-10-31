@@ -85,3 +85,24 @@ export interface PlayerBookmark {
   /** Chapter title at that position, if the app knows it. */
   chapter?: string;
 }
+
+/** One row in the reader contents sheet. The app maps engine TOC entries to stable ids. */
+export interface ReaderTocItem {
+  id: string;
+  title: string;
+  children?: readonly ReaderTocItem[];
+}
+
+/** Loading overlay while the reader engine opens a book. */
+export interface ReaderLoadingState {
+  message: string;
+}
+
+/** Error overlay when the engine cannot open the book. */
+export interface ReaderErrorState {
+  title: string;
+  message: string;
+  /** When given, a secondary button is shown (for example "Try again"). */
+  onRetry?: () => void;
+  retryLabel?: string;
+}
