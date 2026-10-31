@@ -33,7 +33,7 @@ import type { ThemeChoice } from '../theme/themes';
 import { ShortcutsProvider } from '../shortcuts';
 import { ThemeProvider } from '../theme/ThemeProvider';
 import type { ThemeName } from '../theme/themes';
-import type { BookSummary, PlayerBookmark, ReaderSettings } from '../types';
+import type { BookSummary, PlayerBookmark, ReaderSettings, ReaderTocItem } from '../types';
 import { timeLeftLabel } from '../utils/time';
 import {
   SAMPLE_BOOKS,
@@ -62,6 +62,9 @@ export const GALLERY_SCREENS = [
   'detail-audio',
   'reader',
   'reader-aa',
+  'reader-scrub',
+  'reader-loading',
+  'reader-error',
   'player',
   'voice',
   'confirm',
@@ -246,27 +249,61 @@ function HelpOpener() {
   return null;
 }
 
-function ReaderDemo({ aa, theme }: { aa?: boolean; theme: ThemeName }) {
+const DEMO_TOC: readonly ReaderTocItem[] = [
+  { id: '1', title: 'Chapter 1: The long road' },
+  { id: '4', title: 'Chapter 4: What the trees remember' },
+  { id: '7', title: 'Chapter 7: The orchard in March' },
+];
+
+function ReaderDemo({ aa, theme, scrub, loading, error }: { aa?: boolean; theme: ThemeName; scrub?: boolean; loading?: boolean; error?: boolean }) {
   const [settings, setSettings] = useState<ReaderSettings>({ ...SAMPLE_READER_SETTINGS, theme });
   const [open, setOpen] = useState(!!aa);
+  const [tocOpen, setTocOpen] = useState(false);
+  const [progress, setProgress] = useState(0.42);
+  const [chromeVisible, setChromeVisible] = useState(true);
   return (
     <ReaderScreen
       title="The Orchard at the End of Winter"
       chapter={SAMPLE_CHAPTER}
-      progress={0.42}
+      progress={progress}
       minutesLeftInChapter={8}
+      progressLabel={scrub !== false ? `Page ${Math.round(progress * 39) + 1} of 39` : undefined}
+      chapterTicks={scrub !== false ? [0, 0.26, 0.51, 0.74] : undefined}
+      onScrubCommit={scrub !== false ? setProgress : undefined}
       settings={settings}
       fonts={SAMPLE_FONTS}
       onSettingsChange={setSettings}
       settingsOpen={open}
       onSettingsOpenChange={(next) => setOpen(next)}
       onBack={noop}
-      onOpenContents={noop}
+      toc={DEMO_TOC}
+      tocOpen={tocOpen}
+      onTocOpenChange={setTocOpen}
+      tocCurrentId="7"
+      onTocSelect={noop}
+      chromeVisible={chromeVisible}
+      onChromeVisibleChange={setChromeVisible}
+      paginated={!!loading || !!error}
+      loading={loading ? { message: 'Opening The Orchard at the End of Winter…' } : undefined}
+      error={
+        error
+          ? {
+              title: 'This file looks damaged',
+              message: 'PageNest could not read this copy. Try another file or add the book again.',
+              onRetry: noop,
+            }
+          : undefined
+      }
+      twoColumn={!loading && !error}
     >
-      <h2>{SAMPLE_CHAPTER.replace('Chapter 7: ', 'Seven. ')}</h2>
-      {SAMPLE_PARAGRAPHS.map((p) => (
-        <p key={p.slice(0, 24)}>{p}</p>
-      ))}
+      {loading || error ? null : (
+        <>
+          <h2>{SAMPLE_CHAPTER.replace('Chapter 7: ', 'Seven. ')}</h2>
+          {SAMPLE_PARAGRAPHS.map((p) => (
+            <p key={p.slice(0, 24)}>{p}</p>
+          ))}
+        </>
+      )}
     </ReaderScreen>
   );
 }
@@ -470,6 +507,12 @@ export function ScreenGallery({ screen, theme = 'light' }: { screen: GalleryScre
       return <ReaderDemo theme={theme} />;
     case 'reader-aa':
       return <ReaderDemo aa theme={theme} />;
+    case 'reader-scrub':
+      return <ReaderDemo theme={theme} scrub />;
+    case 'reader-loading':
+      return <ReaderDemo theme={theme} loading />;
+    case 'reader-error':
+      return <ReaderDemo theme={theme} error />;
     case 'player':
       return <PlayerDemo />;
     case 'voice':
