@@ -22,12 +22,12 @@ if (typeof URL.createObjectURL !== 'function') {
 }
 
 if (typeof Object.groupBy !== 'function') {
-  Object.groupBy = (items, callback) => {
-    const out: Record<PropertyKey, unknown[]> = {};
-    for (let i = 0; i < items.length; i++) {
-      const key = callback(items[i], i);
-      if (!Object.prototype.hasOwnProperty.call(out, key)) out[key] = [];
-      out[key].push(items[i]);
+  Object.groupBy = <T>(items: Iterable<T>, callback: (item: T, index: number) => PropertyKey) => {
+    const out = Object.create(null) as Record<PropertyKey, T[]>;
+    let i = 0;
+    for (const item of items) {
+      const key = callback(item, i++);
+      (out[key] ??= []).push(item);
     }
     return out;
   };
