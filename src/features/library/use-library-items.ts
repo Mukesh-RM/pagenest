@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLibraryRevision } from '@/app/library-hooks';
 import { useServices } from '@/app/services-context';
+import { yieldToMain } from '@/data/yield-main';
 import type { BookSummary, LibraryQuery } from '@/data/library-query';
 
 /** Page size when reading the whole result. The data layer allows at most 500. */
 export const PAGE = 500;
+/** First page size on screen so the grid paints without a long main-thread task. */
+const FIRST_PAGE = 60;
 /** While books are being added the list refreshes at most this often. */
 const REFRESH_MS = 300;
 
@@ -78,7 +81,10 @@ export function useLibraryItems(query: Partial<LibraryQuery>, extraRefresh: numb
     const stale = (): boolean => seq.current !== mine;
     void (async () => {
       try {
-        const [libraryCount, first] = await Promise.all([data.library.count(), data.library.query({ ...q, offset: 0, limit: PAGE })]);
+        const [libraryCount, first] = await Promise.all([
+          data.library.count(),
+          data.library.query({ ...q, offset: 0, limit: FIRST_PAGE }),
+        ]);
         if (stale()) return;
         let items = first.items;
         // A new query shows its first page at once; a refresh waits for the whole list (no jumping).
@@ -87,11 +93,14 @@ export function useLibraryItems(query: Partial<LibraryQuery>, extraRefresh: numb
           loadedKey.current = key;
         }
         while (items.length < first.total) {
+          await yieldToMain();
           const next = await data.library.query({ ...q, offset: items.length, limit: PAGE });
           if (stale()) return;
           if (next.items.length === 0) break;
           items = items.concat(next.items);
-          if (!sameQuery || items.length >= first.total) setState({ items, total: first.total, libraryCount, ready: true, error: undefined });
+          if (!sameQuery || items.length >= first.total) {
+            setState({ items, total: first.total, libraryCount, ready: true, error: undefined });
+          }
         }
         if (sameQuery && items.length < first.total) setState({ items, total: first.total, libraryCount, ready: true, error: undefined });
         loadedKey.current = key;

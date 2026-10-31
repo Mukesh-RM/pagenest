@@ -150,7 +150,9 @@
 }
 
 .pn-custom__hex {
+  box-sizing: border-box;
   min-width: 0;
+  height: var(--pn-touch);
   min-height: var(--pn-touch);
   padding: 0 var(--pn-space-3);
   border: 1px solid rgb(var(--pn-border-strong));

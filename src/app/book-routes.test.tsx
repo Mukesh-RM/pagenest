@@ -4,7 +4,7 @@ import type { BookRecord } from '@/data/schema';
 import { getSetting, setSetting } from '@/data/settings';
 import type { AppServices } from './services-context';
 import { ensureSeedAudiobookBookRecord, SEED_AUDIO_BOOK_ID } from '@/features/player/seed/seed-audiobook';
-import { makeServices, renderApp, resetSettings } from './test-utils';
+import { makeServices, renderApp, resetSettings, closeServices } from './test-utils';
 
 const book = (id: string, rest: Partial<BookRecord> = {}): BookRecord => ({
   id,
@@ -27,7 +27,9 @@ beforeEach(async () => {
   services = makeServices('book-routes');
   await setSetting(services.db, 'onboardingDone', true);
 });
-afterEach(() => services.db.close());
+afterEach(async () => {
+  if (services) await closeServices(services);
+});
 
 describe('/read/:id', () => {
   it('opens the live reader in the design chrome, with no placeholder, and says so plainly when a record has no file', async () => {

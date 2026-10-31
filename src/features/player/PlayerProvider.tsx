@@ -68,10 +68,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   }, [controller]);
 
   useEffect(() => {
-    void import('./skip-settings').then(({ loadAudioSkipOptions }) =>
-      loadAudioSkipOptions(db).then((opts) => {
-        if (Object.keys(opts).length > 0) controller.setOptions(opts);
-      }),
+    void import('./apply-persisted-skip-options').then(({ applyPersistedSkipOptions }) =>
+      applyPersistedSkipOptions(db, controller).catch(() => undefined),
     );
   }, [controller, db]);
 

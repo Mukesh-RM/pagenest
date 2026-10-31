@@ -1,5 +1,6 @@
 import type { BookKind, Locator, ProgressRecord } from '@/app/contracts';
 import type { PageNestDB } from './db';
+import { isDatabaseClosedError } from './db-errors';
 import type { BookRecord, ChapterRecord, ProgressRow } from './schema';
 
 /** Everything the "Welcome back" card shows, and what a reader needs to land on the exact spot. */
@@ -93,19 +94,24 @@ const CANDIDATES = 12;
 
 /** Load the resume info from IndexedDB, reading only a handful of rows. `undefined` when there is nothing to resume. */
 export async function loadResume(db: PageNestDB): Promise<ResumeInfo | undefined> {
-  const rows = await db.progress.orderBy('updatedAt').reverse().limit(CANDIDATES).toArray();
-  if (rows.length === 0) return undefined;
-  const bookIds = [...new Set(rows.map((r) => r.bookId))];
-  const found = await db.books.bulkGet(bookIds);
-  const books = new Map<string, BookRecord>();
-  for (const b of found) if (b) books.set(b.id, b);
-  // Chapters only for the book that will be chosen.
-  const first = rows.find((r) => {
-    const b = books.get(r.bookId);
-    return b && !b.finished && r.percent < 100 && r.percent > 0;
-  });
-  const chapters = first ? await db.chapters.where('bookId').equals(first.bookId).toArray() : [];
-  return pickResume(rows, books, () => chapters);
+  try {
+    const rows = await db.progress.orderBy('updatedAt').reverse().limit(CANDIDATES).toArray();
+    if (rows.length === 0) return undefined;
+    const bookIds = [...new Set(rows.map((r) => r.bookId))];
+    const found = await db.books.bulkGet(bookIds);
+    const books = new Map<string, BookRecord>();
+    for (const b of found) if (b) books.set(b.id, b);
+    // Chapters only for the book that will be chosen.
+    const first = rows.find((r) => {
+      const b = books.get(r.bookId);
+      return b && !b.finished && r.percent < 100 && r.percent > 0;
+    });
+    const chapters = first ? await db.chapters.where('bookId').equals(first.bookId).toArray() : [];
+    return pickResume(rows, books, () => chapters);
+  } catch (error) {
+    if (isDatabaseClosedError(error)) return undefined;
+    throw error;
+  }
 }
 
 /**
@@ -118,22 +124,27 @@ export async function loadBookPosition(
   progress: { getLatest(bookId: string): Promise<ProgressRecord | undefined> },
   bookId: string,
 ): Promise<ResumeInfo | undefined> {
-  const [book, latest, chapters] = await Promise.all([
-    db.books.get(bookId),
-    progress.getLatest(bookId),
-    db.chapters.where('bookId').equals(bookId).toArray(),
-  ]);
-  if (!book || !latest) return undefined;
-  const chapter = chapterForLocator(chapters, latest.locator);
-  return {
-    bookId: book.id,
-    title: book.title,
-    kind: book.kind,
-    ...(book.author ? { author: book.author } : {}),
-    mode: latest.mode,
-    locator: latest.locator,
-    percent: latest.percent,
-    ...(chapter ? { chapterNumber: chapter.index + 1, chapterTitle: chapter.title } : {}),
-    updatedAt: latest.updatedAt,
-  };
+  try {
+    const [book, latest, chapters] = await Promise.all([
+      db.books.get(bookId),
+      progress.getLatest(bookId),
+      db.chapters.where('bookId').equals(bookId).toArray(),
+    ]);
+    if (!book || !latest) return undefined;
+    const chapter = chapterForLocator(chapters, latest.locator);
+    return {
+      bookId: book.id,
+      title: book.title,
+      kind: book.kind,
+      ...(book.author ? { author: book.author } : {}),
+      mode: latest.mode,
+      locator: latest.locator,
+      percent: latest.percent,
+      ...(chapter ? { chapterNumber: chapter.index + 1, chapterTitle: chapter.title } : {}),
+      updatedAt: latest.updatedAt,
+    };
+  } catch (error) {
+    if (isDatabaseClosedError(error)) return undefined;
+    throw error;
+  }
 }

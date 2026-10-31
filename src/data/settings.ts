@@ -1,13 +1,24 @@
 import type { PageNestDB } from './db';
+import { isDatabaseClosedError } from './db-errors';
 
 /** Typed access to the `settings` key-value store (themes, fonts, skip times, defaults). */
 export async function getSetting<T>(db: PageNestDB, key: string): Promise<T | undefined> {
-  const row = await db.settings.get(key);
-  return row?.value as T | undefined;
+  try {
+    const row = await db.settings.get(key);
+    return row?.value as T | undefined;
+  } catch (error) {
+    if (isDatabaseClosedError(error)) return undefined;
+    throw error;
+  }
 }
 
 export async function setSetting(db: PageNestDB, key: string, value: unknown): Promise<void> {
-  await db.settings.put({ key, value });
+  try {
+    await db.settings.put({ key, value });
+  } catch (error) {
+    if (isDatabaseClosedError(error)) return;
+    throw error;
+  }
 }
 
 /** Names of settings the app shell reads and writes. */

@@ -5,7 +5,7 @@ import type { BookRecord } from '@/data/schema';
 import { setSetting } from '@/data/settings';
 import { resetRouteChromeForTests } from './route-chrome';
 import type { AppServices } from './services-context';
-import { makeServices, renderApp, resetSettings } from './test-utils';
+import { makeServices, renderApp, resetSettings, closeServices } from './test-utils';
 
 const book = (id: string, rest: Partial<BookRecord> = {}): BookRecord => ({
   id,
@@ -38,7 +38,9 @@ beforeEach(() => {
   resetRouteChromeForTests();
   localStorage.clear();
 });
-afterEach(() => services.db.close());
+afterEach(async () => {
+  if (services) await closeServices(services);
+});
 
 describe('app frame per route', () => {
   it.each(['/', '/collections', '/stats', '/settings'])('tab route %s is full chrome with the tab bar and rail', async (path) => {

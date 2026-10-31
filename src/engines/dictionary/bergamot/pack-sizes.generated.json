@@ -1,0 +1,120 @@
+[
+  {
+    "id": "translate-en-hi",
+    "targetLang": "hi",
+    "bergamotKeys": [],
+    "lexiconUrl": "/packs/translate-en-hi-lexicon.json",
+    "lexiconBytes": 36400,
+    "sizeBytes": 36400
+  },
+  {
+    "id": "translate-en-es",
+    "targetLang": "es",
+    "bergamotKeys": [
+      "enes",
+      "esen"
+    ],
+    "lexiconUrl": "/packs/translate-en-es-lexicon.json",
+    "lexiconBytes": 34800,
+    "sizeBytes": 43175228
+  },
+  {
+    "id": "translate-en-de",
+    "targetLang": "de",
+    "bergamotKeys": [
+      "ende",
+      "deen"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 44841542
+  },
+  {
+    "id": "translate-en-fr",
+    "targetLang": "fr",
+    "bergamotKeys": [
+      "enfr",
+      "fren"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 52650074
+  },
+  {
+    "id": "translate-en-ru",
+    "targetLang": "ru",
+    "bergamotKeys": [
+      "enru",
+      "ruen"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 44295457
+  },
+  {
+    "id": "translate-en-cs",
+    "targetLang": "cs",
+    "bergamotKeys": [
+      "encs",
+      "csen"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 43913070
+  },
+  {
+    "id": "translate-en-uk",
+    "targetLang": "uk",
+    "bergamotKeys": [
+      "enuk",
+      "uken"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 73588068
+  },
+  {
+    "id": "translate-en-et",
+    "targetLang": "et",
+    "bergamotKeys": [
+      "enet",
+      "eten"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 42614204
+  },
+  {
+    "id": "translate-en-it",
+    "targetLang": "it",
+    "bergamotKeys": [
+      "enit",
+      "iten"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 45638411
+  },
+  {
+    "id": "translate-en-pt",
+    "targetLang": "pt",
+    "bergamotKeys": [
+      "enpt",
+      "pten"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 45381410
+  },
+  {
+    "id": "translate-en-bg",
+    "targetLang": "bg",
+    "bergamotKeys": [
+      "enbg",
+      "bgen"
+    ],
+    "lexiconUrl": "/packs/translate-lexicon-empty.json",
+    "lexiconBytes": 120,
+    "sizeBytes": 47912404
+  }
+]

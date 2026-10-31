@@ -331,4 +331,7 @@ export const FilePaths = {
   voiceModel: (voiceId: string): FileRef => `voices/${voiceId}`,
   render: (bookId: string, chapterIndex: number, voiceId: string, style: string): FileRef =>
     `renders/${bookId}/${chapterIndex}-${voiceId}-${style}.opus`,
+  /** Offline dictionary or translation pack bytes (JSON). */
+  /** @deprecated Prefer {@link definitionPackPath} / {@link lexiconPackPath} in dictionary pack-paths. */
+  dictionaryPack: (packId: string): FileRef => `dictionaries/${packId}.json`,
 } as const;

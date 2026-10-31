@@ -41,6 +41,7 @@ const ReaderNarration = lazy(() =>
     },
   })),
 );
+const DictionaryHost = lazy(() => import('@/features/dictionary/DictionaryHost'));
 
 type Phase =
   | { readonly status: 'loading'; readonly message: string }
@@ -109,6 +110,10 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const [announce, setAnnounce] = useState('');
   const [preview, setPreview] = useState<number>();
   const [attempt, setAttempt] = useState(0);
+  const [dictToken, setDictToken] = useState(0);
+  const [dictMode, setDictMode] = useState<'define' | 'translate' | undefined>();
+  const [dictOpen, setDictOpen] = useState(false);
+  const [wordTap, setWordTap] = useState<{ token: number; word: string; anchor: DOMRect } | undefined>();
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const appliedRef = useRef<ReaderSettings>();
@@ -249,6 +254,37 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     refreshMarks();
     return doc.onSelectionChange(setSelection);
   }, [doc, book.id, db]);
+
+  useEffect(() => {
+    if (!doc) {
+      setWordTap(undefined);
+      return undefined;
+    }
+    return doc.onWordTap(({ word, anchor }) => {
+      setWordTap({ token: performance.now(), word, anchor });
+    });
+  }, [doc]);
+
+  /** E2E builds: foliate iframe pointer synthesis is flaky; tests dispatch `pn-mock-word-tap` on the host. */
+  useEffect(() => {
+    if (import.meta.env.VITE_PN_MOCK_DICTIONARY !== '1') return undefined;
+    const host = hostRef.current;
+    if (!host || !doc) return undefined;
+    const onMockTap = (ev: Event): void => {
+      const word = (ev as CustomEvent<{ word?: string }>).detail?.word?.trim();
+      if (!word) return;
+      const box = host.getBoundingClientRect();
+      setWordTap({
+        token: performance.now(),
+        word,
+        anchor: new DOMRect(box.width * 0.4, box.height * 0.4, 48, 24),
+      });
+    };
+    host.addEventListener('pn-mock-word-tap', onMockTap);
+    return () => host.removeEventListener('pn-mock-word-tap', onMockTap);
+  }, [doc]);
+
+  const selectionAnchor = doc && selection ? doc.selectionRect() : undefined;
 
   useEffect(() => {
     if (!marksOpen || !doc) return;
@@ -431,9 +467,43 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         </div>
         <div className="pn-live__stage">
           {selection ? (
-            <SelectionBar selection={selection} onHighlight={saveHighlight} onDismiss={() => { doc?.clearSelection(); setSelection(undefined); }} />
+            <SelectionBar
+              selection={selection}
+              onHighlight={saveHighlight}
+              onDefine={() => {
+                setDictMode('define');
+                setDictOpen(true);
+                setDictToken((n) => n + 1);
+              }}
+              onTranslate={() => {
+                setDictMode('translate');
+                setDictOpen(true);
+                setDictToken((n) => n + 1);
+              }}
+              onDismiss={() => {
+                doc?.clearSelection();
+                setSelection(undefined);
+              }}
+            />
           ) : null}
           <div ref={hostRef} className="pn-live__host" tabIndex={-1} role="region" aria-label={`Reading ${book.title}`} />
+          {phase.status === 'ready' && doc ? (
+            <Suspense fallback={null}>
+              <DictionaryHost
+                hostRef={hostRef}
+                selection={selection}
+                {...(selectionAnchor ? { selectionAnchor } : {})}
+                {...(wordTap ? { wordTap } : {})}
+                {...(book.language ? { bookLanguage: book.language } : {})}
+                lookupToken={dictToken}
+                lookupMode={dictOpen ? dictMode : undefined}
+                onClose={() => {
+                  setDictOpen(false);
+                  setDictMode(undefined);
+                }}
+              />
+            </Suspense>
+          ) : null}
           {welcome ? <WelcomeCard welcome={welcome} onDismiss={() => setWelcome(undefined)} /> : null}
         </div>
         {phase.status === 'ready' && doc && doc.layout === 'reflow' ? (

@@ -54,6 +54,12 @@
       "version": "*",
       "license": "MIT",
       "reason": "2026-10-31. First-party dev helper in scripts/e2e (Playwright port resolution). MIT declared in scripts/e2e/package.json; never shipped in dist/."
+    },
+    {
+      "name": "@browsermt/bergamot-translator",
+      "version": "0.4.9",
+      "license": "MPL-2.0",
+      "reason": "2026-10-31. Mozilla Bergamot / Firefox Translations browser runtime. Lazy-loaded (engine-bergamot chunk) for optional offline sentence translation; used unmodified. MPL-2.0 requires keeping the license notice (docs/LICENSES.md). CC-BY model weights download separately from Mozilla S3 into OPFS."
     }
   ]
 }
