@@ -35,3 +35,20 @@ if (typeof objectWithGroupBy.groupBy !== 'function') {
     return out;
   };
 }
+
+const mapWithGroupBy = Map as unknown as {
+  groupBy?: <T, K>(items: Iterable<T>, callback: (item: T, index: number) => K) => Map<K, T[]>;
+};
+if (typeof mapWithGroupBy.groupBy !== 'function') {
+  mapWithGroupBy.groupBy = <T, K>(items: Iterable<T>, callback: (item: T, index: number) => K) => {
+    const out = new Map<K, T[]>();
+    let i = 0;
+    for (const item of items) {
+      const key = callback(item, i++);
+      const bucket = out.get(key);
+      if (bucket) bucket.push(item);
+      else out.set(key, [item]);
+    }
+    return out;
+  };
+}
