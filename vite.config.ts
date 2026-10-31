@@ -31,6 +31,7 @@ export default defineConfig({
           '**/assets/piper.worker-*.js',
           '**/assets/engine-tts-*.js',
           '**/assets/pdf.worker*.mjs',
+          '**/packs/**',
         ],
         maximumFileSizeToCacheInBytes: 1024 * 1024,
       },

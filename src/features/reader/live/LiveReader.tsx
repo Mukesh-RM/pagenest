@@ -25,6 +25,7 @@ import { currentReaderTocId, locatorForReaderTocId, readerTocFromEngine } from '
 import './live.css';
 
 const ReaderNarrationHost = lazy(() => import('@/features/narration/ReaderNarrationHost'));
+const DictionaryHost = lazy(() => import('@/features/dictionary/DictionaryHost'));
 
 type Phase =
   | { readonly status: 'loading'; readonly message: string }
@@ -90,6 +91,9 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const [announce, setAnnounce] = useState('');
   const [preview, setPreview] = useState<number>();
   const [attempt, setAttempt] = useState(0);
+  const [dictToken, setDictToken] = useState(0);
+  const [dictMode, setDictMode] = useState<'define' | 'translate' | undefined>();
+  const [dictOpen, setDictOpen] = useState(false);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const appliedRef = useRef<ReaderSettings>();
@@ -405,9 +409,41 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         </div>
         <div className="pn-live__stage">
           {selection ? (
-            <SelectionBar selection={selection} onHighlight={saveHighlight} onDismiss={() => { doc?.clearSelection(); setSelection(undefined); }} />
+            <SelectionBar
+              selection={selection}
+              onHighlight={saveHighlight}
+              onDefine={() => {
+                setDictMode('define');
+                setDictOpen(true);
+                setDictToken((n) => n + 1);
+              }}
+              onTranslate={() => {
+                setDictMode('translate');
+                setDictOpen(true);
+                setDictToken((n) => n + 1);
+              }}
+              onDismiss={() => {
+                doc?.clearSelection();
+                setSelection(undefined);
+              }}
+            />
           ) : null}
           <div ref={hostRef} className="pn-live__host" tabIndex={-1} role="region" aria-label={`Reading ${book.title}`} />
+          {phase.status === 'ready' && doc ? (
+            <Suspense fallback={null}>
+              <DictionaryHost
+                hostRef={hostRef}
+                selection={selection}
+                {...(book.language ? { bookLanguage: book.language } : {})}
+                lookupToken={dictToken}
+                lookupMode={dictOpen ? dictMode : undefined}
+                onClose={() => {
+                  setDictOpen(false);
+                  setDictMode(undefined);
+                }}
+              />
+            </Suspense>
+          ) : null}
           {welcome ? <WelcomeCard welcome={welcome} onDismiss={() => setWelcome(undefined)} /> : null}
         </div>
         {phase.status === 'ready' && doc && doc.layout === 'reflow' ? (
