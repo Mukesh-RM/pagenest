@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isLocatorForMode, type Locator } from '@/app/contracts';
 import type { BookScreenProps } from '@/app/components/BookSummary';
@@ -25,7 +25,22 @@ import { settingsToAppearance } from './settings-map';
 import { currentReaderTocId, locatorForReaderTocId, readerTocFromEngine } from './toc-map';
 import './live.css';
 
-const ReaderNarrationHost = lazy(() => import('@/features/narration/ReaderNarrationHost'));
+const ReaderNarration = lazy(() =>
+  Promise.all([
+    import('@/features/player/PlayerProvider'),
+    import('@/features/narration/ReaderNarrationHost'),
+  ]).then(([providerMod, hostMod]) => ({
+    default: function ReaderNarrationWithAudio(
+      props: ComponentProps<typeof hostMod.default>,
+    ) {
+      return (
+        <providerMod.PlayerProvider>
+          <hostMod.default {...props} />
+        </providerMod.PlayerProvider>
+      );
+    },
+  })),
+);
 
 type Phase =
   | { readonly status: 'loading'; readonly message: string }
@@ -423,7 +438,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         </div>
         {phase.status === 'ready' && doc && doc.layout === 'reflow' ? (
           <Suspense fallback={null}>
-            <ReaderNarrationHost book={book} doc={doc} hostRef={hostRef} />
+            <ReaderNarration book={book} doc={doc} hostRef={hostRef} />
           </Suspense>
         ) : null}
       </div>

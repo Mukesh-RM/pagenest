@@ -32,29 +32,54 @@ function shotPath(screen: string, width: number, theme: string): string {
 
 async function waitForSettingsStore(page: Page): Promise<void> {
   await page.waitForFunction(async () => {
-    const db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const req = indexedDB.open('pagenest');
-      req.onerror = () => reject(req.error);
-      req.onsuccess = () => resolve(req.result);
-    });
-    try {
-      return db.objectStoreNames.contains('settings');
-    } finally {
-      db.close();
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (let attempt = 0; attempt < 120; attempt++) {
+      try {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const req = indexedDB.open('pagenest');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => resolve(req.result);
+        });
+        try {
+          if (!db.objectStoreNames.contains('settings')) {
+            db.close();
+            await sleep(50);
+            continue;
+          }
+          await new Promise<void>((resolve, reject) => {
+            const tx = db.transaction('settings', 'readonly');
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          });
+          db.close();
+          return true;
+        } catch {
+          db.close();
+          await sleep(50);
+        }
+      } catch {
+        await sleep(50);
+      }
     }
-  }, null, { timeout: 30_000 });
+    return false;
+  }, null, { timeout: 60_000 });
 }
 
-async function setAppTheme(page: Page, theme: (typeof THEMES)[number], opts?: { onboarding?: boolean }): Promise<void> {
-  if (theme === 'custom') {
-    if (opts?.onboarding) {
-      await waitForSettingsStore(page);
-      await page.evaluate(async () => {
-        const open = indexedDB.open('pagenest');
+async function writeSettingsOnboardingCustomTheme(page: Page): Promise<void> {
+  await page.waitForFunction(async () => {
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (let attempt = 0; attempt < 120; attempt++) {
+      try {
         const db = await new Promise<IDBDatabase>((resolve, reject) => {
-          open.onsuccess = () => resolve(open.result);
-          open.onerror = () => reject(open.error);
+          const req = indexedDB.open('pagenest');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => resolve(req.result);
         });
+        if (!db.objectStoreNames.contains('settings')) {
+          db.close();
+          await sleep(50);
+          continue;
+        }
         await new Promise<void>((resolve, reject) => {
           const tx = db.transaction('settings', 'readwrite');
           const store = tx.objectStore('settings');
@@ -67,7 +92,20 @@ async function setAppTheme(page: Page, theme: (typeof THEMES)[number], opts?: { 
           tx.onerror = () => reject(tx.error);
         });
         db.close();
-      });
+        return true;
+      } catch {
+        await sleep(50);
+      }
+    }
+    return false;
+  }, null, { timeout: 60_000 });
+}
+
+async function setAppTheme(page: Page, theme: (typeof THEMES)[number], opts?: { onboarding?: boolean }): Promise<void> {
+  if (theme === 'custom') {
+    if (opts?.onboarding) {
+      await waitForSettingsStore(page);
+      await writeSettingsOnboardingCustomTheme(page);
       await page.reload();
       await expect.poll(() => page.evaluate(() => document.documentElement.dataset.theme)).toBe('custom');
       return;
