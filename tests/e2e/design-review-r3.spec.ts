@@ -197,12 +197,11 @@ test.describe(`Design Review 3 screenshots (${phase})`, () => {
         await page.setViewportSize({ width, height: 800 });
         await pastOnboarding(page);
         await page.goto(`./listen/${SEED_AUDIO_BOOK_ID}?pn_seed_audio=1`);
+        await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 30_000 });
         await page.goto('./');
         await setAppTheme(page, theme);
-        await page.goto(`./listen/${SEED_AUDIO_BOOK_ID}?pn_seed_audio=1`);
-        await page.goto('./');
+        await waitForLibraryBook(page, /Extraordinarily Long Title/i);
         const card = page.getByRole('button', { name: /Extraordinarily Long Title/i }).first();
-        await expect(card).toBeVisible({ timeout: 30_000 });
         await card.click();
         await expect(page.getByRole('dialog')).toBeVisible();
         await capture(page, 'book-detail', width, theme);

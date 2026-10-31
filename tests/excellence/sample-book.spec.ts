@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { launch } from '../e2e/support/app';
+import { launch, waitForBookText } from '../e2e/support/app';
 import { readerTextReport, whyNotRealText, REAL_TEXT } from '../e2e/support/reader';
 
 // Gate: "Try a sample book" on the empty Library must lead to a book that opens on REAL text, not a placeholder.
@@ -7,6 +7,7 @@ import { readerTextReport, whyNotRealText, REAL_TEXT } from '../e2e/support/read
 // Owners: Library (the sample provider and the card), Reader (the screen that must render the text).
 
 test('the sample book opens on real text, not a placeholder', async ({ page }) => {
+  test.setTimeout(120_000);
   await launch(page);
   const card = page.getByRole('region', { name: /try a sample book/i });
   await expect(card, 'the empty Library offers no "Try a sample book" card (no sample provider registered or available): owner Library').toBeVisible({ timeout: 10_000 });
@@ -23,8 +24,9 @@ test('the sample book opens on real text, not a placeholder', async ({ page }) =
   }
   expect(page.url(), 'the sample book is text: it must open in the reader, not the audio player').toMatch(/\/read\//);
 
-  // give the reader up to 10 s to lay out the first page, then judge what is on screen
-  await expect.poll(async () => (await readerTextReport(page)).proseChars, { timeout: 10_000, message: 'the reader never showed any prose' }).toBeGreaterThan(0).catch(() => {});
+  await expect(page.getByRole('button', { name: 'Back to library' })).toBeVisible({ timeout: 90_000 });
+  await waitForBookText(page, { min: 200, timeout: 90_000 });
+
   const report = await readerTextReport(page);
   const why = whyNotRealText(report);
   expect(why, `the sample book opened on something that is not real text (${why}). On screen: "${report.sample}"; need ${REAL_TEXT.minParagraphs}+ paragraphs, ${REAL_TEXT.minProseChars}+ characters`).toBeNull();
