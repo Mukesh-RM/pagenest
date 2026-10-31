@@ -23,7 +23,8 @@
     "test:e2e:library": "playwright test -c src/features/library/e2e/playwright.config.mjs",
     "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs",
     "audit": "node scripts/audit-all.mjs",
-    "audit:licenses": "node scripts/audit-licenses.mjs --check",
+    "check:licenses": "scripts/check-licenses",
+    "audit:licenses": "scripts/check-licenses",
     "test:e2e:reader": "playwright test -c src/features/reader/e2e/playwright.config.mjs",
     "playwright:install": "playwright install --with-deps"
   },

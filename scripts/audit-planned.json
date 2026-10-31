@@ -7,7 +7,7 @@
       "license": "OFL-1.1",
       "source": "https://github.com/rsms/inter",
       "status": "OK-NOTE",
-      "note": "Interface font (5.3). Self-host; ship OFL text and copyright with the font files."
+      "note": "Interface font (5.3). Bundled in src/ui/fonts/inter-latin-wght-normal.woff2 with OFL-Inter.txt (subset from @fontsource-variable/inter 5.x)."
     },
     {
       "name": "Literata",
@@ -15,7 +15,7 @@
       "license": "OFL-1.1",
       "source": "https://github.com/googlefonts/literata",
       "status": "OK-NOTE",
-      "note": "Reading font. Ship OFL text. Check Reserved Font Name before subsetting or converting."
+      "note": "Reading font. Bundled in src/ui/fonts/literata-latin-wght-*.woff2 with OFL-Literata.txt (subset from @fontsource-variable/literata 5.x). No Reserved Font Name in the OFL text."
     },
     {
       "name": "Source Serif 4",
@@ -277,7 +277,8 @@
       "license": "GPL-3.0-or-later",
       "source": "https://github.com/OHF-Voice/piper1-gpl",
       "status": "NOT-OK",
-      "note": "GPL since v1.3.0 (espeak-ng embedded). Do not bundle or link into the MIT web app. Allowed only as a separate tool the user runs (for example the training script), never shipped inside the PWA."
+      "note": "GPL since v1.3.0 (espeak-ng embedded). Do not bundle or link into the MIT web app. Allowed only as a separate tool the user runs (for example the training script), never shipped inside the PWA.",
+      "replacement": "Keep inference on archived rhasspy/piper (MIT) only for experiments, or adopt a non-GPL phonemizer plus ONNX Runtime Web; run GPL training tools outside the PWA."
     },
     {
       "name": "espeak-ng (phonemizer inside Piper and Kokoro WASM stacks)",
@@ -285,7 +286,8 @@
       "license": "GPL-3.0-or-later",
       "source": "https://github.com/espeak-ng/espeak-ng",
       "status": "NOT-OK",
-      "note": "OPEN RISK. Browser Piper builds and the 'phonemizer' npm package (declared Apache-2.0) embed eSpeak NG compiled to WASM. Shipping it in the PWA means distributing GPL-3.0 code. Needs an owner decision: non-GPL phonemizer (dictionary/rule based), or accept GPL for that component with corresponding source and notices. audit-licenses.mjs flags the known packages even though they declare a permissive license."
+      "note": "OPEN RISK. Browser Piper builds and the 'phonemizer' npm package (declared Apache-2.0) embed eSpeak NG compiled to WASM. Shipping it in the PWA means distributing GPL-3.0 code. Needs an owner decision: non-GPL phonemizer (dictionary/rule based), or accept GPL for that component with corresponding source and notices. audit-licenses.mjs flags the known packages even though they declare a permissive license.",
+      "replacement": "Rule-based or dictionary phonemizer (no eSpeak), or Web Speech API (Tier 0) until a permissive WASM phonemizer is vetted."
     },
     {
       "name": "Piper voice models (each voice)",
@@ -293,7 +295,8 @@
       "license": "per voice, see MODEL_CARD",
       "source": "https://huggingface.co/rhasspy/piper-voices",
       "status": "VERIFY",
-      "note": "License is per voice and records the training DATASET only; whether weights inherit it is not settled upstream. Most voices are fine-tuned from en_US-lessac (research-only) or en_US-ryan (CC BY-NC-SA) and are treated as NOT OK. See docs/MODEL_VETTING.md and scripts/audit-models.json for the verdict of each of 178 voices; only voices marked OK there may be added."
+      "note": "License is per voice and records the training DATASET only; whether weights inherit it is not settled upstream. Most voices are fine-tuned from en_US-lessac (research-only) or en_US-ryan (CC BY-NC-SA) and are treated as NOT OK. See docs/MODEL_VETTING.md and scripts/audit-models.json for the verdict of each of 178 voices; only voices marked OK there may be added.",
+      "replacement": "Ship only voices marked OK in scripts/audit-models.json (for example en_US-libritts-high, CC BY 4.0)."
     },
     {
       "name": "Piper voice en_US-lessac (low/medium/high)",
@@ -301,7 +304,8 @@
       "license": "Blizzard 2013 (research only)",
       "source": "https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html",
       "status": "NOT-OK",
-      "note": "Dataset license excludes commercial use and voice synthesis products. About 78 other voices are fine-tuned from it and are NOT OK too (docs/MODEL_VETTING.md). Do not add."
+      "note": "Dataset license excludes commercial use and voice synthesis products. About 78 other voices are fine-tuned from it and are NOT OK too (docs/MODEL_VETTING.md). Do not add.",
+      "replacement": "en_US-libritts-high (LibriTTS, CC BY 4.0) or another voice marked OK in audit-models.json."
     },
     {
       "name": "ONNX Runtime WASM binaries",
@@ -341,7 +345,8 @@
       "license": "Apache-2.0 (declared) on Llama-3.2-3B",
       "source": "https://github.com/canopyai/Orpheus-TTS",
       "status": "VERIFY",
-      "note": "Built on Llama 3.2, so Meta's Llama 3.2 Community License also applies (Built with Llama notice, acceptable-use policy, 'Llama' model-name rule). Not an OSI open license; prefer a different model unless the owner accepts it."
+      "note": "Built on Llama 3.2, so Meta's Llama 3.2 Community License also applies (Built with Llama notice, acceptable-use policy, 'Llama' model-name rule). Not an OSI open license; prefer a different model unless the owner accepts it.",
+      "replacement": "Chatterbox (MIT code, Voice Helper only) or Kokoro-82M (Apache-2.0 weights) after checking the Hugging Face license tag."
     },
     {
       "name": "Voice Helper training script / Colab notebook (My Voice Pack)",
@@ -349,7 +354,8 @@
       "license": "to be chosen",
       "source": "to be created",
       "status": "VERIFY",
-      "note": "Must itself use permissive dependencies only (check Piper training stack: piper1-gpl training is GPL). Audit its requirements file with audit-licenses.mjs --root before release."
+      "note": "Must itself use permissive dependencies only (check Piper training stack: piper1-gpl training is GPL). Audit its requirements file with audit-licenses.mjs --root before release.",
+      "replacement": "Document a Colab or local script whose requirements.txt passes scripts/check-licenses; avoid piper1-gpl in anything users run to produce weights for the app."
     }
   ],
   "sections": [

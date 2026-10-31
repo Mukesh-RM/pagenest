@@ -27,7 +27,7 @@ export function run(argv, { cwd = process.cwd(), log = console.log, errLog = con
   }
   const rootArgs = args.root ? ['--root', path.resolve(cwd, args.root)] : [];
   const jobs = [
-    ['licenses', 'audit-licenses.mjs', [...rootArgs, ...(args.write ? ['--write'] : []), ...(args.check ? ['--check'] : [])]],
+    ['licenses', 'audit-licenses.mjs', [...rootArgs, '--check', ...(args.write ? ['--write'] : [])]],
     ['privacy', 'audit-privacy.mjs', [...rootArgs, ...(args.strict ? ['--strict'] : [])]],
     ['models', 'audit-models.mjs', [...rootArgs, ...(args.write ? ['--write'] : []), ...(args.check ? ['--check'] : [])]],
     ['secrets', 'audit-secrets.mjs', [...rootArgs, ...(args.history ? ['--history'] : []), ...(args.builtin ? ['--builtin'] : [])]],

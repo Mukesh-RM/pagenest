@@ -520,6 +520,43 @@ async function registryFill(packages, fetchFn) {
 
 const STATUS_TEXT = { OK: 'OK', 'OK-NOTE': 'OK (see note)', VERIFY: 'VERIFY before use', 'NOT-OK': 'NOT OK' };
 
+const HIDDEN_COPYLEFT_REPLACEMENT =
+  'Use a non-GPL phonemizer path, Web Speech API (Tier 0), or record an owner decision in audit-license-overrides.json after accepting GPL distribution obligations.';
+
+function renderFlaggedSection({ rows, qaRows, planned }) {
+  const out = [];
+  const flagged = [];
+  for (const r of [...rows, ...qaRows].filter((x) => x.status === 'violation')) {
+    flagged.push({
+      kind: r.scope === 'shipped' ? 'shipped output' : `npm (${r.scope})`,
+      name: r.name === 'dist/public' ? r.reason : `${r.name}@${r.version}`,
+      license: r.license,
+      replacement: /hidden copyleft/i.test(r.reason || '') ? HIDDEN_COPYLEFT_REPLACEMENT : 'Remove the dependency, pick a permissive alternative, or add a reviewed entry to scripts/audit-license-overrides.json.',
+    });
+  }
+  for (const item of [...planned.fonts, ...planned.icons, ...planned.dependencies, ...planned.models]) {
+    if (item.status !== 'VERIFY' && item.status !== 'NOT-OK') continue;
+    flagged.push({
+      kind: 'planned',
+      name: item.name,
+      license: item.license,
+      replacement: item.replacement || 'See the Note column in the tables below.',
+    });
+  }
+  out.push('## Flagged items (GPL / non-commercial / unknown)', '');
+  out.push('These must not ship in the PWA without an owner decision. Installed npm packages with a disallowed license fail `scripts/check-licenses`; planned rows are tracked here until resolved.', '');
+  if (!flagged.length) {
+    out.push('None.', '');
+    return out;
+  }
+  out.push('| Kind | Name | License | Free replacement or next step |', '|---|---|---|---|');
+  for (const f of flagged) {
+    out.push(`| ${escapeMd(f.kind)} | ${escapeMd(f.name)} | ${escapeMd(f.license)} | ${escapeMd(f.replacement)} |`);
+  }
+  out.push('');
+  return out;
+}
+
 function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMode = '' }) {
   const out = [];
   const installed = new Set(rows.map((r) => r.name));
@@ -539,7 +576,8 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMod
     out.push(`- OK: ${count('ok')}, OK with note: ${count('note')}, NOT OK: ${count('violation')}`);
   }
   const risks = [...planned.fonts, ...planned.icons, ...planned.dependencies, ...planned.models].filter((r) => r.status === 'VERIFY' || r.status === 'NOT-OK');
-  out.push(`- Planned assets with open risks: ${risks.length} (see the Models table)`, '');
+  out.push(`- Planned assets with open risks: ${risks.length} (see Flagged items)`, '');
+  out.push(...renderFlaggedSection({ rows, qaRows, planned }));
 
   out.push('## Dependencies (npm)', '');
   if (!rootPkg) {
@@ -592,7 +630,7 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMod
     for (const r of items) out.push(`| ${escapeMd(r.name)} | ${escapeMd(r.version)} | ${escapeMd(r.license)} | ${escapeMd(r.source)} | ${STATUS_TEXT[r.status] || r.status} | ${escapeMd(r.note || '')} |`);
     out.push('');
   };
-  table('Fonts', planned.fonts, 'Planned from blueprint section 5.3. Status "planned": no font files are in the repository yet. Fonts must be self-hosted (no Google Fonts requests).');
+  table('Fonts', planned.fonts, 'From blueprint section 5.3. Inter and Literata are bundled under src/ui/fonts/ with OFL license texts. Other reading fonts are planned; all must be self-hosted (no Google Fonts requests).');
   table('Icons', planned.icons);
   const plannedDeps = planned.dependencies.filter((d) => !d.name.split(' / ').some((n) => installed.has(n.trim())) && !installed.has(d.name));
   table('Planned stack (blueprint section 11, not installed yet)', plannedDeps, 'Expected licenses from the upstream projects. Once a package is installed it moves to the npm table above with the license read from the lockfile, and this row disappears.');
@@ -610,7 +648,7 @@ function renderDoc({ rootPkg, rows, mode, planned, overrides, qaRows = [], qaMod
     }
   }
 
-  out.push('## How to check', '', '```bash', 'node scripts/audit-licenses.mjs           # audit installed dependencies', 'node scripts/audit-licenses.mjs --write   # regenerate this file', 'node scripts/audit-licenses.mjs --check   # CI: fail if this file is stale', 'node scripts/audit-models.mjs             # voices, models and model hosts referenced in the code must be OK in the registry', '```', '');
+  out.push('## How to check', '', '```bash', 'scripts/check-licenses                 # CI: disallowed licenses and stale docs/LICENSES.md', 'node scripts/audit-licenses.mjs           # audit installed dependencies', 'node scripts/audit-licenses.mjs --write   # regenerate this file', 'node scripts/audit-licenses.mjs --check   # same checks as scripts/check-licenses', 'node scripts/audit-models.mjs             # voices, models and model hosts referenced in the code must be OK in the registry', '```', '');
   return out.join('\n');
 }
 
