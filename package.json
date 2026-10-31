@@ -28,12 +28,14 @@
     "audit:licenses": "scripts/check-licenses",
     "test:e2e:reader": "playwright test -c src/features/reader/e2e/playwright.config.mjs",
     "test:e2e:narration": "VITE_PN_MOCK_TTS=1 npm run build && playwright test -c src/features/narration/e2e/playwright.config.mjs",
+    "test:e2e:voice-studio": "playwright test -c src/features/voice-studio/e2e/playwright.config.ts",
     "playwright:install": "playwright install --with-deps"
   },
   "dependencies": {
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "foliate-js": "^1.0.1",
+    "jszip": "^3.10.2",
     "mammoth": "^1.13.0",
     "mp4box": "^2.4.1",
     "music-metadata": "^12.3.3",
