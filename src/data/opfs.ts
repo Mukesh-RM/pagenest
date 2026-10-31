@@ -312,6 +312,16 @@ export async function createFileStore(): Promise<FileStore> {
   return root ? new OpfsFileStore(root) : new MemoryFileStore();
 }
 
+/**
+ * Same file store as imports and the data client after {@link bootstrapStorage} (cache-backed when OPFS is blocked).
+ */
+export async function resolveFileStore(): Promise<FileStore> {
+  const { storageBootstrap } = await import('@/app/storage-bootstrap-state');
+  const boot = storageBootstrap();
+  if (boot?.sharedFiles) return boot.sharedFiles;
+  return createFileStore();
+}
+
 /** Conventional OPFS locations, so every feature uses the same layout. */
 export const FilePaths = {
   book: (bookId: string, fileName: string): FileRef => `books/${bookId}/${fileName}`,

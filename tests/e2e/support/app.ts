@@ -50,8 +50,47 @@ export async function skipOnboarding(page: Page): Promise<void> {
 export async function launch(page: Page): Promise<void> {
   await page.goto('./');
   await skipOnboarding(page);
+  await waitForIndexedDbReady(page);
   await expect(primaryNav(page)).toBeVisible();
   await expect(screenHeading(page, 'Library')).toBeVisible();
+}
+
+/**
+ * WebKit can open IndexedDB before Dexie has finished upgrading schema; wait until the `settings` store accepts reads.
+ */
+export async function waitForIndexedDbReady(page: Page): Promise<void> {
+  await page.waitForFunction(async () => {
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (let attempt = 0; attempt < 120; attempt++) {
+      try {
+        const db = await new Promise<IDBDatabase>((resolve, reject) => {
+          const req = indexedDB.open('pagenest');
+          req.onerror = () => reject(req.error);
+          req.onsuccess = () => resolve(req.result);
+        });
+        try {
+          if (!db.objectStoreNames.contains('settings')) {
+            db.close();
+            await sleep(50);
+            continue;
+          }
+          await new Promise<void>((resolve, reject) => {
+            const tx = db.transaction('settings', 'readonly');
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+          });
+          db.close();
+          return true;
+        } catch {
+          db.close();
+          await sleep(50);
+        }
+      } catch {
+        await sleep(50);
+      }
+    }
+    return false;
+  }, null, { timeout: 60_000 });
 }
 
 /** Opens the app WITHOUT skipping onboarding. Only the dedicated onboarding tests use this. */

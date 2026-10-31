@@ -1,4 +1,5 @@
 import type { Frame, Page } from '@playwright/test';
+import { waitForBookText } from './app';
 
 /** Foliate EPUB iframe that actually contains book text (there may be empty blob frames). */
 export async function foliateBookFrame(page: Page, needle?: string): Promise<Frame | undefined> {
@@ -142,16 +143,21 @@ export async function tapWordInFoliate(page: Page, word: string): Promise<void> 
 }
 
 export async function openSampleBookInReader(page: Page): Promise<void> {
+  const waitText = async (timeout: number): Promise<void> => {
+    await waitForBookText(page, { needle: 'Peter', min: 100, timeout }).catch(() =>
+      waitForFoliateBookText(page, { needle: 'Peter', min: 100, timeout }),
+    );
+  };
+
   if (page.url().includes('/read/')) {
-    await waitForFoliateBookText(page, { needle: 'Peter', min: 100, timeout: 120_000 });
+    await waitText(120_000);
     return;
   }
   await page.getByRole('heading', { level: 1, name: 'Library' }).waitFor({ state: 'visible' });
-  const sampleAdd = page
-    .getByRole('region', { name: 'Try a sample book' })
-    .getByRole('button', { name: 'Add the sample book' });
+  const card = page.getByRole('region', { name: /try a sample book/i });
+  const sampleAdd = card.getByRole('button', { name: /add the sample book/i });
   const sampleVisible = await sampleAdd
-    .waitFor({ state: 'visible', timeout: 5000 })
+    .waitFor({ state: 'visible', timeout: 10_000 })
     .then(() => true)
     .catch(() => false);
   if (sampleVisible) {
@@ -159,17 +165,29 @@ export async function openSampleBookInReader(page: Page): Promise<void> {
   } else {
     await page.getByRole('button', { name: /The Tale of Peter Rabbit/i }).first().click({ timeout: 15_000 });
   }
-  await page.waitForURL(/\/read\//, { timeout: 90_000 });
+
+  const opened = await page.waitForURL(/\/(read|listen)\//, { timeout: 90_000 }).then(() => true, () => false);
+  if (!opened) {
+    await page.locator('main li, main [role=listitem]').first().click({ timeout: 15_000 });
+    const detail = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
+    if (await detail.isVisible().catch(() => false)) await detail.click();
+    await page.waitForURL(/\/read\//, { timeout: 90_000 });
+  }
+  if (!page.url().match(/\/read\//)) {
+    throw new Error(`Expected reader URL after opening sample book, got ${page.url()}`);
+  }
+
   await dismissReaderInterstitials(page);
+  await page.getByRole('button', { name: 'Back to library' }).first().waitFor({ timeout: 90_000 }).catch(() => undefined);
   await page.getByRole('heading', { level: 1, name: /Peter Rabbit/i }).waitFor({ timeout: 90_000 }).catch(() => undefined);
   try {
-    await waitForFoliateBookText(page, { needle: 'Peter', min: 100, timeout: 180_000 });
+    await waitText(180_000);
   } catch (first) {
     await page.getByRole('button', { name: 'Back to library' }).click({ timeout: 5000 }).catch(() => undefined);
     await page.getByRole('button', { name: /The Tale of Peter Rabbit/i }).first().click({ timeout: 15_000 });
     await page.waitForURL(/\/read\//, { timeout: 90_000 });
     await dismissReaderInterstitials(page);
-    await waitForFoliateBookText(page, { needle: 'Peter', min: 100, timeout: 180_000 });
+    await waitText(180_000);
   }
 }
 
