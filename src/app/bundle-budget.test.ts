@@ -111,9 +111,9 @@ describe('bundle budget script', () => {
   describe('Decision 15: lazy engine chunks have their own explicit budgets', () => {
     const files = (extra: Record<string, number>) => makeDist({ 'index-abc.js': 50_000, 'index-abc.css': 1_000, ...extra }, page());
 
-    it('lets the pdf.js engine chunk be up to 125 kB, the docx chunk and worker up to 100 kB, and the epub engine up to 60 kB', () => {
+    it('lets the pdf.js engine chunk be up to 131 kB, the docx chunk and worker up to 100 kB, and the epub engine up to 60 kB', () => {
       const { code, out } = run(
-        files({ 'engine-pdf-aa.js': 120_000, 'docx-core-aa.js': 95_000, 'docx.worker-aa.js': 95_000, 'engine-foliate-aa.js': 55_000 }),
+        files({ 'engine-pdf-aa.js': 128_000, 'docx-core-aa.js': 95_000, 'docx.worker-aa.js': 95_000, 'engine-foliate-aa.js': 55_000 }),
       );
       expect(out).toMatch(/ok {3}engine chunk \(pdf\.js\) engine-pdf-aa\.js/);
       expect(out).toMatch(/ok {3}engine worker \(docx\) docx\.worker-aa\.js/);
@@ -121,7 +121,7 @@ describe('bundle budget script', () => {
     });
 
     it.each([
-      ['engine-pdf-aa.js', 130_000],
+      ['engine-pdf-aa.js', 132_000],
       ['docx-core-aa.js', 105_000],
       ['docx.worker-aa.js', 105_000],
       ['engine-foliate-aa.js', 65_000],

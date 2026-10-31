@@ -11,6 +11,10 @@ import type { WarmTask } from './offline-warm';
  * the first visit: the person opens the sample book in the first seconds, before the warm-up runs. Fetch such files once more, by URL
  * (the browser's HTTP cache usually answers); with the worker in control, it stores them.
  */
+export const ENGINE_FOLIATE_CHUNK = /\/assets\/engine-foliate-[^/]+\.js$/;
+export const ENGINE_FOLIATE_FORMATS_CHUNK = /\/assets\/engine-foliate-formats-[^/]+\.js$/;
+export const ENGINE_PDF_CHUNK = /\/assets\/engine-pdf-[^/]+\.js$/;
+
 async function storeLoaded(pattern: RegExp): Promise<void> {
   const names = performance
     .getEntriesByType('resource')
@@ -21,6 +25,12 @@ async function storeLoaded(pattern: RegExp): Promise<void> {
     if (!response.ok) throw new Error(`${name} ${response.status}`);
     await response.arrayBuffer();
   }
+}
+
+/** Re-fetch lazy engine chunks the page already loaded so the service worker can store them (Decision 15). */
+export async function persistLoadedEngineChunks(...patterns: RegExp[]): Promise<void> {
+  const list = patterns.length ? patterns : [ENGINE_FOLIATE_CHUNK, ENGINE_FOLIATE_FORMATS_CHUNK, ENGINE_PDF_CHUNK];
+  for (const pattern of list) await storeLoaded(pattern);
 }
 
 export function offlineWarmTasks(services: Pick<AppServices, 'sampleBook'>): WarmTask[] {
@@ -43,7 +53,11 @@ export function offlineWarmTasks(services: Pick<AppServices, 'sampleBook'>): War
     run: async () => {
       await import('@/engines/epub/epub-engine');
       await import('foliate-js/view.js'); // the same import the engine makes when a book opens
-      await storeLoaded(/\/assets\/engine-foliate-[^/]+\.js$/);
+      await import('foliate-js/mobi.js');
+      await import('foliate-js/fb2.js');
+      await import('foliate-js/comic-book.js');
+      await storeLoaded(ENGINE_FOLIATE_FORMATS_CHUNK);
+      await storeLoaded(ENGINE_FOLIATE_CHUNK);
     },
   });
   tasks.push({
@@ -52,7 +66,7 @@ export function offlineWarmTasks(services: Pick<AppServices, 'sampleBook'>): War
       await import('@/engines/pdf/pdf-engine');
       const { loadPdfjs } = await import('@/engines/pdf/pdfjs');
       await loadPdfjs();
-      await storeLoaded(/\/assets\/engine-pdf-[^/]+\.js$/);
+      await storeLoaded(ENGINE_PDF_CHUNK);
       const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
       const response = await fetch(worker.default, { credentials: 'same-origin' });
       if (!response.ok) throw new Error(`pdf worker ${response.status}`);

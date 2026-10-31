@@ -6,7 +6,8 @@ import { DEFAULT_READER_SETTINGS, loadReaderSettings, READER_FONTS, saveReaderSe
 import { useRouteChrome } from '@/app/route-chrome';
 import { useServices } from '@/app/services-context';
 import { createFileStore, newId } from '@/data';
-import type { ReaderPosition } from '@/engines/reader/types';
+import type { BookmarkRecord, HighlightRecord } from '@/data/schema';
+import type { HighlightColor, ReaderPosition, ReaderSelection } from '@/engines/reader/types';
 import { Button, EmptyState, useTheme, type ReaderSettings } from '@/ui';
 import { ReaderScreen } from '@/ui/screens';
 import { frameThrottle } from '../core/emitter';
@@ -15,7 +16,12 @@ import type { ReaderDocumentExt } from '../core/ext-types';
 import { openStoredBook } from '../core/registry';
 import { welcomeBackFor, chapterNumber, type WelcomeBack } from '../core/welcome';
 import { getReaderRegistry } from '../registry-instance';
+import { addBookmark, addHighlight, applyHighlights, clearHighlightNote, deleteHighlight, highlightsWithNotes, loadBookmarks, loadHighlights, setHighlightNote } from './marks';
+import { MarksSheet } from './MarksSheet';
+import { NoteEditorSheet } from './NoteEditorSheet';
 import { Scrubber } from './Scrubber';
+import { SearchSheet } from './SearchSheet';
+import { SelectionBar } from './SelectionBar';
 import { settingsToAppearance } from './settings-map';
 import { TocSheet } from './TocSheet';
 import './live.css';
@@ -75,6 +81,14 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const [settings, setSettings] = useState<ReaderSettings>({ ...DEFAULT_READER_SETTINGS, theme: appTheme });
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [marksOpen, setMarksOpen] = useState(false);
+  const [marksPanel, setMarksPanel] = useState<'bookmarks' | 'highlights' | 'notes'>('bookmarks');
+  const [noteEditorOpen, setNoteEditorOpen] = useState(false);
+  const [noteTarget, setNoteTarget] = useState<HighlightRecord>();
+  const [selection, setSelection] = useState<ReaderSelection>();
+  const [highlights, setHighlights] = useState<readonly HighlightRecord[]>([]);
+  const [bookmarks, setBookmarks] = useState<readonly BookmarkRecord[]>([]);
   const [phase, setPhase] = useState<Phase>({ status: 'loading', message: `Opening ${book.title}…` });
   const [doc, setDoc] = useState<ReaderDocumentExt>();
   const [position, setPosition] = useState<ReaderPosition>();
@@ -170,6 +184,13 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         setPosition(first);
         setDoc(document_);
         setPhase({ status: 'ready' });
+        void import('@/app/offline-assets')
+          .then((m) =>
+            book.format === 'pdf'
+              ? m.persistLoadedEngineChunks(m.ENGINE_PDF_CHUNK)
+              : m.persistLoadedEngineChunks(m.ENGINE_FOLIATE_CHUNK, m.ENGINE_FOLIATE_FORMATS_CHUNK),
+          )
+          .catch(() => undefined);
         if (resume) setWelcome(welcomeBackFor(document_, first, resume.percent));
         hostRef.current?.focus({ preventScroll: true });
       } catch (error) {
@@ -199,6 +220,52 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     // `resume` and the theme are read once, when the book opens: later changes must not reopen the book.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book.id, book.format, book.fileRef, db, progress, attempt]);
+
+  const notes = useMemo(() => highlightsWithNotes(highlights), [highlights]);
+
+  const openNoteEditor = useCallback((row: HighlightRecord) => {
+    setNoteTarget(row);
+    setNoteEditorOpen(true);
+  }, []);
+
+  useEffect(() => {
+    if (!doc) {
+      setSelection(undefined);
+      setHighlights([]);
+      setBookmarks([]);
+      return undefined;
+    }
+    const refreshMarks = (): void => {
+      void loadHighlights(db, book.id).then((rows) => {
+        applyHighlights(doc, rows);
+        setHighlights(rows);
+      });
+      void loadBookmarks(db, book.id).then(setBookmarks);
+    };
+    refreshMarks();
+    return doc.onSelectionChange(setSelection);
+  }, [doc, book.id, db]);
+
+  useEffect(() => {
+    if (!marksOpen || !doc) return;
+    void loadBookmarks(db, book.id).then(setBookmarks);
+    void loadHighlights(db, book.id).then(setHighlights);
+  }, [marksOpen, doc, book.id, db]);
+
+  const saveBookmark = useCallback(() => {
+    if (!doc) return;
+    const locator = position?.locator ?? doc.position().locator;
+    void addBookmark(db, book.id, locator, doc.currentLabel()).then((row) => setBookmarks((list) => [...list, row]));
+  }, [book.id, db, doc, position]);
+
+  const saveHighlight = useCallback(
+    (color: HighlightColor) => {
+      if (!doc || !selection) return;
+      void addHighlight(db, book.id, doc, selection.range, selection.text, color).then((row) => setHighlights((list) => [...list, row]));
+      setSelection(undefined);
+    },
+    [book.id, db, doc, selection],
+  );
 
   // ---- settings: apply live, keep saved ----
   const onSettingsChange = useCallback(
@@ -230,7 +297,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   );
   const keyHandler = useRef<(key: { key: string; shiftKey: boolean; ctrlKey: boolean; metaKey: boolean; altKey: boolean; preventDefault(): void }, target: EventTarget | null) => void>(() => undefined);
   keyHandler.current = (e, target) => {
-    if (!doc || settingsOpen || tocOpen) return;
+    if (!doc || settingsOpen || tocOpen || searchOpen || marksOpen || noteEditorOpen) return;
     if (target instanceof HTMLElement && (EDITABLE.test(target.tagName) || target.isContentEditable)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const flip = doc.direction === 'rtl';
@@ -258,6 +325,15 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       case 'End':
         e.preventDefault();
         void doc.goToFraction(1);
+        return;
+      case '/':
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      case 'b':
+      case 'B':
+        e.preventDefault();
+        saveBookmark();
         return;
       default:
     }
@@ -305,7 +381,17 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       {...(minutes !== undefined ? { minutesLeftInChapter: minutes } : {})}
     >
       <div className="pn-live">
+        <div className="pn-live__tools" aria-label="Reader tools">
+          <Button iconOnly variant="ghost" icon="search" aria-label="Search in this book" disabled={!doc} onClick={() => setSearchOpen(true)} />
+          <Button iconOnly variant="ghost" icon="bookmark" aria-label="Add bookmark here" disabled={!doc} onClick={saveBookmark} />
+          <Button variant="ghost" aria-label="Bookmarks and highlights" disabled={!doc} onClick={() => setMarksOpen(true)}>
+            Marks
+          </Button>
+        </div>
         <div className="pn-live__stage">
+          {selection ? (
+            <SelectionBar selection={selection} onHighlight={saveHighlight} onDismiss={() => { doc?.clearSelection(); setSelection(undefined); }} />
+          ) : null}
           <div ref={hostRef} className="pn-live__host" tabIndex={-1} role="region" aria-label={`Reading ${book.title}`} />
           {phase.status === 'loading' ? (
             <div className="pn-live__state" role="status" aria-live="polite">
@@ -361,6 +447,65 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         onGoTo={(locator) => {
           setTocOpen(false);
           void doc?.goTo(locator);
+        }}
+      />
+      <SearchSheet
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        doc={doc}
+        onJump={(hit) => {
+          setSearchOpen(false);
+          void doc?.goToRange(hit.range);
+        }}
+      />
+      <MarksSheet
+        open={marksOpen}
+        onClose={() => setMarksOpen(false)}
+        bookmarks={bookmarks}
+        highlights={highlights}
+        notes={notes}
+        panel={marksPanel}
+        onPanelChange={setMarksPanel}
+        onGoToBookmark={(row) => {
+          setMarksOpen(false);
+          void doc?.goTo(row.locator);
+        }}
+        onGoToHighlight={(row) => {
+          setMarksOpen(false);
+          void doc?.goToRange(row.range);
+        }}
+        onEditNote={(row) => {
+          openNoteEditor(row);
+        }}
+      />
+      <NoteEditorSheet
+        open={noteEditorOpen}
+        highlight={noteTarget}
+        onClose={() => setNoteEditorOpen(false)}
+        onSave={(text) => {
+          if (!noteTarget) return;
+          void setHighlightNote(db, noteTarget, text).then((next) => {
+            setHighlights((list) => list.map((h) => (h.id === next.id ? next : h)));
+            setNoteTarget(next);
+            setNoteEditorOpen(false);
+            setMarksPanel('notes');
+          });
+        }}
+        onDeleteNote={() => {
+          if (!noteTarget) return;
+          void clearHighlightNote(db, noteTarget).then((next) => {
+            setHighlights((list) => list.map((h) => (h.id === next.id ? next : h)));
+            setNoteTarget(next);
+            setNoteEditorOpen(false);
+          });
+        }}
+        onDeleteHighlight={() => {
+          if (!noteTarget || !doc) return;
+          void deleteHighlight(db, doc, noteTarget).then(() => {
+            setHighlights((list) => list.filter((h) => h.id !== noteTarget.id));
+            setNoteEditorOpen(false);
+            setNoteTarget(undefined);
+          });
         }}
       />
     </ReaderScreen>

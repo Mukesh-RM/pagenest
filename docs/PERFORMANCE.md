@@ -224,7 +224,7 @@ Dexie); going lower needs a smaller entry, not more deferral.
 
 | Chunk (lazy, never in the first load) | Budget, gzip |
 | --- | --- |
-| `engine-pdf-*` (pdf.js) | 125 kB |
+| `engine-pdf-*` (pdf.js) | 131 kB |
 | `docx-core-*`, `docx.worker-*` | 100 kB each |
 | `engine-foliate-*` (foliate-js) | 60 kB |
 | every other lazy chunk / every other worker | 40 kB / 55 kB |
@@ -233,3 +233,7 @@ Dexie); going lower needs a smaller entry, not more deferral.
 The engines are not precached (`globIgnores` in `vite.config.ts`), so the precache stays small and the 1 MB per-file cap stays. The service
 worker caches them at runtime, cache first, after the first time that format opens; the app warms the sample book into that cache when idle
 after the first Library render (`src/app/offline-warm.ts`). See docs/DEPLOY.md for the service worker rule and DECISIONS.md, Decision 15.
+
+The pdf.js budget was raised from 125 kB to 131 kB gzip when `pdfjs-dist` was upgraded to ≥6.2.108 for
+[GHSA-hq66-cqwq-w95j](https://github.com/advisories/GHSA-hq66-cqwq-w95j) (`enableScripting` stays off in `PdfEngine`). The built
+`engine-pdf-*` chunk measures about 131 kB gzip on 6.4.299; it does not fit the old 125 kB cap.

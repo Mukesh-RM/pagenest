@@ -9,12 +9,13 @@ export const REPO = resolve(here, '..', '..', '..', '..', '..');
 export const FIXTURE_DIR = resolve(REPO, 'src', 'features', 'reader', 'fixtures');
 export const LARGE_PDF = process.env.PN_LARGE_PDF ?? join(tmpdir(), 'pn-large-50mb.pdf');
 
-/** Build the 50 MB synthetic scan PDF once (not committed: too big). Needs python3 with reportlab, Pillow and numpy. */
+/** Build the 50 MB synthetic scan PDF once (not committed: too big). Uses the Node tool in fixtures/tools. */
 export function ensureLargePdf() {
   if (existsSync(LARGE_PDF)) return;
   mkdirSync(dirname(LARGE_PDF), { recursive: true });
-  const r = spawnSync('python3', [join(FIXTURE_DIR, 'tools', 'make_large_pdf.py'), LARGE_PDF, '50'], { stdio: 'inherit' });
-  if (r.status !== 0) throw new Error('Could not build the large PDF fixture (python3 with reportlab, Pillow and numpy is needed).');
+  const tool = join(FIXTURE_DIR, 'tools', 'make-large-pdf.mjs');
+  const r = spawnSync(process.execPath, [tool, LARGE_PDF, '50'], { stdio: 'inherit', cwd: REPO });
+  if (r.status !== 0) throw new Error('Could not build the large PDF fixture (node make-large-pdf.mjs failed).');
 }
 
 /** Fixtures the tests seed. `format` is stated explicitly, like the Library's stored format; `storedName` is deliberately odd for some. */

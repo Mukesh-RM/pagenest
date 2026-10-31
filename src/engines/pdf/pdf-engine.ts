@@ -57,11 +57,9 @@ export class PdfEngine implements ReaderEngineExt {
     const base = this.#options.assetsBaseUrl;
     const task = lib.getDocument({
       range: transport,
-      length: source.file.size,
       rangeChunkSize: 256 * 1024,
       disableAutoFetch: true,
       disableStream: true,
-      isEvalSupported: false,
       enableXfa: false,
       ...(base ? { cMapUrl: `${base}cmaps/`, cMapPacked: true, standardFontDataUrl: `${base}standard_fonts/`, wasmUrl: `${base}wasm/` } : {}),
     });
