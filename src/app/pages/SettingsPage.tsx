@@ -11,6 +11,7 @@ import '../screen-styles';
 
 // Backup, restore and the storage breakdown come from the Library; they are loaded with the screen, not with the app shell.
 const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
+const SyncSettingsPanel = lazy(() => import('../components/SyncSettingsPanel').then((m) => ({ default: m.SyncSettingsPanel })));
 const VoiceStudioSettingsPanel = lazy(() =>
   import('../components/VoiceStudioSettingsPanel').then((m) => ({ default: m.VoiceStudioSettingsPanel })),
 );
@@ -81,6 +82,9 @@ export function SettingsPage() {
       install={<InstallHelp />}
       storage={storage}
     >
+      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+        <SyncSettingsPanel />
+      </Suspense>
       <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
         <VoiceStudioSettingsPanel />
       </Suspense>

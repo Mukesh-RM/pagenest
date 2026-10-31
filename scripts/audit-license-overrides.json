@@ -48,6 +48,12 @@
         "sharp-libvips"
       ],
       "reason": "2026-10-24, Decision 9. Platform packages of sharp@0.35.5 (Apache-2.0; the wasm32 and win32 ones bundle LGPL libvips and say 'Apache-2.0 AND LGPL-3.0-or-later'). Same review as @img/sharp-libvips-*: optional dependencies of the devDependency sharp, used only by scripts/pwa/generate-icons.mjs, absent from the production tree and from dist/ and public/. Fails if one appears in the production tree, dist/ or public/."
+    },
+    {
+      "name": "@pagenest/e2e-port",
+      "version": "*",
+      "license": "MIT",
+      "reason": "2026-10-31. First-party dev helper in scripts/e2e (Playwright port resolution). MIT declared in scripts/e2e/package.json; never shipped in dist/."
     }
   ]
 }
