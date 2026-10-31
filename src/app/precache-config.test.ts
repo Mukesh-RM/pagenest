@@ -35,6 +35,7 @@ describe('service worker precache configuration (vite.config.ts)', () => {
       '**/assets/docx.worker-*.js',
       '**/assets/piper.worker-*.js',
       '**/assets/engine-tts-*.js',
+      '**/assets/engine-bergamot-*.js',
       '**/assets/pdf.worker*.mjs',
     ];
     for (const ignore of list('globIgnores').filter((g) => !ENGINE_IGNORES.includes(g))) {
@@ -56,6 +57,7 @@ describe('service worker precache configuration (vite.config.ts)', () => {
     for (const name of [
       'assets/engine-pdf-abc.js',
       'assets/engine-foliate-abc.js',
+      'assets/engine-bergamot-abc.js',
       'assets/docx-core-abc.js',
       'assets/docx.worker-abc.js',
       'assets/pdf.worker.min-abc.mjs',

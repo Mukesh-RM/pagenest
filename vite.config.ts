@@ -30,7 +30,9 @@ export default defineConfig({
           '**/assets/docx.worker-*.js',
           '**/assets/piper.worker-*.js',
           '**/assets/engine-tts-*.js',
+          '**/assets/engine-bergamot-*.js',
           '**/assets/pdf.worker*.mjs',
+          '**/packs/**',
         ],
         maximumFileSizeToCacheInBytes: 1024 * 1024,
       },
@@ -57,6 +59,7 @@ export default defineConfig({
           if (/node_modules\/foliate-js\/(?:mobi|fb2|comic-book)\.js|node_modules\/foliate-js\/vendor\/fflate\.js/.test(id)) return 'engine-foliate-formats';
           if (id.includes('node_modules/foliate-js')) return 'engine-foliate';
           if (id.includes('node_modules/onnxruntime-web')) return 'engine-tts-ort';
+          if (id.includes('@browsermt/bergamot-translator')) return 'engine-bergamot';
           if (id.includes('node_modules/react-dom')) return 'react-dom';
           if (id.includes('node_modules/dexie')) return 'dexie';
           if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) return 'router';

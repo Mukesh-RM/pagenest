@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "pair": "en-es",
+  "forward": {
+    "hello": "hola",
+    "world": "mundo",
+    "book": "libro",
+    "time": "tiempo",
+    "water": "agua",
+    "friend": "amigo",
+    "good": "bueno",
+    "night": "noche",
+    "day": "día",
+    "wonder": "maravilla",
+    "rabbit": "conejo",
+    "queen": "reina",
+    "king": "rey",
+    "tea": "té",
+    "read": "leer",
+    "dream": "sueño"
+  },
+  "reverse": {
+    "hola": "hello",
+    "mundo": "world",
+    "libro": "book",
+    "tiempo": "time",
+    "agua": "water",
+    "amigo": "friend",
+    "bueno": "good",
+    "noche": "night",
+    "día": "day",
+    "maravilla": "wonder",
+    "conejo": "rabbit",
+    "reina": "queen",
+    "rey": "king",
+    "té": "tea",
+    "leer": "read",
+    "sueño": "dream"
+  }
+}

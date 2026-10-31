@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
+import { isDatabaseClosedError } from '@/data/db-errors';
 import type { LibraryPage, LibraryQuery } from '@/data/library-query';
 import { useServices } from './services-context';
 
@@ -11,8 +12,13 @@ import { useServices } from './services-context';
 export function useLibraryRevision(): object | undefined {
   const { db } = useServices();
   return useLiveQuery(async () => {
-    await Promise.all([db.books.count(), db.collections.count(), db.collectionBooks.count(), db.progress.count()]);
-    return {};
+    try {
+      await Promise.all([db.books.count(), db.collections.count(), db.collectionBooks.count(), db.progress.count()]);
+      return {};
+    } catch (error) {
+      if (isDatabaseClosedError(error)) return {};
+      throw error;
+    }
   }, [db]);
 }
 

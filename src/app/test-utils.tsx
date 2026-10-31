@@ -1,4 +1,4 @@
-import { render, type RenderResult } from '@testing-library/react';
+import { render, cleanup, type RenderResult } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { CoverUrlCache } from '@/data/cover-url';
@@ -23,6 +23,18 @@ export function makeServices(prefix = 'pagenest-test'): AppServices {
   const db = new PageNestDB(`${prefix}-${counter}`);
   const data = createDataClient({ db, workerFactory: () => undefined });
   return { db, progress: new DexieProgressService(db), data, covers: new CoverUrlCache({ load: (id) => data.books.getCover(id) }) };
+}
+
+/** Unmount React trees, flush progress, close the data client, then close Dexie (avoids DatabaseClosedError flakes). */
+export async function closeServices(services: AppServices): Promise<void> {
+  cleanup();
+  await new Promise<void>((resolve) => {
+    queueMicrotask(() => resolve());
+  });
+  services.data.close();
+  if (services.progress instanceof DexieProgressService) await services.progress.dispose();
+  else await services.progress.flush().catch(() => undefined);
+  services.db.close();
 }
 
 /** Put the settings store back to its first-run defaults. */
