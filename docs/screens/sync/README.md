@@ -4,7 +4,7 @@ Report for branch `feature/sync` (off `feature/integrate-2`).
 
 ## Commit
 
-- **SHA:** `ac65a93` (full: `ac65a93…` on branch `feature/sync`)
+- **SHA:** `1992db0c029bc543f16907fa73240bf55f69d978`
 
 ## Bundle sizes (gzip, production build)
 
