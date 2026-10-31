@@ -68,7 +68,7 @@ const core =
     ? [lighthouseScreens, playwrightStable]
     : mode === 'gates'
       ? gates
-      : [lighthouseScreens, lighthouseScenarios, playwrightStable, ...gates.slice(0, -1)];
+      : [lighthouseScenarios, lighthouseScreens, playwrightStable, ...gates.slice(0, -1)];
 const steps = [...vitestStep, ...core];
 
 let failed = 0;

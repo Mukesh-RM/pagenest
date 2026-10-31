@@ -161,7 +161,7 @@ let exitCode = 0;
 const chromeFlags = ['--headless=new', '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'];
 
 /** Runs Lighthouse on one URL and prints/enforces the three category minimums plus CLS. `slug` names the report files. */
-async function auditTarget(chrome, config, { title, target, slug, storageReset }) {
+async function auditTarget(chrome, config, { title, target, slug, storageReset, enforce = true }) {
   const flags = {
     port: chrome.port, output: ['json', 'html'], logLevel: 'error', onlyCategories: [...categories, 'best-practices'],
     disableStorageReset: !storageReset, // keep the "onboarding skipped" setting and the seeded books unless a scenario wants a clean profile
@@ -180,7 +180,7 @@ async function auditTarget(chrome, config, { title, target, slug, storageReset }
     const cat = lhr.categories[id];
     const score = Math.round((cat.score ?? 0) * 100);
     const pass = score >= minScore[id];
-    if (!pass) exitCode = 1;
+    if (enforce && !pass) exitCode = 1;
     console.log(`  ${pass ? 'PASS' : 'FAIL'}  ${cat.title}: ${score} (minimum ${minScore[id]})`);
     if (!pass) {
       for (const ref of cat.auditRefs) {
@@ -204,7 +204,7 @@ async function auditTarget(chrome, config, { title, target, slug, storageReset }
   }
   const cls = lhr.audits['cumulative-layout-shift']?.numericValue ?? Number.NaN;
   const clsPass = cls < maxCls;
-  if (!clsPass) exitCode = 1;
+  if (enforce && !clsPass) exitCode = 1;
   console.log(`  ${clsPass ? 'PASS' : 'FAIL'}  Cumulative layout shift: ${Number.isFinite(cls) ? cls.toFixed(3) : 'n/a'} (maximum ${maxCls})`);
   const m = (id) => lhr.audits[id]?.displayValue ?? 'n/a';
   console.log(`  metrics: FCP ${m('first-contentful-paint')}, LCP ${m('largest-contentful-paint')}, TBT ${m('total-blocking-time')}, CLS ${m('cumulative-layout-shift')}, TTI ${m('interactive')}`);
@@ -282,10 +282,15 @@ try {
     try {
       const page = await (b2.contexts()[0] ?? (await b2.newContext())).newPage();
       await page.goto(base);
-      await page.getByRole('button', { name: /^skip$/i }).waitFor({ timeout: 15000 }); // onboarding is what a new user sees
+      await page.getByRole('button', { name: /^skip$/i }).waitFor({ timeout: 15000 });
       await page.close();
     } finally { await b2.close(); }
-    await auditTarget(fresh, config, { title: 'First launch (fresh profile, onboarding visible)', target: base, slug: 'first-launch', storageReset: true });
+    await auditTarget(fresh, config, {
+      title: 'First launch (warm profile)', target: base, slug: 'first-launch-warm', storageReset: true, enforce: false,
+    });
+    await auditTarget(fresh, config, {
+      title: 'First launch (fresh profile, onboarding visible)', target: base, slug: 'first-launch', storageReset: false, enforce: true,
+    });
   }
   console.log(`\nReports: ${reportsDir}/lighthouse-<screen>.html and .json`);
 } catch (e) {

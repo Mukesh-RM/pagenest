@@ -12,16 +12,15 @@ if (!root) throw new Error('Missing #root element in index.html.');
 // Inter first; Literata and the service worker after the shell can paint.
 preloadCriticalFonts();
 
+createRoot(root).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
+
 void import('./app/storage-bootstrap')
   .then(({ bootstrapStorage }) => bootstrapStorage())
   .then(() => {
-    createRoot(root).render(
-      <StrictMode>
-        <App />
-      </StrictMode>,
-    );
-    whenIdle(() => {
-      preloadHeadingFonts();
-      registerServiceWorker();
-    });
+    whenIdle(() => preloadHeadingFonts(), 10_000);
+    whenIdle(() => registerServiceWorker(), 10_000);
   });

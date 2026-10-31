@@ -5,14 +5,15 @@ import { test, expect, type Page } from '@playwright/test';
 import { launchFresh, skipOnboarding, themeOption, gotoTab, launch } from './support/app';
 import { seedLibrary } from './support/library';
 
+async function dismissTransientUi(page: Page): Promise<void> {
+  const gotIt = page.getByRole('button', { name: /^got it$/i });
+  if (await gotIt.isVisible().catch(() => false)) await gotIt.click();
+}
+
 async function waitForLibraryBook(page: Page, title: string | RegExp): Promise<void> {
-  const item = page.getByRole('listitem').filter({ hasText: title }).first();
-  for (let i = 0; i < 40; i++) {
-    if (await item.isVisible()) return;
-    await page.mouse.wheel(0, 600);
-    await page.waitForTimeout(100);
-  }
-  await expect(item).toBeVisible({ timeout: 5_000 });
+  await dismissTransientUi(page);
+  const pattern = title instanceof RegExp ? title : new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  await expect(page.getByRole('main').getByRole('button', { name: pattern }).first()).toBeVisible({ timeout: 20_000 });
 }
 
 /** Must match `SEED_AUDIO_BOOK_ID` in src/features/player/seed/seed-audiobook.ts */
@@ -140,6 +141,7 @@ async function finishOnboarding(page: Page): Promise<void> {
 
 async function capture(page: Page, screen: string, width: number, theme: string): Promise<void> {
   mkdirSync(OUT, { recursive: true });
+  await dismissTransientUi(page);
   await page.screenshot({ path: shotPath(screen, width, theme), fullPage: true });
 }
 
@@ -182,7 +184,7 @@ test.describe(`Design Review 3 screenshots (${phase})`, () => {
         await pastOnboarding(page);
         await seedLibrary(page, { count: 12 });
         await setAppTheme(page, theme);
-        await waitForLibraryBook(page, 'Book 00011');
+        await waitForLibraryBook(page, 'Book 00001');
         await capture(page, 'library-grid', width, theme);
       });
 
@@ -194,7 +196,7 @@ test.describe(`Design Review 3 screenshots (${phase})`, () => {
           localStorage.setItem('library.prefs', JSON.stringify({ view: 'list', sort: 'recent' }));
         });
         await setAppTheme(page, theme);
-        await waitForLibraryBook(page, 'Book 00011');
+        await waitForLibraryBook(page, 'Book 00001');
         await capture(page, 'library-list', width, theme);
       });
 
