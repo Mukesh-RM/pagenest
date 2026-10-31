@@ -24,7 +24,7 @@ test('the sample book opens on real text, not a placeholder', async ({ page }) =
   }
   expect(page.url(), 'the sample book is text: it must open in the reader, not the audio player').toMatch(/\/read\//);
 
-  await expect(page.getByRole('button', { name: 'Back to library' })).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByRole('button', { name: 'Back to library' }).first()).toBeVisible({ timeout: 90_000 });
   await waitForBookText(page, { min: 200, timeout: 120_000 });
 
   const report = await readerTextReport(page);
