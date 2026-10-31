@@ -4,7 +4,7 @@ Report for branch `feature/sync` (off `feature/integrate-2`).
 
 ## Commit
 
-- **SHA:** `1992db0c029bc543f16907fa73240bf55f69d978`
+- **SHA:** `3b8ecb6` (tip of `feature/sync`; feature commit `1992db0`)
 
 ## Bundle sizes (gzip, production build)
 
