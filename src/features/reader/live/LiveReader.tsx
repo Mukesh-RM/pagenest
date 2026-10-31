@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { isLocatorForMode, type Locator } from '@/app/contracts';
 import type { BookScreenProps } from '@/app/components/BookSummary';
@@ -24,6 +24,8 @@ import { SelectionBar } from './SelectionBar';
 import { settingsToAppearance } from './settings-map';
 import { TocSheet } from './TocSheet';
 import './live.css';
+
+const ReaderNarrationHost = lazy(() => import('@/features/narration/ReaderNarrationHost'));
 
 type Phase =
   | { readonly status: 'loading'; readonly message: string }
@@ -424,6 +426,11 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
             }}
           />
         </div>
+        {phase.status === 'ready' && doc && doc.layout === 'reflow' ? (
+          <Suspense fallback={null}>
+            <ReaderNarrationHost book={book} doc={doc} hostRef={hostRef} />
+          </Suspense>
+        ) : null}
         <div className="pn-visually-hidden" role="status" aria-live="polite">
           {announce}
         </div>

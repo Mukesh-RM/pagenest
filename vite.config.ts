@@ -28,6 +28,8 @@ export default defineConfig({
           '**/assets/engine-*.js',
           '**/assets/docx-core-*.js',
           '**/assets/docx.worker-*.js',
+          '**/assets/piper.worker-*.js',
+          '**/assets/engine-tts-*.js',
           '**/assets/pdf.worker*.mjs',
         ],
         maximumFileSizeToCacheInBytes: 1024 * 1024,
@@ -41,6 +43,10 @@ export default defineConfig({
   // compiled separately, which breaks that task up; the total first-load size is unchanged (they are modulepreloaded).
   build: {
     rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        narrationE2e: fileURLToPath(new URL('./narration-e2e.html', import.meta.url)),
+      },
       output: {
         manualChunks(id: string) {
           // Lazy engines get names the bundle check and the precache rules can recognise (Decision 15).
@@ -50,6 +56,7 @@ export default defineConfig({
           // MOBI, FB2 and comic books are separate lazy downloads: a plain reflowable book never loads them.
           if (/node_modules\/foliate-js\/(?:mobi|fb2|comic-book)\.js|node_modules\/foliate-js\/vendor\/fflate\.js/.test(id)) return 'engine-foliate-formats';
           if (id.includes('node_modules/foliate-js')) return 'engine-foliate';
+          if (id.includes('node_modules/onnxruntime-web')) return 'engine-tts-ort';
           if (id.includes('node_modules/react-dom')) return 'react-dom';
           if (id.includes('node_modules/dexie')) return 'dexie';
           if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run')) return 'router';

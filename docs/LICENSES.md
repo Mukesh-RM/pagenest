@@ -8,10 +8,10 @@ Allowed: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, OFL-1.1, CC0-1.0, 0BS
 
 ## Summary
 
-- Installed packages audited: 737 (73 production, 664 development)
+- Installed packages audited: 753 (91 production, 662 development)
 - Source of data: package-lock.json + node_modules
 - QA toolchain (`tests/`, dev only, never shipped): 210 packages from package-lock.json; OK: 207, OK with note: 3, NOT OK: 0
-- OK: 708, OK with note: 29, NOT OK: 0
+- OK: 724, OK with note: 29, NOT OK: 0
 - Planned assets with open risks: 6 (see Flagged items)
 
 ## Flagged items (GPL / non-commercial / unknown)
@@ -128,7 +128,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @babel/template | 7.29.7 | dev | MIT | https://www.npmjs.com/package/@babel/template/v/7.29.7 | OK |
 | @babel/traverse | 7.29.10 | dev | MIT | https://www.npmjs.com/package/@babel/traverse/v/7.29.10 | OK |
 | @babel/types | 7.29.11 | dev | MIT | https://www.npmjs.com/package/@babel/types/v/7.29.11 | OK |
-| @borewit/text-codec | 0.2.2 | prod | MIT | https://www.npmjs.com/package/@borewit/text-codec/v/0.2.2 | OK |
+| @borewit/text-codec | 0.2.3 | prod | MIT | https://www.npmjs.com/package/@borewit/text-codec/v/0.2.3 | OK |
 | @csstools/color-helpers | 5.1.0 | dev | MIT-0 | https://www.npmjs.com/package/@csstools/color-helpers/v/5.1.0 | OK |
 | @csstools/css-calc | 2.1.4 | dev | MIT | https://www.npmjs.com/package/@csstools/css-calc/v/2.1.4 | OK |
 | @csstools/css-color-parser | 3.1.0 | dev | MIT | https://www.npmjs.com/package/@csstools/css-color-parser/v/3.1.0 | OK |
@@ -226,6 +226,15 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @nodelib/fs.stat | 2.0.5 | dev | MIT | https://www.npmjs.com/package/@nodelib/fs.stat/v/2.0.5 | OK |
 | @nodelib/fs.walk | 1.2.8 | dev | MIT | https://www.npmjs.com/package/@nodelib/fs.walk/v/1.2.8 | OK |
 | @playwright/test | 1.64.1 | dev | Apache-2.0 | https://www.npmjs.com/package/@playwright/test/v/1.64.1 | OK |
+| @protobufjs/aspromise | 1.1.2 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/aspromise/v/1.1.2 | OK |
+| @protobufjs/base64 | 1.1.2 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/base64/v/1.1.2 | OK |
+| @protobufjs/codegen | 2.0.5 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/codegen/v/2.0.5 | OK |
+| @protobufjs/eventemitter | 1.1.1 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/eventemitter/v/1.1.1 | OK |
+| @protobufjs/fetch | 1.1.1 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/fetch/v/1.1.1 | OK |
+| @protobufjs/float | 1.0.2 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/float/v/1.0.2 | OK |
+| @protobufjs/path | 1.1.2 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/path/v/1.1.2 | OK |
+| @protobufjs/pool | 1.1.0 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/pool/v/1.1.0 | OK |
+| @protobufjs/utf8 | 1.1.2 | prod | BSD-3-Clause | https://www.npmjs.com/package/@protobufjs/utf8/v/1.1.2 | OK |
 | @rolldown/pluginutils | 1.0.0-rc.3 | dev | MIT | https://www.npmjs.com/package/@rolldown/pluginutils/v/1.0.0-rc.3 | OK |
 | @rollup/plugin-babel | 6.1.0 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-babel/v/6.1.0 | OK |
 | @rollup/plugin-node-resolve | 16.0.3 | dev | MIT | https://www.npmjs.com/package/@rollup/plugin-node-resolve/v/16.0.3 | OK |
@@ -261,7 +270,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @testing-library/jest-dom | 6.9.1 | dev | MIT | https://www.npmjs.com/package/@testing-library/jest-dom/v/6.9.1 | OK |
 | @testing-library/react | 16.3.3 | dev | MIT | https://www.npmjs.com/package/@testing-library/react/v/16.3.3 | OK |
 | @testing-library/user-event | 14.6.8 | dev | MIT | https://www.npmjs.com/package/@testing-library/user-event/v/14.6.8 | OK |
-| @tokenizer/inflate | 0.5.2 | prod | MIT | https://www.npmjs.com/package/@tokenizer/inflate/v/0.5.2 | OK |
+| @tokenizer/inflate | 0.6.0 | prod | MIT | https://www.npmjs.com/package/@tokenizer/inflate/v/0.6.0 | OK |
 | @tokenizer/token | 0.3.0 | prod | MIT | https://www.npmjs.com/package/@tokenizer/token/v/0.3.0 | OK |
 | @trickfilm400/rollup-plugin-off-main-thread | 3.0.0-pre1 | dev | Apache-2.0 | https://www.npmjs.com/package/@trickfilm400/rollup-plugin-off-main-thread/v/3.0.0-pre1 | OK |
 | @types/aria-query | 5.0.4 | dev | MIT | https://www.npmjs.com/package/@types/aria-query/v/5.0.4 | OK |
@@ -273,7 +282,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | @types/deep-eql | 4.0.2 | dev | MIT | https://www.npmjs.com/package/@types/deep-eql/v/4.0.2 | OK |
 | @types/estree | 1.0.9 | dev | MIT | https://www.npmjs.com/package/@types/estree/v/1.0.9 | OK |
 | @types/json-schema | 7.0.15 | dev | MIT | https://www.npmjs.com/package/@types/json-schema/v/7.0.15 | OK |
-| @types/node | 20.19.43 | dev | MIT | https://www.npmjs.com/package/@types/node/v/20.19.43 | OK |
+| @types/node | 20.19.43 | prod | MIT | https://www.npmjs.com/package/@types/node/v/20.19.43 | OK |
 | @types/prop-types | 15.7.15 | dev | MIT | https://www.npmjs.com/package/@types/prop-types/v/15.7.15 | OK |
 | @types/react | 18.3.31 | dev | MIT | https://www.npmjs.com/package/@types/react/v/18.3.31 | OK |
 | @types/react-dom | 18.3.7 | dev | MIT | https://www.npmjs.com/package/@types/react-dom/v/18.3.7 | OK |
@@ -427,11 +436,12 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | fdir | 6.5.0 | dev | MIT | https://www.npmjs.com/package/fdir/v/6.5.0 | OK |
 | fdir | 6.5.0 | dev | MIT | https://www.npmjs.com/package/fdir/v/6.5.0 | OK |
 | file-entry-cache | 8.0.0 | dev | MIT | https://www.npmjs.com/package/file-entry-cache/v/8.0.0 | OK |
-| file-type | 22.2.0 | prod | MIT | https://www.npmjs.com/package/file-type/v/22.2.0 | OK |
+| file-type | 22.3.0 | prod | MIT | https://www.npmjs.com/package/file-type/v/22.3.0 | OK |
 | filelist | 1.0.6 | dev | Apache-2.0 | https://www.npmjs.com/package/filelist/v/1.0.6 | OK |
 | fill-range | 7.1.1 | dev | MIT | https://www.npmjs.com/package/fill-range/v/7.1.1 | OK |
 | find-up | 5.0.0 | dev | MIT | https://www.npmjs.com/package/find-up/v/5.0.0 | OK |
 | flat-cache | 4.0.1 | dev | MIT | https://www.npmjs.com/package/flat-cache/v/4.0.1 | OK |
+| flatbuffers | 25.9.23 | prod | Apache-2.0 | https://www.npmjs.com/package/flatbuffers/v/25.9.23 | OK |
 | flatted | 3.4.4 | dev | ISC | https://www.npmjs.com/package/flatted/v/3.4.4 | OK |
 | foliate-js | 1.0.1 | prod | MIT | https://www.npmjs.com/package/foliate-js/v/1.0.1 | OK |
 | for-each | 0.3.5 | dev | MIT | https://www.npmjs.com/package/for-each/v/0.3.5 | OK |
@@ -457,6 +467,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | globalthis | 1.0.4 | dev | MIT | https://www.npmjs.com/package/globalthis/v/1.0.4 | OK |
 | gopd | 1.2.0 | dev | MIT | https://www.npmjs.com/package/gopd/v/1.2.0 | OK |
 | graceful-fs | 4.2.11 | dev | ISC | https://www.npmjs.com/package/graceful-fs/v/4.2.11 | OK |
+| guid-typescript | 1.0.9 | prod | ISC | https://www.npmjs.com/package/guid-typescript/v/1.0.9 | OK |
 | has-bigints | 1.1.0 | dev | MIT | https://www.npmjs.com/package/has-bigints/v/1.1.0 | OK |
 | has-flag | 4.0.0 | dev | MIT | https://www.npmjs.com/package/has-flag/v/4.0.0 | OK |
 | has-property-descriptors | 1.0.2 | dev | MIT | https://www.npmjs.com/package/has-property-descriptors/v/1.0.2 | OK |
@@ -538,6 +549,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | locate-path | 6.0.0 | dev | MIT | https://www.npmjs.com/package/locate-path/v/6.0.0 | OK |
 | lodash.debounce | 4.0.8 | dev | MIT | https://www.npmjs.com/package/lodash.debounce/v/4.0.8 | OK |
 | lodash.merge | 4.6.2 | dev | MIT | https://www.npmjs.com/package/lodash.merge/v/4.6.2 | OK |
+| long | 5.3.2 | prod | Apache-2.0 | https://www.npmjs.com/package/long/v/5.3.2 | OK |
 | loose-envify | 1.4.0 | prod | MIT | https://www.npmjs.com/package/loose-envify/v/1.4.0 | OK |
 | lop | 0.4.2 | prod | BSD-2-Clause | https://www.npmjs.com/package/lop/v/0.4.2 | OK |
 | loupe | 3.2.1 | dev | MIT | https://www.npmjs.com/package/loupe/v/3.2.1 | OK |
@@ -559,7 +571,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | minipass | 7.1.3 | dev | BlueOak-1.0.0 | https://www.npmjs.com/package/minipass/v/7.1.3 | OK |
 | mp4box | 2.4.1 | prod | BSD-3-Clause | https://www.npmjs.com/package/mp4box/v/2.4.1 | OK |
 | ms | 2.1.3 | prod | MIT | https://www.npmjs.com/package/ms/v/2.1.3 | OK |
-| music-metadata | 12.3.0 | prod | MIT | https://www.npmjs.com/package/music-metadata/v/12.3.0 | OK |
+| music-metadata | 12.3.3 | prod | MIT | https://www.npmjs.com/package/music-metadata/v/12.3.3 | OK |
 | mz | 2.7.0 | dev | MIT | https://www.npmjs.com/package/mz/v/2.7.0 | OK |
 | nanoid | 3.3.20 | dev | MIT | https://www.npmjs.com/package/nanoid/v/3.3.20 | OK |
 | natural-compare | 1.4.0 | dev | MIT | https://www.npmjs.com/package/natural-compare/v/1.4.0 | OK |
@@ -572,6 +584,8 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | object-inspect | 1.13.4 | dev | MIT | https://www.npmjs.com/package/object-inspect/v/1.13.4 | OK |
 | object-keys | 1.1.1 | dev | MIT | https://www.npmjs.com/package/object-keys/v/1.1.1 | OK |
 | object.assign | 4.1.7 | dev | MIT | https://www.npmjs.com/package/object.assign/v/4.1.7 | OK |
+| onnxruntime-common | 1.31.1 | prod | MIT | https://www.npmjs.com/package/onnxruntime-common/v/1.31.1 | OK |
+| onnxruntime-web | 1.31.1 | prod | MIT | https://www.npmjs.com/package/onnxruntime-web/v/1.31.1 | OK |
 | option | 0.2.4 | prod | BSD-2-Clause | https://www.npmjs.com/package/option/v/0.2.4 | OK |
 | optionator | 0.9.4 | dev | MIT | https://www.npmjs.com/package/optionator/v/0.9.4 | OK |
 | own-keys | 1.0.2 | dev | MIT | https://www.npmjs.com/package/own-keys/v/1.0.2 | OK |
@@ -595,6 +609,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | picomatch | 4.0.7 | dev | MIT | https://www.npmjs.com/package/picomatch/v/4.0.7 | OK |
 | picomatch | 4.0.7 | dev | MIT | https://www.npmjs.com/package/picomatch/v/4.0.7 | OK |
 | pirates | 4.0.7 | dev | MIT | https://www.npmjs.com/package/pirates/v/4.0.7 | OK |
+| platform | 1.3.6 | prod | MIT | https://www.npmjs.com/package/platform/v/1.3.6 | OK |
 | playwright | 1.64.1 | dev | Apache-2.0 | https://www.npmjs.com/package/playwright/v/1.64.1 | OK |
 | playwright-core | 1.64.1 | dev | Apache-2.0 | https://www.npmjs.com/package/playwright-core/v/1.64.1 | OK |
 | possible-typed-array-names | 1.1.0 | dev | MIT | https://www.npmjs.com/package/possible-typed-array-names/v/1.1.0 | OK |
@@ -610,6 +625,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | pretty-bytes | 6.1.1 | dev | MIT | https://www.npmjs.com/package/pretty-bytes/v/6.1.1 | OK |
 | pretty-format | 27.5.1 | dev | MIT | https://www.npmjs.com/package/pretty-format/v/27.5.1 | OK |
 | process-nextick-args | 2.0.1 | prod | MIT | https://www.npmjs.com/package/process-nextick-args/v/2.0.1 | OK |
+| protobufjs | 7.6.6 | prod | BSD-3-Clause | https://www.npmjs.com/package/protobufjs/v/7.6.6 | OK |
 | punycode | 2.3.1 | dev | MIT | https://www.npmjs.com/package/punycode/v/2.3.1 | OK |
 | queue-microtask | 1.2.3 | dev | MIT | https://www.npmjs.com/package/queue-microtask/v/1.2.3 | OK |
 | react | 18.3.1 | prod | MIT | https://www.npmjs.com/package/react/v/18.3.1 | OK |
@@ -680,7 +696,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | strip-indent | 3.0.0 | dev | MIT | https://www.npmjs.com/package/strip-indent/v/3.0.0 | OK |
 | strip-json-comments | 3.1.1 | dev | MIT | https://www.npmjs.com/package/strip-json-comments/v/3.1.1 | OK |
 | strip-literal | 3.1.0 | dev | MIT | https://www.npmjs.com/package/strip-literal/v/3.1.0 | OK |
-| strtok3 | 10.6.2 | prod | MIT | https://www.npmjs.com/package/strtok3/v/10.6.2 | OK |
+| strtok3 | 10.6.3 | prod | MIT | https://www.npmjs.com/package/strtok3/v/10.6.3 | OK |
 | sucrase | 3.35.1 | dev | MIT | https://www.npmjs.com/package/sucrase/v/3.35.1 | OK |
 | supports-color | 7.2.0 | dev | MIT | https://www.npmjs.com/package/supports-color/v/7.2.0 | OK |
 | supports-preserve-symlinks-flag | 1.0.0 | dev | MIT | https://www.npmjs.com/package/supports-preserve-symlinks-flag/v/1.0.0 | OK |
@@ -717,7 +733,7 @@ These must not ship in the PWA without an owner decision. Installed npm packages
 | uint8array-extras | 1.6.0 | prod | MIT | https://www.npmjs.com/package/uint8array-extras/v/1.6.0 | OK |
 | unbox-primitive | 1.1.0 | dev | MIT | https://www.npmjs.com/package/unbox-primitive/v/1.1.0 | OK |
 | underscore | 1.13.8 | prod | MIT | https://www.npmjs.com/package/underscore/v/1.13.8 | OK |
-| undici-types | 6.21.0 | dev | MIT | https://www.npmjs.com/package/undici-types/v/6.21.0 | OK |
+| undici-types | 6.21.0 | prod | MIT | https://www.npmjs.com/package/undici-types/v/6.21.0 | OK |
 | unicode-canonical-property-names-ecmascript | 2.0.1 | dev | MIT | https://www.npmjs.com/package/unicode-canonical-property-names-ecmascript/v/2.0.1 | OK |
 | unicode-match-property-ecmascript | 2.0.0 | dev | MIT | https://www.npmjs.com/package/unicode-match-property-ecmascript/v/2.0.0 | OK |
 | unicode-match-property-value-ecmascript | 2.2.1 | dev | MIT | https://www.npmjs.com/package/unicode-match-property-value-ecmascript/v/2.2.1 | OK |
@@ -1067,8 +1083,6 @@ Expected licenses from the upstream projects. Once a package is installed it mov
 | radix-ui / @radix-ui/* | latest | MIT | https://www.npmjs.com/org/radix-ui | OK |  |
 | comlink | latest | Apache-2.0 | https://www.npmjs.com/package/comlink | OK |  |
 | minisearch | latest | MIT | https://www.npmjs.com/package/minisearch | OK | Planned only: not yet in package.json or the lockfile on any branch (checked Oct 24, 2026); latest 7.2.0 is MIT with no dependencies. |
-| onnxruntime-web | latest | MIT | https://www.npmjs.com/package/onnxruntime-web | OK | WASM and WebGPU files must be self-hosted. |
-| jszip | 3.x | MIT OR GPL-3.0-or-later | https://www.npmjs.com/package/jszip | OK (see note) | Dual license; InkQuiet uses it under MIT. State this choice in the license notices. |
 | @lhci/cli | latest | Apache-2.0 | https://www.npmjs.com/package/@lhci/cli | OK | dev. |
 
 ## Models and voice engines (planned)

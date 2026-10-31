@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/check-bundle.mjs && node scripts/check-no-seed-in-dist.mjs",
+    "postinstall": "node scripts/copy-ort-wasm.mjs",
     "build:seed-audio": "VITE_PN_SEED_AUDIO=1 npm run build",
     "preview": "vite preview",
     "lint": "eslint .",
@@ -26,6 +27,7 @@
     "check:licenses": "scripts/check-licenses",
     "audit:licenses": "scripts/check-licenses",
     "test:e2e:reader": "playwright test -c src/features/reader/e2e/playwright.config.mjs",
+    "test:e2e:narration": "VITE_PN_MOCK_TTS=1 npm run build && playwright test -c src/features/narration/e2e/playwright.config.mjs",
     "playwright:install": "playwright install --with-deps"
   },
   "dependencies": {
@@ -35,6 +37,7 @@
     "mammoth": "^1.13.0",
     "mp4box": "^2.4.1",
     "music-metadata": "^12.3.3",
+    "onnxruntime-web": "^1.22.0",
     "pdfjs-dist": "^5.6.205",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
