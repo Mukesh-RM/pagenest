@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as OpfsModule from '@/data/opfs';
 import { getDb } from '@/data/db';
 import { openOpfsRoot } from '@/data/opfs';
 import { bootstrapStorage } from './storage-bootstrap';
 import { storageBootstrap } from './storage-bootstrap-state';
 
 vi.mock('@/data/opfs', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/data/opfs')>();
+  const actual = await importOriginal<typeof OpfsModule>();
   return { ...actual, openOpfsRoot: vi.fn() };
 });
 

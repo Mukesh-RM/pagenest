@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import { skipOnboarding } from './support/app';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -15,7 +15,7 @@ function readFixture(path: string): Buffer {
 }
 
 async function importOne(
-  page: import('@playwright/test').Page,
+  page: Page,
   file: { name: string; mimeType: string; buffer: Buffer },
 ): Promise<void> {
   await page.goto('/');
