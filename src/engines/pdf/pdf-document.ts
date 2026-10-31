@@ -16,6 +16,7 @@ import type { KeyboardLike, ReaderDocumentExt } from '@/features/reader/core/ext
 import { reflowAt, sectionsOfRange } from '@/features/reader/core/ranges';
 import { searchText } from '@/features/reader/core/search';
 import { prefersReducedMotion } from '@/ui/utils/motion';
+import { loadPdfjs } from './pdfjs';
 import { PageLayout, type PageAnchor } from './page-layout';
 import { buildPageText, offsetOfItemChar, spansForRange, type PageText } from './page-text';
 import { RenderQueue } from './render-queue';
@@ -360,7 +361,7 @@ export class PdfReaderDocument implements ReaderDocumentExt {
     this.#scroller.remove();
     for (const emitter of [this.#position, this.#selection, this.#taps, this.#keys, this.#hlTaps, this.#tocChange]) emitter.clear();
     this.#destroyLoading();
-    await this.#pdf.destroy().catch(() => undefined);
+    this.#destroyLoading();
   }
 
   // ---- layout and rendering ----
@@ -563,7 +564,7 @@ export class PdfReaderDocument implements ReaderDocumentExt {
         key: `x:${view.page}`,
         priority: distance + 0.5,
         run: async (signal) => {
-          const [page, lib] = await Promise.all([this.#getPage(view.page), import('pdfjs-dist')]);
+          const [page, lib] = await Promise.all([this.#getPage(view.page), loadPdfjs()]);
           if (signal.aborted || this.#closed || !this.#views.has(view.page)) return;
           view.textLayer?.cancel();
           view.text.replaceChildren();
@@ -599,7 +600,13 @@ export class PdfReaderDocument implements ReaderDocumentExt {
       view.links.replaceChildren();
       for (const a of annotations as Array<{ subtype?: string; rect?: number[]; url?: string; dest?: unknown; unsafeUrl?: string }>) {
         if (a.subtype !== 'Link' || !a.rect) continue;
-        const [x1, y1, x2, y2] = viewport.convertToViewportRectangle(a.rect) as [number, number, number, number];
+        const r = a.rect as [number, number, number, number];
+        const [vx1, vy1] = viewport.convertToViewportPoint(r[0], r[1]);
+        const [vx2, vy2] = viewport.convertToViewportPoint(r[2], r[3]);
+        const x1 = Math.min(vx1, vx2);
+        const y1 = Math.min(vy1, vy2);
+        const x2 = Math.max(vx1, vx2);
+        const y2 = Math.max(vy1, vy2);
         const link = document.createElement('a');
         link.className = 'pn-pdf-link';
         link.style.left = `${Math.min(x1, x2)}px`;

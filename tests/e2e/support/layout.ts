@@ -108,9 +108,14 @@ export async function unreachableControls(page: Page): Promise<Problem[]> {
         // Scroll the way a user can: the scrollable (auto/scroll) ancestors, then the page. scrollIntoView would also move
         // overflow:hidden ancestors (the dialog itself), which no user can do, and push other controls off screen.
         for (let p: Element | null = probe.parentElement; p; p = p.parentElement) {
-          const oy = getComputedStyle(p).overflowY;
+          const csP = getComputedStyle(p);
+          const oy = csP.overflowY;
           if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight && p !== document.documentElement && p !== document.body) {
             p.scrollTop += (probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2) - (p.getBoundingClientRect().top + p.getBoundingClientRect().height / 2);
+          }
+          const ox = csP.overflowX;
+          if ((ox === 'auto' || ox === 'scroll') && p.scrollWidth > p.clientWidth && p !== document.documentElement && p !== document.body) {
+            p.scrollLeft += (probe.getBoundingClientRect().left + probe.getBoundingClientRect().width / 2) - (p.getBoundingClientRect().left + p.getBoundingClientRect().width / 2);
           }
         }
         window.scrollBy(0, probe.getBoundingClientRect().top + probe.getBoundingClientRect().height / 2 - innerHeight / 2);

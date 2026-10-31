@@ -12,6 +12,10 @@
 // QA_GATES_ENFORCED is read by the CI workflow (repo variable) to decide whether the `qa:gates` job may fail the build.
 // This script ignores it on purpose: it always exits non-zero when a gate fails.
 import { spawnSync } from 'node:child_process';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const mode = process.argv[2] ?? 'all';
 if (!['all', 'stable', 'gates'].includes(mode)) {
@@ -19,30 +23,62 @@ if (!['all', 'stable', 'gates'].includes(mode)) {
   process.exit(2);
 }
 
+const vitestStep =
+  mode === 'gates' || process.env.CI
+    ? []
+    : [['Vitest (app unit tests)', ['npm', 'test'], { cwd: repoRoot, env: process.env }]];
+
 const webkit = !process.env.CI || process.env.PAGENEST_WEBKIT === '1';
+const e2eProjects = [
+  '--project=unit',
+  '--project=chromium-desktop',
+  '--project=chromium-mobile',
+  '--project=android-mobile',
+  ...(webkit ? ['--project=webkit-iphone'] : []),
+];
 // The JSON reports feed the CI summary (gates-summary.mjs). They go to qa-reports/, not test-results/, because Playwright
 // empties test-results/ at the start of every run. Gates never retry: a timing gate that passes on the second try is flaky.
 const gatesEnv = (name) => ({ ...process.env, PLAYWRIGHT_JSON_OUTPUT_NAME: `qa-reports/${name}.json` });
 const reporter = process.env.CI ? '--reporter=list,html,json' : '--reporter=list,json';
 
-const stable = [
-  ['Playwright: unit, e2e on the real app, accessibility, offline', ['npx', 'playwright', 'test', '--project=unit', '--project=chromium-desktop', '--project=chromium-mobile', ...(webkit ? ['--project=webkit-iphone'] : [])], process.env],
-  ['Lighthouse: PWA, accessibility, performance on every screen', ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'none'], process.env],
+const lighthouseScreens = [
+  'Lighthouse: PWA, accessibility, performance on every screen',
+  ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'none'],
+  { env: process.env },
 ];
-// Two separate runs, so the timing-sensitive performance gates never share the machine with the excellence tests.
+const playwrightStable = [
+  'Playwright: unit, e2e on the real app, accessibility, offline',
+  ['npx', 'playwright', 'test', ...e2eProjects],
+  { env: process.env },
+];
+// Two separate Playwright runs so timing-sensitive performance gates never share the machine with excellence tests.
+const lighthouseScenarios = [
+  'Lighthouse scenarios: mid-size library and first launch',
+  ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'only'],
+  { env: process.env },
+];
 const gates = [
-  ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile', '--retries=0', reporter], gatesEnv('gates-excellence')],
+  ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-excellence')],
   ['Playwright: performance gates (one worker)', ['npx', 'playwright', 'test', '--project=perf-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-perf')],
-  // Cold first launch and a 250-book library (Performance >= 90, CLS < 0.1 each). The first launch is the strictest page: nothing cached yet.
-  ['Lighthouse scenarios: mid-size library and first launch', ['npm', 'run', '--silent', 'lighthouse', '--', '--scenarios', 'only'], process.env],
+  lighthouseScenarios,
 ];
-const steps = mode === 'stable' ? stable : mode === 'gates' ? gates : [stable[0], ...gates, stable[1]];
+// Lighthouse is CPU-sensitive: run every Lighthouse step before Playwright's parallel projects.
+const core =
+  mode === 'stable'
+    ? [lighthouseScreens, playwrightStable]
+    : mode === 'gates'
+      ? gates
+      : [lighthouseScenarios, lighthouseScreens, ...gates.slice(0, -1), playwrightStable];
+const steps = [...vitestStep, ...core];
 
 let failed = 0;
 const results = [];
-for (const [name, cmd, env] of steps) {
+for (const step of steps) {
+  const [name, cmd, opts] = step;
+  const env = opts?.env ?? process.env;
+  const cwd = opts?.cwd;
   console.log(`\n=== ${name} ===`);
-  const r = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit', env });
+  const r = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit', env, ...(cwd ? { cwd } : {}) });
   const ok = r.status === 0;
   if (!ok) failed++;
   results.push(`${ok ? 'PASS' : 'FAIL'}  ${name} (exit ${r.status})`);

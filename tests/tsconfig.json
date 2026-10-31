@@ -9,7 +9,11 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@pagenest/e2e-port": ["../scripts/e2e/resolve-port.mjs"]
+    }
   },
   "include": ["**/*.ts", "playwright.config.ts"],
   "exclude": ["node_modules", "fixtures"]

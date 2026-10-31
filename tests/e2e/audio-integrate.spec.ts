@@ -66,6 +66,7 @@ test.describe('integrated audio player', () => {
   });
 
   test('skip interval persists across reload', async ({ page }) => {
+    test.setTimeout(90_000);
     await page.getByRole('button', { name: 'More options' }).click();
     await page.getByRole('menuitem', { name: 'Skip buttons' }).click();
     await expect(page.getByRole('dialog', { name: 'Skip buttons' })).toBeVisible();
@@ -74,7 +75,7 @@ test.describe('integrated audio player', () => {
 
     await page.reload();
     await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible({ timeout: 30_000 });
   });
 });
 

@@ -44,7 +44,6 @@ function useResumeHeader(): { ready: boolean; header: ReactNode } {
 export function LibraryRoute() {
   const { ready, header } = useResumeHeader();
   const services = useServices();
-  // Once the Library is on screen: keep the sample book (and, when they ship, the Reader engines) for offline use. Draws nothing.
   useEffect(() => {
     if (!ready) return undefined;
     return scheduleOfflineWarm(async () => (await import('../offline-assets')).offlineWarmTasks(services));

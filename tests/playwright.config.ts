@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveE2ePort, isE2ePortExplicit } from '@pagenest/e2e-port';
+import { resolveE2ePort, isE2ePortExplicit } from '../scripts/e2e/resolve-port.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -79,6 +79,8 @@ export default defineConfig({
     { name: 'unit', testMatch: 'unit/**/*.spec.ts' },
     { name: 'chromium-desktop', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Desktop Chrome'] } },
     { name: 'chromium-mobile', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Pixel 7'] } },
+    // Android phone profile (Pixel 7); same viewport family as excellence phone 360 checks.
+    { name: 'android-mobile', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Pixel 7'] } },
     // Performance gates (budgets in perf/budgets.ts): Chromium mobile profile, CPU slowed to a mid-range phone.
     // Run alone for the steadiest numbers: `npm run test:perf` (one worker).
     { name: 'perf-chromium-mobile', testMatch: 'perf/**/*.spec.ts', fullyParallel: false, use: { ...devices['Pixel 7'] } },

@@ -206,18 +206,11 @@ jobs:
           });
           NODE
 
-      - name: Stable QA gates (unit, e2e on the real app, Lighthouse on every screen)
+      - name: Stable QA gates (Vitest, unit, e2e on the real app, Lighthouse on every screen)
         if: steps.detect.outputs.has_e2e == 'true'
         working-directory: tests
-        # Same gates as `npm run qa:stable`, with runtime ports (see tests/playwright.config.ts and lighthouse/run.mjs).
-        run: |
-          set -euo pipefail
-          webkit_projects=()
-          if [ "${PAGENEST_WEBKIT:-}" = "1" ]; then
-            webkit_projects=(--project=webkit-iphone)
-          fi
-          npx playwright test --project=unit --project=chromium-desktop --project=chromium-mobile "${webkit_projects[@]}"
-          node --import tsx lighthouse/run.mjs --port "${PAGENEST_LIGHTHOUSE_PORT}"
+        # Same gates as `npm run qa:stable` (Vitest, Playwright, Lighthouse on every screen); runtime ports in env below.
+        run: npm run qa:stable
         env:
           # Until playwright.config.ts reads PAGENEST_E2E_PORT, mirror the shared e2e port.
           PAGENEST_PORT: ${{ env.PAGENEST_E2E_PORT }}
@@ -243,9 +236,8 @@ jobs:
     if: ${{ always() && needs.verify.outputs.built == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # Report-only until Casey sets the repository variable QA_GATES_ENFORCED to 1: a failing gate then does not fail
-    # the workflow. With QA_GATES_ENFORCED=1 this is false and any gate failure fails the build.
-    continue-on-error: ${{ vars.QA_GATES_ENFORCED != '1' }}
+    # Enforced on integrate branches: any gate failure fails the build.
+    continue-on-error: false
     env:
       QA_GATES_ENFORCED: ${{ vars.QA_GATES_ENFORCED }}
     steps:

@@ -34,7 +34,8 @@ export interface HtmlAudioControllerDeps {
 export function createAudioElement(doc: Document = document): HTMLAudioElement {
   const audio = doc.createElement('audio');
   audio.preload = 'auto';
-  audio.crossOrigin = 'anonymous';
+  audio.setAttribute('playsinline', '');
+  audio.setAttribute('webkit-playsinline', '');
   return audio;
 }
 

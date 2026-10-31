@@ -26,7 +26,7 @@ describe('CollectionsScreen', () => {
   it('has a title, the automatic shelves and your shelves with plain book counts', () => {
     render(collections());
     expect(screen.getByRole('heading', { level: 1, name: 'Collections' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Unfinished\. Books you started/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Unfinished Books you started/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Summer reading, 6 books' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /For the train, 1 book$/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /, 0 books$/ })).toBeInTheDocument();

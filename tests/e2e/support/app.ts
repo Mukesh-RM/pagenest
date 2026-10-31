@@ -101,6 +101,26 @@ export async function openSheet(page: Page): Promise<void> {
 }
 
 /**
+ * Wait until foliate has rendered real book text in a blob document frame (see reader e2e support/app.mjs).
+ */
+export async function waitForBookText(page: Page, opts?: { needle?: string; min?: number; timeout?: number }): Promise<string> {
+  const min = opts?.min ?? 200;
+  const timeout = opts?.timeout ?? 60_000;
+  const deadline = Date.now() + timeout;
+  for (;;) {
+    for (const f of page.frames()) {
+      if (f === page.mainFrame()) continue;
+      const text = await f.evaluate(() => document.body?.innerText ?? '').catch(() => '');
+      if (text.length >= min && (!opts?.needle || text.includes(opts.needle))) return text;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(`No book text appeared within ${timeout} ms${opts?.needle ? ` (looking for "${opts.needle}")` : ''}`);
+    }
+    await page.waitForTimeout(50);
+  }
+}
+
+/**
  * Resolves once the service worker is active AND controls the page. If the worker was installed during this
  * very load, a reload is needed before it controls the page, so we do exactly that once.
  */

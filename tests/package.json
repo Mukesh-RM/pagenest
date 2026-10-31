@@ -20,7 +20,8 @@
     "lighthouse": "node --import tsx lighthouse/run.mjs",
     "typecheck": "tsc --noEmit",
     "qa:stable": "node run-qa.mjs stable",
-    "qa:gates": "node run-qa.mjs gates"
+    "qa:gates": "node run-qa.mjs gates",
+    "gate": "node run-qa.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

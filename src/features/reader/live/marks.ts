@@ -38,6 +38,21 @@ export async function setHighlightNote(db: PageNestDB, row: HighlightRecord, not
   return next;
 }
 
+export async function clearHighlightNote(db: PageNestDB, row: HighlightRecord): Promise<HighlightRecord> {
+  const next = { ...row, note: undefined };
+  await db.highlights.put(next);
+  return next;
+}
+
+export async function deleteHighlight(db: PageNestDB, doc: ReaderDocumentExt, row: HighlightRecord): Promise<void> {
+  doc.hideHighlight(row.id);
+  await db.highlights.delete(row.id);
+}
+
+export function highlightsWithNotes(rows: readonly HighlightRecord[]): HighlightRecord[] {
+  return rows.filter((row) => row.note?.trim());
+}
+
 export async function addBookmark(
   db: PageNestDB,
   bookId: string,

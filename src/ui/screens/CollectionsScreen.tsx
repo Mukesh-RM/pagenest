@@ -106,15 +106,15 @@ export function CollectionsScreen({
           <ul className="pn-shelves">
             {smart.map((s) => (
               <li key={s.id}>
-                <Card className="pn-shelf" onPress={() => onOpenSmart?.(s)} aria-label={`${s.name}. ${s.description}`}>
+                <Card className="pn-shelf" onPress={() => onOpenSmart?.(s)}>
                   <span className="pn-shelf__art pn-shelf__art--icon pn-shelf__art--smart" aria-hidden="true">
                     <Icon name={s.icon ?? 'collections'} size={24} />
                   </span>
-                  <span className="pn-shelf__text" aria-hidden="true">
+                  <span className="pn-shelf__text">
                     <span className="pn-shelf__name">{s.name}</span>
                     <span className="pn-shelf__sub">{s.description}</span>
                   </span>
-                  <Icon name="chevronRight" size={20} className="pn-shelf__chevron" />
+                  <Icon name="chevronRight" size={20} className="pn-shelf__chevron" aria-hidden="true" />
                 </Card>
               </li>
             ))}
