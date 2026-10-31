@@ -46,7 +46,7 @@ export async function loadReviewSeedAudiobook(controller: AudioController): Prom
       { index: 1, title: 'Middle passage', startSec: CHAPTER_SEC },
       { index: 2, title: 'Closing tones', startSec: CHAPTER_SEC * 2 },
     ],
-    { author: 'PageNest QA', narrator: 'Synthetic waveform', cover },
+    { author: 'InkQuiet QA', narrator: 'Synthetic waveform', cover },
   );
   await controller.load(item);
 }
@@ -61,7 +61,7 @@ export async function ensureSeedAudiobookBookRecord(db: PageNestDB): Promise<voi
     kind: 'audio',
     format: 'wav',
     title: SEED_TITLE,
-    author: 'PageNest QA',
+    author: 'InkQuiet QA',
     narrator: 'Synthetic waveform',
     durationSec: CHAPTER_SEC * 3,
     addedAt: Date.now(),

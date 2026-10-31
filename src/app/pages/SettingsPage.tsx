@@ -19,8 +19,8 @@ const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPa
 const PANELS_RESERVE_REM = 36; // measured: 36.9 rem at 360 px wide, 33 rem at 1024 px, 38 rem at 200 % text
 
 function usageText(storage: StorageStatus): string {
-  if (storage.usageBytes === undefined) return 'Your browser does not say how much space PageNest uses.';
-  const used = `PageNest uses ${formatBytes(storage.usageBytes)}`;
+  if (storage.usageBytes === undefined) return 'Your browser does not say how much space InkQuiet uses.';
+  const used = `InkQuiet uses ${formatBytes(storage.usageBytes)}`;
   return storage.quotaBytes === undefined ? `${used}.` : `${used} of about ${formatBytes(storage.quotaBytes)} available.`;
 }
 

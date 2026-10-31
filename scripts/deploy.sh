@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy the built PageNest app (dist/) to Cloudflare Pages (free plan).
+# Deploy the built InkQuiet app (dist/) to Cloudflare Pages (free plan).
 #
 # Usage (run from the repo root, after merging to main):
 #   scripts/deploy.sh              # build, then deploy to production (branch main)

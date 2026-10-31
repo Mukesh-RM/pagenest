@@ -1,6 +1,6 @@
 # Testing and E2E ports
 
-PageNest runs several Playwright suites and a Lighthouse gate. Each suite can bind its own TCP port so parallel jobs do not collide. All local servers listen on `127.0.0.1`.
+InkQuiet runs several Playwright suites and a Lighthouse gate. Each suite can bind its own TCP port so parallel jobs do not collide. All local servers listen on `127.0.0.1`.
 
 ## Install browsers
 

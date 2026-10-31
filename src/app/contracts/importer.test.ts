@@ -5,7 +5,7 @@ import type { BookImporter, ImportOutcome, ImportResult, SampleBookProvider } fr
 function fakeLibrary(): BookImporter & SampleBookProvider {
   const added = new Set<string>();
   const add = async (name: string): Promise<ImportOutcome> => {
-    if (name.endsWith('.drm')) return { fileName: name, error: 'This file is protected, so PageNest cannot open it.' };
+    if (name.endsWith('.drm')) return { fileName: name, error: 'This file is protected, so InkQuiet cannot open it.' };
     const result: ImportResult = { bookId: name, kind: 'ebook', format: 'epub', title: name, alreadyInLibrary: added.has(name) };
     added.add(name);
     return { fileName: name, result };

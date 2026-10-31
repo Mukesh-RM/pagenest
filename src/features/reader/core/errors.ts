@@ -2,9 +2,9 @@ import type { ReaderError, ReaderErrorCode } from '@/engines/reader/types';
 
 /** Plain-word messages shown to people (blueprint 5.8): never codes or stack traces. */
 export const READER_ERROR_MESSAGES: Readonly<Record<ReaderErrorCode, string>> = {
-  drm: 'This file is protected by DRM, so PageNest cannot open it.',
+  drm: 'This file is protected by DRM, so InkQuiet cannot open it.',
   corrupt: 'This file looks damaged. Try another copy.',
-  unsupported: 'PageNest cannot open this kind of file yet.',
+  unsupported: 'InkQuiet cannot open this kind of file yet.',
   aborted: 'Opening was cancelled.',
 };
 

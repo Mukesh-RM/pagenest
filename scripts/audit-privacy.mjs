@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// PageNest privacy audit. Dependency-free, offline.
+// InkQuiet privacy audit. Dependency-free, offline.
 //
 //   node scripts/audit-privacy.mjs              scan src/, index.html, public/, vite config, package.json
 //   node scripts/audit-privacy.mjs --strict     warnings also fail
@@ -46,7 +46,7 @@ export const TRACKER_HOSTS = [
   'auth0.com', 'clerk.com', 'clerk.dev', 'clerk.accounts.dev', 'firebaseio.com', 'firebaseapp.com', 'identitytoolkit.googleapis.com', 'securetoken.googleapis.com', 'accounts.google.com', 'appleid.apple.com', 'login.microsoftonline.com', 'okta.com', 'supabase.co', 'supabase.in', 'amazoncognito.com', 'cognito-idp.amazonaws.com',
 ];
 
-/** External font/CDN hosts: PageNest must self-host everything (blueprint 11: "No external requests"). */
+/** External font/CDN hosts: InkQuiet must self-host everything (blueprint 11: "No external requests"). */
 export const CDN_HOSTS = [
   'fonts.googleapis.com', 'fonts.gstatic.com', 'use.typekit.net', 'p.typekit.net', 'fonts.adobe.com', 'fast.fonts.net', 'use.fontawesome.com', 'kit.fontawesome.com', 'ka-f.fontawesome.com', 'fonts.bunny.net',
   'cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'unpkg.com', 'ajax.googleapis.com', 'code.jquery.com', 'maxcdn.bootstrapcdn.com', 'stackpath.bootstrapcdn.com', 'cdn.tailwindcss.com', 'esm.sh', 'cdn.skypack.dev', 'ga.jspm.io', 'esm.run', 'cdn.statically.io', 'rawcdn.githack.com', 'cdn.rawgit.com', 'fastly.jsdelivr.net', 'gcore.jsdelivr.net',
@@ -76,7 +76,7 @@ export const SDK_PATTERNS = [
   [/\bsupabase\.auth\.\w+\s*\(|\bcreateClient\s*\(\s*['"`]https?:\/\/[^'"`]*supabase/, 'Supabase'],
   [/\bnew\s+Auth0Client\s*\(|\bauth0\.WebAuth\s*\(/, 'Auth0'],
   [/\bClerk\.(?:load|signIn|signUp)\b|\bwindow\.Clerk\b/, 'Clerk'],
-  [/\bnavigator\.sendBeacon\s*\(/, 'navigator.sendBeacon (beacons are tracking by design; PageNest has no use for it)'],
+  [/\bnavigator\.sendBeacon\s*\(/, 'navigator.sendBeacon (beacons are tracking by design; InkQuiet has no use for it)'],
 ];
 
 const SCANNED_EXT = new Set(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.jsx', '.mts', '.cts', '.html', '.htm', '.css', '.scss', '.sass', '.less', '.json', '.webmanifest', '.svg', '.vue', '.svelte', '.astro', '.xml', '.txt', '.toml', '.yml', '.yaml']);
@@ -450,7 +450,7 @@ export function run(argv, { cwd = process.cwd(), log = console.log, errLog = con
     log(JSON.stringify({ root, scanned: res.scanned, skipped: res.skipped, failures: fails, warnings: warns }, null, 2));
     return exit;
   }
-  log('PageNest privacy audit');
+  log('InkQuiet privacy audit');
   log(`  project: ${root}`);
   log(`  scanned ${res.scanned} file(s) in: ${res.targets.length ? 'src/, public/, index.html, vite config, package.json (where present)' : 'nothing found'}`);
   if (res.targets.length === 0) log('  no app code yet (no src/, public/, index.html or package.json): nothing to scan.');

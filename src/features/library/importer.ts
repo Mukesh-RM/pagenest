@@ -5,7 +5,7 @@ import { getImportController } from './registry';
 import { createSampleBookProvider, type SampleDeps } from './sample';
 
 /**
- * The file picker shows every file. PageNest decides what a file is from its content (magic
+ * The file picker shows every file. InkQuiet decides what a file is from its content (magic
  * bytes), never from its name, extension or the type the browser guesses, so the picker must not
  * hide a file because of how it is named.
  */

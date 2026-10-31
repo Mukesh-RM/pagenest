@@ -28,7 +28,7 @@ import { useInstall, useUpdatePrompt } from '@/sw';
 
 const { ui, applyUpdate, dismiss } = useUpdatePrompt(isPlaying); // isPlaying comes from the audio controller
 // ui.kind === 'refresh'     -> quiet snackbar "New version ready, refresh" with a Refresh button (onClick: applyUpdate)
-// ui.kind === 'next-launch' -> "New version ready. It will apply the next time you open PageNest." with NO button
+// ui.kind === 'next-launch' -> "New version ready. It will apply the next time you open InkQuiet." with NO button
 // ui.kind === 'none'        -> render nothing
 
 const { canInstall, showIosSteps, installed, install } = useInstall();

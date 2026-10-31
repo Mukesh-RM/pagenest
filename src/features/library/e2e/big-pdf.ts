@@ -31,7 +31,7 @@ export async function writeBigPdf(path: string, megabytes: number, o: { title: s
   add(1, '<< /Type /Catalog /Pages 2 0 R >>');
   add(2, `<< /Type /Pages /Kids [${Array.from({ length: pages }, (_, i) => `${3 + i} 0 R`).join(' ')}] /Count ${pages} >>`);
   for (let i = 0; i < pages; i += 1) add(3 + i, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792]${i === 0 ? ` /Resources << /XObject << /Scan ${imageNum} 0 R >> >>` : ''} >>`);
-  add(infoNum, `<< /Title (${o.title}) /Author (${o.author}) /Producer (PageNest acceptance test) >>`);
+  add(infoNum, `<< /Title (${o.title}) /Author (${o.author}) /Producer (InkQuiet acceptance test) >>`);
 
   const imageHead = `${imageNum} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${side} /Height ${height} /ColorSpace /DeviceGray /BitsPerComponent 8 /Length ${length} >>\nstream\n`;
   offsets[imageNum - 1] = position;

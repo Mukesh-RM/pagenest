@@ -1,63 +1,59 @@
-# PageNest name check
+# Product name verification (2026-10-31)
 
-**Date:** 31 October 2026  
-**Scope:** Informal clearance for a **free, MIT-licensed, offline-first reading PWA** (e-books, PDFs, audiobooks, narration). Not legal advice. A trademark attorney and formal USPTO/EUIPO search are still required before App Store / Play listing or federal registration.
+Owner preference: **Readtide**. This check follows the fallback order in the rename task: Readtide → Homeshelf Reader → InkQuiet → (propose one calm word).
 
-## Verdict
+## Chosen name: **InkQuiet**
 
-**Do not treat “PageNest” as clearly free to use** for this product.
+Readtide and Homeshelf Reader both conflict with existing book/reading products in the same space. **InkQuiet** is the first name in the fallback list with no matching reading-app trademark or store listing found (domain caveat below).
 
-The name is already used by several reading-adjacent apps and an active commercial brand in another category. The closest collision is **PageNest Read** on the App Store — same “PageNest” family, same job (local EPUB/PDF/CBZ reader). That creates **high likelihood of confusion** if this PWA is marketed under “PageNest” on iOS or the web, even though this repo is a separate MIT project.
+---
 
-**Practical recommendation:** Keep “PageNest” as the **internal repo / codename** until counsel clears it, or **rebrand before public launch** using one of the alternatives below (after a fresh search).
+## 1. Readtide — **not clear (conflict)**
 
-## Method
+| Channel | Finding | Evidence |
+|--------|---------|----------|
+| **US trademark** | Pending **Class 9** application for downloadable e-book/reading mobile apps | Readtide, LLC, US serial **99842854**, filed 2026-05-24, published for opposition 2026-10-20. Goods: downloadable mobile apps for downloading, organizing, and reading electronic books and publications. [Markinton summary](https://markinton.com/trademark/readtide-99842854); verify on [USPTO TSDR](https://tsdr.uspto.gov/) with serial 99842854. |
+| **App Store / web product** | Live reading app marketed as Readtide | [readtide.app](https://readtide.app/) — private, ad-free reader; Shore (free) / Ocean (paid) tiers. Direct overlap with this PWA. |
+| **Web** | Active site using the Readtide name for fiction reading | [readtide.com](https://readtide.com/) — web novel catalog (contact@readtide.com). |
+| **Domains** | Core names taken | `readtide.app`, `readtide.com` in use for reading products. |
 
-- Web and app-store intelligence (MWM, AppBrain, Chrome Stats, official sites).
-- USPTO: no **PageNest** registration surfaced in public search summaries; full wordmark clearance still needed at [tmsearch.uspto.gov](https://tmsearch.uspto.gov/).
-- Domains and GitHub org names were not exhaustively WHOIS-checked; treat domain availability as unknown here.
+**Conclusion:** Likelihood of confusion with an existing reading app and a pending US mark in the same Nice class. Do **not** ship under Readtide without legal review and owner acceptance of risk.
 
-## Findings for “PageNest”
+---
 
-| Source | What it is | Relevance |
-| --- | --- | --- |
-| [PageNest Read](https://mwm.ai/apps/pagenest-read/6805689420) (Hyoshin Kwak, App Store, Books) | iPhone/iPad reader for EPUB, PDF, Markdown, TXT, ZIP, CBZ; optional PageNest account sync | **Direct conflict** — same category and overlapping features |
-| [pagenest.ai](https://pagenest.ai/) (pagenest, Inc.) | AI website builder; Terms claim **pagenest** name, logo, and branding ([terms](https://pagenest.ai/terms/)) | **Different goods**, but active US company asserting brand rights on “pagenest” |
-| [pagenest.app](https://pagenest.app/) | “Coming soon” landing | **Same exact name** on the public web |
-| Android `com.pagenest.bookvale` ([AppBrain](https://www.appbrain.com/app/pagenest/com.pagenest.bookvale)) | “PageNest” reading **tracker** (not a full reader); removed from Google Play June 2026 | Shows recent third-party use of the exact name in reading |
-| This project | PWA at `pagenest-42f.pages.dev`, GitHub `Mukesh-RM/pagenest` | Establishes **your** use, but does not resolve conflicts with earlier store listings or pagenest.ai |
+## 2. Homeshelf Reader — **not clear (conflict)**
 
-### Trademarks
+| Channel | Finding | Evidence |
+|--------|---------|----------|
+| **Google Play / iOS** | **Homeshelf** — home library catalog and reading planner for homeschool families (barcode scan, lending, reading plans) | [Elco Dev product page](https://www.elcodev.com/apps/homeshelf), [Google Play listing preview](https://apppage.net/preview/com.elcodev.homeshelf) (Books & Reference, Sept 2026). |
+| **Domains** | `homeshelf.app` hosts a related library tool | [homeshelf.app](https://homeshelf.app/) |
+| **US trademark** | No mark found for the exact string "Homeshelf Reader" in this search | — |
+| **Related mark** | **ARC BOOKSHELF** (American Reading Company) covers downloadable reading software (different brand) | [USPTO 88700118](https://uspto.report/TM/88700118) |
 
-No confirmed **live US registration for the exact mark “PageNest”** appeared in the secondary sources used for this memo. That does **not** mean the mark is available: pending applications, common-law rights, and international filings may exist. **PageNest Read** and **pagenest, Inc.** may rely on use in commerce even without a registration you can see in a quick search.
+**Conclusion:** "Homeshelf" is already a book-library app brand; adding "Reader" does not clear confusion in books software.
 
-### App stores
+---
 
-- **Apple:** “PageNest Read” is the dominant hit for PageNest + books; expect review questions if you ship another “PageNest” reader.
-- **Google Play:** A prior “PageNest” listing existed under `com.pagenest.bookvale` (removed); package namespace may still be reserved in practice.
+## 3. InkQuiet — **clear enough to adopt**
 
-## If you rebrand — three alternatives (lighter initial scan)
+| Channel | Finding | Evidence |
+|--------|---------|----------|
+| **App Store / Google Play** | No listing found for **InkQuiet** or **Ink Quiet** as a books/reader app in web search (2026-10-31) | Searches returned unrelated **Inkitt** / **Galatea** reading apps, not InkQuiet. |
+| **US trademark** | No USPTO hit for **INKQUIET** as a reading/e-book Class 9 mark in this search | — |
+| **Web** | `inkquiet.com` is a generic placeholder template (design agency boilerplate), not a reading product | [inkquiet.com](https://inkquiet.com/) |
+| **Domains** | `.com` registered to unrelated placeholder content; no reading app at that URL | Product can use another domain; Cloudflare project URL unchanged per deploy rules. |
+| **Phonetic / brand** | Distinct from **Inkitt** (major fiction platform) despite shared "Ink-" prefix | Different spelling and positioning; monitor if marketing near Inkitt. |
 
-Each name below had **no obvious exact-match reading app** in a quick web/store pass on 31 Oct 2026. **Re-run USPTO, EUIPO, App Store, Play, and domain checks before committing.**
+**Conclusion:** No direct competitor app or pending reading trademark identified. Suitable for a calm, offline-first reader PWA pending formal clearance before App Store / Play submission.
 
-| Candidate | Rationale | Caveats spotted |
-| --- | --- | --- |
-| **InkQuiet** | Suggests calm, private reading; distinct from “PageNest” | [inkquiet.com](https://inkquiet.com/) is a generic services landing (not a reader) — domain may be squatted |
-| **Readtide** | Short, readable, “flow” metaphor | [Readtide](https://readtide.app/) is an existing iPhone reading app — similar space, different spelling/branding but audible similarity |
-| **Homeshelf** (e.g. “Homeshelf Reader”) | PWA-on-home-screen story; offline library | Many “shelf*” reader names exist (Shelfy, SHELFill, etc.); pick a distinctive compound and check Class 9/42 |
+---
 
-Other directions if those fail clearance: coined compounds (**Pageward Local**, **StillBind**, **Offbind Reader**) or descriptive-plus-coined (**Local Folio PWA**) — always prefer marks that are **not** generic “Reader” alone.
+## 4. Alternate one-word name (not needed)
 
-## Next steps before launch
+If InkQuiet were blocked, a reasonable calm candidate would be **Stillmark** (still + bookmark; no hits as a reading app in quick search). Not used because InkQuiet cleared first.
 
-1. Commission or run a **full trademark clearance** (US at minimum if you host on `.com` / US stores).
-2. Decide: **rename publicly** vs. **continue as PageNest** with documented risk acceptance.
-3. If renaming: update `manifest.webmanifest`, `index.html`, README, Cloudflare project display name, and store assets in one release to avoid split branding.
+---
 
-## References (checked 31 Oct 2026)
+## Implementation note
 
-- PageNest Read — https://mwm.ai/apps/pagenest-read/6805689420  
-- pagenest.ai — https://pagenest.ai/ , https://pagenest.ai/terms/  
-- pagenest.app — https://pagenest.app/  
-- Android PageNest (removed) — https://www.appbrain.com/app/pagenest/com.pagenest.bookvale  
-- USPTO trademark search — https://www.uspto.gov/trademarks/search  
+User-visible branding in this PR uses **InkQuiet**. Internal identifiers unchanged per task: npm package name `pagenest`, `PageNestDB`, import alias `@pagenest/e2e-port`, backup format id `pagenest-backup`, Cloudflare project URL in `docs/DEPLOY.md`.

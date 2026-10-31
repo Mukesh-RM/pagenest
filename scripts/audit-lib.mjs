@@ -1,4 +1,4 @@
-// Shared helpers for the PageNest audit scripts (scripts/audit-*). Dependency-free.
+// Shared helpers for the InkQuiet audit scripts (scripts/audit-*). Dependency-free.
 // Owner: Auditor. Do not import from product code.
 import fs from 'node:fs';
 import path from 'node:path';

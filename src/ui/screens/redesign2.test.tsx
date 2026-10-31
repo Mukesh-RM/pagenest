@@ -133,7 +133,7 @@ function SettingsHarness({ withInstall = true }: { withInstall?: boolean }) {
         textSize={size}
         onTextSizeChange={setSize}
         install={withInstall ? <button type="button">Install help</button> : undefined}
-        storage={{ usageText: 'PageNest uses 12 MB of about 40 GB available.', persisted: false, onKeepData: vi.fn() }}
+        storage={{ usageText: 'InkQuiet uses 12 MB of about 40 GB available.', persisted: false, onKeepData: vi.fn() }}
       />
     </ThemeProvider>
   );

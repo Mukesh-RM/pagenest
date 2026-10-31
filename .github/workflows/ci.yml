@@ -37,7 +37,7 @@ permissions:
 
 env:
   CI: "true"
-  # PageNest never sends telemetry; keep tooling quiet too.
+  # InkQuiet never sends telemetry; keep tooling quiet too.
   WRANGLER_SEND_METRICS: "false"
   # Space-separated QA port env var names: each gets a distinct free port at runtime (see Allocate ephemeral QA ports).
   PAGENEST_CI_PORT_VARS: PAGENEST_E2E_PORT PAGENEST_LIBRARY_PORT PAGENEST_LIGHTHOUSE_PORT

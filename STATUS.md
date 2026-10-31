@@ -1,4 +1,4 @@
-# PageNest Status
+# InkQuiet Status
 
 **Current phase:** Setup complete. Phase 0 not started.
 **Last updated:** 2026-10-24 (Asia/Calcutta)

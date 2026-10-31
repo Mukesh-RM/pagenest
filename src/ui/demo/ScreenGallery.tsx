@@ -373,7 +373,7 @@ function SettingsDemo({ sheet, theme }: { sheet?: boolean; theme: ThemeName }) {
             Install help
           </button>
         }
-        storage={{ usageText: 'PageNest uses 38 MB of about 41 GB available.', persisted: false, onKeepData: noop }}
+        storage={{ usageText: 'InkQuiet uses 38 MB of about 41 GB available.', persisted: false, onKeepData: noop }}
       />
       <InstallHelpSheet
         open={open}

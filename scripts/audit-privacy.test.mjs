@@ -170,14 +170,14 @@ test('package.json dependency names are checked in all dependency groups', () =>
   for (const n of ['dexie', 'comlink', 'jszip', 'pdfjs-dist', 'onnxruntime-web', 'minisearch', 'lucide-react', 'vite-plugin-pwa', 'workbox-window', 'zustand', 'react-router-dom', '@radix-ui/react-dialog']) assert.equal(badPackageCategory(n), null, n);
 });
 
-test('a clean PageNest-style project passes with exit 0', () => {
+test('a clean InkQuiet-style project passes with exit 0', () => {
   const root = tmp();
   write(root, 'package.json', { name: 'pagenest', dependencies: { react: '^18.3.0', dexie: '^4', comlink: '^4', zustand: '^5', jszip: '^3' } });
   write(root, 'index.html', '<!doctype html><html><head><link rel="manifest" href="/manifest.webmanifest"><script type="module" src="/src/main.tsx"></script></head><body><div id="root"></div></body></html>');
   write(root, 'vite.config.ts', "import { defineConfig } from 'vite';\nexport default defineConfig({ base: '/' });");
   write(root, 'src/main.tsx', "import React from 'react';\nexport const load = () => fetch('/models/voices.json');");
   write(root, 'src/styles.css', "@font-face { font-family: 'Inter'; src: url('/fonts/inter.woff2') format('woff2'); }");
-  write(root, 'public/manifest.webmanifest', { name: 'PageNest', start_url: '/' });
+  write(root, 'public/manifest.webmanifest', { name: 'InkQuiet', start_url: '/' });
   const r = capture(['--root', root]);
   assert.equal(r.code, 0, r.out);
   assert.match(r.out, /RESULT: PASS/);

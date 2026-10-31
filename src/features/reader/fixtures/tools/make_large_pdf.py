@@ -41,8 +41,8 @@ def scan_jpeg():
 pages = 0
 total = 0
 c = canvas.Canvas(str(out), pagesize=A4, pageCompression=1)
-c.setTitle("PageNest large PDF fixture")
-c.setAuthor("PageNest fixtures (generated)")
+c.setTitle("InkQuiet large PDF fixture")
+c.setAuthor("InkQuiet fixtures (generated)")
 cursor = 0
 while True:
     jpg = scan_jpeg()

@@ -332,7 +332,7 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
         <EmptyState
           art={<Illustration name="offline" />}
           title="Your library could not be read"
-          description="Close other PageNest tabs and try again."
+          description="Close other InkQuiet tabs and try again."
           action={{ label: 'Try again', onClick: reload }}
         />
       ) : showEmptyLibrary ? (

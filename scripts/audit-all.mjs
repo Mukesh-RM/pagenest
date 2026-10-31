@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Runs the four PageNest audits (licenses, privacy, models, secrets) and prints one summary.
+// Runs the four InkQuiet audits (licenses, privacy, models, secrets) and prints one summary.
 //
 //   node scripts/audit-all.mjs                run all three
 //   node scripts/audit-all.mjs --history      also scan git history for secrets

@@ -6,7 +6,7 @@ const main = readFileSync('src/main.tsx', 'utf8');
 
 describe('boot screen in index.html', () => {
   it('sits inside #root, hidden from assistive technology, so the first paint does not wait for the app code', () => {
-    expect(html).toMatch(/<div id="root"><div id="pn-boot" aria-hidden="true">PageNest<\/div><\/div>/);
+    expect(html).toMatch(/<div id="root"><div id="pn-boot" aria-hidden="true">InkQuiet<\/div><\/div>/);
   });
 
   it('is styled inline, with no inline script (the CSP allows inline styles only) and no extra download', () => {

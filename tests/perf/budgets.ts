@@ -1,5 +1,5 @@
 /**
- * Every performance threshold PageNest QA enforces lives in this one file. Change a number here, nowhere else.
+ * Every performance threshold InkQuiet QA enforces lives in this one file. Change a number here, nowhere else.
  * Source: blueprint section 3 principles ("every action responds within 100 ms; screens never block on heavy work")
  * and section 16 (performance targets). Where the blueprint gives no number, the choice is marked "QA choice".
  * A build that misses any of these fails QA (non-zero exit code).

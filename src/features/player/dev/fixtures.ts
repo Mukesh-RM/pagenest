@@ -19,7 +19,7 @@ export async function loadDevAudioFixture(controller: AudioController): Promise<
   const blob = await fetchToneBlob();
   const item = audioItemFromFolder(
     DEV_FIXTURE_BOOK_ID,
-    'PageNest test tone',
+    'InkQuiet test tone',
     [
       { blob, fileName: '01-chapter-one.wav', durationSec: TONE_DURATION_SEC, trackNumber: 1 },
       {
@@ -30,7 +30,7 @@ export async function loadDevAudioFixture(controller: AudioController): Promise<
       },
     ],
     [],
-    { author: 'PageNest QA', narrator: 'Synthetic tone' },
+    { author: 'InkQuiet QA', narrator: 'Synthetic tone' },
   );
   await controller.load(item);
 }
@@ -46,7 +46,7 @@ export async function loadDevSingleFileFixture(controller: AudioController): Pro
       { index: 0, title: 'Opening', startSec: 0 },
       { index: 1, title: 'Closing', startSec: 0.6 },
     ],
-    { author: 'PageNest QA' },
+    { author: 'InkQuiet QA' },
   );
   await controller.load(item);
 }

@@ -25,7 +25,7 @@ export const IOS_INSTALL_ID = 'ios-install-sheet';
  * All three PWA prompts, wired to `@/sw`. Render it once, inside the theme provider, next to the app frame:
  *
  * - Update notice: "New version ready." with Refresh, or (while audio plays) "It will apply the next time you open
- *   PageNest." with no button, so a reload can never cut playback. Dismiss hides it until the next version.
+ *   InkQuiet." with no button, so a reload can never cut playback. Dismiss hides it until the next version.
  * - Install banner (Android, desktop Chrome and Edge): after `installOfferReady`, with Install and Not now.
  * - iPhone sheet (Safari, not installed): once, after `installOfferReady`, with the three steps.
  *
@@ -50,7 +50,7 @@ export function PwaPrompts({ isPlaying, installOfferReady = false, store: given 
       <UpdateAvailableSnackbar
         open={ui.kind !== 'none'}
         showRefresh={ui.kind === 'refresh'}
-        message={ui.kind === 'next-launch' ? 'New version ready. It will apply the next time you open PageNest.' : 'New version ready.'}
+        message={ui.kind === 'next-launch' ? 'New version ready. It will apply the next time you open InkQuiet.' : 'New version ready.'}
         onRefresh={() => void applyUpdate()}
         onDismiss={dismiss}
       />

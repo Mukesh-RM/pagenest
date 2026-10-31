@@ -1,4 +1,4 @@
-# PageNest
+# InkQuiet
 
 Free, installable, **offline-first** web app (PWA) for reading e-books and PDFs and listening to audiobooks — with background playback, read-aloud, expressive narration, and Voice Studio (your own voice only).
 

@@ -263,7 +263,7 @@ export interface TextScaleResult {
  *     scale does to px text;
  *  3. every visible text element's font size is compared before and after, so text that ignores the setting is reported
  *     (`unscaledText`) instead of passing silently.
- * Nothing is hard-coded to PageNest's token names or to a unit.
+ * Nothing is hard-coded to InkQuiet's token names or to a unit.
  */
 export async function applyTextScale(page: Page, scale: number): Promise<TextScaleResult> {
   return page.evaluate((scale) => {

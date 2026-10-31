@@ -1,4 +1,4 @@
-# PageNest performance rules
+# InkQuiet performance rules
 
 Mukeshh's rule: **nobody should ever feel lag.** This page lists how `src/app` and `src/data`
 keep to it, the numbers we hold ourselves to, and the checks that fail when someone breaks them.

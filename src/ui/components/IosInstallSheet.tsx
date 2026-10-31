@@ -18,7 +18,7 @@ export interface IosInstallSheetProps {
 export function IosInstallSheet({
   open,
   onClose,
-  title = 'Add PageNest to your iPhone',
+  title = 'Add InkQuiet to your iPhone',
   doneLabel = 'Got it',
 }: IosInstallSheetProps) {
   return (
@@ -32,7 +32,7 @@ export function IosInstallSheet({
         </Button>
       }
     >
-      <p className="pn-ios-install__intro">Installing lets PageNest open full screen and keep playing with the screen locked.</p>
+      <p className="pn-ios-install__intro">Installing lets InkQuiet open full screen and keep playing with the screen locked.</p>
       <IosInstallSteps />
     </BottomSheet>
   );

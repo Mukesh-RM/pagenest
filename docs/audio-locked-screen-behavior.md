@@ -1,6 +1,6 @@
 # Locked-screen and background audio (web reality)
 
-This document complements `docs/audio-real-device-checklist.md` and blueprint **section 15**. It states what browsers actually do, and what PageNest does in code today (`src/engines/audio`, `src/features/player`).
+This document complements `docs/audio-real-device-checklist.md` and blueprint **section 15**. It states what browsers actually do, and what InkQuiet does in code today (`src/engines/audio`, `src/features/player`).
 
 ## Platform limits
 

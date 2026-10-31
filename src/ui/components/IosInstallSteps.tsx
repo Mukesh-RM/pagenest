@@ -11,7 +11,7 @@ interface Step {
 const STEPS: readonly Step[] = [
   { icon: 'share', before: 'Tap', strong: 'Share', after: 'in the Safari toolbar.' },
   { icon: 'squarePlus', before: 'Scroll and tap', strong: 'Add to Home Screen', after: '.' },
-  { icon: 'check', before: 'Tap', strong: 'Add', after: 'in the top corner. PageNest is now on your home screen.' },
+  { icon: 'check', before: 'Tap', strong: 'Add', after: 'in the top corner. InkQuiet is now on your home screen.' },
 ];
 
 /** The three iPhone install steps (Share, Add to Home Screen, Add) as an ordered list with small illustrations. */

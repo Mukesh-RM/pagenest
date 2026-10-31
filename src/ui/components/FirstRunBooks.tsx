@@ -25,7 +25,7 @@ export function FirstRunBooks({ onAdd, starter, extra, className }: FirstRunBook
       <h2 id="pn-firstrun-title" className="pn-firstrun__title">
         Your shelf is waiting
       </h2>
-      <p className="pn-firstrun__text">Add a book from this device, or open the sample to see how PageNest reads. Everything stays on this device.</p>
+      <p className="pn-firstrun__text">Add a book from this device, or open the sample to see how InkQuiet reads. Everything stays on this device.</p>
       {starter ? <StarterBookCard offer={starter} /> : null}
       {onAdd ? (
         <Button variant={starter ? 'secondary' : 'primary'} icon="filePlus" onClick={onAdd}>

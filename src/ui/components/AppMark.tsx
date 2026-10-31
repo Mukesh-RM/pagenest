@@ -7,7 +7,7 @@ export interface AppMarkProps {
 }
 
 /**
- * The PageNest mark (headphones around an open book) drawn from the theme tokens, so it is right in every theme
+ * The InkQuiet mark (headphones around an open book) drawn from the theme tokens, so it is right in every theme
  * including Custom. Decorative: the heading next to it names the app.
  */
 export function AppMark({ size = 72, className }: AppMarkProps) {

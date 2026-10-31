@@ -1,5 +1,5 @@
 /**
- * PageNest screens entry: `import { LibraryScreen, OnboardingScreen, ... } from '@/ui/screens'`.
+ * InkQuiet screens entry: `import { LibraryScreen, OnboardingScreen, ... } from '@/ui/screens'`.
  *
  * The screens and their stylesheets (screens.css, surfaces.css, about 40 percent of the design system's CSS) are a
  * separate entry on purpose. The app's first load only needs the primitives from `@/ui`; each screen's CSS then

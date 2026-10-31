@@ -56,7 +56,7 @@ export function InstallHelpSheet({
       <h3 id="pn-install-help-ios" className="pn-install-help__heading">
         On iPhone or iPad
       </h3>
-      <p className="pn-install-help__text">Open PageNest in Safari, then:</p>
+      <p className="pn-install-help__text">Open InkQuiet in Safari, then:</p>
       <IosInstallSteps />
     </section>
   );
@@ -67,15 +67,15 @@ export function InstallHelpSheet({
       </h3>
       {canInstall ? (
         <>
-          <p className="pn-install-help__text">Your browser can install PageNest now. It opens like an app and keeps playing with the screen off.</p>
+          <p className="pn-install-help__text">Your browser can install InkQuiet now. It opens like an app and keeps playing with the screen off.</p>
           <Button onClick={onInstall} icon="download">
-            Install PageNest
+            Install InkQuiet
           </Button>
         </>
       ) : (
         <p className="pn-install-help__text">
           Open the browser menu and choose <strong>Install app</strong> or <strong>Add to Home screen</strong>. If you do not see it,
-          PageNest may already be installed, or your browser does not offer installing.
+          InkQuiet may already be installed, or your browser does not offer installing.
         </p>
       )}
     </section>
@@ -102,8 +102,8 @@ export function InstallHelpSheet({
         className="pn-install-help__status"
       >
         {installed
-          ? 'PageNest is installed on this device. Open it from your home screen.'
-          : 'Installing is optional and free. It makes PageNest open full screen'}
+          ? 'InkQuiet is installed on this device. Open it from your home screen.'
+          : 'Installing is optional and free. It makes InkQuiet open full screen'}
         {installed ? null : offlineReady ? '.' : ' and work offline.'}
         {offlineReady ? ' Ready to use offline.' : ''}
       </p>
