@@ -9,7 +9,7 @@ import '../styles/screens.css';
 import '../styles/surfaces.css';
 
 export interface SettingsStorage {
-  /** "PageNest uses 12 MB of about 40 GB available." Plain words, already formatted. */
+  /** "InkQuiet uses 12 MB of about 40 GB available." Plain words, already formatted. */
   usageText: string;
   /** The browser promised to keep the data (true), may clear it (false), or does not say (undefined). */
   persisted?: boolean;
@@ -93,7 +93,7 @@ export function SettingsScreen({
           <h2 id="pn-set-install" className="pn-set-card__title">
             Install help
           </h2>
-          <p className="pn-set-card__text">Add PageNest to your home screen and it opens like any other app.</p>
+          <p className="pn-set-card__text">Add InkQuiet to your home screen and it opens like any other app.</p>
           {install}
         </section>
       ) : null}
@@ -131,7 +131,7 @@ export function SettingsScreen({
         <h2 id="pn-set-about" className="pn-set-card__title">
           About
         </h2>
-        <p className="pn-set-card__text">PageNest collects nothing. Your books, notes and settings stay on this device. There is no account, no ads and no tracking.</p>
+        <p className="pn-set-card__text">InkQuiet collects nothing. Your books, notes and settings stay on this device. There is no account, no ads and no tracking.</p>
       </section>
     </div>
   );

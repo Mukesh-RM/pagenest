@@ -17,7 +17,7 @@ export interface RangeProps {
 }
 
 /**
- * Native range input with the PageNest look: 44 px tall hit area, a thin teal track filled up to the thumb, a
+ * Native range input with the InkQuiet look: 44 px tall hit area, a thin teal track filled up to the thumb, a
  * 20 px thumb, full keyboard and screen-reader support from the platform. The fill is a gradient driven by a CSS
  * variable, so it needs no layout and no animation.
  */

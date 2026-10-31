@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// PageNest model audit: every voice, model or model host referenced in the app must be vetted.
+// InkQuiet model audit: every voice, model or model host referenced in the app must be vetted.
 //
 //   node scripts/audit-models.mjs                 scan src/, public/, index.html, configs against the registry
 //   node scripts/audit-models.mjs --voice ID      print the verdict for one Piper voice (for example en_US-lessac-medium)
@@ -420,7 +420,7 @@ export function run(argv, { cwd = process.cwd(), log = console.log, errLog = con
     log(JSON.stringify({ root, scanned: result.scanned, registry: summarize(reg), problems, findings: result.findings }, null, 2));
   } else {
     const s = summarize(reg);
-    log('PageNest model audit');
+    log('InkQuiet model audit');
     log(`  project: ${root}`);
     log(`  registry: ${s.voices} Piper voices (OK ${s.ok}, NOT OK ${s.notOk}, VERIFY ${s.verify}), ${s.components} components`);
     log(`  scanned ${result.scanned} file(s) in: src/, public/, index.html, configs, package.json`);

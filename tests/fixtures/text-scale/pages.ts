@@ -1,14 +1,14 @@
 /**
  * Deliberately sane and deliberately broken pages for the 200% text-size gate (see e2e/text-scale-harness.spec.ts).
  * They prove the gate has teeth: it must pass on the sane page and fail, for the right reason, on each broken one,
- * whichever unit the page uses for its text ('px' tokens like PageNest today, or 'rem' tokens).
+ * whichever unit the page uses for its text ('px' tokens like InkQuiet today, or 'rem' tokens).
  * Not product code.
  */
 export type Unit = 'px' | 'rem' | 'mixed';
 export type Defect = 'none' | 'fixed-width-overflow' | 'clipped-height' | 'clipped-width' | 'ignores-text-size';
 
 const tokens: Record<Unit, string> = {
-  // PageNest style: root size and text sizes are px custom properties
+  // InkQuiet style: root size and text sizes are px custom properties
   px: ':root{--app-font-size:16px;--app-text-sm:14px;--app-text-md:16px;--app-text-lg:24px} html{font-size:var(--app-font-size)}',
   // rem style: tokens are relative to the root, root is left at the browser default
   rem: ':root{--app-text-sm:0.875rem;--app-text-md:1rem;--app-text-lg:1.5rem} html{font-size:100%}',

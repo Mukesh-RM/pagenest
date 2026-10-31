@@ -119,7 +119,7 @@ function hue(tokens: Record<string, string>, name: string): number {
   return (h * 60 + 360) % 360;
 }
 
-describe('high-contrast accents are the PageNest teal family (never the old blue)', () => {
+describe('high-contrast accents are the InkQuiet teal family (never the old blue)', () => {
   for (const theme of THEME_NAMES) {
     it(`${theme}: accent, link, accent-ink and the snackbar accent sit between 160 and 195 degrees`, () => {
       const tokens = highTokens(theme);

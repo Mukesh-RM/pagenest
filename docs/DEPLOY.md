@@ -1,6 +1,6 @@
-# Deploying PageNest
+# Deploying InkQuiet
 
-PageNest is a static PWA hosted on Cloudflare Pages (free plan).
+InkQuiet is a static PWA hosted on Cloudflare Pages (free plan).
 
 - Pages project: `pagenest` (production branch `main`)
 - Live URL: <https://pagenest-42f.pages.dev> (free `*.pages.dev` address; deployed and serving production)

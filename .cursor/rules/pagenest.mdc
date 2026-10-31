@@ -1,9 +1,9 @@
 ---
-description: PageNest stack and coding rules
+description: InkQuiet stack and coding rules
 alwaysApply: true
 ---
 
-# PageNest
+# InkQuiet
 
 Free, offline-first PWA for e-books, PDFs and audiobooks. Source of truth: `docs/BLUEPRINT.md`.
 No login, no ads, no analytics, no payments, no backend.

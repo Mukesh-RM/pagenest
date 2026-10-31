@@ -62,7 +62,7 @@ describe('UpdateAvailableSnackbar', () => {
 describe('InstallBanner', () => {
   it('is a labelled region with Install and Not now actions', () => {
     render(<InstallBanner onInstall={() => undefined} onDismiss={() => undefined} />);
-    const region = screen.getByRole('region', { name: 'Install PageNest' });
+    const region = screen.getByRole('region', { name: 'Install InkQuiet' });
     expect(within(region).getByRole('button', { name: 'Install' })).toBeInTheDocument();
     expect(within(region).getByRole('button', { name: 'Not now' })).toBeInTheDocument();
     expect(region.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
@@ -94,7 +94,7 @@ describe('InstallBanner', () => {
 describe('IosInstallSheet', () => {
   it('is a modal dialog with the three steps in order: Share, Add to Home Screen, Add', () => {
     render(<IosInstallSheet open onClose={() => undefined} />);
-    const dialog = screen.getByRole('dialog', { name: 'Add PageNest to your iPhone' });
+    const dialog = screen.getByRole('dialog', { name: 'Add InkQuiet to your iPhone' });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     const steps = within(dialog).getAllByRole('listitem');
     expect(steps).toHaveLength(3);

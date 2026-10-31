@@ -22,7 +22,7 @@ export function AddSheet({ open, onClose, onPick }: AddSheetProps) {
   };
   return (
     <BottomSheet open={open} onClose={onClose} title="Add to your library">
-      <p className="pn-lib-sheet-note">Books, PDFs and audiobooks stay on this device. PageNest looks inside each file, so it does not matter what the file is called.</p>
+      <p className="pn-lib-sheet-note">Books, PDFs and audiobooks stay on this device. InkQuiet looks inside each file, so it does not matter what the file is called.</p>
       <div className="pn-lib-sheet-actions">
         <Button block size="lg" icon="plus" onClick={() => files.current?.click()}>
           Choose files

@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import type { ThemeName } from './contrast';
 
 /**
- * Selector contract for the PageNest shell. Everything is found through ARIA roles and visible names
+ * Selector contract for the InkQuiet shell. Everything is found through ARIA roles and visible names
  * (blueprint section 5.5, 5.6 and 5.8), never through CSS classes, so the app can restyle freely.
  * The contract is documented in tests/README.md and is what the reference fixture implements.
  */

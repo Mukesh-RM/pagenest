@@ -1,4 +1,4 @@
-# PageNest design system (`src/ui`)
+# InkQuiet design system (`src/ui`)
 
 Owned by the UI/UX designer. Implements blueprint section 5 and the "warm paper" redesign. Everything here is
 TypeScript + React, plain CSS variables, no CDN: Inter and Literata (SIL OFL 1.1) and Lucide icons (ISC) are

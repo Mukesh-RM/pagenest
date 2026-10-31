@@ -161,7 +161,7 @@ function DemoBody({ mode, theme, onChange: onModeChange, contrastMode, contrast,
   return (
     <div className="pn-demo">
       <style>{DEMO_CSS}</style>
-      <h1>PageNest UI kit</h1>
+      <h1>InkQuiet UI kit</h1>
       <p style={{ color: 'rgb(var(--pn-muted))', margin: 0 }}>
         Every component in every theme. Dev only: mount this route in development builds.
       </p>

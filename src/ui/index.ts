@@ -1,5 +1,5 @@
 /**
- * PageNest design system. Import from "src/ui" (or your alias); importing this file also loads
+ * InkQuiet design system. Import from "src/ui" (or your alias); importing this file also loads
  * the self-hosted Inter font, the theme tokens and the component styles.
  * The demo page is NOT exported here (keep it out of production bundles): see README.md.
  */

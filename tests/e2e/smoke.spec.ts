@@ -10,7 +10,7 @@ test.describe('phase 0 smoke', () => {
     page.on('console', (m) => { if (m.type() === 'error') errors.push(`console: ${m.text()}`); });
 
     await launch(page);
-    await expect(page).toHaveTitle(/PageNest/);
+    await expect(page).toHaveTitle(/InkQuiet/);
     await expect(page.locator('html')).toHaveAttribute('lang', /.+/);
     expect(errors, errors.join('\n')).toEqual([]);
   });

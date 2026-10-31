@@ -3,7 +3,7 @@ export type UpdateUi =
   | { kind: 'none' }
   /** Show "New version ready, refresh" with a Refresh button. */
   | { kind: 'refresh' }
-  /** Audio is playing: show "applies next time you open PageNest" with no button. */
+  /** Audio is playing: show "applies next time you open InkQuiet" with no button. */
   | { kind: 'next-launch' };
 
 export interface UpdateState {

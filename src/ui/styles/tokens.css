@@ -1,5 +1,5 @@
 /*
- * PageNest design tokens: the single source of truth for colors, spacing, shape and motion.
+ * InkQuiet design tokens: the single source of truth for colors, spacing, shape and motion.
  * The contrast test (src/ui/tokens/contrast.test.ts) parses THIS file, so values cannot drift.
  *
  * Themes are selected with the data-theme attribute on any element (document root for the app

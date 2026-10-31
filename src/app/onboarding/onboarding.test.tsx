@@ -312,11 +312,11 @@ describe('onboarding on the design system screen: sample book and Add your book'
   });
 
   it('when nothing could be added, the importer plain words are shown and onboarding stays', async () => {
-    const importer = { accept: '*/*', available: () => true, importFiles: async (files: readonly File[]) => files.map((f) => ({ fileName: f.name, error: 'This file is protected, so PageNest cannot open it.' })) };
+    const importer = { accept: '*/*', available: () => true, importFiles: async (files: readonly File[]) => files.map((f) => ({ fileName: f.name, error: 'This file is protected, so InkQuiet cannot open it.' })) };
     const { container } = renderApp({ ...services, importer });
     await toCard2();
     fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [new File(['x'], 'a.epub')] } });
-    expect(await screen.findByText(/protected, so PageNest cannot open it/)).toBeInTheDocument();
+    expect(await screen.findByText(/protected, so InkQuiet cannot open it/)).toBeInTheDocument();
     expect(screen.getByText('Step 2 of 3')).toBeInTheDocument();
   });
 

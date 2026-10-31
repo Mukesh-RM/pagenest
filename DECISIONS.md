@@ -24,7 +24,7 @@ vite-plugin-pwa, workbox-precaching, workbox-routing, workbox-window (MIT); shar
 Composer was requested for all work. Bots report they cannot select a model from inside their sessions, so this cannot be enforced from here; flagged to Mukeshh.
 
 ## Decision 8 (Oct 24, 2026, amended) Speech engine licensing (Auditor finding)
-Amended after the Narration Piper spike and the Auditor's voice vetting (docs/MODEL_VETTING.md). There is no GPL relicense: PageNest stays MIT.
+Amended after the Narration Piper spike and the Auditor's voice vetting (docs/MODEL_VETTING.md). There is no GPL relicense: InkQuiet stays MIT.
 - Engine: Piper voices run through onnxruntime-web (MIT), with CMUdict (BSD-style licence, keep its copyright, conditions and disclaimer in the licenses screen) for grapheme-to-phoneme conversion.
 - Not allowed in the bundle: eSpeak NG, piper-phonemize, piper1-gpl and kokoro-js (it depends on a phonemizer that embeds GPL eSpeak NG). Nothing GPL is added to main.
 - Voice rule: every voice is checked per voice. en_US-lessac (Blizzard 2013, no commercial use) is NOT allowed. The earlier line "prefer libritts_r" was WRONG: en_US-libritts_r-medium is fine-tuned from lessac. Use en_US-libritts-high (trained from scratch, CC BY 4.0).

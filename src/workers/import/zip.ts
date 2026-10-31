@@ -138,7 +138,7 @@ export async function readZipEntry(blob: Blob, entry: ZipEntry, maxBytes = Infin
       throw new ZipError('This ZIP file has a damaged entry.');
     }
   }
-  throw new ZipError('This ZIP file uses a format PageNest cannot unpack.');
+  throw new ZipError('This ZIP file uses a format InkQuiet cannot unpack.');
 }
 
 /** A stored (uncompressed) entry as a lazy `Blob` slice, without reading it. Throws for compressed entries. */

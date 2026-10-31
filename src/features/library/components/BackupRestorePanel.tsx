@@ -22,12 +22,12 @@ export function BackupRestorePanel() {
 
   async function save(): Promise<void> {
     const win = window as unknown as PickerWindow;
-    const name = `PageNest backup ${new Date().toISOString().slice(0, 10)}.zip`;
+    const name = `InkQuiet backup ${new Date().toISOString().slice(0, 10)}.zip`;
     let handle: Awaited<ReturnType<NonNullable<PickerWindow['showSaveFilePicker']>>> | undefined;
     if (win.showSaveFilePicker) {
       // Ask where to save first: the picker needs the tap that started this, and a big backup takes a while.
       try {
-        handle = await win.showSaveFilePicker({ suggestedName: name, types: [{ description: 'PageNest backup', accept: { 'application/zip': ['.zip'] } }] });
+        handle = await win.showSaveFilePicker({ suggestedName: name, types: [{ description: 'InkQuiet backup', accept: { 'application/zip': ['.zip'] } }] });
       } catch {
         return; // the person closed the picker
       }

@@ -133,7 +133,7 @@
    "name": "@huggingface/transformers (transformers.js)",
    "license": "Apache-2.0",
    "verdict": "OK",
-   "reason": "LICENSE is the Apache License 2.0. Loads models from the Hugging Face hub by default; PageNest would have to point it at registered, self-approved URLs.",
+   "reason": "LICENSE is the Apache License 2.0. Loads models from the Hugging Face hub by default; InkQuiet would have to point it at registered, self-approved URLs.",
    "evidence": [
     "https://github.com/huggingface/transformers.js/blob/main/LICENSE"
    ]

@@ -1,4 +1,4 @@
-// foliate-js (MIT) ships plain ES modules without types. Only the pieces PageNest touches are declared, loosely.
+// foliate-js (MIT) ships plain ES modules without types. Only the pieces InkQuiet touches are declared, loosely.
 
 declare module 'foliate-js/view.js' {
   export class View extends HTMLElement {

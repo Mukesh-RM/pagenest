@@ -1,4 +1,4 @@
-# PageNest tests
+# InkQuiet tests
 
 Owner: QA (`/tests` only). Everything here is self-contained: it has its own `package.json`, so it needs no change to the product's root files.
 
@@ -54,7 +54,7 @@ The tests find things by ARIA role and visible name, never by CSS class. Phase 0
 
 | Thing | Contract |
 |---|---|
-| Page title | contains `PageNest` |
+| Page title | contains `InkQuiet` |
 | Navigation | one `<nav>` with an accessible name matching primary, main or tabs (bottom bar on phones, left rail on desktop) |
 | Tabs | four links in the order Library, Collections, Stats, Settings; the current one has `aria-current="page"` |
 | Screens | each tab shows an `<h1>` with the same text; the start URL shows Library |
@@ -151,7 +151,7 @@ Two jobs, one build. The app is built once, in `verify`; `dist/` is uploaded as 
 `applyTextScale(page, 2)` in `e2e/support/layout.ts` works whichever unit the app uses, and reads everything at runtime:
 
 1. It scales the root font size (inline `font-size ... !important` on `<html>`), which is what an OS or browser text size does to rem/em text.
-2. It walks the style sheets for custom properties whose name contains `font` or `text` and whose value is a px, rem or em length (PageNest: `--pn-font-size`, `--pn-text-xs` to `-xl`), measures each through a probe element before and after, and overrides only the ones that did **not** grow with the root (fixed px tokens) to before x scale. rem and em tokens follow the root by themselves.
+2. It walks the style sheets for custom properties whose name contains `font` or `text` and whose value is a px, rem or em length (InkQuiet: `--pn-font-size`, `--pn-text-xs` to `-xl`), measures each through a probe element before and after, and overrides only the ones that did **not** grow with the root (fixed px tokens) to before x scale. rem and em tokens follow the root by themselves.
 3. It compares the rendered font size of every visible text element before and after (`unscaledText`).
 
 `expectTextScaleOk` then fails the gate if the root or body did not actually grow (so a gate can never "pass" on an unscaled page), if more than 10 % of the text ignores the setting, or if anything overflows, is clipped or is unreachable.

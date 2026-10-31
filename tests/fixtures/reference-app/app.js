@@ -47,7 +47,7 @@
       html += '</fieldset><button type="button" id="open-sheet">Install help</button>';
     }
     main.innerHTML = html;
-    document.title = title + ' · PageNest';
+    document.title = title + ' · InkQuiet';
     document.querySelectorAll('nav a').forEach(function (a) {
       if (a.getAttribute('href') === '#/' + key) a.setAttribute('aria-current', 'page');
       else a.removeAttribute('aria-current');

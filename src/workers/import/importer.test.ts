@@ -102,8 +102,8 @@ describe('importing files whose names lie', () => {
     ]);
     expect(summary).toEqual({ added: 1, duplicates: 0, unsupported: 7, skipped: 0 });
     const msg = (name: string): string => (outcomes.find((o) => o.name === name && o.status === 'unsupported') as { message: string }).message;
-    expect(msg('protected.epub')).toBe('This file is protected by DRM, so PageNest cannot open it.');
-    expect(msg('itunes.m4a')).toBe('This file is protected by DRM, so PageNest cannot open it.');
+    expect(msg('protected.epub')).toBe('This file is protected by DRM, so InkQuiet cannot open it.');
+    expect(msg('itunes.m4a')).toBe('This file is protected by DRM, so InkQuiet cannot open it.');
     expect(msg('empty.pdf')).toMatch(/empty/);
     expect(msg('archive.epub')).toMatch(/ZIP archive/);
     expect(msg('random.bin')).toMatch(/cannot open this kind of file/);
@@ -285,10 +285,10 @@ describe('backup and restore', () => {
       const failed = events.find((e) => e.type === 'failed');
       return failed?.type === 'failed' ? failed.message : 'no failure';
     };
-    expect(await msg(new Blob([concat([1, 2, 3, 4])]))).toMatch(/not look like a PageNest backup/);
-    expect(await msg(new Blob([(await makeZip([{ name: 'x.txt', data: 'y' }])) as BlobPart]))).toMatch(/not a PageNest backup/);
+    expect(await msg(new Blob([concat([1, 2, 3, 4])]))).toMatch(/not look like a InkQuiet backup/);
+    expect(await msg(new Blob([(await makeZip([{ name: 'x.txt', data: 'y' }])) as BlobPart]))).toMatch(/not a InkQuiet backup/);
     const future = await makeZip([{ name: 'pagenest-backup.json', data: JSON.stringify({ format: 'pagenest-backup', version: 99 }) }]);
-    expect(await msg(new Blob([future as BlobPart]))).toMatch(/newer PageNest/);
+    expect(await msg(new Blob([future as BlobPart]))).toMatch(/newer InkQuiet/);
     await fill();
     const good = new Uint8Array(await (await createBackup(db, files)).arrayBuffer());
     const target = (await readZipEntries(new Blob([good as BlobPart]))).find((e) => e.name.startsWith('files/books/') && e.size > 20);

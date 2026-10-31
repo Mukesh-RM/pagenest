@@ -38,7 +38,7 @@
   border: 0;
 }
 
-/* Visible keyboard focus on every interactive PageNest control */
+/* Visible keyboard focus on every interactive InkQuiet control */
 .pn-btn:focus-visible,
 .pn-chip:focus-visible,
 .pn-card--interactive:focus-visible,

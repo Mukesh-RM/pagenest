@@ -2,22 +2,22 @@ import { Icon } from '../icons';
 import { cx } from '../utils/cx';
 import { Button } from './Button';
 
-/** Plain-word messages for the failures PageNest can hit. Never codes, never stack traces (blueprint 5.8). */
+/** Plain-word messages for the failures InkQuiet can hit. Never codes, never stack traces (blueprint 5.8). */
 export const PLAIN_ERRORS = {
   drm: {
     title: 'This file is protected',
-    description: 'This file is protected by DRM, so PageNest cannot open it.',
+    description: 'This file is protected by DRM, so InkQuiet cannot open it.',
     help: 'Open a copy of the book that has no copy protection.',
     retryable: false,
   },
   damaged: {
     title: 'This file looks damaged',
-    description: 'This file looks damaged, so PageNest cannot open it.',
+    description: 'This file looks damaged, so InkQuiet cannot open it.',
     help: 'Download the book again or choose another copy.',
     retryable: false,
   },
   unsupported: {
-    title: 'PageNest cannot open this kind of file',
+    title: 'InkQuiet cannot open this kind of file',
     description: 'It opens EPUB, PDF and audiobook files such as MP3 and M4B.',
     help: 'Choose a file in one of those formats.',
     retryable: false,

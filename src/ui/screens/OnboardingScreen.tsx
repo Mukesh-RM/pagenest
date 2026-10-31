@@ -35,7 +35,7 @@ const PROMISES: ReadonlyArray<{ icon: IconName; title: string; text: string }> =
 
 const HOME: ReadonlyArray<{ icon: IconName; text: string }> = [
   { icon: 'folder', text: 'Books, PDFs and audiobooks are saved in private storage on this device.' },
-  { icon: 'wifiOff', text: 'After the first load, PageNest works without internet.' },
+  { icon: 'wifiOff', text: 'After the first load, InkQuiet works without internet.' },
   { icon: 'lock', text: 'Nothing you add is ever uploaded.' },
 ];
 
@@ -86,7 +86,7 @@ export function OnboardingScreen({ step, onNext, onBack, onSkip, onDone, starter
             <h1 ref={heading} tabIndex={-1} className="pn-onb__title">
               Your books, your voice, no account.
             </h1>
-            <p className="pn-onb__lead">PageNest keeps everything on this device. There is no sign-in, no ads and no tracking.</p>
+            <p className="pn-onb__lead">InkQuiet keeps everything on this device. There is no sign-in, no ads and no tracking.</p>
             <ul className="pn-onb__promises">
               {PROMISES.map((p) => (
                 <li key={p.title} className="pn-onb__promise">

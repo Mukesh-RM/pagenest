@@ -59,7 +59,7 @@ export async function listBackupFiles(files: FileStore): Promise<string[]> {
 
 export function backupFileName(now: Date = new Date()): string {
   const pad = (n: number): string => String(n).padStart(2, '0');
-  return `PageNest backup ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.zip`;
+  return `InkQuiet backup ${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.zip`;
 }
 
 /** Build the backup zip. */
@@ -128,19 +128,19 @@ export async function restoreBackup(source: Blob, deps: RestoreDeps, progress: P
   try {
     entries = await readZipEntries(source);
   } catch (error) {
-    if (error instanceof ZipError) throw new BackupError('This file does not look like a PageNest backup, or it is damaged.');
+    if (error instanceof ZipError) throw new BackupError('This file does not look like a InkQuiet backup, or it is damaged.');
     throw error;
   }
   const manifestEntry = entries.find((e) => e.name === MANIFEST_NAME);
-  if (!manifestEntry) throw new BackupError('This file is not a PageNest backup.');
+  if (!manifestEntry) throw new BackupError('This file is not a InkQuiet backup.');
   let manifest: Manifest;
   try {
     manifest = JSON.parse(new TextDecoder().decode(await readZipEntry(source, manifestEntry, 1_000_000))) as Manifest;
   } catch {
     throw new BackupError(DAMAGED);
   }
-  if (manifest.format !== BACKUP_FORMAT) throw new BackupError('This file is not a PageNest backup.');
-  if (manifest.version > BACKUP_VERSION) throw new BackupError('This backup was made by a newer PageNest. Update the app, then try again.');
+  if (manifest.format !== BACKUP_FORMAT) throw new BackupError('This file is not a InkQuiet backup.');
+  if (manifest.version > BACKUP_VERSION) throw new BackupError('This backup was made by a newer InkQuiet. Update the app, then try again.');
 
   const readRows = async (store: DataStore): Promise<unknown[]> => {
     const entry = entries.find((e) => e.name === `data/${store}.json`);

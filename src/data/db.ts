@@ -16,7 +16,7 @@ import {
   type VoiceRecord,
 } from './schema';
 
-/** The PageNest IndexedDB database (blueprint sections 11 and 13). */
+/** The InkQuiet IndexedDB database (blueprint sections 11 and 13). */
 export class PageNestDB extends Dexie {
   books!: Table<BookRecord, string>;
   tracks!: Table<TrackRecord, [string, number]>;

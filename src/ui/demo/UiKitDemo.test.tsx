@@ -15,7 +15,7 @@ describe('UiKitDemo', () => {
 
   it('shows every component, and one panel per theme', () => {
     render(<UiKitDemo defaultMode="light" />);
-    expect(screen.getByRole('heading', { level: 1, name: 'PageNest UI kit' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'InkQuiet UI kit' })).toBeInTheDocument();
     for (const section of [
       'All themes side by side',
       'Buttons',

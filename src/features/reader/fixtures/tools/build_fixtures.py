@@ -78,7 +78,7 @@ fb = ['<?xml version="1.0" encoding="utf-8"?>',
       '<FictionBook xmlns="http://www.gribuser.ru/xml/fictionbook/2.0"><description><title-info>'
       '<genre>children</genre><author><first-name>Lewis</first-name><last-name>Carroll</last-name></author>'
       "<book-title>Alice's Adventures in Wonderland</book-title><lang>en</lang></title-info>"
-      '<document-info><author><nickname>PageNest fixtures</nickname></author><date>2026-10-24</date>'
+      '<document-info><author><nickname>InkQuiet fixtures</nickname></author><date>2026-10-24</date>'
       '<id>pagenest-fixture-alice-fb2</id><version>1.0</version></document-info></description><body>']
 for head, title, paras in chapters[:3]:
     fb.append(f"<section><title><p>{esc(head)} {esc(title)}</p></title>" + "".join(f"<p>{esc(t)}</p>" for t in paras) + "</section>")

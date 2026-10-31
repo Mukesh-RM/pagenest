@@ -103,7 +103,7 @@ describe('Settings: Backup and restore', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save a backup' }));
     expect(await screen.findByText(/Backup saved/)).toBeTruthy();
     expect(clicks).toHaveLength(1);
-    expect(clicks[0]).toMatch(/^PageNest backup \d{4}-\d{2}-\d{2}\.zip$/);
+    expect(clicks[0]).toMatch(/^InkQuiet backup \d{4}-\d{2}-\d{2}\.zip$/);
     expect(saved).toHaveLength(1);
     expect(saved[0]!.size).toBeGreaterThan(1000);
 
@@ -124,7 +124,7 @@ describe('Settings: Backup and restore', () => {
     Object.defineProperty(input, 'files', { configurable: true, value: [new File([new Uint8Array(300)], 'photo.zip')] });
     fireEvent.change(input);
     const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toMatch(/not look like a PageNest backup|not a PageNest backup|damaged/);
+    expect(alert.textContent).toMatch(/not look like a InkQuiet backup|not a InkQuiet backup|damaged/);
     expect((screen.getByRole('button', { name: 'Save a backup' }) as HTMLButtonElement).disabled).toBe(false);
   });
 });

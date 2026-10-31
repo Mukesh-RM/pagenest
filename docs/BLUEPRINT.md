@@ -1,13 +1,13 @@
-# PageNest: Free Reader and Audiobook Web App
+# InkQuiet: Free Reader and Audiobook Web App
 
 Oct 24, 2026 · @dzx
 
-PageNest is a free web app you install from a link onto your home screen. It opens e-books, PDFs and audiobooks, reads any book aloud in an expressive voice (even your own cloned voice), keeps playing with the screen off, works fully offline, and never asks you to log in. This document is the complete build blueprint: what the product is, how it looks and feels, how every feature works, how it is built, and the exact prompts to build it with Cursor or Claude.
+InkQuiet is a free web app you install from a link onto your home screen. It opens e-books, PDFs and audiobooks, reads any book aloud in an expressive voice (even your own cloned voice), keeps playing with the screen off, works fully offline, and never asks you to log in. This document is the complete build blueprint: what the product is, how it looks and feels, how every feature works, how it is built, and the exact prompts to build it with Cursor or Claude.
 
 ## 1. What We Are Building
 
 
-| PageNest is | PageNest is not |
+| InkQuiet is | InkQuiet is not |
 |---|---|
 | A web app (PWA) you open from a link and add to your home screen | A native app from Google Play or the App Store |
 | Free: no ads, no subscription, no locked premium tier | A product with features hidden behind payment |
@@ -34,7 +34,7 @@ PageNest is a free web app you install from a link onto your home screen. It ope
 ## 3. Who Uses It
 
 
-| Person | What they want | What PageNest gives them |
+| Person | What they want | What InkQuiet gives them |
 |---|---|---|
 | Commuter | Long audiobooks with the phone in a pocket | Background playback, lock-screen controls, sleep timer, exact resume |
 | Student | PDFs and notes they can mark up and search | Fast PDF reader, highlights, notes, in-book search, export |
@@ -198,7 +198,7 @@ Collections, Stats and Settings
 
 - **Loading:** skeleton cards instead of spinners; progress ring on imports with file count.
 - **Undo:** deletions and shelf changes show an Undo snackbar for 8 seconds.
-- **Errors in plain words:** “This file is protected by DRM, so PageNest cannot open it.” “This file looks damaged. Try another copy.” Never codes or stack traces.
+- **Errors in plain words:** “This file is protected by DRM, so InkQuiet cannot open it.” “This file looks damaged. Try another copy.” Never codes or stack traces.
 - **Accessibility:** screen-reader labels on every control, dynamic text size, full keyboard use on desktop, reduce-motion support, high-contrast option, 44 px targets, captions for any spoken UI hint.
 - **Tone of words:** short, warm and plain. “Welcome back. You were on chapter 7.” Never guilt, never streak shaming.
 
@@ -212,7 +212,7 @@ A web app cannot scan the whole phone, so import must feel effortless instead.
 | Choose files (multi-select) | Yes | Yes, through the Files app | Yes |
 | Drag and drop | n/a | n/a | Yes |
 | Choose a folder | Where the browser supports it; otherwise multi-select | Multi-select | Yes in Chrome and Edge |
-| Share to PageNest from another app | Yes, through the Android share sheet (Web Share Target) | No | n/a |
+| Share to InkQuiet from another app | Yes, through the Android share sheet (Web Share Target) | No | n/a |
 | Wi-Fi transfer from a computer | Open the app on the computer and drag books in, then use backup/restore | Same | Native |
 
 
@@ -445,7 +445,7 @@ src/
 
 ## 14. PWA Setup: Install, Offline and Updates
 
-- **Manifest:** name, short name, standalone display, theme and background colors, start URL, any orientation, 192 and 512 icons plus a maskable icon, categories, and a Share Target entry so Android can send files to PageNest.
+- **Manifest:** name, short name, standalone display, theme and background colors, start URL, any orientation, 192 and 512 icons plus a maskable icon, categories, and a Share Target entry so Android can send files to InkQuiet.
 - **iPhone details:** Apple touch icon, standalone meta tags, status bar style, safe-area padding for the notch and home bar.
 - **Service worker:** pre-caches the app shell, fonts and icons so the app opens offline instantly. Large voice models are stored in OPFS, not in the service worker cache.
 - **Updates:** a quiet “New version ready, refresh” prompt; updates never interrupt a book that is playing and apply on the next launch.
@@ -501,7 +501,7 @@ If a store listing is ever wanted, the same web code can be wrapped with Capacit
 
 
 
-**Privacy statement for the app:** PageNest collects nothing. Books, notes, voices and settings stay on the device. The only network activity is downloading the app and any voice models you choose. Backups are files you save yourself.
+**Privacy statement for the app:** InkQuiet collects nothing. Books, notes, voices and settings stay on the device. The only network activity is downloading the app and any voice models you choose. Backups are files you save yourself.
 
 ## 18. Roadmap
 
@@ -576,7 +576,7 @@ The Listen band is highlighted because background playback on a locked iPhone an
 
 ```
 ROLE
-You are a senior front-end engineer and product designer. Build PageNest: a free, installable, offline-first web app (PWA) for reading e-books and PDFs and listening to audiobooks. People install it from a link to their phone home screen and use it like an app. Read docs/BLUEPRINT.md first and follow it exactly.
+You are a senior front-end engineer and product designer. Build InkQuiet: a free, installable, offline-first web app (PWA) for reading e-books and PDFs and listening to audiobooks. People install it from a link to their phone home screen and use it like an app. Read docs/BLUEPRINT.md first and follow it exactly.
 
 WHAT YOU ARE BUILDING
 - One web app. No backend, no login, no analytics, no ads, no payments. Free forever.

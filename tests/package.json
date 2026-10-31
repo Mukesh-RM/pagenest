@@ -2,7 +2,7 @@
   "name": "pagenest-tests",
   "private": true,
   "version": "0.0.0",
-  "description": "PageNest QA: Playwright end-to-end, axe accessibility, contrast and Lighthouse checks",
+  "description": "InkQuiet QA: Playwright end-to-end, axe accessibility, contrast and Lighthouse checks",
   "license": "MIT",
   "type": "module",
   "engines": {

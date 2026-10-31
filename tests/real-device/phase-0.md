@@ -1,7 +1,7 @@
 # Phase 0 real-device checklist
 
 **Gate (blueprint section 18):** the app installs on Android and iPhone and opens offline.
-**Time:** about 15 minutes. **You need:** one Android phone with Chrome, one iPhone with Safari, and the PageNest link (the `*.pages.dev` preview address).
+**Time:** about 15 minutes. **You need:** one Android phone with Chrome, one iPhone with Safari, and the InkQuiet link (the `*.pages.dev` preview address).
 **Tester:** ____________  **Date:** ____________  **Build / commit:** ____________  **Link:** ____________
 
 Tick each box, or write FAIL and a short note. A screenshot of any FAIL helps. Do the Android section, then the iPhone section.
@@ -11,7 +11,7 @@ Tick each box, or write FAIL and a short note. A screenshot of any FAIL helps. D
 Device and Android version: ______________________
 
 1. [ ] **Open the link** in Chrome. The Library screen shows within about 3 seconds on mobile data. No login, ad or cookie banner appears.
-2. [ ] **Install.** Use the Chrome menu, then Install app (or Add to Home Screen). An icon named "PageNest" appears on the home screen, and the icon is not cropped or cut off.
+2. [ ] **Install.** Use the Chrome menu, then Install app (or Add to Home Screen). An icon named "InkQuiet" appears on the home screen, and the icon is not cropped or cut off.
 3. [ ] **Launch from the icon.** It opens full screen with no browser address bar, and the splash screen is in the app colours.
 4. [ ] **Offline launch.** Open the app once, then swipe it away. Turn on airplane mode (Wi-Fi and mobile data off). Launch from the icon. The Library screen appears in about 1 second.
 5. [ ] **Tabs offline.** Still in airplane mode, tap Library, Collections, Stats, Settings. Each screen opens, and the active tab is highlighted.
@@ -28,7 +28,7 @@ Device and Android version: ______________________
 Device and iOS version: ______________________
 
 1. [ ] **Open the link** in Safari (not inside another app). The Library screen shows within about 3 seconds. No login or ad.
-2. [ ] **Add to Home Screen.** Tap Share, Add to Home Screen, Add. An icon named "PageNest" appears, and the icon looks right (the iPhone does not add a black border or crop it).
+2. [ ] **Add to Home Screen.** Tap Share, Add to Home Screen, Add. An icon named "InkQuiet" appears, and the icon looks right (the iPhone does not add a black border or crop it).
 3. [ ] **Launch from the icon.** It opens full screen with no Safari bars.
 4. [ ] **Offline launch.** Open the app once, then swipe it away from the app switcher. Turn on airplane mode. Launch from the icon. The Library screen appears in about 1 second. (If it shows a blank or error page, mark FAIL. Also note whether you waited 10 seconds after the very first open before going offline.)
 5. [ ] **Tabs offline.** Still in airplane mode, tap all four tabs. Each opens, and the active tab is highlighted.

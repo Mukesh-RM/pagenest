@@ -98,19 +98,19 @@ describe('InstallHelp (Settings row)', () => {
     render(<InstallHelp />);
     fireEvent.click(screen.getByRole('button', { name: /install help/i }));
     const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Install PageNest' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Install InkQuiet' }));
     await waitFor(() => expect(event.prompt).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(usePwaStore.getState().installed).toBe(true));
   });
 
-  it('says so when PageNest is already installed, and hides the how-to', async () => {
+  it('says so when InkQuiet is already installed, and hides the how-to', async () => {
     usePwaStore.setState({ installed: true, iosInstallHint: false });
     render(<InstallHelp />);
     fireEvent.click(screen.getByRole('button', { name: /install help/i }));
     const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('PageNest is installed on this device');
+    expect(dialog).toHaveTextContent('InkQuiet is installed on this device');
     expect(within(dialog).queryByRole('list')).toBeNull();
-    expect(within(dialog).queryByRole('button', { name: 'Install PageNest' })).toBeNull();
+    expect(within(dialog).queryByRole('button', { name: 'Install InkQuiet' })).toBeNull();
   });
 
   it('keeps your books safe: asks the browser, shows usage and the offline note', async () => {
@@ -150,7 +150,7 @@ describe('PwaPrompts: update notice', () => {
   it('while audio plays there is no Refresh button and the notice says it applies next launch', () => {
     usePwaStore.getState().setNeedRefresh();
     const { rerender } = render(<PwaPrompts isPlaying />);
-    expect(screen.getByText(/It will apply the next time you open PageNest/)).toBeInTheDocument();
+    expect(screen.getByText(/It will apply the next time you open InkQuiet/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
     rerender(<PwaPrompts isPlaying={false} />);
     expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
@@ -177,9 +177,9 @@ describe('PwaPrompts: install banner and iPhone sheet', () => {
     const event = installEvent();
     usePwaStore.setState({ installEvent: event });
     const { rerender } = render(<PwaPrompts isPlaying={false} />);
-    expect(screen.queryByRole('region', { name: 'Install PageNest' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Install InkQuiet' })).toBeNull();
     rerender(<PwaPrompts isPlaying={false} installOfferReady />);
-    const banner = screen.getByRole('region', { name: 'Install PageNest' });
+    const banner = screen.getByRole('region', { name: 'Install InkQuiet' });
     fireEvent.click(within(banner).getByRole('button', { name: 'Install' }));
     await waitFor(() => expect(event.prompt).toHaveBeenCalledTimes(1));
   });
@@ -189,18 +189,18 @@ describe('PwaPrompts: install banner and iPhone sheet', () => {
     const store = memoryHintStore();
     const { unmount } = render(<PwaPrompts isPlaying={false} installOfferReady store={store} />);
     fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
-    expect(screen.queryByRole('region', { name: 'Install PageNest' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Install InkQuiet' })).toBeNull();
     expect(store.hasSeen(INSTALL_BANNER_ID)).toBe(true);
     unmount();
     render(<PwaPrompts isPlaying={false} installOfferReady store={store} />);
-    expect(screen.queryByRole('region', { name: 'Install PageNest' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Install InkQuiet' })).toBeNull();
   });
 
   it('shows the iPhone sheet once with three steps, and never when installed', async () => {
     usePwaStore.setState({ iosInstallHint: true });
     const store = memoryHintStore();
     const { rerender } = render(<PwaPrompts isPlaying={false} installOfferReady store={store} />);
-    const dialog = await screen.findByRole('dialog', { name: /add pagenest to your iphone/i });
+    const dialog = await screen.findByRole('dialog', { name: /add inkquiet to your iphone/i });
     expect(dialog).toHaveAttribute('aria-modal', 'true');
     expect(within(dialog).getAllByRole('listitem')).toHaveLength(3);
     fireEvent.click(within(dialog).getByRole('button', { name: 'Got it' }));
@@ -214,6 +214,6 @@ describe('PwaPrompts: install banner and iPhone sheet', () => {
     usePwaStore.setState({ installed: true, iosInstallHint: true, installEvent: installEvent() });
     render(<PwaPrompts isPlaying={false} installOfferReady />);
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.queryByRole('region', { name: 'Install PageNest' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Install InkQuiet' })).toBeNull();
   });
 });

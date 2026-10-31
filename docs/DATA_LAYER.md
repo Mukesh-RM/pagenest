@@ -1,4 +1,4 @@
-# PageNest data layer (Phase 1: library, collections, covers, search)
+# InkQuiet data layer (Phase 1: library, collections, covers, search)
 
 Owner: Architect (`src/data`, `src/app`). Users of this page: the Library feature
 (`src/features/library`) and the import worker (`src/workers/import`).
