@@ -12,9 +12,11 @@ vi.mock('@/engines/audio', async (importOriginal) => {
   };
 });
 
+// Lazy screens are transformed by Vitest the first time a test opens them, which can take seconds on a busy machine
+// (several bots share one). Passing tests are not slower; only a failing wait takes longer to give up.
+configure({ asyncUtilTimeout: 5000 });
+
 if (typeof URL.createObjectURL !== 'function') {
   URL.createObjectURL = () => 'blob:vitest';
   URL.revokeObjectURL = () => undefined;
 }
-
-configure({ asyncUtilTimeout: 5000 });
