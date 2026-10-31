@@ -79,6 +79,8 @@ export default defineConfig({
     { name: 'unit', testMatch: 'unit/**/*.spec.ts' },
     { name: 'chromium-desktop', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Desktop Chrome'] } },
     { name: 'chromium-mobile', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Pixel 7'] } },
+    // Android phone profile (Pixel 7); same viewport family as excellence phone 360 checks.
+    { name: 'android-mobile', testMatch: 'e2e/**/*.spec.ts', use: { ...devices['Pixel 7'] } },
     // Performance gates (budgets in perf/budgets.ts): Chromium mobile profile, CPU slowed to a mid-range phone.
     // Run alone for the steadiest numbers: `npm run test:perf` (one worker).
     { name: 'perf-chromium-mobile', testMatch: 'perf/**/*.spec.ts', fullyParallel: false, use: { ...devices['Pixel 7'] } },

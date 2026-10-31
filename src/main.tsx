@@ -14,8 +14,12 @@ preloadCriticalFonts();
 
 registerServiceWorker();
 
-createRoot(root).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+void import('./app/storage-bootstrap')
+  .then(({ bootstrapStorage }) => bootstrapStorage())
+  .then(() => {
+    createRoot(root).render(
+      <StrictMode>
+        <App />
+      </StrictMode>,
+    );
+  });

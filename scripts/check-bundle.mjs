@@ -34,6 +34,8 @@ export const ENGINE_CHUNK_BUDGETS_KB = [
   { pattern: /^engine-foliate-/, label: 'engine chunk (epub)', budget: 60 },
   { pattern: /^engine-tts-ort-/, label: 'engine chunk (onnxruntime-web)', budget: 130 },
   { pattern: /^piper\.worker-/, label: 'worker chunk (piper tts)', budget: 90 },
+  // Loaded only when OPFS is blocked: shares import + cache-backed storage with the data client (WebKit/Linux CI).
+  { pattern: /^in-process-import-/, label: 'OPFS fallback import service', budget: 56 },
 ];
 
 const kb = (bytes) => bytes / 1000;

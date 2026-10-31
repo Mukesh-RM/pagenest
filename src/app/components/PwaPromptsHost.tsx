@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PwaPrompts } from '@/ui';
 import { localHintStore } from '../hint-store';
 import { useChromeStore } from '../route-chrome';
@@ -13,9 +14,17 @@ import { useServices } from '../services-context';
  * notice has no Refresh button, so an update can never cut playback.
  */
 export function PwaPromptsHost() {
+  const { pathname } = useLocation();
   const { db } = useServices();
   const [store] = useState(() => localHintStore());
   const hasBook = useLiveQuery(async () => (await db.books.count()) > 0, [db]);
   const playing = useChromeStore((s) => s.as);
-  return <PwaPrompts isPlaying={playing} installOfferReady={hasBook === true} store={store} />;
+  const immersive = pathname.startsWith('/listen/') || pathname.startsWith('/read/');
+  return (
+    <PwaPrompts
+      isPlaying={playing}
+      installOfferReady={hasBook === true && !immersive}
+      store={store}
+    />
+  );
 }

@@ -26,6 +26,7 @@
     "audit": "node scripts/audit-all.mjs",
     "check:licenses": "scripts/check-licenses",
     "audit:licenses": "scripts/check-licenses",
+    "gate": "node scripts/run-gate.mjs",
     "test:e2e:reader": "node src/features/reader/e2e/support/run-playwright.mjs",
     "test:e2e:narration": "VITE_PN_MOCK_TTS=1 npm run build && playwright test -c src/features/narration/e2e/playwright.config.mjs",
     "test:e2e:voice-studio": "playwright test -c src/features/voice-studio/e2e/playwright.config.ts",
