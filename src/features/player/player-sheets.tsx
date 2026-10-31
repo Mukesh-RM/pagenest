@@ -1,63 +1,16 @@
 import { BottomSheet, Button, Chip, ChipGroup } from '@/ui';
 import type { AudioController } from '@/engines/audio/types';
 import { formatClock } from '@/engines/audio/util';
+import { SharedSleepTimerSheet } from '@/features/playback/SharedSleepTimerSheet';
 import { usePlayerStore } from './audio-store';
 const SPEED_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
-const SLEEP_MINUTES = [5, 15, 30, 45, 60];
 
-export function SleepTimerSheet({
-  open,
-  onClose,
-  controller,
-}: {
+export function SleepTimerSheet(props: {
   open: boolean;
   onClose: () => void;
   controller: AudioController;
 }) {
-  const state = usePlayerStore((s) => s.state);
-  return (
-    <BottomSheet open={open} onClose={() => onClose()} title="Sleep timer">
-      {state.sleep ? (
-        <p className="mb-3 text-base text-muted" data-testid="player-sleep-active">
-          {formatClock(state.sleep.remainingSec)} remaining
-        </p>
-      ) : null}
-      <ChipGroup label="Sleep timer">
-        {SLEEP_MINUTES.map((m) => (
-          <Chip
-            key={m}
-            selected={state.sleep?.spec.kind === 'minutes' && state.sleep.spec.minutes === m}
-            onClick={() => {
-              controller.setSleepTimer({ kind: 'minutes', minutes: m });
-              onClose();
-            }}
-          >
-            {m} min
-          </Chip>
-        ))}
-        <Chip
-          selected={state.sleep?.spec.kind === 'endOfChapter'}
-          onClick={() => {
-            controller.setSleepTimer({ kind: 'endOfChapter' });
-            onClose();
-          }}
-        >
-          End of chapter
-        </Chip>
-        {state.sleep ? (
-          <Chip
-            selected
-            onClick={() => {
-              controller.setSleepTimer(null);
-              onClose();
-            }}
-          >
-            Turn off
-          </Chip>
-        ) : null}
-      </ChipGroup>
-    </BottomSheet>
-  );
+  return <SharedSleepTimerSheet {...props} />;
 }
 
 export function ChaptersSheet({

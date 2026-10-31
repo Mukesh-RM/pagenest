@@ -12,10 +12,13 @@ function Demo() {
       settings={settings}
       playing={playing}
       preparing={false}
+      sleepLabel="15 min"
       onPlayPause={() => setPlaying((p) => !p)}
       onSpeed={(speed) => setSettings((s) => ({ ...s, speed }))}
       onVoice={() => {}}
       onExpressive={(expressive) => setSettings((s) => ({ ...s, expressive, style: expressive ? 'expressive' : 'natural' }))}
+      onSleep={() => {}}
+      onDriveMode={() => {}}
     />
   );
 }

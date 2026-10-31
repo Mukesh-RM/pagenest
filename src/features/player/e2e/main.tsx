@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HashRouter, Route, Routes } from 'react-router-dom';
 import '@/ui';
+import { SnackbarProvider } from '@/ui';
 import { AppShell } from '@/app/AppShell';
 import { RouteChrome } from '@/app/RouteChrome';
 import { CoverUrlCache } from '@/data/cover-url';
@@ -42,8 +43,9 @@ const fixtureBook: BookRecord = {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ServicesProvider services={services}>
-      <PlayerProvider>
-        <HashRouter>
+      <SnackbarProvider>
+        <PlayerProvider>
+          <HashRouter>
           <Routes>
             <Route element={<AppShell />}>
               <Route index element={<p>Library placeholder</p>} />
@@ -58,7 +60,8 @@ createRoot(document.getElementById('root')!).render(
             </Route>
           </Routes>
         </HashRouter>
-      </PlayerProvider>
+        </PlayerProvider>
+      </SnackbarProvider>
     </ServicesProvider>
   </StrictMode>,
 );
