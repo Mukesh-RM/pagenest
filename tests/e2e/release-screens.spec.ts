@@ -12,6 +12,8 @@ async function setTheme(page: import('@playwright/test').Page, theme: 'Light' | 
 }
 
 test.describe('release screenshots (360 px)', () => {
+  test.skip(() => process.env.PAGENEST_RELEASE_SHOTS !== '1', 'Set PAGENEST_RELEASE_SHOTS=1 to capture docs/screens/release PNGs');
+
   test.beforeAll(() => {
     mkdirSync(OUT, { recursive: true });
   });

@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveE2ePort, isE2ePortExplicit } from '@pagenest/e2e-port';
+import { resolveE2ePort, isE2ePortExplicit } from '../scripts/e2e/resolve-port.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 

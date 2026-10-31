@@ -15,5 +15,5 @@
     "baseUrl": ".",
     "paths": { "@pagenest/e2e-port": ["scripts/e2e/resolve-port.mjs"] }
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "tailwind.config.ts", "tests/playwright.config.ts", "scripts/e2e/resolve-port.d.ts"]
+  "include": ["vite.config.ts", "tailwind.config.ts", "scripts/e2e/resolve-port.d.ts"]
 }
