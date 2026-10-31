@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "PageNest",
+  "name": "PageNest — offline reader",
   "short_name": "PageNest",
-  "description": "Free, private reader and audiobook player. Read e-books and PDFs, listen to audiobooks and have any book read aloud, all offline and with no account.",
+  "description": "Free MIT reader and audiobook player for your phone or desktop. Import EPUB, PDF, and audio; read and listen offline with no account, ads, or cloud upload.",
   "lang": "en",
   "dir": "ltr",
   "start_url": "/",
