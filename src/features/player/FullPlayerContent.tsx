@@ -5,9 +5,9 @@ import { formatClock } from '@/engines/audio/util';
 import { useServices } from '@/app/services-context';
 import { usePlayerStore } from './audio-store';
 import { addBookmark, listBookmarks, removeBookmark } from './bookmarks';
+import { SleepTimerPanel } from '@/features/playback/SleepTimerPanel';
 
 const SPEED_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3];
-const SLEEP_MINUTES = [5, 15, 30, 45, 60];
 
 /** Shared full-player controls (immersive screen). State comes from the audio controller store only. */
 export function FullPlayerContent({ controller }: { controller: AudioController }) {
@@ -102,34 +102,8 @@ export function FullPlayerContent({ controller }: { controller: AudioController 
 
         <section aria-label="Sleep timer" data-testid="player-sleep-section" className="min-w-0">
           <p className="mb-2 text-base font-medium">Sleep timer</p>
-          {state.sleep ? (
-            <p className="mb-2 text-base text-muted" data-testid="player-sleep-active">
-              Sleep timer: {formatClock(state.sleep.remainingSec)} remaining
-            </p>
-          ) : null}
-          <ChipGroup label="Sleep timer" scroll>
-          {SLEEP_MINUTES.map((m) => (
-            <Chip
-              key={m}
-              selected={state.sleep?.spec.kind === 'minutes' && state.sleep.spec.minutes === m}
-              onClick={() => controller.setSleepTimer({ kind: 'minutes', minutes: m })}
-            >
-              {m} min
-            </Chip>
-          ))}
-          <Chip
-            selected={state.sleep?.spec.kind === 'endOfChapter'}
-            onClick={() => controller.setSleepTimer({ kind: 'endOfChapter' })}
-          >
-            End of chapter
-          </Chip>
-          {state.sleep ? (
-            <Chip selected onClick={() => controller.setSleepTimer(null)}>
-              Cancel ({formatClock(state.sleep.remainingSec)})
-            </Chip>
-          ) : null}
-        </ChipGroup>
-      </section>
+          <SleepTimerPanel controller={controller} />
+        </section>
 
       <section aria-label="Skip intervals">
         <p className="mb-2 text-sm font-medium">Skip</p>

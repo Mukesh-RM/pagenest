@@ -3,6 +3,10 @@ import type { BookScreenProps } from '@/app/components/BookSummary';
 import type { ReaderDocumentExt } from '@/features/reader/core/ext-types';
 import { sectionText } from '@/features/reader/core/text-offsets';
 import { useAudioController } from '@/features/player/PlayerProvider';
+import { usePlayerStore } from '@/features/player/audio-store';
+import { DriveModeOverlay } from '@/features/drive-mode/DriveModeOverlay';
+import { SharedSleepTimerSheet } from '@/features/playback/SharedSleepTimerSheet';
+import { formatClock } from '@/engines/audio/util';
 import type { VoiceInfo } from '@/engines/tts/types';
 import { buildNarrationPlan } from '@/engines/emotion/pipeline';
 import { createPiperEngine } from '@/engines/tts/piper/piper-engine';
@@ -23,6 +27,9 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
   const audio = useAudioController();
   const [settings, setSettings] = useState<NarrationSettings>(DEFAULT_NARRATION_SETTINGS);
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [sleepOpen, setSleepOpen] = useState(false);
+  const [driveOpen, setDriveOpen] = useState(false);
+  const audioSleep = usePlayerStore((s) => s.state.sleep);
   const [voices, setVoices] = useState<readonly VoiceInfo[]>([]);
   const [playing, setPlaying] = useState(false);
   const [preparing, setPreparing] = useState(false);
@@ -95,17 +102,29 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
     }
   }, [active, book.id, book.title, chapterText, playing, settings, sync]);
 
+  const sleepLabel = useMemo(() => {
+    if (!audioSleep) return 'Off';
+    if (audioSleep.spec.kind === 'endOfChapter') return 'End of chapter';
+    if (audioSleep.spec.kind === 'minutes' && audioSleep.spec.minutes) return `${audioSleep.spec.minutes} min`;
+    return formatClock(audioSleep.remainingSec);
+  }, [audioSleep]);
+
   return (
     <>
       <NarrationControls
         settings={settings}
         playing={playing}
         preparing={preparing}
+        sleepLabel={sleepLabel}
         onPlayPause={() => void onPlayPause()}
         onSpeed={(speed) => setSettings((s) => ({ ...s, speed }))}
         onVoice={() => setVoiceOpen(true)}
         onExpressive={(expressive) => setSettings((s) => ({ ...s, expressive, style: expressive ? 'expressive' : 'natural' }))}
+        onSleep={() => setSleepOpen(true)}
+        onDriveMode={() => setDriveOpen(true)}
       />
+      <SharedSleepTimerSheet open={sleepOpen} onClose={() => setSleepOpen(false)} controller={audio} />
+      <DriveModeOverlay open={driveOpen} controller={audio} onClose={() => setDriveOpen(false)} />
       <NarrationSheet
         open={voiceOpen}
         voices={voices}

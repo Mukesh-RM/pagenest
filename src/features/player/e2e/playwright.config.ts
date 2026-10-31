@@ -9,7 +9,7 @@ const harnessPath = '/src/features/player/e2e/index.html';
 
 export default defineConfig({
   testDir: here,
-  testMatch: 'player.spec.ts',
+  testMatch: ['player.spec.ts', 'drive-mode.spec.ts'],
   timeout: 60_000,
   use: {
     baseURL: `http://127.0.0.1:${PORT}${harnessPath.replace(/index\.html$/, '')}`,
