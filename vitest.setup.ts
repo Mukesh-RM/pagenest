@@ -21,8 +21,11 @@ if (typeof URL.createObjectURL !== 'function') {
   URL.revokeObjectURL = () => undefined;
 }
 
-if (typeof Object.groupBy !== 'function') {
-  Object.groupBy = <T>(items: Iterable<T>, callback: (item: T, index: number) => PropertyKey) => {
+const objectWithGroupBy = Object as unknown as {
+  groupBy?: (<T>(items: Iterable<T>, callback: (item: T, index: number) => PropertyKey) => Record<PropertyKey, T[]>) | undefined;
+};
+if (typeof objectWithGroupBy.groupBy !== 'function') {
+  objectWithGroupBy.groupBy = <T>(items: Iterable<T>, callback: (item: T, index: number) => PropertyKey) => {
     const out = Object.create(null) as Record<PropertyKey, T[]>;
     let i = 0;
     for (const item of items) {
