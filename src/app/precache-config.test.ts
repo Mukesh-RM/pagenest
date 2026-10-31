@@ -29,7 +29,14 @@ describe('service worker precache configuration (vite.config.ts)', () => {
   });
 
   it('does not ignore the import worker, the data worker or the parser chunks, and never ignores JavaScript as a whole', () => {
-    const ENGINE_IGNORES = ['**/assets/engine-*.js', '**/assets/docx-core-*.js', '**/assets/docx.worker-*.js', '**/assets/pdf.worker*.mjs'];
+    const ENGINE_IGNORES = [
+      '**/assets/engine-*.js',
+      '**/assets/docx-core-*.js',
+      '**/assets/docx.worker-*.js',
+      '**/assets/piper.worker-*.js',
+      '**/assets/engine-tts-*.js',
+      '**/assets/pdf.worker*.mjs',
+    ];
     for (const ignore of list('globIgnores').filter((g) => !ENGINE_IGNORES.includes(g))) {
       expect(ignore).not.toMatch(/worker|Parser|\.js\b/i);
     }

@@ -1,4 +1,3 @@
 # features/narration
 
-Owner: **Narration** bot. Chapter render queue, Opus cache, read-aloud UI, voice picker. Engines live in `src/engines/tts`.
-Nothing is implemented here yet (Phase 4).
+Read-aloud UI, chapter render queue, sentence highlighting and voice picker. Engines live in `src/engines/tts`; expression planning in `src/engines/emotion`.
