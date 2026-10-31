@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-// @ts-ignore jsdom has no bundled types in this repo
+// @ts-expect-error jsdom has no bundled types in this repo
 import { JSDOM } from 'jsdom';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadFoliateBook } from './book-loader';
