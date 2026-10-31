@@ -5,6 +5,7 @@ import {
   OpfsFileStore,
   FilePaths,
   createFileStore,
+  resolveFileStore,
   isOpfsSupported,
   parsePath,
   type DirectoryHandleLike,
@@ -214,6 +215,16 @@ describe('capability detection', () => {
     });
     expect(isOpfsSupported()).toBe(true);
     expect((await createFileStore()).kind).toBe('memory');
+  });
+});
+
+describe('resolveFileStore', () => {
+  it('returns the bootstrapped shared store when OPFS bootstrap ran', async () => {
+    const { setStorageBootstrap } = await import('@/app/storage-bootstrap-state');
+    const { createCacheBackedFileStore } = await import('./cache-file-store');
+    const shared = createCacheBackedFileStore();
+    setStorageBootstrap({ sharedFiles: shared, dataClient: { files: shared } });
+    await expect(resolveFileStore()).resolves.toBe(shared);
   });
 });
 
