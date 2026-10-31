@@ -28,6 +28,15 @@ Screenshots and notes from Vitest + Playwright runs on branch `feature/drive-mod
 After CI, append **commit SHA** and test command results below.
 
 ```text
-SHA: (filled after push)
-Tests: npm test && npm run test:e2e
+SHA: 357ceb2
+Branch: feature/drive-mode
+Base: feature/integrate-2
+
+Tests (local):
+  npm test — 127 files, 1782 passed
+  npm run typecheck — ok
+  npm run lint — 0 errors
+  npm run build — initial JS within 120 kB gzip budget; DriveModeView lazy chunk ok
+  npx playwright test -c src/features/player/e2e/playwright.config.ts — 7 passed
+  npm run test:e2e:narration — 1 passed
 ```
