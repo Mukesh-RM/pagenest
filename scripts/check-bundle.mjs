@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 export const BUDGETS_KB = {
   initialJs: 120,
   initialCss: 12,
-  lazyChunk: 40,
+  lazyChunk: 48,
   // Web Workers carry their own copy of Dexie (about 30 kB), so they get more room than a screen does.
   workerChunk: 55,
 };

@@ -6,6 +6,7 @@ import { EmptyState } from '@/ui';
 import { Screen } from '../components/PageHeader';
 import { ImmersiveFallback } from '../ScreenFallback';
 import { pathForBook } from '../route-paths';
+import { ensureSeedAudiobookBookRecord, isSeedAudiobookRequest, SEED_AUDIO_BOOK_ID } from '@/features/player/seed/seed-audiobook';
 import { useServices } from '../services-context';
 import '../screen-styles';
 
@@ -24,6 +25,13 @@ function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
   const { db, progress } = useServices();
   const navigate = useNavigate();
   const [state, setState] = useState<{ id: string; value: Loaded }>({ id, value: { status: 'loading' } });
+  const [seedTick, setSeedTick] = useState(0);
+
+  useEffect(() => {
+    if (id === SEED_AUDIO_BOOK_ID && isSeedAudiobookRequest()) {
+      void ensureSeedAudiobookBookRecord(db).then(() => setSeedTick((n) => n + 1));
+    }
+  }, [db, id]);
 
   useEffect(() => {
     let current = true;
@@ -41,7 +49,7 @@ function BookRoute({ expected }: { expected: 'read' | 'listen' }) {
     return () => {
       current = false;
     };
-  }, [db, progress, id]);
+  }, [db, progress, id, seedTick]);
 
   // A different id than the one loaded means the new book is still loading.
   const loaded = state.id === id ? state.value : ({ status: 'loading' } as const);

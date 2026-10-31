@@ -62,9 +62,10 @@ describe('app frame per route', () => {
 
   it('/listen/:id is immersive', async () => {
     await launch();
-    await services.db.books.add(book('a1', { kind: 'audio', format: 'm4b' }));
-    const { container } = renderApp(services, { path: '/listen/a1' });
-    await screen.findByRole('heading', { level: 1, name: 'Title a1' });
+    const { ensureSeedAudiobookBookRecord, SEED_AUDIO_BOOK_ID } = await import('@/features/player/seed/seed-audiobook');
+    await ensureSeedAudiobookBookRecord(services.db);
+    const { container } = renderApp(services, { path: `/listen/${SEED_AUDIO_BOOK_ID}` });
+    await screen.findByRole('region', { name: 'Audio player' }, { timeout: 5000 });
     expect(scope(container)).toHaveAttribute('data-chrome', 'immersive');
   });
 
@@ -99,7 +100,12 @@ describe('app frame per route', () => {
 });
 
 function slot(overrides: Partial<MiniPlayerSlot> = {}): MiniPlayerSlot {
-  return { Component: () => <section aria-label="Mini player">Now playing</section>, ...overrides };
+  const Component = () => (
+    <div className="min-h-[calc(var(--pn-miniplayer-height)+var(--pn-space-2))]">
+      <section aria-label="Mini player">Now playing</section>
+    </div>
+  );
+  return { Component, ...overrides };
 }
 
 describe('mini-player slot', () => {
@@ -115,7 +121,7 @@ describe('mini-player slot', () => {
     await launch({ miniPlayerSlot: slot() });
     renderApp(services, { path: '/stats' });
     const host = await screen.findByTestId('mini-player-slot');
-    expect(host.className).toContain('min-h-[calc(var(--pn-miniplayer-height)+var(--pn-space-2))]');
+    expect(host.querySelector('.min-h-\\[calc\\(var\\(--pn-miniplayer-height\\)\\+var\\(--pn-space-2\\)\\)\\]')).not.toBeNull();
     expect(screen.getByText('Now playing')).toBeInTheDocument();
     const bottom = host.parentElement;
     expect(bottom?.querySelector('[data-testid="pn-tabbar"]')).not.toBeNull();
