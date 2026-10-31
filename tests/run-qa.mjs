@@ -58,7 +58,7 @@ const lighthouseScenarios = [
   { env: process.env },
 ];
 const gates = [
-  ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile', '--retries=0', reporter], gatesEnv('gates-excellence')],
+  ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-excellence')],
   ['Playwright: performance gates (one worker)', ['npx', 'playwright', 'test', '--project=perf-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-perf')],
   lighthouseScenarios,
 ];
@@ -68,7 +68,7 @@ const core =
     ? [lighthouseScreens, playwrightStable]
     : mode === 'gates'
       ? gates
-      : [lighthouseScenarios, lighthouseScreens, playwrightStable, ...gates.slice(0, -1)];
+      : [lighthouseScenarios, lighthouseScreens, ...gates.slice(0, -1), playwrightStable];
 const steps = [...vitestStep, ...core];
 
 let failed = 0;

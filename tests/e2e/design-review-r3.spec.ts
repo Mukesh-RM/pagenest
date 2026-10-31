@@ -48,6 +48,7 @@ async function waitForSettingsStore(page: Page): Promise<void> {
 async function setAppTheme(page: Page, theme: (typeof THEMES)[number], opts?: { onboarding?: boolean }): Promise<void> {
   if (theme === 'custom') {
     if (opts?.onboarding) {
+      await waitForSettingsStore(page);
       await page.evaluate(async () => {
         const open = indexedDB.open('pagenest');
         const db = await new Promise<IDBDatabase>((resolve, reject) => {

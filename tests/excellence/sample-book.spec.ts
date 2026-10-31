@@ -6,6 +6,8 @@ import { readerTextReport, whyNotRealText, REAL_TEXT } from '../e2e/support/read
 // Flow: first launch -> Skip onboarding -> empty Library -> "Try a sample book" -> add it -> open it -> the reader shows prose.
 // Owners: Library (the sample provider and the card), Reader (the screen that must render the text).
 
+test.describe.configure({ mode: 'serial' });
+
 test('the sample book opens on real text, not a placeholder', async ({ page }) => {
   test.setTimeout(180_000);
   await launch(page);
