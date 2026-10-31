@@ -20,3 +20,15 @@ if (typeof URL.createObjectURL !== 'function') {
   URL.createObjectURL = () => 'blob:vitest';
   URL.revokeObjectURL = () => undefined;
 }
+
+if (typeof Object.groupBy !== 'function') {
+  Object.groupBy = (items, callback) => {
+    const out: Record<PropertyKey, unknown[]> = {};
+    for (let i = 0; i < items.length; i++) {
+      const key = callback(items[i], i);
+      if (!Object.prototype.hasOwnProperty.call(out, key)) out[key] = [];
+      out[key].push(items[i]);
+    }
+    return out;
+  };
+}
