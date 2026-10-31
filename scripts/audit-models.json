@@ -216,6 +216,43 @@
     "https://raw.githubusercontent.com/cmusphinx/cmudict/master/LICENSE",
     "https://raw.githubusercontent.com/cmusphinx/cmudict/master/README"
    ]
+  },
+  {
+   "id": "wordnet-en-core",
+   "kind": "dictionary",
+   "name": "WordNet 3.1 English gloss pack (Princeton)",
+   "license": "WordNet License",
+   "verdict": "OK",
+   "reason": "Princeton WordNet 3.1 license permits redistribution with copyright and license notice; trademark guidelines apply to the WordNet name.",
+   "attribution": "WordNet® 3.1 Copyright © 2010 by Princeton University. https://wordnet.princeton.edu/license-and-commercial-use",
+   "evidence": [
+    "https://wordnet.princeton.edu/license-and-commercial-use"
+   ]
+  },
+  {
+   "id": "firefox-translations-bergamot",
+   "kind": "translation",
+   "name": "Firefox Translations / Bergamot (Mozilla)",
+   "license": "MPL-2.0 (engine) + CC-BY per model card (weights)",
+   "verdict": "OK",
+   "reason": "Bergamot translator and firefox-translations-models are maintained by Mozilla; each model directory states CC-BY or compatible terms on its MODEL_CARD. Lexicon packs in PageNest use separate CC BY-SA sample data until full WASM models are installed.",
+   "attribution": "Translations powered by Bergamot and Firefox Translations (Mozilla). See https://github.com/mozilla/firefox-translations-models",
+   "evidence": [
+    "https://github.com/mozilla/bergamot-translator/blob/main/LICENSE",
+    "https://github.com/mozilla/firefox-translations-models"
+   ]
+  },
+  {
+   "id": "wiktionary-lexicon-sample",
+   "kind": "dictionary",
+   "name": "Wiktionary-derived bilingual lexicon sample",
+   "license": "CC BY-SA 4.0",
+   "verdict": "OK",
+   "reason": "Compact en↔hi and en↔es lexicon samples shipped as optional downloads; attribution required on the licenses screen.",
+   "attribution": "Sample entries derived from Wiktionary (https://en.wiktionary.org/) under CC BY-SA 4.0.",
+   "evidence": [
+    "https://creativecommons.org/licenses/by-sa/4.0/"
+   ]
   }
  ],
  "voices": [

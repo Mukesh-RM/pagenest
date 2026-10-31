@@ -1,0 +1,127 @@
+/* Dictionary popup: warm raised surface, readable at 200% text, AA contrast via tokens. */
+.pn-dict-popup {
+  position: fixed;
+  z-index: 20;
+  width: min(calc(100vw - var(--pn-space-8)), 320px);
+  max-height: min(60vh, 420px);
+  overflow: auto;
+  padding: var(--pn-space-3) var(--pn-space-4);
+  border-radius: var(--pn-radius-lg);
+  background: rgb(var(--pn-surface-raised));
+  box-shadow: var(--pn-shadow-md), 0 0 0 1px rgb(var(--pn-line));
+  animation: pn-dict-in var(--pn-duration-fast) var(--pn-ease-out);
+}
+
+.pn-dict-popup__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--pn-space-2);
+  margin-bottom: var(--pn-space-2);
+}
+
+.pn-dict-popup__word {
+  flex: 1;
+  margin: 0;
+  font-family: var(--pn-font-serif, inherit);
+  font-size: var(--pn-text-lg);
+  font-weight: var(--pn-weight-semibold);
+  line-height: var(--pn-leading-snug);
+  color: rgb(var(--pn-text));
+}
+
+.pn-dict-popup__label {
+  margin: 0 0 var(--pn-space-1);
+  font-size: var(--pn-text-xs);
+  font-weight: var(--pn-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(var(--pn-muted));
+}
+
+.pn-dict-popup__section {
+  margin-top: var(--pn-space-3);
+}
+
+.pn-dict-popup__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pn-dict-popup__pos {
+  display: inline-block;
+  margin-right: var(--pn-space-2);
+  padding: 0 var(--pn-space-2);
+  border-radius: var(--pn-radius-pill);
+  font-size: var(--pn-text-xs);
+  font-weight: var(--pn-weight-medium);
+  color: rgb(var(--pn-accent));
+  background: color-mix(in srgb, rgb(var(--pn-accent)) 12%, transparent);
+}
+
+.pn-dict-popup__gloss {
+  margin: var(--pn-space-1) 0 var(--pn-space-2);
+  font-size: var(--pn-text-md);
+  line-height: var(--pn-leading-relaxed);
+  color: rgb(var(--pn-text));
+}
+
+.pn-dict-popup__translation {
+  margin: 0;
+  font-size: var(--pn-text-lg);
+  line-height: var(--pn-leading-relaxed);
+  color: rgb(var(--pn-text));
+}
+
+.pn-dict-popup__muted {
+  margin: 0;
+  font-size: var(--pn-text-sm);
+  color: rgb(var(--pn-muted));
+}
+
+.pn-dict-popup__size {
+  margin: var(--pn-space-1) 0 var(--pn-space-2);
+  font-size: var(--pn-text-sm);
+  color: rgb(var(--pn-text));
+}
+
+.pn-dict-popup__cta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-2);
+  align-items: flex-start;
+}
+
+.pn-live-select__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pn-space-2);
+}
+
+@keyframes pn-dict-in {
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--pn-space-1) * -1);
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.pn-dict-settings__row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--pn-space-1);
+  padding: var(--pn-space-3) 0;
+  border-bottom: 1px solid rgb(var(--pn-line));
+}
+
+.pn-dict-settings__row:last-child {
+  border-bottom: none;
+}
+
+.pn-dict-settings__meta {
+  font-size: var(--pn-text-sm);
+  color: rgb(var(--pn-muted));
+}
