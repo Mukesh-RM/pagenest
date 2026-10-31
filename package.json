@@ -23,7 +23,7 @@
     "test:e2e:sw": "playwright test -c src/sw/e2e/playwright.config.mjs",
     "audit": "node scripts/audit-all.mjs",
     "audit:licenses": "node scripts/audit-licenses.mjs --check",
-    "test:e2e:reader": "playwright test -c src/features/reader/e2e/playwright.config.mjs"
+    "test:e2e:reader": "node src/features/reader/e2e/support/run-playwright.mjs"
   },
   "dependencies": {
     "dexie": "^4.4.7",
@@ -31,7 +31,7 @@
     "foliate-js": "^1.0.1",
     "mammoth": "^1.13.0",
     "music-metadata": "^11.16.1",
-    "pdfjs-dist": "^5.6.205",
+    "pdfjs-dist": "^6.4.299",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.18.4",
@@ -56,7 +56,9 @@
     "eslint-plugin-react-refresh": "^0.5.7",
     "fake-indexeddb": "^6.2.6",
     "globals": "^17.13.0",
+    "jpeg-js": "^0.4.4",
     "jsdom": "^26.1.0",
+    "pdf-lib": "^1.17.1",
     "postcss": "^8.5.31",
     "sharp": "^0.35.5",
     "tailwindcss": "^3.4.19",
