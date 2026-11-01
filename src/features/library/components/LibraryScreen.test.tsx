@@ -149,7 +149,7 @@ describe('the library list', () => {
     expect(chip.getAttribute('aria-pressed')).toBe('true');
     await waitFor(() => expect(cards().every((c) => /Starred/.test(c.textContent ?? ''))).toBe(true));
     expect(cards()).toHaveLength(6);
-    await user.click(screen.getByRole('button', { name: 'All' }));
+    await user.click(within(screen.getByRole('group', { name: 'Filter library' })).getByRole('button', { name: 'All' }));
     expect(chip.getAttribute('aria-pressed')).toBe('false');
     await waitFor(() => expect(cards().length).toBeGreaterThan(6));
   });
@@ -238,6 +238,8 @@ describe('the library list', () => {
     await waitFor(() => expect(cards().length).toBeGreaterThan(0));
     expect(screen.getByRole('button', { name: 'Add books' }).className).toContain('pn-btn--primary');
     expect(screen.getByRole('heading', { name: 'Library', level: 1 })).toBeTruthy();
+    const typeGroup = screen.getByRole('group', { name: 'Library type' });
+    expect(within(typeGroup).getAllByRole('button').map((b) => b.textContent)).toEqual(['All', 'Books', 'Audio']);
     const group = screen.getByRole('group', { name: 'Filter library' });
     expect(within(group).getAllByRole('button').map((b) => b.textContent)).toEqual(['All', 'Favorites', 'Reading', 'Listening', 'Finished']);
     expect(group.className).toContain('pn-chip-group--scroll'); // one row that scrolls, never wraps

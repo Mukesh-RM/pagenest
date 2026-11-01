@@ -143,8 +143,8 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
   const [text, setText] = useState('');
   const [filter, setFilter] = useState<FilterId>('all');
   const query = useMemo(
-    () => ({ ...toLibraryQuery({ text, filter, sort: prefs.sort, collectionId: shelfId }), ...(preset ?? {}) }),
-    [text, filter, prefs.sort, shelfId, preset],
+    () => ({ ...toLibraryQuery({ text, filter, sort: prefs.sort, segment: prefs.segment, collectionId: shelfId }), ...(preset ?? {}) }),
+    [text, filter, prefs.sort, prefs.segment, shelfId, preset],
   );
   const { items, total, libraryCount, ready, error, patch, remove, reload } = useLibraryItems(query);
 
@@ -316,6 +316,8 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
       <Toolbar
         text={text}
         onText={setText}
+        segment={prefs.segment}
+        onSegment={(segment) => setPrefs({ segment })}
         filter={filter}
         onFilter={setFilter}
         sort={prefs.sort}
