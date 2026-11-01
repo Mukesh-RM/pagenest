@@ -16,7 +16,7 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| In PR | **Tap zones on book content** (`doc.onTap` → turn / chrome) |
+| In PR | **Tap zones on book content** (`doc.onTap` → turn / chrome; foliate tap x fix) |
 | Open | Page turn mode in Aa (slide / scroll / none) |
 | Open | Align, hyphenation, paragraph spacing in Aa |
 | Open | Edge brightness / warm filter |

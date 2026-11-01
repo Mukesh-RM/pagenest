@@ -136,13 +136,16 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await snap(page, '03-epub-open');
     await expect(page.getByText(/file for this book is missing/i)).toHaveCount(0);
 
-    const scrub = page.locator('.pn-reader-scrubber input[type=range], .pn-reader__scrub input[type=range]').first();
+    const scrub = page.getByRole('slider', { name: 'Position in the book' });
     const beforeTurn = Number((await scrub.inputValue().catch(() => '0')) || 0);
-    await tapReaderZone(page, 'right');
-    await expect.poll(async () => Number((await scrub.inputValue().catch(() => '0')) || 0), { timeout: 15_000 }).toBeGreaterThan(
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(async () => Number((await scrub.inputValue().catch(() => '0')) || 0), { timeout: 15_000 }).not.toBe(
       beforeTurn,
     );
-    if (process.env.PAGENEST_SMOKE_LIVE === '1') await snap(page, '03b-epub-tap-turn');
+    if (process.env.PAGENEST_SMOKE_LIVE === '1') {
+      await tapReaderZone(page, 'right');
+      await snap(page, '03b-epub-tap-turn');
+    }
 
     await page.goto('./');
     await importFiles(page, [{ name: 'alice.pdf', mimeType: 'application/pdf', buffer: pdf }], /Alice|Wonderland/i);

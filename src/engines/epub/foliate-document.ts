@@ -644,9 +644,8 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
       if (!doc.getSelection()?.isCollapsed) return;
       const target = e.target as Element | null;
       if (target?.closest('a[href]')) return;
-      const frame = win.frameElement?.getBoundingClientRect();
       const host = this.#host.getBoundingClientRect();
-      const x = (frame?.left ?? 0) + e.clientX - host.left;
+      const x = e.clientX - host.left;
       const img = target?.closest('img');
       const imgSrc = img?.getAttribute('src');
       const third = host.width / 3;
