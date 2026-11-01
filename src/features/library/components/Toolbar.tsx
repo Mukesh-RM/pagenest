@@ -1,10 +1,12 @@
 import { useId } from 'react';
 import { Chip, ChipGroup, Icon } from '@/ui';
-import { FILTERS, SORT_KEYS, SORT_LABELS, type FilterId, type SortKey, type ViewMode } from '../model';
+import { FILTERS, SEGMENTS, SORT_KEYS, SORT_LABELS, type FilterId, type SegmentId, type SortKey, type ViewMode } from '../model';
 
 export interface ToolbarProps {
   text: string;
   onText: (text: string) => void;
+  segment: SegmentId;
+  onSegment: (segment: SegmentId) => void;
   filter: FilterId;
   onFilter: (filter: FilterId) => void;
   sort: SortKey;
@@ -20,7 +22,7 @@ export interface ToolbarProps {
  * system's Library toolbar (`LibraryScreen`), with the same classes and words, so it looks the same:
  * a pill search field, a chip row that scrolls with a fade at its end, then "Sort by" and the switch.
  */
-export function Toolbar({ text, onText, filter, onFilter, sort, onSort, view, onView, showSort = true }: ToolbarProps) {
+export function Toolbar({ text, onText, segment, onSegment, filter, onFilter, sort, onSort, view, onView, showSort = true }: ToolbarProps) {
   const searchId = useId();
   const sortId = useId();
   return (
@@ -42,6 +44,15 @@ export function Toolbar({ text, onText, filter, onFilter, sort, onSort, view, on
           enterKeyHint="search"
           onChange={(event) => onText(event.target.value)}
         />
+      </div>
+      <div className="pn-library__filters">
+        <ChipGroup label="Library type" scroll>
+          {SEGMENTS.map((s) => (
+            <Chip key={s.id} selected={segment === s.id} onClick={() => onSegment(s.id)}>
+              {s.label}
+            </Chip>
+          ))}
+        </ChipGroup>
       </div>
       <div className="pn-library__filters">
         <ChipGroup label="Filter library" scroll>

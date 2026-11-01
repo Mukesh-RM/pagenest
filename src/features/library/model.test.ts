@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { FILTERS, SORT_LABELS, formatDuration, formatTag, isFinished, parsePrefs, toLibraryQuery } from './model';
 
 describe('toLibraryQuery', () => {
-  const base = { text: '', filter: 'all', sort: 'title' } as const;
+  const base = { text: '', filter: 'all', sort: 'title', segment: 'all' } as const;
   it('asks only for what is set', () => {
     expect(toLibraryQuery(base)).toEqual({ sort: 'title' });
     expect(toLibraryQuery({ ...base, filter: 'favorites' })).toEqual({ status: 'favorites', sort: 'title' });
@@ -10,6 +10,10 @@ describe('toLibraryQuery', () => {
   });
   it('ranks a search by relevance instead of the chosen sort, and trims it', () => {
     expect(toLibraryQuery({ ...base, text: '  zebra ' })).toEqual({ text: 'zebra' });
+  });
+  it('limits by segment (All / Books / Audio)', () => {
+    expect(toLibraryQuery({ ...base, segment: 'audio' })).toEqual({ segment: 'audio', sort: 'title' });
+    expect(toLibraryQuery({ ...base, segment: 'books' })).toEqual({ segment: 'books', sort: 'title' });
   });
   it('keeps a shelf', () => {
     expect(toLibraryQuery({ ...base, collectionId: 'c1' })).toMatchObject({ collectionId: 'c1' });
@@ -28,9 +32,9 @@ describe('the words on the screen', () => {
 
 describe('helpers', () => {
   it('reads saved preferences safely, ignoring old ones it no longer has', () => {
-    expect(parsePrefs({ view: 'list', sort: 'title', segment: 'audio' })).toEqual({ view: 'list', sort: 'title' });
-    expect(parsePrefs({ view: 'cube', sort: 7 })).toEqual({ view: 'grid', sort: 'recent' });
-    expect(parsePrefs(null)).toEqual({ view: 'grid', sort: 'recent' });
+    expect(parsePrefs({ view: 'list', sort: 'title', segment: 'audio' })).toEqual({ view: 'list', sort: 'title', segment: 'audio' });
+    expect(parsePrefs({ view: 'cube', sort: 7 })).toEqual({ view: 'grid', sort: 'recent', segment: 'all' });
+    expect(parsePrefs(null)).toEqual({ view: 'grid', sort: 'recent', segment: 'all' });
   });
   it('knows a finished book by its flag or by reaching the end', () => {
     expect(isFinished({ finished: true }, 0)).toBe(true);
