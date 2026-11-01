@@ -84,13 +84,7 @@ export async function selectPhraseInFoliate(page: Page, phrase: string): Promise
 /** Tap a word inside the foliate iframe (triggers {@link FoliateReaderDocument} word tap). */
 export async function tapWordInFoliate(page: Page, word: string): Promise<void> {
   await waitForFoliateBookText(page, { needle: word, min: 20, timeout: 120_000 });
-  await page.locator('.pn-live__host').waitFor({ timeout: 60_000 });
-  await page.waitForFunction(() => {
-    const view = document.querySelector('foliate-view') as
-      | (HTMLElement & { renderer?: { getContents: () => Array<{ doc: Document }> } })
-      | null;
-    return Boolean(view?.renderer?.getContents?.()[0]?.doc);
-  }, { timeout: 60_000 });
+  await page.getByRole('region', { name: /^Reading /i }).waitFor({ timeout: 120_000 });
 
   const frame = await foliateBookFrame(page, word);
   if (!frame) throw new Error('No foliate book frame.');

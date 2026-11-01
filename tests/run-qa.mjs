@@ -48,7 +48,7 @@ const lighthouseScreens = [
 ];
 const playwrightStable = [
   'Playwright: unit, e2e on the real app, accessibility, offline',
-  ['npx', 'playwright', 'test', ...e2eProjects],
+  ['npx', 'playwright', 'test', ...e2eProjects, ...(process.env.CI ? ['--workers=1'] : [])],
   { env: process.env },
 ];
 // Two separate Playwright runs so timing-sensitive performance gates never share the machine with excellence tests.
