@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
-import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
+import { dismissReaderInterstitials, tapReaderZone, waitForFoliateBookTextLive } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const liveHost = process.env.PAGENEST_SMOKE_LIVE_HOST;
@@ -143,6 +143,17 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     const epubReadUrl = page.url();
     await snap(page, '03-epub-open');
     await expect(page.getByText(/file for this book is missing/i)).toHaveCount(0);
+
+    const scrub = page.getByRole('slider', { name: 'Position in the book' });
+    const beforeTurn = Number((await scrub.inputValue().catch(() => '0')) || 0);
+    await page.keyboard.press('ArrowRight');
+    await expect.poll(async () => Number((await scrub.inputValue().catch(() => '0')) || 0), { timeout: 15_000 }).not.toBe(
+      beforeTurn,
+    );
+    if (process.env.PAGENEST_SMOKE_LIVE === '1') {
+      await tapReaderZone(page, 'right');
+      await snap(page, '03b-epub-tap-turn');
+    }
 
     await page.goto('./');
     await importFiles(page, [{ name: 'alice.pdf', mimeType: 'application/pdf', buffer: pdf }], /Alice|Wonderland/i);
