@@ -14,6 +14,7 @@
 // Lighthouse is pinned to 11.x because Lighthouse 12 removed the PWA category that blueprint 19 asks for.
 // Exit code 0 = all categories pass, 1 = a score is below the threshold, 2 = the audit could not run.
 import { spawn, spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,11 +51,24 @@ async function waitForUrl(url, ms = 15000) {
   throw new Error(`Server did not answer at ${url}`);
 }
 
+const qaBuildEnv = {
+  ...process.env,
+  VITE_PN_MOCK_DICTIONARY: '1',
+  VITE_PN_MOCK_BERGAMOT: '1',
+  VITE_PN_SEED_AUDIO: '1',
+};
+
 const args = parseArgs(process.argv.slice(2));
 if (!args.url && !process.env.PAGENEST_BASE_URL && process.env.PAGENEST_LIGHTHOUSE_SKIP_BUILD !== '1') {
-  console.log('Building dist with VITE_PN_SEED_AUDIO=1 for Lighthouse (audio player route)…');
-  const built = spawnSync('npm', ['run', 'build:seed-audio'], { cwd: repoRoot, stdio: 'inherit', env: process.env });
-  if (built.status !== 0) process.exit(built.status ?? 1);
+  const distReady = existsSync(resolve(repoRoot, 'dist/index.html'));
+  const skipRebuild = process.env.CI === 'true' && distReady;
+  if (skipRebuild) {
+    console.log('Reusing existing dist/ for Lighthouse (CI build artifact).');
+  } else {
+    console.log('Building dist with VITE_PN_MOCK_DICTIONARY=1 VITE_PN_MOCK_BERGAMOT=1 VITE_PN_SEED_AUDIO=1 for Lighthouse…');
+    const built = spawnSync('npm', ['run', 'build'], { cwd: repoRoot, stdio: 'inherit', env: qaBuildEnv });
+    if (built.status !== 0) process.exit(built.status ?? 1);
+  }
 }
 if (args.port === undefined && !args.url && !process.env.PAGENEST_BASE_URL) {
   args.port = await resolveE2ePort('PAGENEST_LIGHTHOUSE_PORT');
