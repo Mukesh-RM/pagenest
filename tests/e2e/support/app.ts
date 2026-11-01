@@ -1,4 +1,4 @@
-import { expect, type Locator, type Page } from '@playwright/test';
+import { expect, type Locator, type Page, type BrowserContext } from '@playwright/test';
 import type { ThemeName } from './contrast';
 
 /**
@@ -46,8 +46,21 @@ export async function skipOnboarding(page: Page): Promise<void> {
   }
 }
 
+/** Suppress one-time PWA / iOS install sheets that block library taps in WebKit live smoke. */
+export async function primeSmokeHints(context: BrowserContext): Promise<void> {
+  await context.addInitScript(() => {
+    try {
+      localStorage.setItem('pn.hint.ios-install-sheet', '1');
+      localStorage.setItem('pn.hint.install-banner', '1');
+    } catch {
+      /* private mode */
+    }
+  });
+}
+
 /** Closes library coach marks and import toasts that block taps during smoke tests. */
 export async function dismissLibraryOverlays(page: Page): Promise<void> {
+  await page.getByRole('dialog', { name: 'Add InkQuiet to your iPhone' }).waitFor({ state: 'visible', timeout: 2000 }).catch(() => undefined);
   await page.getByRole('button', { name: 'Got it' }).click({ timeout: 2000 }).catch(() => undefined);
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 2000 }).catch(() => undefined);
 }

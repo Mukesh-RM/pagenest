@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, expect, test, webkit } from '@playwright/test';
 import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
-import { dismissLibraryOverlays, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -30,6 +30,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
     baseURL: process.env.PAGENEST_BASE_URL,
     serviceWorkers: 'allow',
   });
+  await primeSmokeHints(browser);
   const page = browser.pages()[0] ?? (await browser.newPage());
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {

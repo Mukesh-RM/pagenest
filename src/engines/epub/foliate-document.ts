@@ -68,6 +68,7 @@ export interface FoliateDocumentInit {
   readonly host: HTMLElement;
   readonly appearance: ReaderAppearance;
   readonly fixed: boolean;
+  readonly onUnmount?: () => void;
 }
 
 /** Section index of a `relocate` event: foliate's progress puts it in `section.current`. */
@@ -141,6 +142,7 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
     this.layout = init.fixed ? 'fixed' : 'reflow';
     this.direction = init.book.dir === 'rtl' ? 'rtl' : 'ltr';
     this.#lastPosition = { locator: init.fixed ? { kind: 'page', page: 1, offset: 0 } : reflowAt(0, 0), percent: 0 };
+    if (init.onUnmount) this.#cleanups.push(init.onUnmount);
     this.#wire();
   }
 
