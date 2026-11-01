@@ -151,6 +151,22 @@ export function ReaderSettingsSheet({ open, onClose, settings, fonts, onChange }
             onChange={(margins) => set({ margins })}
           />
         </section>
+
+        <section className="pn-aa__group" aria-labelledby="pn-aa-turn">
+          <h3 id="pn-aa-turn" className="pn-aa__heading">
+            Page turn
+          </h3>
+          <ChoiceGroup
+            label="Page turn"
+            value={settings.pageTurn}
+            options={[
+              { value: 'slide', label: 'Slide' },
+              { value: 'scroll', label: 'Scroll' },
+              { value: 'none', label: 'Instant' },
+            ]}
+            onChange={(pageTurn) => set({ pageTurn })}
+          />
+        </section>
       </div>
     </BottomSheet>
   );

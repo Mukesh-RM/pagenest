@@ -153,6 +153,7 @@ export const SAMPLE_READER_SETTINGS: ReaderSettings = {
   theme: 'light',
   lineSpacing: 'comfortable',
   margins: 'medium',
+  pageTurn: 'slide',
 };
 
 export const SAMPLE_CHAPTER = 'Chapter 7: The orchard in March';

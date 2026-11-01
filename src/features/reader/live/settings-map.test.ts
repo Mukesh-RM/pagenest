@@ -36,7 +36,11 @@ describe('settings to appearance', () => {
     expect(settingsToAppearance({ ...DEFAULT_READER_SETTINGS, fontId: 'nope' }).fontFamily).toBe(READING_FONTS[0]?.family);
   });
 
-  it('produces an appearance the engine accepts unchanged', () => {
+  it('maps page turn style', () => {
+    expect(settingsToAppearance({ ...DEFAULT_READER_SETTINGS, pageTurn: 'scroll' }).pageTurn).toBe('scroll');
+  });
+
+  it('normalizes mapped appearance for varied font sizes', () => {
     for (const fontSize of [14, 18, 32]) {
       const a = settingsToAppearance({ ...DEFAULT_READER_SETTINGS, fontSize });
       expect(normalizeAppearance(a)).toEqual(a);
