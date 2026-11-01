@@ -26,6 +26,8 @@ test.describe('360px audit screenshots (real fixtures)', () => {
     await shot(page, '01-library-light');
     await gotoTab(page, 'Settings');
     await shot(page, '02-settings-light');
+    await page.getByRole('heading', { name: 'Privacy' }).scrollIntoViewIfNeeded();
+    await shot(page, '05-settings-privacy-360');
     await gotoTab(page, 'Library');
     const buffer = readFileSync(join(repoRoot, 'src/features/reader/fixtures/alice.epub'));
     await page.getByRole('button', { name: 'Add books' }).first().click();
