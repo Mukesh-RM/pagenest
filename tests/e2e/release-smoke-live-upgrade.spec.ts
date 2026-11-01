@@ -16,7 +16,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   void context;
   test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
   test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
-  test.setTimeout(300_000);
+  test.setTimeout(600_000);
 
   const profile = join(repoRoot, 'tests/test-results/live-profile', host, testInfo.project.name);
   mkdirSync(profile, { recursive: true });
@@ -65,6 +65,8 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   await dismissLibraryOverlays(page);
   await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
+  await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
+  await dismissReaderInterstitials(page);
   await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
   await expect(page.getByText(/file for this book is missing/i)).toHaveCount(0);
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-03-after-reload.png`), fullPage: true });

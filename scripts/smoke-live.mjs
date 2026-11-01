@@ -33,6 +33,7 @@ const args = [
   'test',
   'e2e/release-smoke.spec.ts',
   'e2e/release-smoke-live-upgrade.spec.ts',
+  'e2e/release-smoke-live-narration.spec.ts',
   '--project=release-smoke-chromium',
   '--project=release-smoke-webkit',
   '--workers=1',

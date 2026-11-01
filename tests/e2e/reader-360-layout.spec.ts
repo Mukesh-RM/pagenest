@@ -68,8 +68,31 @@ test.describe('reader at 360px', () => {
     await launchFresh(page);
     const buffer = readFixture('src/features/reader/fixtures/alice.epub');
     await importEpub(page, buffer);
-    const text = await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    const text =     await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(text.length).toBeGreaterThan(200);
+    const titleLines = await page.evaluate(() => {
+      const el = document.querySelector('.pn-reader__title');
+      if (!el) return [] as string[];
+      const text = el.textContent ?? '';
+      const node = el.firstChild;
+      if (!text || !node) return [text.trim()].filter(Boolean);
+      const range = document.createRange();
+      const lines: string[] = [''];
+      let lastTop = -1;
+      for (let i = 0; i < text.length; i++) {
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        const top = range.getBoundingClientRect().top;
+        if (lastTop >= 0 && Math.abs(top - lastTop) > 2) lines.push('');
+        lines[lines.length - 1] += text[i] ?? '';
+        lastTop = top;
+      }
+      return lines.map((l) => l.trim()).filter(Boolean);
+    });
+    for (const line of titleLines) {
+      expect(line).not.toMatch(/^es$/i);
+      expect(line).not.toMatch(/Adventur$/i);
+    }
     await expect(page.getByRole('region', { name: 'Read aloud controls' })).toBeHidden();
     await expect(page.getByRole('button', { name: 'Read aloud' })).toBeVisible();
     await assertNoOverlap(page, [

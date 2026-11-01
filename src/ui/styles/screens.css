@@ -238,8 +238,15 @@
   font-size: var(--pn-text-md);
   font-weight: var(--pn-weight-heading);
   line-height: var(--pn-leading-tight);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
 }
 
 .pn-reader__chapter {
@@ -247,8 +254,14 @@
   overflow: hidden;
   color: rgb(var(--pn-muted));
   font-size: var(--pn-text-xs);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  white-space: normal;
 }
 
 .pn-reader__aa {

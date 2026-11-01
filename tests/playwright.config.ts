@@ -77,10 +77,10 @@ export default defineConfig({
   projects: [
     // Pure logic tests (no browser, no app): contrast maths and blueprint palette.
     { name: 'unit', testMatch: 'unit/**/*.spec.ts' },
-    { name: 'chromium-desktop', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts'], use: { ...devices['Desktop Chrome'] } },
-    { name: 'chromium-mobile', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts'], use: { ...devices['Pixel 7'] } },
+    { name: 'chromium-desktop', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts', '**/release-smoke-live-narration.spec.ts'], use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium-mobile', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts', '**/release-smoke-live-narration.spec.ts'], use: { ...devices['Pixel 7'] } },
     // Android phone profile (Pixel 7); same viewport family as excellence phone 360 checks.
-    { name: 'android-mobile', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts'], use: { ...devices['Pixel 7'] } },
+    { name: 'android-mobile', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts', '**/release-smoke-live-narration.spec.ts'], use: { ...devices['Pixel 7'] } },
     // Performance gates (budgets in perf/budgets.ts): Chromium mobile profile, CPU slowed to a mid-range phone.
     // Run alone for the steadiest numbers: `npm run test:perf` (one worker).
     { name: 'perf-chromium-mobile', testMatch: 'perf/**/*.spec.ts', fullyParallel: false, use: { ...devices['Pixel 7'] } },
@@ -88,14 +88,14 @@ export default defineConfig({
     { name: 'excellence-chromium-mobile', testMatch: 'excellence/**/*.spec.ts', use: { ...devices['Pixel 7'] } },
     // WebKit stands in for Safari on iPhone. It is a proxy, not a replacement for the real-device checklist.
     ...(includeWebkit
-      ? [{ name: 'webkit-iphone', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts'], use: { ...devices['iPhone 14'] } }]
+      ? [{ name: 'webkit-iphone', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts', '**/release-smoke-live-narration.spec.ts'], use: { ...devices['iPhone 14'] } }]
       : []),
-    { name: 'release-smoke-chromium', testMatch: ['e2e/release-smoke.spec.ts', 'e2e/release-smoke-live-upgrade.spec.ts'], use: { ...devices['Pixel 7'] } },
+    { name: 'release-smoke-chromium', testMatch: ['e2e/release-smoke.spec.ts', 'e2e/release-smoke-live-upgrade.spec.ts', 'e2e/release-smoke-live-narration.spec.ts'], use: { ...devices['Pixel 7'] } },
     ...(includeWebkit
       ? [
           {
             name: 'release-smoke-webkit',
-            testMatch: ['e2e/release-smoke.spec.ts', 'e2e/release-smoke-live-upgrade.spec.ts'],
+            testMatch: ['e2e/release-smoke.spec.ts', 'e2e/release-smoke-live-upgrade.spec.ts', 'e2e/release-smoke-live-narration.spec.ts'],
             use: { ...devices['iPhone 14'] },
           },
         ]
