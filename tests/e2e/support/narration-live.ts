@@ -1,6 +1,35 @@
 import type { BrowserContext } from '@playwright/test';
 import { expect, type Page } from '@playwright/test';
 
+/** Simulates a pre–Web-Speech-default profile that still had Piper selected. */
+export async function seedLegacyPiperNarrationSettings(page: Page): Promise<void> {
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve, reject) => {
+      const open = indexedDB.open('pagenest');
+      open.onerror = () => reject(open.error ?? new Error('indexedDB.open failed'));
+      open.onsuccess = () => {
+        const db = open.result;
+        const tx = db.transaction('settings', 'readwrite');
+        tx.onerror = () => reject(tx.error ?? new Error('settings write failed'));
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.objectStore('settings').put({
+          key: 'narrationSettings',
+          value: {
+            engine: 'piper',
+            voiceId: 'en_US-libritts-high',
+            speed: 1,
+            style: 'natural',
+            expressive: false,
+          },
+        });
+      };
+    });
+  });
+}
+
 /** Headless Chromium/WebKit often ship no TTS voices; stub speech for live smoke UI checks. */
 export async function primeDeviceSpeechForLiveSmoke(context: BrowserContext): Promise<void> {
   await context.addInitScript(() => {
