@@ -14,12 +14,16 @@ export async function startDefaultReadAloud(page: Page): Promise<void> {
   await start.click();
 }
 
-/** Waits for Piper download + audible playback (AnalyserNode or position advance). */
-export async function waitForReadAloudAudible(page: Page, timeoutMs = 480_000): Promise<void> {
+/** Waits for read-aloud playback (HTML audio for HD voices, or speechSynthesis for device voices). */
+export async function waitForReadAloudAudible(page: Page, timeoutMs = 120_000): Promise<void> {
   await expect(page.getByRole('alert')).toHaveCount(0, { timeout: 5_000 }).catch(() => undefined);
   await expect.poll(
     async () =>
       page.evaluate(async () => {
+        const synth = window.speechSynthesis;
+        if (synth?.speaking && !synth.paused) {
+          return { ok: true, via: 'speech' as const };
+        }
         const audio = document.querySelector('audio');
         if (!audio) return { ok: false, reason: 'no-audio' };
         if (audio.paused) {
@@ -53,32 +57,18 @@ export async function waitForReadAloudAudible(page: Page, timeoutMs = 480_000): 
         }
         await new Promise((r) => setTimeout(r, 400));
         const advanced = audio.currentTime > t0 + 0.03;
-        const session = navigator.mediaSession?.playbackState ?? '';
         return {
           ok: !audio.paused && (advanced || analyserEnergy > 48),
+          via: 'audio' as const,
           paused: audio.paused,
           advanced,
           analyserEnergy,
-          session,
           t0,
           t1: audio.currentTime,
         };
       }),
-    { timeout: timeoutMs, intervals: [500, 1000, 2000, 4000] },
+    { timeout: timeoutMs, intervals: [250, 500, 1000, 2000] },
   ).toMatchObject({ ok: true });
-}
-
-export async function expectDownloadProgressVisible(page: Page): Promise<void> {
-  await expect(page.getByRole('button', { name: /Downloading voice|Loading voice/i })).toBeVisible({ timeout: 120_000 });
-}
-
-export async function assertOrtWasmDeployed(page: Page): Promise<void> {
-  const ok = await page.evaluate(async () => {
-    const res = await fetch('/ort/ort-wasm-simd-threaded.wasm', { method: 'HEAD' });
-    const type = res.headers.get('content-type') ?? '';
-    return res.ok && !type.includes('text/html') && Number(res.headers.get('content-length') || 0) > 1_000_000;
-  });
-  expect(ok, '/ort/*.wasm must be deployed (not SPA fallback HTML)').toBe(true);
 }
 
 export async function exerciseReadAloudControls(page: Page): Promise<void> {

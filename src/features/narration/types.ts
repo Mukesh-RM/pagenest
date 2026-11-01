@@ -12,8 +12,8 @@ export interface NarrationSettings {
 }
 
 export const DEFAULT_NARRATION_SETTINGS: NarrationSettings = {
-  engine: 'piper',
-  voiceId: 'en_US-libritts-high',
+  engine: 'speech',
+  voiceId: '',
   speed: 1,
   style: 'natural',
   expressive: false,

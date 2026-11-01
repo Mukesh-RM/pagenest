@@ -50,7 +50,7 @@ export function NarrationControls({
           disabled={preparing}
           onClick={onPlayPause}
         >
-          {playing ? 'Pause' : preparing ? prepMessage ?? 'Loading voice…' : 'Read aloud'}
+          {playing ? 'Pause' : preparing ? prepMessage ?? 'Starting…' : 'Read aloud'}
         </Button>
         <Button variant="secondary" aria-label="Choose voice" onClick={onVoice}>
           Voice

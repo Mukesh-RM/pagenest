@@ -10,12 +10,7 @@ import {
   waitForServiceWorkerControl,
 } from './support/app';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
-import {
-  assertOrtWasmDeployed,
-  exerciseReadAloudControls,
-  openReadAloudControls,
-  waitForReadAloudAudible,
-} from './support/narration-live';
+import { exerciseReadAloudControls, openReadAloudControls, waitForReadAloudAudible } from './support/narration-live';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -47,7 +42,7 @@ async function importAliceEpub(page: Page): Promise<void> {
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
   await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
   await dismissReaderInterstitials(page);
-  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 180_000 });
+  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
 }
 
 test.describe('live read-aloud produces audible audio', () => {
@@ -58,8 +53,8 @@ test.describe('live read-aloud produces audible audio', () => {
     await page.setViewportSize(VIEW);
   });
 
-  test('Kristin voice: ORT wasm, download, audible playback, play/pause, speed', async ({ page }, testInfo) => {
-    test.setTimeout(900_000);
+  test('device voice: instant playback, play/pause, speed', async ({ page }, testInfo) => {
+    test.setTimeout(600_000);
     const project = testInfo.project.name;
     const consoleErrors: string[] = [];
     page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
@@ -67,27 +62,21 @@ test.describe('live read-aloud produces audible audio', () => {
       if (msg.type() === 'error') consoleErrors.push(`console: ${msg.text()}`);
     });
 
-    await assertOrtWasmDeployed(page);
-
     await importAliceEpub(page);
     await snap(page, project, '01-reader');
 
     await openReadAloudControls(page);
     await snap(page, project, '02-controls');
 
-    await page.getByRole('button', { name: 'Choose voice' }).click();
-    await page.getByRole('button', { name: /Kristin \(US\)/i }).click();
-    await snap(page, project, '02b-voice');
-
     await page.getByRole('button', { name: 'Start read aloud' }).click();
-
-    await expect(page.getByRole('button', { name: /Downloading voice|Pause read aloud/i })).toBeVisible({
-      timeout: 120_000,
+    await expect(page.getByRole('button', { name: /Downloading voice|Loading voice/i })).toHaveCount(0, {
+      timeout: 5_000,
     });
-    await snap(page, project, '03-preparing');
+    await expect(page.getByRole('button', { name: 'Pause read aloud' })).toBeVisible({ timeout: 30_000 });
+    await snap(page, project, '03-playing');
 
     await waitForReadAloudAudible(page);
-    await snap(page, project, '04-playing');
+    await snap(page, project, '04-audible');
 
     await exerciseReadAloudControls(page);
     await snap(page, project, '05-controls');

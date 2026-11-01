@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSpeechEngine } from '@/engines/tts/speech-engine';
+import { createSpeechEngine, parseSpeechVoiceUri, speechVoiceIdFrom } from '@/engines/tts/speech-engine';
 import { phonemesToIds, runPiperInference } from '@/engines/tts/piper/inference';
 import { encodeWav, concatSamples } from './wav-encode';
 import { buildNarrationPlan } from '@/engines/emotion/pipeline';
@@ -42,6 +42,17 @@ describe('speech engine', () => {
     const engine = createSpeechEngine();
     const voices = await engine.listVoices('en');
     expect(Array.isArray(voices)).toBe(true);
+  });
+
+  it('round-trips speech voice ids', () => {
+    const id = speechVoiceIdFrom({
+      name: 'Test',
+      lang: 'en-US',
+      voiceURI: 'com.example.voice',
+      default: false,
+      localService: true,
+    } as SpeechSynthesisVoice);
+    expect(parseSpeechVoiceUri(id)).toBe('com.example.voice');
   });
 });
 
