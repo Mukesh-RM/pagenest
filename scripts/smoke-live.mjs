@@ -33,7 +33,6 @@ const args = [
   'test',
   'e2e/release-smoke.spec.ts',
   'e2e/release-smoke-live-upgrade.spec.ts',
-  'e2e/release-smoke-live-read-aloud.spec.ts',
   '--project=release-smoke-chromium',
   '--project=release-smoke-webkit',
   '--workers=1',
@@ -41,5 +40,18 @@ const args = [
 ];
 
 console.log(`\n=== Live smoke @ ${baseURL} (360px Pixel + iPhone) ===\n`);
-const r = spawnSync('npx', args, { cwd: testsDir, env, stdio: 'inherit' });
+let r = spawnSync('npx', args, { cwd: testsDir, env, stdio: 'inherit' });
+if (r.status !== 0) process.exit(r.status ?? 1);
+
+console.log(`\n=== Live read-aloud smoke @ ${baseURL} ===\n`);
+const readAloudArgs = [
+  'playwright',
+  'test',
+  'e2e/release-smoke-live-read-aloud.spec.ts',
+  '--project=release-smoke-chromium',
+  '--project=release-smoke-webkit',
+  '--workers=1',
+  '--retries=0',
+];
+r = spawnSync('npx', readAloudArgs, { cwd: testsDir, env, stdio: 'inherit' });
 process.exit(r.status ?? 1);

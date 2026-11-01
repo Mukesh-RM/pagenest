@@ -10,7 +10,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/check-bundle.mjs && node scripts/check-no-seed-in-dist.mjs",
+    "build": "node scripts/copy-ort-wasm.mjs && tsc -b && vite build && node scripts/check-ort-wasm.mjs && node scripts/check-bundle.mjs && node scripts/check-no-seed-in-dist.mjs",
     "postinstall": "node scripts/copy-ort-wasm.mjs",
     "build:seed-audio": "VITE_PN_SEED_AUDIO=1 npm run build",
     "build:wordnet-full": "node scripts/build-wordnet-full-pack.mjs",

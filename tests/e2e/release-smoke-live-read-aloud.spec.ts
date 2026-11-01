@@ -2,7 +2,6 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { PIPER_DEFAULT_VOICE } from '../../../src/engines/tts/piper/voices';
 import {
   dismissLibraryOverlays,
   primeSmokeHints,
@@ -11,7 +10,12 @@ import {
   waitForServiceWorkerControl,
 } from './support/app';
 import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
-import { openReadAloudControls, waitForReadAloudAudible } from './support/narration-live';
+import {
+  assertOrtWasmDeployed,
+  exerciseReadAloudControls,
+  openReadAloudControls,
+  waitForReadAloudAudible,
+} from './support/narration-live';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -49,12 +53,12 @@ async function importAliceEpub(page: Page): Promise<void> {
 test.describe('live read-aloud produces audible audio', () => {
   test.beforeEach(async ({ page, context }, testInfo) => {
     test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
-    test.skip(testInfo.project.name !== 'release-smoke-chromium', 'Pixel Chromium profile for read-aloud P0.');
+    test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
     await primeSmokeHints(context);
     await page.setViewportSize(VIEW);
   });
 
-  test(`default voice (${PIPER_DEFAULT_VOICE}): download progress and non-silent playback`, async ({ page }, testInfo) => {
+  test('Kristin voice: ORT wasm, download, audible playback, play/pause, speed', async ({ page }, testInfo) => {
     test.setTimeout(900_000);
     const project = testInfo.project.name;
     const consoleErrors: string[] = [];
@@ -62,6 +66,8 @@ test.describe('live read-aloud produces audible audio', () => {
     page.on('console', (msg) => {
       if (msg.type() === 'error') consoleErrors.push(`console: ${msg.text()}`);
     });
+
+    await assertOrtWasmDeployed(page);
 
     await importAliceEpub(page);
     await snap(page, project, '01-reader');
@@ -73,8 +79,7 @@ test.describe('live read-aloud produces audible audio', () => {
     await page.getByRole('button', { name: /Kristin \(US\)/i }).click();
     await snap(page, project, '02b-voice');
 
-    const start = page.getByRole('button', { name: 'Start read aloud' });
-    await start.click();
+    await page.getByRole('button', { name: 'Start read aloud' }).click();
 
     await expect(page.getByRole('button', { name: /Downloading voice|Pause read aloud/i })).toBeVisible({
       timeout: 120_000,
@@ -83,6 +88,9 @@ test.describe('live read-aloud produces audible audio', () => {
 
     await waitForReadAloudAudible(page);
     await snap(page, project, '04-playing');
+
+    await exerciseReadAloudControls(page);
+    await snap(page, project, '05-controls');
 
     await expect(page.getByRole('alert')).toHaveCount(0);
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
