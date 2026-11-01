@@ -12,7 +12,7 @@ const shotDir = join(repoRoot, 'docs/screens/release-smoke-live', host);
 
 test.describe.configure({ mode: 'serial' });
 
-test('upgraded profile: import on live URL then reopen after reload', async ({}, testInfo) => {
+test('upgraded profile: import on live URL then reopen after reload', async ({ context: _context }, testInfo) => {
   test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
   test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
   test.setTimeout(300_000);

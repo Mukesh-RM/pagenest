@@ -12,7 +12,6 @@ const shotDir = liveHost
   : join(repoRoot, 'docs/screens/release-smoke');
 
 const VIEW = { width: 360, height: 740 };
-const allowedProjects = new Set(['release-smoke-chromium', 'release-smoke-webkit']);
 
 function readFixture(rel: string): Buffer {
   return readFileSync(join(repoRoot, rel));
@@ -67,7 +66,7 @@ async function openBookByFormat(page: Page, title: RegExp, format: RegExp): Prom
   throw new Error(`No ${format} book found for ${title}`);
 }
 
-async function openBookCard(page: Page, title: RegExp, index = 0): Promise<void> {
+async function openBookCard(page: Page, title: RegExp): Promise<void> {
   await openBookByFormat(page, title, /EPUB/i);
 }
 
@@ -110,7 +109,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     test.setTimeout(600_000);
     const consoleErrors: string[] = [];
     attachConsoleGuard(page, consoleErrors);
-    let swVersion = 1;
+    const swVersion = 1;
     await page.route('**/sw.js', async (route) => {
       const response = await route.fetch();
       const body = `${await response.text()}\n/* release-smoke v${swVersion} */`;
