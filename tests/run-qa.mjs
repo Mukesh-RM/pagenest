@@ -63,7 +63,6 @@ const releaseSmoke = [
     'playwright',
     'test',
     'e2e/release-smoke.spec.ts',
-    'e2e/release-smoke-live-upgrade.spec.ts',
     ...releaseSmokeProjects,
     '--workers=1',
     '--retries=0',

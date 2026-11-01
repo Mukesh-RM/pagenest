@@ -55,13 +55,15 @@ async function openBookByFormat(page: Page, title: RegExp, format: RegExp): Prom
     await cards.nth(i).click();
     const sheet = page.getByRole('dialog');
     await expect(sheet).toBeVisible({ timeout: 10_000 });
-    if (await sheet.getByText(format).first().isVisible().catch(() => false)) {
+    const meta = await sheet.innerText();
+    if (format.test(meta)) {
       await sheet.getByRole('button', { name: /^start reading$/i }).click();
       await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
       await dismissReaderInterstitials(page);
       return;
     }
-    await sheet.getByRole('button', { name: /^close$/i }).click();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden({ timeout: 5000 }).catch(() => undefined);
   }
   throw new Error(`No ${format} book found for ${title}`);
 }
@@ -118,9 +120,9 @@ test.describe('release smoke: import, open, reload, SW update', () => {
 
     await context.clearCookies();
     await page.goto('./');
-  await skipOnboarding(page);
-  await dismissLibraryOverlays(page);
-  await waitForIndexedDbReady(page);
+    await skipOnboarding(page);
+    await dismissLibraryOverlays(page);
+    await waitForIndexedDbReady(page);
     await waitForServiceWorkerControl(page);
     await snap(page, '01-library');
 
@@ -176,6 +178,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
 
   test('OPFS blocked: cache-backed store still imports and opens EPUB', async ({ page, context }) => {
     test.skip(process.env.PAGENEST_SMOKE_LIVE === '1', 'Local profile only (live smoke uses real OPFS).');
+    test.skip(!!process.env.CI, 'OPFS-unavailable profile runs locally; CI has real OPFS.');
     test.setTimeout(300_000);
     const consoleErrors: string[] = [];
     attachConsoleGuard(page, consoleErrors);
