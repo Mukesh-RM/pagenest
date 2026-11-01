@@ -19,6 +19,10 @@ const DictionarySettingsPanel = lazy(() =>
 const VoiceStudioSettingsPanel = lazy(() =>
   import('../components/VoiceStudioSettingsPanel').then((m) => ({ default: m.VoiceStudioSettingsPanel })),
 );
+const LegalSettingsPanel = lazy(() => import('../components/LegalSettingsPanel').then((m) => ({ default: m.LegalSettingsPanel })));
+const LanguageSettingsPanel = lazy(() =>
+  import('../components/LanguageSettingsPanel').then((m) => ({ default: m.LanguageSettingsPanel })),
+);
 
 /**
  * Height kept for the Library's two groups only while their code loads (in `rem`, so it follows the text
@@ -104,6 +108,12 @@ export function SettingsPage() {
           </Suspense>
           <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
             <LibrarySettingsPanels />
+          </Suspense>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: '12rem' }} />}>
+            <LanguageSettingsPanel />
+          </Suspense>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: '16rem' }} />}>
+            <LegalSettingsPanel />
           </Suspense>
         </>
       ) : (

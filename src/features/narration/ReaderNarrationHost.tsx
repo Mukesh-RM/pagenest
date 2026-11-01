@@ -144,7 +144,10 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         onPlayPause={() => void onPlayPause()}
         onSpeed={(speed) => setSettings((s) => ({ ...s, speed }))}
         onVoice={() => setVoiceOpen(true)}
-        onExpressive={(expressive) => setSettings((s) => ({ ...s, expressive, style: expressive ? 'expressive' : 'natural' }))}
+        onExpressive={(expressive) =>
+          setSettings((s) => ({ ...s, expressive, style: expressive ? 'expressive' : s.style === 'cast' ? 'cast' : 'natural' }))
+        }
+        onCast={(cast) => setSettings((s) => ({ ...s, style: cast ? 'cast' : 'natural', expressive: false }))}
         onSleep={() => setSleepOpen(true)}
         onDriveMode={() => setDriveOpen(true)}
       />

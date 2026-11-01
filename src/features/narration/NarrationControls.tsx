@@ -12,6 +12,7 @@ export interface NarrationControlsProps {
   readonly onSpeed: (speed: number) => void;
   readonly onVoice: () => void;
   readonly onExpressive: (on: boolean) => void;
+  readonly onCast?: (on: boolean) => void;
   readonly onSleep?: () => void;
   readonly onDriveMode?: () => void;
 }
@@ -28,6 +29,7 @@ export function NarrationControls({
   onSpeed,
   onVoice,
   onExpressive,
+  onCast,
   onSleep,
   onDriveMode,
 }: NarrationControlsProps) {
@@ -59,11 +61,21 @@ export function NarrationControls({
         <label className="pn-narration__chip">
           <input
             type="checkbox"
-            checked={settings.expressive || settings.style !== 'natural'}
+            checked={settings.expressive || settings.style === 'expressive'}
             onChange={(e) => onExpressive(e.target.checked)}
           />
           Expressive
         </label>
+        {onCast ? (
+          <label className="pn-narration__chip">
+            <input
+              type="checkbox"
+              checked={settings.style === 'cast'}
+              onChange={(e) => onCast(e.target.checked)}
+            />
+            Cast voices
+          </label>
+        ) : null}
       </div>
       <div className="pn-narration__speeds" role="group" aria-label="Playback speed">
         {SPEEDS.map((s) => (
