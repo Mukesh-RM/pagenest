@@ -48,3 +48,8 @@
 /manifest.webmanifest
   Content-Type: application/manifest+json; charset=utf-8
   Cache-Control: public, max-age=3600
+/models/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/ort/*
+  Cache-Control: public, max-age=31536000, immutable

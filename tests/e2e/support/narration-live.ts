@@ -71,3 +71,21 @@ export async function waitForReadAloudAudible(page: Page, timeoutMs = 480_000): 
 export async function expectDownloadProgressVisible(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: /Downloading voice|Loading voice/i })).toBeVisible({ timeout: 120_000 });
 }
+
+export async function assertOrtWasmDeployed(page: Page): Promise<void> {
+  const ok = await page.evaluate(async () => {
+    const res = await fetch('/ort/ort-wasm-simd-threaded.wasm', { method: 'HEAD' });
+    const type = res.headers.get('content-type') ?? '';
+    return res.ok && !type.includes('text/html') && Number(res.headers.get('content-length') || 0) > 1_000_000;
+  });
+  expect(ok, '/ort/*.wasm must be deployed (not SPA fallback HTML)').toBe(true);
+}
+
+export async function exerciseReadAloudControls(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Pause read aloud' }).click();
+  await expect(page.getByRole('button', { name: 'Start read aloud' })).toBeVisible();
+  await page.getByRole('button', { name: 'Start read aloud' }).click();
+  await expect(page.getByRole('button', { name: 'Pause read aloud' })).toBeVisible();
+  await page.getByRole('button', { name: '1.25×', exact: true }).click();
+  await expect(page.getByRole('button', { name: '1.25×', exact: true })).toHaveAttribute('aria-pressed', 'true');
+}

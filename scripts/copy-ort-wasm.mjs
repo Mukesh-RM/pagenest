@@ -1,24 +1,44 @@
 #!/usr/bin/env node
-/** Copy ONNX Runtime Web WASM files into public/ort for the Piper worker (self-hosted, Decision 8). */
-import { cpSync, existsSync, mkdirSync } from 'node:fs';
+/** Copy ONNX Runtime Web WASM (+ companion .mjs) into public/ort for Piper (self-hosted, Decision 8). */
+import { cpSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-let pkgDir;
-try {
-  pkgDir = dirname(require.resolve('onnxruntime-web/package.json'));
-} catch {
+
+function resolveOrtDist() {
+  const candidates = [
+    join(root, 'node_modules', 'onnxruntime-web', 'dist'),
+  ];
+  try {
+    const entry = dirname(require.resolve('onnxruntime-web'));
+    candidates.unshift(entry);
+    candidates.unshift(join(entry, 'dist'));
+  } catch {
+    /* optional dependency path */
+  }
+  for (const dir of candidates) {
+    if (existsSync(join(dir, 'ort-wasm-simd-threaded.wasm'))) return dir;
+  }
   console.warn('onnxruntime-web is not installed; skipping ORT WASM copy.');
   process.exit(0);
 }
-const src = join(pkgDir, 'dist');
+
+const src = resolveOrtDist();
 const dest = join(root, 'public', 'ort');
 mkdirSync(dest, { recursive: true });
-for (const name of ['ort-wasm.wasm', 'ort-wasm-simd.wasm', 'ort-wasm-threaded.wasm', 'ort-wasm-simd-threaded.wasm']) {
-  const from = join(src, name);
-  if (existsSync(from)) cpSync(from, join(dest, name));
+
+let copied = 0;
+for (const name of readdirSync(src)) {
+  if (!/^ort-wasm.*\.(wasm|mjs)$/.test(name)) continue;
+  cpSync(join(src, name), join(dest, name));
+  copied += 1;
 }
-console.log(`Copied ORT wasm to ${dest}`);
+
+if (copied === 0) {
+  console.error(`No ort-wasm assets found under ${src}`);
+  process.exit(1);
+}
+console.log(`Copied ${copied} ORT wasm/mjs file(s) to ${dest}`);
