@@ -1,6 +1,10 @@
 # Cloudflare Pages custom headers (https://developers.cloudflare.com/pages/configuration/headers/).
 # Served from the root of the build output (dist/_headers), copied from public/.
 #
+# IMPORTANT: Do not put Content-Security-Policy or COOP on `/*` — Pages merges every matching rule,
+# so `/assets/*` would inherit them on `.js` responses and WebKit breaks foliate blob iframes (live smoke).
+# Document headers apply only to HTML shell routes below.
+#
 # CSP rationale (blueprint 11, 12.2, 14, 17):
 #   default-src 'self'            no third-party origin anywhere; fonts, icons and all code are self-hosted
 #   script-src 'self' 'wasm-unsafe-eval'   Vite bundles; WebAssembly (pdf.js, ONNX Runtime Web) must compile. No inline scripts, no eval.
@@ -15,20 +19,91 @@
 #   object-src 'none'; base-uri 'self'; form-action 'self'   (the Web Share Target POSTs to /share-target on this origin)
 #   frame-ancestors 'none'        the app cannot be embedded
 
-/*
+/
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Frame-Options: DENY
   Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
   Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
 
-# No Cache-Control on /*: Cloudflare MERGES the headers of every matching rule, so a global value would be
-# joined with the specific ones below and conflict. Pages already revalidates static files by default.
+/index.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
 
-# Fingerprinted Vite output never changes for a given name.
+/read/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
+
+/listen/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
+
+/collections
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
+
+/stats
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
+
+/settings
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
+
+/share-target
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
+
+/narration-e2e.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: microphone=(self), camera=(), geolocation=(), payment=(), usb=(), serial=(), hid=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cache-Control: no-cache
+
+# Fingerprinted Vite output never changes for a given name (no document CSP/COOP here).
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff
 
 # Self-hosted fonts and icons are not fingerprinted by name: revalidate daily, the service worker precaches them anyway.
 /fonts/*
@@ -40,10 +115,6 @@
 /sw.js
   Cache-Control: no-cache
 /registerSW.js
-  Cache-Control: no-cache
-/
-  Cache-Control: no-cache
-/index.html
   Cache-Control: no-cache
 /manifest.webmanifest
   Content-Type: application/manifest+json; charset=utf-8
