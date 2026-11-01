@@ -17,9 +17,13 @@ async function importEpub(page: Page, buffer: Buffer, name = 'alice.epub'): Prom
   await skipOnboarding(page);
   await page.getByRole('button', { name: 'Add books' }).first().click();
   await page.getByTestId('pick-files').setInputFiles({ name, mimeType: 'application/epub+zip', buffer });
-  await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 60_000 });
-  await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
-  await expect(page).toHaveURL(/\/read\//);
+  const card = page.getByRole('button', { name: /Alice|Wonderland/i }).first();
+  await expect(card).toBeVisible({ timeout: 60_000 });
+  await card.click();
+  const read = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
+  if (await read.isVisible().catch(() => false)) await read.click();
+  else await card.click();
+  await expect(page).toHaveURL(/\/read\//, { timeout: 90_000 });
   await dismissReaderInterstitials(page);
 }
 
