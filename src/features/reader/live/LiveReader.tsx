@@ -460,8 +460,8 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         <>
           <Button iconOnly variant="ghost" icon="search" aria-label="Search in this book" disabled={!doc} onClick={() => setSearchOpen(true)} />
           <Button iconOnly variant="ghost" icon="bookmark" aria-label="Add bookmark here" disabled={!doc} onClick={saveBookmark} />
-          <Button variant="ghost" className="pn-reader__marks" aria-label="Bookmarks and highlights" disabled={!doc} onClick={() => setMarksOpen(true)}>
-            Marks
+          <Button variant="ghost" icon="list" className="pn-reader__marks" aria-label="Bookmarks and highlights" disabled={!doc} onClick={() => setMarksOpen(true)}>
+            <span className="pn-reader__marks-label">Marks</span>
           </Button>
         </>
       }

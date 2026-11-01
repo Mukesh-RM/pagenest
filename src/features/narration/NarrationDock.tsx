@@ -22,10 +22,10 @@ export function NarrationDock(props: NarrationDockProps) {
           className="pn-narration-dock__toggle"
           aria-expanded={open}
           aria-controls="pn-narration-sheet"
-          aria-label={open ? 'Close read aloud controls' : 'Open read aloud controls'}
+          aria-label="Read aloud"
           onClick={() => setOpen((v) => !v)}
         >
-          {playing ? 'Pause' : preparing ? 'Loading voice…' : 'Read aloud'}
+          {playing ? 'Pause' : preparing ? 'Loading…' : 'Read aloud'}
         </Button>
       </div>
       <BottomSheet

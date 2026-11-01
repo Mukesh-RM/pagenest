@@ -1,8 +1,6 @@
 import type { Locator } from '@/app/contracts';
 import type { ReaderDocumentExt } from '../core/ext-types';
 
-const COVER_TITLE = /^(cover|title page|front matter|half title|copyright|dedication|contents|table of contents)$/i;
-
 function hostHasReadableContent(host: HTMLElement): boolean {
   const view = host.querySelector('foliate-view') as
     | (HTMLElement & { renderer?: { getContents: () => Array<{ doc: Document }> } })
@@ -34,23 +32,12 @@ function flatToc(items: ReaderDocumentExt['toc']): Array<{ title: string; locato
 /** On a fresh open, skip empty cover shells and land on the first page that shows text or a cover image. */
 export async function ensureReadableStart(doc: ReaderDocumentExt, host: HTMLElement): Promise<void> {
   if (doc.layout !== 'reflow') return;
-  await new Promise<void>((r) => window.setTimeout(r, 120));
   if (hostHasReadableContent(host)) return;
 
   const entries = flatToc(doc.toc);
   for (const entry of entries) {
     if (entry.locator.kind !== 'reflow') continue;
-    if (COVER_TITLE.test(entry.title.trim()) && entries.indexOf(entry) === 0) {
-      await doc.goTo(entry.locator);
-      await new Promise<void>((r) => window.setTimeout(r, 180));
-      if (hostHasReadableContent(host)) return;
-      continue;
-    }
     await doc.goTo(entry.locator);
-    await new Promise<void>((r) => window.setTimeout(r, 180));
     if (hostHasReadableContent(host)) return;
   }
-
-  const firstText = entries.find((e) => e.locator.kind === 'reflow' && !COVER_TITLE.test(e.title.trim()));
-  if (firstText) await doc.goTo(firstText.locator);
 }

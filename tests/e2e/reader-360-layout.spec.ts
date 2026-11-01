@@ -71,7 +71,7 @@ test.describe('reader at 360px', () => {
     const text = await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(text.length).toBeGreaterThan(200);
     await expect(page.getByRole('region', { name: 'Read aloud controls' })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Open read aloud controls' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Read aloud' })).toBeVisible();
     await assertNoOverlap(page, [
       'button[aria-label="Search in this book"]',
       'button[aria-label="Add bookmark here"]',
@@ -79,7 +79,7 @@ test.describe('reader at 360px', () => {
       'button[aria-label="Reading settings"]',
       '.pn-narration-dock__toggle',
     ]);
-    await page.getByRole('button', { name: 'Open read aloud controls' }).click();
+    await page.getByRole('button', { name: 'Read aloud' }).click();
     await expect(page.getByRole('dialog', { name: 'Read aloud' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Read aloud controls' })).toBeVisible();
   });
