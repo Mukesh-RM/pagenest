@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { dismissLibraryOverlays, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -97,8 +97,11 @@ async function bumpServiceWorker(page: Page, bump: { version: number }): Promise
 test.describe.configure({ mode: 'serial' });
 
 test.describe('release smoke: import, open, reload, SW update', () => {
-  test.beforeEach(async ({ page }, testInfo) => {
+  test.beforeEach(async ({ page, context }, testInfo) => {
     test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name), 'Release smoke project only.');
+    if (process.env.PAGENEST_SMOKE_LIVE === '1' || testInfo.project.name.includes('webkit')) {
+      await primeSmokeHints(context);
+    }
     await page.setViewportSize(VIEW);
   });
 
