@@ -10,7 +10,7 @@ import {
   waitForServiceWorkerControl,
 } from './support/app';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
-import { exerciseReadAloudControls, openReadAloudControls, primeDeviceSpeechForLiveSmoke, waitForReadAloudAudible } from './support/narration-live';
+import { exerciseReadAloudControls, openReadAloudControls, primeDeviceSpeechForLiveSmoke, seedLegacyPiperNarrationSettings, waitForReadAloudAudible } from './support/narration-live';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -84,5 +84,36 @@ test.describe('live read-aloud produces audible audio', () => {
 
     await expect(page.getByRole('alert')).toHaveCount(0);
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+  });
+
+  test('legacy Piper pref migrates to device voice (no HD download)', async ({ page }, testInfo) => {
+    test.setTimeout(600_000);
+    const project = testInfo.project.name;
+    const consoleErrors: string[] = [];
+    page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') consoleErrors.push(`console: ${msg.text()}`);
+    });
+
+    await importAliceEpub(page);
+    await seedLegacyPiperNarrationSettings(page);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await dismissReaderInterstitials(page);
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+    await snap(page, project, 'legacy-01-reader');
+
+    await openReadAloudControls(page);
+    await page.getByRole('button', { name: 'Start read aloud' }).click();
+    await expect(page.getByRole('button', { name: /Downloading voice|Loading voice/i })).toHaveCount(0, {
+      timeout: 5_000,
+    });
+    await expect(page.getByRole('button', { name: 'Pause read aloud' })).toBeVisible({ timeout: 30_000 });
+    await waitForReadAloudAudible(page);
+    await snap(page, project, 'legacy-02-audible');
+
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    const joined = consoleErrors.join('\n');
+    expect(joined).not.toMatch(/sid.*feeds/i);
+    expect(consoleErrors, joined).toEqual([]);
   });
 });

@@ -31,9 +31,16 @@ const api = {
       wasm: `${ortBase}ort-wasm-simd-threaded.wasm`,
     };
     ort.env.wasm.numThreads = 1;
-    state.session = (await ort.InferenceSession.create(payload.modelBuffer, {
+    const created = await ort.InferenceSession.create(payload.modelBuffer, {
       executionProviders: ['wasm'],
-    })) as unknown as PiperSession;
+    });
+    state.session = {
+      inputNames: created.inputNames,
+      run: async (feeds) => {
+        const out = await created.run(feeds as never);
+        return out as Record<string, { data: Float32Array | ArrayLike<number> }>;
+      },
+    };
   },
   async synthesize(payload: { text: string; rate: number }) {
     if (!state.config) throw new Error('Voice not loaded');

@@ -35,4 +35,6 @@ export const SETTING_KEYS = {
   onboardingDone: 'onboardingDone',
   /** `ReaderSettings` (size, font, theme, spacing, margins) chosen in the reader's "Aa" sheet. */
   readerSettings: 'readerSettings',
+  /** Read-aloud voice, speed, style (`StoredNarrationSettings`). */
+  narrationSettings: 'narrationSettings',
 } as const;

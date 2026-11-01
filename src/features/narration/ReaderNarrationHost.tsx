@@ -17,7 +17,8 @@ import { NarrationDock } from './NarrationDock';
 import { NarrationSheet } from './NarrationSheet';
 import { NarrationSession } from './narration-session';
 import { applySentenceHighlights, clearSentenceHighlights, scrollSentenceIntoView } from './sentence-highlight';
-import { DEFAULT_NARRATION_SETTINGS, type NarrationSettings } from './types';
+import { loadNarrationSettings, saveNarrationSettings, type StoredNarrationSettings } from './narration-settings';
+import { DEFAULT_NARRATION_SETTINGS } from './types';
 
 export interface ReaderNarrationHostProps {
   readonly book: BookScreenProps['book'];
@@ -32,7 +33,8 @@ function formatNarrationError(err: unknown): string {
 
 export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrationHostProps) {
   const audio = useAudioController();
-  const [settings, setSettings] = useState<NarrationSettings>(DEFAULT_NARRATION_SETTINGS);
+  const [settings, setSettings] = useState<StoredNarrationSettings>(DEFAULT_NARRATION_SETTINGS);
+  const narrationPrefsHydrated = useRef(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [sleepOpen, setSleepOpen] = useState(false);
   const [driveOpen, setDriveOpen] = useState(false);
@@ -65,11 +67,10 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
       void eng.listVoices(book.language?.slice(0, 2) ?? 'en').then((list) => {
         if (cancelled) return;
         setVoices(list);
-        setSettings((s) => {
-          if (s.voiceId && list.some((v) => v.id === s.voiceId)) return s;
-          const device = pickDefaultSpeechVoice(list, book.language);
-          if (!device) return s;
-          return { ...s, engine: 'speech', voiceId: device.id };
+        void loadNarrationSettings(db, list).then((migrated) => {
+          if (cancelled) return;
+          setSettings(migrated);
+          narrationPrefsHydrated.current = true;
         });
       });
     });
@@ -77,6 +78,11 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
       cancelled = true;
     };
   }, [book.language, db]);
+
+  useEffect(() => {
+    if (!narrationPrefsHydrated.current || voices.length === 0) return;
+    void saveNarrationSettings(db, settings);
+  }, [db, settings, voices.length]);
 
   useEffect(() => {
     return () => {
@@ -201,7 +207,12 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         onClose={() => setVoiceOpen(false)}
         onPick={(voiceId, engineId) => {
           setError(undefined);
-          setSettings((s) => ({ ...s, voiceId, engine: engineId }));
+          setSettings((s) => ({
+            ...s,
+            voiceId,
+            engine: engineId,
+            hdVoiceExplicit: engineId === 'piper',
+          }));
         }}
       />
     </>
