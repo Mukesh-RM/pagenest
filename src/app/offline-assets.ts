@@ -51,6 +51,8 @@ export function offlineWarmTasks(services: Pick<AppServices, 'sampleBook'>): War
   tasks.push({
     name: 'epub-engine',
     run: async () => {
+      const { installWebKitFoliateIframeFix } = await import('@/engines/epub/foliate-webkit');
+      installWebKitFoliateIframeFix();
       await import('@/engines/epub/epub-engine');
       await import('foliate-js/view.js'); // the same import the engine makes when a book opens
       await import('foliate-js/mobi.js');

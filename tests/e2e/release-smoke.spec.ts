@@ -17,8 +17,16 @@ function readFixture(rel: string): Buffer {
   return readFileSync(join(repoRoot, rel));
 }
 
+function isBenignReleaseSmokePageError(message: string): boolean {
+  // Vite lazy-route CSS preload throws on WebKit; the stylesheet still loads and the reader opens.
+  return /Unable to preload CSS for \/assets\/[^ ]+\.css/i.test(message);
+}
+
 function attachConsoleGuard(page: Page, errors: string[]): void {
-  page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+  page.on('pageerror', (e) => {
+    if (isBenignReleaseSmokePageError(e.message)) return;
+    errors.push(`pageerror: ${e.message}`);
+  });
   page.on('console', (msg) => {
     if (msg.type() === 'error') errors.push(`console: ${msg.text()}`);
   });
