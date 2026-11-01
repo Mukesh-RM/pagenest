@@ -140,7 +140,13 @@ function speak(request: SynthesisRequest): Promise<void> {
     u.pitch = Math.max(0, Math.min(2, 1 + request.delivery.pitch / 12));
     u.volume = Math.min(1, request.delivery.volume);
     const voice = resolveVoice(request.voiceId, request.language);
-    if (voice) u.voice = voice;
+    if (voice) {
+      try {
+        u.voice = voice;
+      } catch {
+        /* stubbed or mismatched voices: lang + name still apply */
+      }
+    }
 
     const onAbort = (): void => {
       cancelSpeechSynthesis();

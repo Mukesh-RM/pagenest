@@ -86,7 +86,11 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
 
   useEffect(() => {
     if (!engine) return;
-    sessionRef.current = new NarrationSession({ engine, audio });
+    sessionRef.current = new NarrationSession({
+      engine,
+      audio,
+      onError: (err) => setError(formatNarrationError(err)),
+    });
     return () => sessionRef.current?.stop();
   }, [engine, audio]);
 
@@ -148,7 +152,7 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         voiceId: voice.id,
       });
       await session.prepare(book.id, book.title, text, Math.max(0, active), (msg) => setPrepMessage(msg));
-      await session.playFromUserGesture(Math.max(0, active));
+      session.playFromUserGesture(Math.max(0, active));
     } catch (err) {
       sessionRef.current?.pause();
       setError(formatNarrationError(err));

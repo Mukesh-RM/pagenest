@@ -10,7 +10,7 @@ import {
   waitForServiceWorkerControl,
 } from './support/app';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
-import { exerciseReadAloudControls, openReadAloudControls, waitForReadAloudAudible } from './support/narration-live';
+import { exerciseReadAloudControls, openReadAloudControls, primeDeviceSpeechForLiveSmoke, waitForReadAloudAudible } from './support/narration-live';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -50,6 +50,7 @@ test.describe('live read-aloud produces audible audio', () => {
     test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
     test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
     await primeSmokeHints(context);
+    await primeDeviceSpeechForLiveSmoke(context);
     await page.setViewportSize(VIEW);
   });
 

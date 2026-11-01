@@ -14,6 +14,7 @@ import type { NarrationSettings, SentenceTiming } from './types';
 export interface NarrationSessionDeps {
   readonly engine: VoiceEngine;
   readonly audio: AudioController;
+  readonly onError?: (err: unknown) => void;
 }
 
 /** Sentence-at-a-time read-aloud; device voices speak live, HD voices render to WAV buffers. */
@@ -110,12 +111,15 @@ export class NarrationSession {
     }
   }
 
-  async playFromUserGesture(startSentence = this.active >= 0 ? this.active : 0): Promise<void> {
+  playFromUserGesture(startSentence = this.active >= 0 ? this.active : 0): void {
     if (!this.plan.length) return;
     this.playing = true;
     this.livePaused = false;
     this.active = startSentence;
-    await this.playSentence(startSentence);
+    void this.playSentence(startSentence).catch((err) => {
+      this.playing = false;
+      this.deps.onError?.(err);
+    });
   }
 
   pause(): void {

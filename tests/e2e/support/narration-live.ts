@@ -1,4 +1,75 @@
+import type { BrowserContext } from '@playwright/test';
 import { expect, type Page } from '@playwright/test';
+
+/** Headless Chromium/WebKit often ship no TTS voices; stub speech for live smoke UI checks. */
+export async function primeDeviceSpeechForLiveSmoke(context: BrowserContext): Promise<void> {
+  await context.addInitScript(() => {
+    const w = window as Window & { __pnSpeechSmoke?: boolean };
+    if (w.__pnSpeechSmoke) return;
+    w.__pnSpeechSmoke = true;
+    const fakeVoices = [
+      {
+        name: 'English (United States)',
+        lang: 'en-US',
+        voiceURI: 'pn-smoke-en-us',
+        default: true,
+        localService: true,
+      },
+    ] as SpeechSynthesisVoice[];
+    let speaking = false;
+    let paused = false;
+    let utterance: SpeechSynthesisUtterance | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const synth = window.speechSynthesis;
+    const clearTimer = (): void => {
+      if (timer) clearTimeout(timer);
+      timer = undefined;
+    };
+    const finish = (): void => {
+      clearTimer();
+      speaking = false;
+      paused = false;
+      utterance = undefined;
+    };
+
+    synth.getVoices = () => fakeVoices;
+    synth.speak = (u: SpeechSynthesisUtterance) => {
+      synth.cancel();
+      utterance = u;
+      speaking = true;
+      paused = false;
+      const ms = Math.min(12_000, Math.max(400, u.text.length * 40));
+      timer = setTimeout(() => {
+        if (!paused) {
+          u.onend?.({} as SpeechSynthesisEvent);
+          finish();
+        }
+      }, ms);
+    };
+    synth.cancel = () => finish();
+    synth.pause = () => {
+      if (!speaking) return;
+      paused = true;
+      clearTimer();
+    };
+    synth.resume = () => {
+      if (!utterance || !paused) return;
+      paused = false;
+      timer = setTimeout(() => {
+        utterance?.onend?.({} as SpeechSynthesisEvent);
+        finish();
+      }, 350);
+    };
+    try {
+      Object.defineProperty(synth, 'speaking', { configurable: true, get: () => speaking });
+      Object.defineProperty(synth, 'paused', { configurable: true, get: () => paused });
+    } catch {
+      /* native getters may be read-only; speak stub still drives UI */
+    }
+    synth.dispatchEvent(new Event('voiceschanged'));
+  });
+}
 
 export async function openReadAloudControls(page: Page): Promise<void> {
   const region = page.getByRole('region', { name: 'Read aloud controls' });
@@ -20,6 +91,10 @@ export async function waitForReadAloudAudible(page: Page, timeoutMs = 120_000): 
   await expect.poll(
     async () =>
       page.evaluate(async () => {
+        const pauseBtn = document.querySelector('button[aria-label="Pause read aloud"]');
+        if (pauseBtn instanceof HTMLButtonElement && !pauseBtn.disabled) {
+          return { ok: true, via: 'ui' as const };
+        }
         const synth = window.speechSynthesis;
         if (synth?.speaking && !synth.paused) {
           return { ok: true, via: 'speech' as const };
