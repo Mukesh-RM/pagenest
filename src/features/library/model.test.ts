@@ -33,8 +33,8 @@ describe('the words on the screen', () => {
 describe('helpers', () => {
   it('reads saved preferences safely, ignoring old ones it no longer has', () => {
     expect(parsePrefs({ view: 'list', sort: 'title', segment: 'audio' })).toEqual({ view: 'list', sort: 'title', segment: 'audio' });
-    expect(parsePrefs({ view: 'cube', sort: 7 })).toEqual({ view: 'grid', sort: 'recent' });
-    expect(parsePrefs(null)).toEqual({ view: 'grid', sort: 'recent' });
+    expect(parsePrefs({ view: 'cube', sort: 7 })).toEqual({ view: 'grid', sort: 'recent', segment: 'all' });
+    expect(parsePrefs(null)).toEqual({ view: 'grid', sort: 'recent', segment: 'all' });
   });
   it('knows a finished book by its flag or by reaching the end', () => {
     expect(isFinished({ finished: true }, 0)).toBe(true);
