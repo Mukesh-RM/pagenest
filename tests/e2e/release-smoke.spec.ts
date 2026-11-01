@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -40,11 +40,6 @@ async function importFiles(
   await page.getByTestId('pick-files').setInputFiles(files);
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   if (waitForCard) await expect(page.getByRole('button', { name: waitForCard }).first()).toBeVisible({ timeout: 120_000 });
-}
-
-async function dismissLibraryOverlays(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Got it' }).click({ timeout: 2000 }).catch(() => undefined);
-  await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 2000 }).catch(() => undefined);
 }
 
 async function openBookByFormat(page: Page, title: RegExp, format: RegExp): Promise<void> {
