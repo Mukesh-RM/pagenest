@@ -301,6 +301,10 @@ Rows with `unreviewed` have only been classified from the MODEL_CARD text. If a 
 | t-neethesh/spkrec-xvect-voxceleb-onnx | weights | Apache-2.0 | **OK** | ONNX export of speechbrain/spkrec-xvect-voxceleb (Apache-2.0). Builds 512-dim speaker embeddings from the user's consent-verified recordings only. | [src1](https://huggingface.co/t-neethesh/spkrec-xvect-voxceleb-onnx) |
 | Orpheus TTS 3B (canopylabs/orpheus-3b-0.1-ft) | weights | apache-2.0 tag on a Llama 3.2 base | **NOT OK** | HF API: license apache-2.0 but base_model meta-llama/Llama-3.2-3B-Instruct, so the Llama 3.2 Community License also applies (Decision 8 excludes it). The model card is gated and could not be read; the github repo canopyai/Orpheus-TTS is Apache-2.0. | [src1](https://huggingface.co/canopylabs/orpheus-3b-0.1-ft) [src2](https://github.com/canopyai/Orpheus-TTS) |
 | CMU Pronouncing Dictionary (cmusphinx/cmudict) | dictionary | BSD-2-Clause style (CMU) | **OK** | LICENSE is a 2-clause BSD licence (Copyright 1993-2015 Carnegie Mellon University); README: 'Use of this dictionary for any research or commercial purpose is completely unrestricted' and asks for acknowledgement. Keep the copyright, conditions and disclaimer in source and in the app's licenses screen. | [src1](https://raw.githubusercontent.com/cmusphinx/cmudict/master/LICENSE) [src2](https://raw.githubusercontent.com/cmusphinx/cmudict/master/README) |
+| WordNet 3.1 English gloss pack (Princeton) | dictionary | WordNet License | **OK** | Princeton WordNet 3.1 license permits redistribution with copyright and license notice; trademark guidelines apply to the WordNet name. | [src1](https://wordnet.princeton.edu/license-and-commercial-use) |
+| WordNet 3.1 full English WNPK pack (Princeton) | dictionary | WordNet License | **OK** | Full WordNet 3.1 gloss index shipped as optional gzip WNPK download; same Princeton WordNet License as the starter pack. | [src1](https://wordnet.princeton.edu/license-and-commercial-use) |
+| Firefox Translations / Bergamot (Mozilla) | translation | MPL-2.0 (engine) + CC-BY per model card (weights) | **OK** | Bergamot translator (@browsermt/bergamot-translator, MPL-2.0) loads lazily; firefox-translations-models weights are CC-BY per MODEL_CARD and download from Mozilla S3 into OPFS. Lexicon JSON packs remain instant word-level fallbacks. | [src1](https://github.com/mozilla/bergamot-translator/blob/main/LICENSE) [src2](https://github.com/mozilla/firefox-translations-models) |
+| Wiktionary-derived bilingual lexicon sample | dictionary | CC BY-SA 4.0 | **OK** | Compact en↔hi and en↔es lexicon samples shipped as optional downloads; attribution required on the licenses screen. | [src1](https://creativecommons.org/licenses/by-sa/4.0/) |
 <!-- END GENERATED: components -->
 
 Kokoro, Chatterbox and Orpheus in short:
@@ -325,6 +329,10 @@ Kokoro, Chatterbox and Orpheus in short:
 - **nl_NL-mls-medium**: Multilingual LibriSpeech (Pratap et al., 2020), CC BY 4.0, https://www.openslr.org/94/
 - **Kokoro-82M weights (hexgrad/Kokoro-82M, onnx-community/Kokoro-82M-v1.0-ONNX)**: Kokoro-82M by hexgrad (Apache-2.0); training data credits: Koniwa tnc (CC BY 3.0), SIWIS (CC BY 4.0).
 - **CMU Pronouncing Dictionary (cmusphinx/cmudict)**: The Carnegie Mellon Pronouncing Dictionary, Copyright (C) 1993-2015 Carnegie Mellon University, BSD-style licence (https://github.com/cmusphinx/cmudict).
+- **WordNet 3.1 English gloss pack (Princeton)**: WordNet® 3.1 Copyright © 2010 by Princeton University. https://wordnet.princeton.edu/license-and-commercial-use
+- **WordNet 3.1 full English WNPK pack (Princeton)**: WordNet® 3.1 Copyright © 2010 by Princeton University. https://wordnet.princeton.edu/license-and-commercial-use
+- **Firefox Translations / Bergamot (Mozilla)**: Translations powered by Bergamot and Firefox Translations (Mozilla). See https://github.com/mozilla/firefox-translations-models
+- **Wiktionary-derived bilingual lexicon sample**: Sample entries derived from Wiktionary (https://en.wiktionary.org/) under CC BY-SA 4.0.
 <!-- END GENERATED: attribution -->
 
 ## 8. Review of `docs/NARRATION_SPIKE.md` (branch `feature/narration-spike`, 2fcbaca)
