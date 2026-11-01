@@ -5,6 +5,30 @@ export function isWebKitEngine(): boolean {
   return /AppleWebKit/i.test(ua) && !/\bChrome\//i.test(ua) && !/\bChromium\//i.test(ua) && !/\bEdg\//i.test(ua);
 }
 
+let iframeSandboxPatchInstalled = false;
+
+/**
+ * foliate-js sandboxes book iframes inside **closed** shadow roots; DOM observers on the host cannot reach them.
+ * On WebKit, sandbox + blob: EPUB frames fail (see foliate-js README / WebKit 218086). Ignore sandbox assignments on WebKit.
+ */
+export function installWebKitFoliateIframeFix(): void {
+  if (!isWebKitEngine() || iframeSandboxPatchInstalled || typeof HTMLIFrameElement === 'undefined') return;
+  iframeSandboxPatchInstalled = true;
+  const proto = HTMLIFrameElement.prototype;
+  const origSet = proto.setAttribute;
+  proto.setAttribute = function setAttribute(name: string, value: string) {
+    if (name === 'sandbox') return;
+    return origSet.call(this, name, value);
+  };
+  if (proto.setAttributeNS) {
+    const origSetNS = proto.setAttributeNS;
+    proto.setAttributeNS = function setAttributeNS(ns: string | null, name: string, value: string) {
+      if (name === 'sandbox') return;
+      return origSetNS.call(this, ns, name, value);
+    };
+  }
+}
+
 function sandboxStripper(): { strip: (el: Element) => void; stripTree: (root: ParentNode) => void } {
   const strip = (el: Element): void => {
     if (el instanceof HTMLIFrameElement && el.hasAttribute('sandbox')) el.removeAttribute('sandbox');
@@ -12,10 +36,6 @@ function sandboxStripper(): { strip: (el: Element) => void; stripTree: (root: Pa
   return { strip, stripTree: (root: ParentNode) => root.querySelectorAll('iframe[sandbox]').forEach(strip) };
 }
 
-/**
- * foliate-js sandboxes book iframes for other engines; on WebKit that breaks blob: EPUB frames (CSP / sandbox interaction).
- * foliate-js documents the sandbox as ineffective on WebKit anyway — drop it so reflow books open on iPhone.
- */
 /** Strip sandbox from foliate book iframes already in the tree (call after `view.open`). */
 export function unsandboxFoliateIframesNow(root: HTMLElement): void {
   if (!isWebKitEngine()) return;

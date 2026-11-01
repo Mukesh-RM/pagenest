@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it } from 'vitest';
-import { isWebKitEngine, watchUnsandboxFoliateIframes } from './foliate-webkit';
+import { installWebKitFoliateIframeFix, isWebKitEngine, watchUnsandboxFoliateIframes } from './foliate-webkit';
 
 describe('isWebKitEngine', () => {
   beforeEach(() => {
@@ -22,6 +22,22 @@ describe('isWebKitEngine', () => {
         'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
     });
     expect(isWebKitEngine()).toBe(false);
+  });
+});
+
+describe('installWebKitFoliateIframeFix', () => {
+  beforeEach(() => {
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      value: 'Mozilla/5.0 (iPhone) AppleWebKit/605.1.15 Version/17.0 Mobile Safari/604.1',
+    });
+  });
+
+  it('blocks sandbox attribute on iframes (foliate closed shadow)', () => {
+    installWebKitFoliateIframeFix();
+    const iframe = document.createElement('iframe');
+    iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+    expect(iframe.hasAttribute('sandbox')).toBe(false);
   });
 });
 
