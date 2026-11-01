@@ -1,25 +1,30 @@
 import { getDb } from '@/data/db';
-import { openOpfsRoot } from '@/data/opfs';
+import { createCacheBackedFileStore } from '@/data/cache-file-store';
+import { OpfsFileStore, openOpfsRoot } from '@/data/opfs';
 import { setStorageBootstrap, type StorageBootstrap } from './storage-bootstrap-state';
 
 /**
- * When OPFS is missing or blocked, the import worker and data worker would each use a separate
- * in-memory file store, so imported bytes never reach the player. Align import and data on one store.
+ * One shared file store for imports, the data client, and the reader. Imports always run in-process on this store
+ * so book bytes are never written to a separate worker memory store (Android Chrome can expose OPFS on the page but not
+ * in the import worker).
  */
 export async function bootstrapStorage(): Promise<void> {
   const root = await openOpfsRoot();
-  if (root) return;
-  const [{ createCacheBackedFileStore }, { inProcessImportBackend }, { setImportBackend }] = await Promise.all([
-    import('@/data/cache-file-store'),
+  const files = root ? new OpfsFileStore(root) : createCacheBackedFileStore();
+
+  const [{ inProcessImportBackend }, { setImportBackend }] = await Promise.all([
     import('@/features/library/in-process-import'),
     import('@/features/library/registry'),
   ]);
+
   const db = getDb();
-  const files = createCacheBackedFileStore();
   setImportBackend(() => inProcessImportBackend(db, files));
+
   const boot: StorageBootstrap = {
     sharedFiles: files,
     dataClient: { workerFactory: () => undefined, files },
   };
   setStorageBootstrap(boot);
+
+  void import('@/sw/persist').then((m) => m.requestPersistence());
 }

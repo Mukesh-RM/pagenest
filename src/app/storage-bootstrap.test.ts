@@ -20,13 +20,17 @@ describe('bootstrapStorage', () => {
     vi.mocked(openOpfsRoot).mockReset();
   });
 
-  it('does nothing when OPFS opens', async () => {
+  it('registers shared OPFS and in-process import when OPFS opens', async () => {
     vi.mocked(openOpfsRoot).mockResolvedValue({} as Awaited<ReturnType<typeof openOpfsRoot>>);
     await bootstrapStorage();
-    expect(storageBootstrap()).toBeUndefined();
+    const boot = storageBootstrap();
+    expect(boot?.sharedFiles).toBeDefined();
+    expect(boot?.sharedFiles.persistent).toBe(true);
+    expect(boot?.dataClient.workerFactory?.()).toBeUndefined();
+    expect(boot?.dataClient.files).toBe(boot?.sharedFiles);
   });
 
-  it('aligns import and data on one memory store when OPFS is blocked', async () => {
+  it('uses cache-backed storage and in-process import when OPFS is blocked', async () => {
     vi.mocked(openOpfsRoot).mockResolvedValue(undefined);
     await bootstrapStorage();
     const boot = storageBootstrap();
