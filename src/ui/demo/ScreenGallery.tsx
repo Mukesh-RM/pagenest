@@ -289,7 +289,7 @@ function ReaderDemo({ aa, theme, scrub, loading, error }: { aa?: boolean; theme:
         error
           ? {
               title: 'This file looks damaged',
-              message: 'PageNest could not read this copy. Try another file or add the book again.',
+              message: 'InkQuiet could not read this copy. Try another file or add the book again.',
               onRetry: noop,
             }
           : undefined

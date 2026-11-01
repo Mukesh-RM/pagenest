@@ -30,20 +30,16 @@ registerRoute(
   ({ request }) => engineCacheFirst(request, self.caches),
 );
 
-// 3. Updates wait. There is no skipWaiting() on install, so a new version applies on the next launch, or when the page asks
-//    for it after the user taps Refresh (never while audio plays). The one exception is the very first install: there is no
-//    older version to replace and no open page depends on one, so the worker takes control of the page that installed it.
-//    Without that, the first visit would run uncontrolled and nothing it loads (the engines, the sample book) could reach the
-//    cache until a reload. Every later update still waits.
-let firstInstall = false;
-self.addEventListener('install', () => {
-  firstInstall = self.registration.active === null;
+// 3. Updates activate promptly: skipWaiting on install and claim open clients on activate, so users are not stuck on an old
+//    precache. The page shows "Update available, reload" and reloads only when the user taps Refresh (never while audio plays).
+self.addEventListener('install', (event) => {
+  event.waitUntil(self.skipWaiting());
 });
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
-      if (firstInstall) await self.clients.claim();
-      await pruneEngineCache(self.caches).catch(() => undefined); // engine files of older builds can never be asked for again
+      await self.clients.claim();
+      await pruneEngineCache(self.caches).catch(() => undefined);
     })(),
   );
 });

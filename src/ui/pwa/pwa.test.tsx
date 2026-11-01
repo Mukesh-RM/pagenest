@@ -136,33 +136,33 @@ describe('InstallHelp (Settings row)', () => {
 });
 
 describe('PwaPrompts: update notice', () => {
-  it('renders nothing until a version is waiting, then Refresh, which applies the update', async () => {
+  it('renders nothing until a version is waiting, then Reload, which applies the update', async () => {
     const apply = vi.fn(async () => undefined);
     usePwaStore.getState().setApplyUpdate(apply);
     render(<PwaPrompts isPlaying={false} />);
-    expect(screen.queryByText('New version ready.')).toBeNull();
+    expect(screen.queryByText(/Update available/i)).toBeNull();
     act(() => usePwaStore.getState().setNeedRefresh());
-    expect(screen.getByText('New version ready.')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
+    expect(screen.getByText(/Update available\. Reload/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Reload' }));
     await waitFor(() => expect(apply).toHaveBeenCalledTimes(1));
   });
 
-  it('while audio plays there is no Refresh button and the notice says it applies next launch', () => {
+  it('while audio plays there is no Reload button and the notice says it applies next launch', () => {
     usePwaStore.getState().setNeedRefresh();
     const { rerender } = render(<PwaPrompts isPlaying />);
     expect(screen.getByText(/It will apply the next time you open InkQuiet/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Refresh' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reload' })).toBeNull();
     rerender(<PwaPrompts isPlaying={false} />);
-    expect(screen.getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reload' })).toBeInTheDocument();
   });
 
   it('Dismiss hides it until the next version', () => {
     usePwaStore.getState().setNeedRefresh();
     render(<PwaPrompts isPlaying={false} />);
     fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
-    expect(screen.queryByText('New version ready.')).toBeNull();
+    expect(screen.queryByText(/Update available/i)).toBeNull();
     act(() => usePwaStore.getState().setNeedRefresh());
-    expect(screen.getByText('New version ready.')).toBeInTheDocument();
+    expect(screen.getByText(/Update available\. Reload/i)).toBeInTheDocument();
   });
 
   it('the notice is a polite status region', () => {

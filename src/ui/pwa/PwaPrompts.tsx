@@ -50,7 +50,8 @@ export function PwaPrompts({ isPlaying, installOfferReady = false, store: given 
       <UpdateAvailableSnackbar
         open={ui.kind !== 'none'}
         showRefresh={ui.kind === 'refresh'}
-        message={ui.kind === 'next-launch' ? 'New version ready. It will apply the next time you open InkQuiet.' : 'New version ready.'}
+        message={ui.kind === 'next-launch' ? 'Update available. It will apply the next time you open InkQuiet.' : 'Update available. Reload to get the latest version.'}
+        refreshLabel="Reload"
         onRefresh={() => void applyUpdate()}
         onDismiss={dismiss}
       />

@@ -13,7 +13,7 @@ import { createNarrationVoiceEngine } from '@/engines/tts';
 import { PIPER_DEFAULT_VOICE } from '@/engines/tts/piper/voices';
 import { getDb } from '@/data/db';
 import { createFileStore } from '@/data/opfs';
-import { NarrationControls } from './NarrationControls';
+import { NarrationDock } from './NarrationDock';
 import { NarrationSheet } from './NarrationSheet';
 import { NarrationSession } from './narration-session';
 import { applySentenceHighlights, clearSentenceHighlights, scrollSentenceIntoView } from './sentence-highlight';
@@ -135,7 +135,7 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
 
   return (
     <>
-      <NarrationControls
+      <NarrationDock
         settings={settings}
         playing={playing}
         preparing={preparing}
