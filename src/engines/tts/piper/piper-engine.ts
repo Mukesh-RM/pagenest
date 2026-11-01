@@ -9,6 +9,7 @@ import type {
 } from '../types';
 import { voiceError } from '../errors';
 import { OK_PIPER_VOICES, modelUrls, piperVoiceById } from './voices';
+import { downloadPiperWeights, fetchPiperConfig } from './voice-download';
 import type { PiperWorkerApi } from './piper.worker';
 
 function isMockTtsMode(): boolean {
@@ -71,14 +72,14 @@ export function createPiperEngine(deps: {
       let model = await deps.readModel(voiceId);
       if (!model && !isMockTtsMode()) {
         if (!options?.allowDownload) throw voiceError('download-required', 'Download this voice to read aloud offline.');
-        model = await downloadVoice(voiceId, options);
+        model = await downloadPiperWeights(voiceId, options);
         await deps.writeModel(voiceId, model);
       }
       const urls = modelUrls(voiceId);
       if (!urls) throw voiceError('voice-not-found', 'That voice is not available.');
       const configJson = isMockTtsMode()
         ? JSON.stringify(mockConfig())
-        : await fetchText(urls.config, options?.signal);
+        : await fetchPiperConfig(voiceId, options?.signal);
       await ensureWorker().loadModel({ configJson, modelBuffer: model });
       loadedVoice = voiceId;
     },
@@ -103,50 +104,6 @@ export function createPiperEngine(deps: {
       loadedVoice = undefined;
     },
   };
-}
-
-async function downloadVoice(voiceId: string, options?: PrepareOptions): Promise<ArrayBuffer> {
-  const urls = modelUrls(voiceId);
-  if (!urls) throw voiceError('voice-not-found', 'That voice is not available.');
-  let res: Response;
-  try {
-    res = await fetch(urls.weights, { signal: options?.signal });
-  } catch {
-    throw voiceError('failed', 'Could not download the voice. Check your connection or try again on Wi‑Fi.');
-  }
-  if (!res.ok) throw voiceError('failed', `Could not download the voice model (${res.status}).`);
-  const total = Number(res.headers.get('content-length') || 0);
-  const reader = res.body?.getReader();
-  if (!reader) return res.arrayBuffer();
-  const chunks: Uint8Array[] = [];
-  let received = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) {
-      chunks.push(value);
-      received += value.length;
-      if (total > 0) options?.onProgress?.({ done: received, total });
-    }
-  }
-  const out = new Uint8Array(received);
-  let off = 0;
-  for (const c of chunks) {
-    out.set(c, off);
-    off += c.length;
-  }
-  return out.buffer;
-}
-
-async function fetchText(url: string, signal?: AbortSignal): Promise<string> {
-  let res: Response;
-  try {
-    res = await fetch(url, { signal });
-  } catch {
-    throw voiceError('failed', 'Could not load the voice configuration. Check your connection.');
-  }
-  if (!res.ok) throw voiceError('failed', 'Could not load the voice configuration.');
-  return res.text();
 }
 
 function mockConfig() {

@@ -9,14 +9,14 @@
 #   img-src 'self' blob: data:    covers and book images are object URLs / data URIs from OPFS
 #   media-src 'self' blob:        the single <audio> element plays object URLs created from OPFS files
 #   font-src 'self'               Inter, Literata etc. are self-hosted woff2
-#   connect-src 'self' blob: data: plus approved model hosts (scripts/audit-allowlist.json; DECISIONS.md phase 4)
+#   connect-src 'self' blob: data:  Piper voice ONNX + config are same-origin (/models/piper/…); no runtime Hugging Face
 #   frame-src 'self' blob:        foliate-js renders book sections in blob: iframes
 #   manifest-src 'self'           web app manifest
 #   object-src 'none'; base-uri 'self'; form-action 'self'   (the Web Share Target POSTs to /share-target on this origin)
 #   frame-ancestors 'none'        the app cannot be embedded
 
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data: https://huggingface.co https://*.huggingface.co https://*.hf.co; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' blob:; img-src 'self' blob: data:; media-src 'self' blob:; font-src 'self'; connect-src 'self' blob: data:; frame-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Frame-Options: DENY
@@ -48,3 +48,6 @@
 /manifest.webmanifest
   Content-Type: application/manifest+json; charset=utf-8
   Cache-Control: public, max-age=3600
+
+/models/*
+  Cache-Control: public, max-age=31536000, immutable

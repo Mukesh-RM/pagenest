@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { textToPhonemeString } from './g2p/text-to-phonemes';
 import { phonemesToIds } from './inference';
+import { OK_PIPER_VOICES, modelPartUrl, modelUrls, partCountForVoice, PIPER_MODELS_ROOT } from './voices';
+
+describe('piper model URLs', () => {
+  it('uses same-origin paths with chunked parts for large voices', () => {
+    const v = OK_PIPER_VOICES[0]!;
+    const urls = modelUrls(v.id);
+    expect(urls?.weights.startsWith(PIPER_MODELS_ROOT)).toBe(true);
+    expect(urls?.partCount).toBeGreaterThan(1);
+    expect(modelPartUrl(v.id, 0)).toContain('.onnx.part00');
+    expect(partCountForVoice(v.sizeBytes)).toBe(urls?.partCount);
+  });
+});
 
 describe('piper g2p', () => {
   it('looks up CMUdict words', () => {
