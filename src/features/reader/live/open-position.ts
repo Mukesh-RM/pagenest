@@ -34,9 +34,12 @@ export async function ensureReadableStart(doc: ReaderDocumentExt, host: HTMLElem
   if (doc.layout !== 'reflow') return;
   if (hostHasReadableContent(host)) return;
 
-  const entries = flatToc(doc.toc);
-  for (const entry of entries) {
-    if (entry.locator.kind !== 'reflow') continue;
+  const entries = flatToc(doc.toc).filter((e) => e.locator.kind === 'reflow');
+  const ordered = [
+    ...entries.filter((e) => !/\bcover\b/i.test(e.title.trim())),
+    ...entries.filter((e) => /\bcover\b/i.test(e.title.trim())),
+  ];
+  for (const entry of ordered) {
     await doc.goTo(entry.locator);
     if (hostHasReadableContent(host)) return;
   }

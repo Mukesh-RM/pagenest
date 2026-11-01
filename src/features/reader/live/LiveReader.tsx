@@ -122,6 +122,10 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return undefined;
+    host.classList.add('pn-live__host--settling');
+    const endSettling = (): void => {
+      host.classList.remove('pn-live__host--settling');
+    };
     const abort = new AbortController();
     const cleanups: Array<() => void> = [];
     let opened: ReaderDocumentExt | undefined;
@@ -155,6 +159,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         setSettings(current);
         if (!fileRef) {
           window.clearTimeout(slowTimer);
+          endSettling();
           setPhase({ status: 'error', title: 'This book has no file', message: 'Add it to your library again to read it.', retry: false });
           return;
         }
@@ -194,6 +199,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         const first = document_.position();
         setPosition(first);
         setDoc(document_);
+        endSettling();
         setPhase({ status: 'ready' });
         void import('@/app/offline-assets')
           .then((m) =>
@@ -206,16 +212,22 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         hostRef.current?.focus({ preventScroll: true });
       } catch (error) {
         window.clearTimeout(slowTimer);
+        endSettling();
         if (abort.signal.aborted) return;
         if ((error as { missing?: boolean }).missing) {
+          endSettling();
           setPhase({ status: 'error', title: 'The file for this book is missing', message: (error as Error).message, retry: false });
           return;
         }
-        if (toReaderError(error).code !== 'aborted') setPhase(describe(error));
+        if (toReaderError(error).code !== 'aborted') {
+          endSettling();
+          setPhase(describe(error));
+        }
       }
     })();
 
     return () => {
+      endSettling();
       abort.abort();
       window.clearTimeout(slowTimer);
       document.removeEventListener('visibilitychange', onVisibility);

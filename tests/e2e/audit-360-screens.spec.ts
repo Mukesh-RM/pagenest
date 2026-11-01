@@ -25,6 +25,7 @@ test.describe('360px audit screenshots (real fixtures)', () => {
     await gotoTab(page, 'Library');
     await shot(page, '01-library-light');
     await gotoTab(page, 'Settings');
+    await expect(page.getByRole('heading', { name: 'Privacy' })).toBeVisible({ timeout: 60_000 });
     await shot(page, '02-settings-light');
     await page.getByRole('heading', { name: 'Privacy' }).scrollIntoViewIfNeeded();
     await shot(page, '05-settings-privacy-360');
@@ -33,6 +34,7 @@ test.describe('360px audit screenshots (real fixtures)', () => {
     await page.getByRole('button', { name: 'Add books' }).first().click();
     await page.getByTestId('pick-files').setInputFiles({ name: 'alice.epub', mimeType: 'application/epub+zip', buffer });
     await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 5000 }).catch(() => undefined);
+    await page.getByRole('button', { name: 'Got it' }).click({ timeout: 5000 }).catch(() => undefined);
     const card = page.getByRole('button', { name: /Alice|Wonderland/i }).first();
     await expect(card).toBeVisible({ timeout: 60_000 });
     const start = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
