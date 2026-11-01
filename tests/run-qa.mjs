@@ -16,6 +16,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const testsDir = resolve(repoRoot, 'tests');
 
 const mode = process.argv[2] ?? 'all';
 if (!['all', 'stable', 'gates'].includes(mode)) {
@@ -51,6 +52,10 @@ const playwrightStable = [
   ['npx', 'playwright', 'test', ...e2eProjects, ...(process.env.CI ? ['--workers=1'] : [])],
   { env: process.env },
 ];
+const releaseSmokeProjects = [
+  '--project=release-smoke-chromium',
+  ...(webkit ? ['--project=release-smoke-webkit'] : []),
+];
 const releaseSmoke = [
   'Release smoke: import/open/reload/SW (Pixel + iPhone)',
   [
@@ -58,11 +63,10 @@ const releaseSmoke = [
     'playwright',
     'test',
     'e2e/release-smoke.spec.ts',
-    '--project=release-smoke-chromium',
-    '--project=release-smoke-webkit',
+    'e2e/release-smoke-live-upgrade.spec.ts',
+    ...releaseSmokeProjects,
     '--workers=1',
     '--retries=0',
-    ...(process.env.CI ? [] : []),
   ],
   { env: process.env, cwd: testsDir },
 ];

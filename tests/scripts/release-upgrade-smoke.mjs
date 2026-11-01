@@ -4,7 +4,7 @@
  * browser profile still opens the book (OPFS / cache bytes must survive app updates).
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,7 +58,10 @@ const profile = mkdtempSync(join(tmpdir(), 'pagenest-upgrade-profile-'));
 
 try {
   run('git', ['worktree', 'add', '--detach', worktree, parentSha]);
-  run('npm', ['ci'], { cwd: worktree });
+  const linkedModules = join(worktree, 'node_modules');
+  if (!existsSync(linkedModules)) {
+    symlinkSync(join(repoRoot, 'node_modules'), linkedModules, 'dir');
+  }
   run('npm', ['run', 'build'], { cwd: worktree, env: { ...process.env, VITE_PN_MOCK_DICTIONARY: '1', VITE_PN_MOCK_BERGAMOT: '1', VITE_PN_MOCK_TTS: '1' } });
   const oldDist = join(worktree, 'dist');
   const server = serveDist(oldDist);
@@ -69,7 +72,7 @@ try {
       'playwright',
       'test',
       'e2e/release-upgrade.spec.ts',
-      '--project=chromium-mobile',
+      '--project=release-upgrade',
       '--workers=1',
       '--retries=0',
     ],
@@ -96,7 +99,7 @@ try {
       'playwright',
       'test',
       'e2e/release-upgrade.spec.ts',
-      '--project=chromium-mobile',
+      '--project=release-upgrade',
       '--workers=1',
       '--retries=0',
     ],
