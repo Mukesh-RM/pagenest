@@ -211,12 +211,19 @@ async function auditTarget(chrome, config, { title, target, slug, storageReset, 
 }
 
 /** One in-app visit so the next Lighthouse run hits a warm shell (same Chrome profile). */
-async function warmShellVisit(chromePort, target) {
+async function warmShellVisit(chromePort, target, { settle = false } = {}) {
   const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chromePort}`);
   try {
     const page = await (browser.contexts()[0] ?? (await browser.newContext())).newPage();
     await page.goto(target, { waitUntil: 'domcontentloaded' });
     await page.getByRole('navigation').first().waitFor({ timeout: 15000 }).catch(() => undefined);
+    if (settle) {
+      await page.getByRole('main').waitFor({ timeout: 15000 }).catch(() => undefined);
+      await page.evaluate(() => new Promise((resolve) => {
+        if (typeof requestIdleCallback === 'function') requestIdleCallback(() => resolve(), { timeout: 3000 });
+        else setTimeout(() => resolve(), 300);
+      }));
+    }
     await page.close();
   } finally {
     await browser.close();
@@ -234,14 +241,17 @@ try {
 
   chrome = await chromeLauncher.launch({ chromePath, chromeFlags });
   await skipOnboardingInProfile(chrome.port);
+  await warmShellVisit(chrome.port, base, { settle: true });
+  await warmShellVisit(chrome.port, base, { settle: true });
   for (const screen of args.scenarios === 'only' ? [] : screens) {
     const needsPrep = ['Reader', 'Audio player', 'Voice Studio'].includes(screen.name);
     const target = needsPrep
       ? await preparedAuditUrl(chrome.port, base, screen)
       : new URL(screen.path.replace(/^\//, ''), base).toString();
     if (screen.path === '/') {
-      await warmShellVisit(chrome.port, target);
-      await warmShellVisit(chrome.port, target);
+      await warmShellVisit(chrome.port, target, { settle: true });
+      await warmShellVisit(chrome.port, target, { settle: true });
+      await warmShellVisit(chrome.port, target, { settle: true });
     }
     await auditTarget(chrome, config, {
       title: screen.name, target,
@@ -263,8 +273,9 @@ try {
       });
       await page.close();
     } finally { await browser.close(); }
-    await warmShellVisit(chrome.port, base);
-    await warmShellVisit(chrome.port, base);
+    await warmShellVisit(chrome.port, base, { settle: true });
+    await warmShellVisit(chrome.port, base, { settle: true });
+    await warmShellVisit(chrome.port, base, { settle: true });
     await auditTarget(chrome, config, { title: `Library with ${books}+ books`, target: base, slug: 'library-seeded', storageReset: false });
 
     // Scenario 1b: the same library with a "Welcome back" resume card (a book read to RESUME_BOOK.percent %, saved just now).
