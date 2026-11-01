@@ -30,11 +30,12 @@ test.describe('360px audit screenshots (real fixtures)', () => {
     const buffer = readFileSync(join(repoRoot, 'src/features/reader/fixtures/alice.epub'));
     await page.getByRole('button', { name: 'Add books' }).first().click();
     await page.getByTestId('pick-files').setInputFiles({ name: 'alice.epub', mimeType: 'application/epub+zip', buffer });
+    await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 5000 }).catch(() => undefined);
     const card = page.getByRole('button', { name: /Alice|Wonderland/i }).first();
     await expect(card).toBeVisible({ timeout: 60_000 });
-    await card.click();
-    const read = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
-    await read.click();
+    const start = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
+    if (!(await start.isVisible().catch(() => false))) await card.click();
+    await start.click({ timeout: 15_000 });
     await expect(page).toHaveURL(/\/read\//, { timeout: 90_000 });
     await dismissReaderInterstitials(page);
     await waitForFoliateBookText(page, { min: 100, timeout: 120_000 });

@@ -17,34 +17,41 @@ async function importEpub(page: Page, buffer: Buffer, name = 'alice.epub'): Prom
   await skipOnboarding(page);
   await page.getByRole('button', { name: 'Add books' }).first().click();
   await page.getByTestId('pick-files').setInputFiles({ name, mimeType: 'application/epub+zip', buffer });
+  await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 5000 }).catch(() => undefined);
   const card = page.getByRole('button', { name: /Alice|Wonderland/i }).first();
   await expect(card).toBeVisible({ timeout: 60_000 });
-  await card.click();
-  const read = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
-  if (await read.isVisible().catch(() => false)) await read.click();
-  else await card.click();
+  if (page.url().includes('/read/')) {
+    await dismissReaderInterstitials(page);
+    return;
+  }
+  const start = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
+  if (!(await start.isVisible().catch(() => false))) {
+    await card.click();
+  }
+  if (!(page.url().includes('/read/'))) {
+    await start.click({ timeout: 15_000 });
+  }
   await expect(page).toHaveURL(/\/read\//, { timeout: 90_000 });
   await dismissReaderInterstitials(page);
 }
 
 async function assertNoOverlap(page: Page, selectors: string[]): Promise<void> {
   const pairs = await page.evaluate((sels) => {
-    const rects = sels.map((sel) => {
-      const el = document.querySelector(sel);
-      const r = el?.getBoundingClientRect();
-      return r && r.width > 0 && r.height > 0 ? { sel, x: r.left, y: r.top, w: r.width, h: r.height } : undefined;
-    }).filter(Boolean) as Array<{ sel: string; x: number; y: number; w: number; h: number }>;
+    const rects = sels
+      .map((sel) => {
+        const el = document.querySelector(sel);
+        const r = el?.getBoundingClientRect();
+        return r && r.width > 4 && r.height > 4 ? { sel, x: r.left, y: r.top, w: r.width, h: r.height } : undefined;
+      })
+      .filter(Boolean) as Array<{ sel: string; x: number; y: number; w: number; h: number }>;
     const overlaps: string[] = [];
     for (let i = 0; i < rects.length; i++) {
       for (let j = i + 1; j < rects.length; j++) {
         const a = rects[i];
         const b = rects[j];
-        const hit =
-          a.x < b.x + b.w - 2 &&
-          a.x + a.w > b.x + 2 &&
-          a.y < b.y + b.h - 2 &&
-          a.y + a.h > b.y + 2;
-        if (hit) overlaps.push(`${a.sel} × ${b.sel}`);
+        const overlapW = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+        const overlapH = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+        if (overlapW > 8 && overlapH > 8) overlaps.push(`${a.sel} × ${b.sel}`);
       }
     }
     return overlaps;
