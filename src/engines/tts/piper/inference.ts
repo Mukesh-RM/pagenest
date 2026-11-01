@@ -13,6 +13,12 @@ export function phonemesToIds(phonemeText: string, config: PiperModelConfig): nu
   return ids;
 }
 
+/** Default speaker id for multi-speaker Piper checkpoints (e.g. LibriTTS). */
+export function defaultPiperSpeakerId(config: PiperModelConfig): number {
+  if (config.num_speakers !== undefined && config.num_speakers <= 1) return 0;
+  return 0;
+}
+
 /** Run a loaded ONNX session (or mock) for one phoneme id sequence. */
 export async function runPiperInference(
   session: PiperSession | undefined,
@@ -30,6 +36,10 @@ export async function runPiperInference(
     input_lengths: inputLen,
     scales,
   };
+  const names = session.inputNames ?? [];
+  if (names.includes('sid')) {
+    feeds.sid = BigInt64Array.from([BigInt(defaultPiperSpeakerId(config))]);
+  }
   const out = await session.run(feeds);
   const tensor = out.output ?? out[Object.keys(out)[0]!];
   const data = (tensor as { data: Float32Array }).data;
