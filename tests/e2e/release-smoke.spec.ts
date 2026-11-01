@@ -57,7 +57,7 @@ async function openBookByFormat(page: Page, title: RegExp, format: RegExp): Prom
     await expect(sheet).toBeVisible({ timeout: 10_000 });
     const meta = await sheet.innerText();
     if (format.test(meta)) {
-      await sheet.getByRole('button', { name: /^start reading$/i }).click();
+      await sheet.getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
       await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
       await dismissReaderInterstitials(page);
       return;
@@ -178,19 +178,18 @@ test.describe('release smoke: import, open, reload, SW update', () => {
 
   test('OPFS blocked: cache-backed store still imports and opens EPUB', async ({ page, context }) => {
     test.skip(process.env.PAGENEST_SMOKE_LIVE === '1', 'Local profile only (live smoke uses real OPFS).');
-    test.skip(!!process.env.CI, 'OPFS-unavailable profile runs locally; CI has real OPFS.');
     test.setTimeout(300_000);
     const consoleErrors: string[] = [];
     attachConsoleGuard(page, consoleErrors);
 
     await context.addInitScript(() => {
-      const storage = navigator.storage as StorageManager & { getDirectory?: () => Promise<FileSystemDirectoryHandle> };
-      if (typeof storage?.getDirectory !== 'function') return;
-      storage.getDirectory = () => Promise.reject(new DOMException('blocked', 'SecurityError'));
+      sessionStorage.setItem('pn_no_opfs', '1');
     });
 
     await context.clearCookies();
-    await launch(page);
+    await page.goto('./?pn_no_opfs=1');
+    await skipOnboarding(page);
+    await waitForIndexedDbReady(page);
     await waitForServiceWorkerControl(page);
 
     const epub = readFixture('src/features/reader/fixtures/alice.epub');
@@ -199,6 +198,9 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await page.reload();
     await waitForServiceWorkerControl(page);
+    await page.goto('./?pn_no_opfs=1');
+    await dismissLibraryOverlays(page);
+    await waitForIndexedDbReady(page);
     await openBookCard(page, /Alice|Wonderland/i);
     await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
