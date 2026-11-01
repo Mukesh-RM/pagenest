@@ -120,8 +120,23 @@ export function isOpfsSupported(): boolean {
   return typeof storageManager()?.getDirectory === 'function';
 }
 
+/**
+ * QA harness: skip OPFS and use the cache-backed file store (same path as a blocked OPFS open).
+ * Set `?pn_no_opfs=1` on first load or `sessionStorage.pn_no_opfs = '1'` before bootstrap (e2e only).
+ */
+export function isOpfsHarnessDisabled(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (new URLSearchParams(window.location.search).get('pn_no_opfs') === '1') return true;
+    return sessionStorage.getItem('pn_no_opfs') === '1';
+  } catch {
+    return false;
+  }
+}
+
 /** Open the OPFS root, or `undefined` when unsupported or blocked (for example private mode in some browsers). */
 export async function openOpfsRoot(): Promise<DirectoryHandleLike | undefined> {
+  if (isOpfsHarnessDisabled()) return undefined;
   const getDirectory = storageManager()?.getDirectory;
   if (typeof getDirectory !== 'function') return undefined;
   try {
