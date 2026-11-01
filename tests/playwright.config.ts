@@ -28,6 +28,8 @@ const useFixture = process.env.PAGENEST_TARGET === 'fixture';
 const repoRoot = resolve(here, '..');
 const skipBuild = process.env.PAGENEST_SKIP_BUILD ? process.env.PAGENEST_SKIP_BUILD === '1' : !!process.env.CI;
 const includeWebkit = !process.env.CI || process.env.PAGENEST_WEBKIT === '1';
+/** Live smoke uses persistent contexts and long serial runs; retain-on-failure traces race on close (WebKit ENOENT). */
+const smokeTrace = process.env.PAGENEST_SMOKE_LIVE === '1' ? 'off' : 'retain-on-failure';
 
 const rawBase = external ?? `http://127.0.0.1:${PORT}/`;
 export const baseURL = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
@@ -69,7 +71,7 @@ export default defineConfig({
     : [['list']],
   use: {
     baseURL,
-    trace: 'retain-on-failure',
+    trace: smokeTrace,
     screenshot: 'only-on-failure',
     serviceWorkers: 'allow',
     actionTimeout: 8_000,
