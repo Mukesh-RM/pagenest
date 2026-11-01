@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { launch, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -42,11 +42,6 @@ async function importFiles(
   if (waitForCard) await expect(page.getByRole('button', { name: waitForCard }).first()).toBeVisible({ timeout: 120_000 });
 }
 
-async function dismissLibraryOverlays(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Got it' }).click({ timeout: 2000 }).catch(() => undefined);
-  await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 2000 }).catch(() => undefined);
-}
-
 async function openBookByFormat(page: Page, title: RegExp, format: RegExp): Promise<void> {
   await dismissLibraryOverlays(page);
   const cards = page.getByRole('button', { name: title });
@@ -57,7 +52,7 @@ async function openBookByFormat(page: Page, title: RegExp, format: RegExp): Prom
     await expect(sheet).toBeVisible({ timeout: 10_000 });
     const meta = await sheet.innerText();
     if (format.test(meta)) {
-      await sheet.getByRole('button', { name: /^start reading$/i }).click();
+      await sheet.getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
       await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
       await dismissReaderInterstitials(page);
       return;
