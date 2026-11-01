@@ -80,6 +80,17 @@ export async function waitForFoliateBookTextLive(
   }
 }
 
+/** Tap a left/center/right zone on the live reader (immersive chrome + foliate/PDF tap handling). */
+export async function tapReaderZone(page: Page, zone: 'left' | 'center' | 'right'): Promise<void> {
+  const article = page.locator('article.pn-reader__page');
+  await article.waitFor({ state: 'visible', timeout: 30_000 });
+  const box = await article.boundingBox();
+  if (!box) throw new Error('Reader page has no layout box.');
+  const x = zone === 'left' ? box.width * 0.12 : zone === 'right' ? box.width * 0.88 : box.width * 0.5;
+  const y = box.height * 0.45;
+  await article.click({ position: { x, y } });
+}
+
 /** Dismiss welcome, iOS install sheet, and similar overlays on the reader route. */
 export async function dismissReaderInterstitials(page: Page): Promise<void> {
   await page.getByRole('dialog', { name: 'Add InkQuiet to your iPhone' }).waitFor({ state: 'visible', timeout: 3000 }).catch(() => undefined);

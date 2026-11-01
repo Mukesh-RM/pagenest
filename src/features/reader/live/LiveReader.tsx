@@ -116,6 +116,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const [dictMode, setDictMode] = useState<'define' | 'translate' | undefined>();
   const [dictOpen, setDictOpen] = useState(false);
   const [wordTap, setWordTap] = useState<{ token: number; word: string; anchor: DOMRect } | undefined>();
+  const [chromeVisible, setChromeVisible] = useState(true);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const appliedRef = useRef<ReaderSettings>();
@@ -348,6 +349,19 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     },
     [doc, say],
   );
+  const overlayOpenRef = useRef(false);
+  overlayOpenRef.current = settingsOpen || tocOpen || searchOpen || marksOpen || noteEditorOpen;
+  const tapHandler = useRef<(zone: 'left' | 'center' | 'right') => void>(() => undefined);
+  tapHandler.current = (zone) => {
+    if (overlayOpenRef.current || !doc) return;
+    const rtl = doc.direction === 'rtl';
+    if (zone === 'center') {
+      setChromeVisible((visible) => !visible);
+      return;
+    }
+    const dir: 1 | -1 = zone === 'left' ? (rtl ? 1 : -1) : rtl ? -1 : 1;
+    void turn(dir);
+  };
   const keyHandler = useRef<(key: { key: string; shiftKey: boolean; ctrlKey: boolean; metaKey: boolean; altKey: boolean; preventDefault(): void }, target: EventTarget | null) => void>(() => undefined);
   keyHandler.current = (e, target) => {
     if (!doc || settingsOpen || tocOpen || searchOpen || marksOpen || noteEditorOpen) return;
@@ -398,7 +412,11 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   }, []);
   useEffect(() => {
     if (!doc) return undefined;
-    const offs = [doc.onKey((e) => keyHandler.current(e, null)), doc.onTocChange(() => setTocVersion((v) => v + 1))];
+    const offs = [
+      doc.onKey((e) => keyHandler.current(e, null)),
+      doc.onTocChange(() => setTocVersion((v) => v + 1)),
+      doc.onTap((zone) => tapHandler.current(zone)),
+    ];
     return () => {
       for (const off of offs) off();
     };
@@ -440,6 +458,8 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       onBack={() => navigate('/')}
       {...(minutes !== undefined ? { minutesLeftInChapter: minutes } : {})}
       immersiveChrome
+      chromeVisible={chromeVisible}
+      onChromeVisibleChange={setChromeVisible}
       onPagePrev={() => void turn(flip ? 1 : -1)}
       onPageNext={() => void turn(flip ? -1 : 1)}
       chapterTicks={ticks}
