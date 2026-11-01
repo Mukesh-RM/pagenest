@@ -39,7 +39,7 @@ export function ConsentStep({
       </header>
       <h1 className="pn-screen__title">Confirm it is your voice</h1>
       <p className="pn-voice__intro">
-        This voice will be you. Only record your own voice. Read the phrase below aloud in one go so PageNest knows you are
+        This voice will be you. Only record your own voice. Read the phrase below aloud in one go so InkQuiet knows you are
         present.
       </p>
 
@@ -49,7 +49,7 @@ export function ConsentStep({
 
       {micBlocked ? (
         <div className="pn-voice-studio__callout" role="alert">
-          Microphone access is blocked. Open your browser site settings for PageNest and allow the microphone, then try again.
+          Microphone access is blocked. Open your browser site settings for InkQuiet and allow the microphone, then try again.
         </div>
       ) : null}
 

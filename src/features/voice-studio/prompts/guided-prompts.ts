@@ -3,7 +3,7 @@ export const GUIDED_PROMPTS = [
   {
     id: 'intro-calm',
     title: 'Calm introduction',
-    text: 'Hello, this is my voice for PageNest. I speak clearly and at a relaxed pace.',
+    text: 'Hello, this is my voice for InkQuiet. I speak clearly and at a relaxed pace.',
   },
   {
     id: 'story-bit',

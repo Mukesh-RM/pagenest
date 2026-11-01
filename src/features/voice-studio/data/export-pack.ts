@@ -21,11 +21,11 @@ export async function buildVoicePackExportFiles(
       data: new Blob(
         [
           [
-            'PageNest My Voice Pack',
+            'InkQuiet My Voice Pack',
             '----------------------',
             'This package contains your own voice recordings for offline training.',
             'Do not share these files; they are meant only for your personal voice model.',
-            'Train with the free PageNest Voice Helper script, then import the model back into the app.',
+            'Train with the free InkQuiet Voice Helper script, then import the model back into the app.',
           ].join('\n'),
         ],
         { type: 'text/plain' },

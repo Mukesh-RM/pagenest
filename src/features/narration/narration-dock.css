@@ -1,0 +1,22 @@
+.pn-narration-dock {
+  position: absolute;
+  z-index: 4;
+  right: calc(var(--pn-space-3) + env(safe-area-inset-right, 0px));
+  bottom: calc(var(--pn-space-3) + env(safe-area-inset-bottom, 0px));
+  left: calc(var(--pn-space-3) + env(safe-area-inset-left, 0px));
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.pn-narration-dock__toggle {
+  pointer-events: auto;
+  max-width: 100%;
+  box-shadow: var(--pn-shadow-md);
+}
+
+.pn-narration-sheet .pn-narration {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}

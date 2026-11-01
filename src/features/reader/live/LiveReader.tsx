@@ -21,6 +21,7 @@ import { MarksSheet } from './MarksSheet';
 import { NoteEditorSheet } from './NoteEditorSheet';
 import { SearchSheet } from './SearchSheet';
 import { SelectionBar } from './SelectionBar';
+import { ensureReadableStart } from './open-position';
 import { settingsToAppearance } from './settings-map';
 import { currentReaderTocId, locatorForReaderTocId, readerTocFromEngine } from './toc-map';
 import './live.css';
@@ -121,6 +122,10 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return undefined;
+    host.classList.add('pn-live__host--settling');
+    const endSettling = (): void => {
+      host.classList.remove('pn-live__host--settling');
+    };
     const abort = new AbortController();
     const cleanups: Array<() => void> = [];
     let opened: ReaderDocumentExt | undefined;
@@ -154,6 +159,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         setSettings(current);
         if (!fileRef) {
           window.clearTimeout(slowTimer);
+          endSettling();
           setPhase({ status: 'error', title: 'This book has no file', message: 'Add it to your library again to read it.', retry: false });
           return;
         }
@@ -175,8 +181,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
           return;
         }
         opened = document_;
-        const firstChapter = document_.toc[0]?.locator;
-        if (!start && firstChapter?.kind === 'reflow' && firstChapter.section > 0) await document_.goTo(firstChapter);
+        if (!start && host) await ensureReadableStart(document_, host);
         if (abort.signal.aborted) return;
         window.clearTimeout(slowTimer);
         const publish = frameThrottle((p: ReaderPosition) => setPosition(p));
@@ -194,6 +199,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         const first = document_.position();
         setPosition(first);
         setDoc(document_);
+        endSettling();
         setPhase({ status: 'ready' });
         void import('@/app/offline-assets')
           .then((m) =>
@@ -206,16 +212,22 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         hostRef.current?.focus({ preventScroll: true });
       } catch (error) {
         window.clearTimeout(slowTimer);
+        endSettling();
         if (abort.signal.aborted) return;
         if ((error as { missing?: boolean }).missing) {
+          endSettling();
           setPhase({ status: 'error', title: 'The file for this book is missing', message: (error as Error).message, retry: false });
           return;
         }
-        if (toReaderError(error).code !== 'aborted') setPhase(describe(error));
+        if (toReaderError(error).code !== 'aborted') {
+          endSettling();
+          setPhase(describe(error));
+        }
       }
     })();
 
     return () => {
+      endSettling();
       abort.abort();
       window.clearTimeout(slowTimer);
       document.removeEventListener('visibilitychange', onVisibility);
@@ -456,15 +468,17 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
           : undefined
       }
       statusMessage={announce}
-    >
-      <div className="pn-live">
-        <div className="pn-live__tools" aria-label="Reader tools">
+      barTools={
+        <>
           <Button iconOnly variant="ghost" icon="search" aria-label="Search in this book" disabled={!doc} onClick={() => setSearchOpen(true)} />
           <Button iconOnly variant="ghost" icon="bookmark" aria-label="Add bookmark here" disabled={!doc} onClick={saveBookmark} />
-          <Button variant="ghost" aria-label="Bookmarks and highlights" disabled={!doc} onClick={() => setMarksOpen(true)}>
-            Marks
+          <Button variant="ghost" icon="list" className="pn-reader__marks" aria-label="Bookmarks and highlights" disabled={!doc} onClick={() => setMarksOpen(true)}>
+            <span className="pn-reader__marks-label">Marks</span>
           </Button>
-        </div>
+        </>
+      }
+    >
+      <div className="pn-live">
         <div className="pn-live__stage">
           {selection ? (
             <SelectionBar

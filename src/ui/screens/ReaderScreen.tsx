@@ -61,6 +61,8 @@ export interface ReaderScreenProps {
   onPageNext?: () => void;
   /** Polite announcement (for example when a page turn is blocked). */
   statusMessage?: string;
+  /** Extra icon buttons in the top bar (search, bookmarks, …). Wraps on narrow viewports. */
+  barTools?: ReactNode;
   /** The page content (the reader engine renders here). */
   children: ReactNode;
 }
@@ -109,6 +111,7 @@ export function ReaderScreen({
   onPagePrev,
   onPageNext,
   statusMessage,
+  barTools,
   children,
 }: ReaderScreenProps) {
   const [chromeVisibleInternal, setChromeVisibleInternal] = useState(true);
@@ -217,6 +220,7 @@ export function ReaderScreen({
           {showContents ? (
             <Button iconOnly variant="ghost" icon="list" aria-label="Contents" onClick={openContents} />
           ) : null}
+          {barTools ? <div className="pn-reader__tools">{barTools}</div> : null}
           <Button
             variant="ghost"
             aria-label="Reading settings"

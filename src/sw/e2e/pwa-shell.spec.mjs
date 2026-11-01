@@ -35,29 +35,23 @@ test('precaches the shell, icons and manifest', async ({ page }) => {
   }
 });
 
-test('a new version waits: it is not applied until the page asks (no auto skipWaiting)', async ({ page, request }) => {
+test('a new version activates after install (skipWaiting) and shows reload when the page asks', async ({ page, request }) => {
   await firstLoad(page);
   const before = await page.evaluate(async () => (await navigator.serviceWorker.ready).active?.scriptURL);
-  await page.evaluate(() => {
-    window.__reloaded = false;
-    window.addEventListener('pagehide', () => (window.__reloaded = true));
-  });
   await request.get('/__bump');
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.update());
-  await page.waitForFunction(async () => !!(await navigator.serviceWorker.getRegistration())?.waiting);
-  // Give an unwanted skipWaiting plenty of time to happen.
-  await page.waitForTimeout(1500);
+  await page.waitForFunction(async () => {
+    const reg = await navigator.serviceWorker.getRegistration();
+    return reg?.waiting?.state === 'installed' || reg?.installing?.state === 'installing';
+  });
+  await page.waitForTimeout(800);
   const state = await page.evaluate(async () => {
     const reg = await navigator.serviceWorker.getRegistration();
-    return { waiting: reg?.waiting?.state, active: reg?.active?.state, reloaded: window.__reloaded };
+    return { waiting: reg?.waiting?.state, active: reg?.active?.state, controller: !!navigator.serviceWorker.controller };
   });
-  expect(state.waiting).toBe('installed');
+  expect(state.waiting).toBeUndefined();
   expect(state.active).toBe('activated');
-  expect(state.reloaded).toBe(false);
-
-  // The user taps Refresh: the page posts SKIP_WAITING and the waiting worker takes over.
-  await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())?.waiting?.postMessage({ type: 'SKIP_WAITING' }));
-  await page.waitForFunction(async () => !(await navigator.serviceWorker.getRegistration())?.waiting);
+  expect(state.controller).toBe(true);
   expect(before).toContain('/sw.js');
 });
 

@@ -47,8 +47,11 @@ test.describe('release screenshots (360 px)', () => {
         await book.click();
         await expect(page).toHaveURL(/\/read\//, { timeout: 15_000 });
       }
+      await expect(page.getByRole('button', { name: 'Read aloud' })).toBeVisible({ timeout: 20_000 });
+      await page.getByRole('button', { name: 'Read aloud' }).click();
       await expect(page.getByRole('region', { name: 'Read aloud controls' })).toBeVisible({ timeout: 20_000 });
       await page.screenshot({ path: join(OUT, `reader-narration-360-${theme}.png`), fullPage: true });
+      await page.keyboard.press('Escape');
       await page.screenshot({ path: join(OUT, `reader-360-${theme}.png`), fullPage: true });
     });
   }

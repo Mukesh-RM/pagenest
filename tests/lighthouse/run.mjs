@@ -139,6 +139,7 @@ async function preparedAuditUrl(chromePort, base, screen) {
         await page.waitForURL(/\/read\//, { timeout: 30_000 });
       }
       await page.getByRole('button', { name: 'Back to library' }).waitFor({ timeout: 60_000 });
+      await page.waitForTimeout(800);
       const url = page.url();
       await page.close();
       return url;
@@ -263,6 +264,11 @@ try {
       ? await preparedAuditUrl(chrome.port, base, screen)
       : new URL(screen.path.replace(/^\//, ''), base).toString();
     if (screen.path === '/') {
+      await warmShellVisit(chrome.port, target, { settle: true });
+      await warmShellVisit(chrome.port, target, { settle: true });
+      await warmShellVisit(chrome.port, target, { settle: true });
+    }
+    if (screen.name === 'Reader') {
       await warmShellVisit(chrome.port, target, { settle: true });
       await warmShellVisit(chrome.port, target, { settle: true });
       await warmShellVisit(chrome.port, target, { settle: true });
