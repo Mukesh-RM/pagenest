@@ -11,8 +11,7 @@ import type {
   SessionRecord,
   SettingRecord,
 } from '@/data/schema';
-import type { SettingSyncRow } from './payload';
-import { SYNC_DATA_STORES, type SyncPayload } from './payload';
+import type { SettingSyncRow, SyncDataStore, SyncPayload } from './payload';
 
 export interface SyncMergeSummary {
   booksMatched: number;
@@ -33,7 +32,7 @@ export interface SyncMergeDeps {
 
 const CHUNK = 400;
 
-async function putAll(db: PageNestDB, store: (typeof SYNC_DATA_STORES)[number], rows: unknown[]): Promise<void> {
+async function putAll(db: PageNestDB, store: SyncDataStore, rows: unknown[]): Promise<void> {
   const table = db.table(store);
   for (let i = 0; i < rows.length; i += CHUNK) {
     await table.bulkPut(rows.slice(i, i + CHUNK));

@@ -182,7 +182,7 @@ export async function openSampleBookInReader(page: Page): Promise<void> {
   await page.getByRole('heading', { level: 1, name: /Peter Rabbit/i }).waitFor({ timeout: 90_000 }).catch(() => undefined);
   try {
     await waitText(180_000);
-  } catch (first) {
+  } catch {
     await page.getByRole('button', { name: 'Back to library' }).click({ timeout: 5000 }).catch(() => undefined);
     await page.getByRole('button', { name: /The Tale of Peter Rabbit/i }).first().click({ timeout: 15_000 });
     await page.waitForURL(/\/read\//, { timeout: 90_000 });

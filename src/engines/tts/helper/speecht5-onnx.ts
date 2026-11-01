@@ -11,7 +11,9 @@ const THRESHOLD = 0.5;
 const MINLEN_RATIO = 0;
 const MAXLEN_RATIO = 20;
 
-type OrtModule = typeof import('onnxruntime-web/wasm');
+import type * as OrtWasm from 'onnxruntime-web/wasm';
+
+type OrtModule = typeof OrtWasm;
 
 export interface SpeechT5Stack {
   synthesize(text: string, speakerEmbedding: Float32Array): Promise<Float32Array>;

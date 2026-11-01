@@ -146,7 +146,7 @@ export function createCloneRuntime(): CloneWorkerApi {
       const referencePcm = await buildReferencePcm(payload.wavBuffers);
       const pcm16Chunks: Float32Array[] = [];
       for (const buf of payload.wavBuffers) pcm16Chunks.push(await decodeWavMono(buf, 16_000));
-      let embedAcc = new Float32Array(512);
+      const embedAcc = new Float32Array(512);
       let count = 0;
       if (mock || !payload.xvectModel) {
         for (const pcm of pcm16Chunks) {
