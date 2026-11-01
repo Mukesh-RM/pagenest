@@ -89,7 +89,15 @@ export function checkBundle(distDir, budgets = BUDGETS_KB) {
 
   const assetsDir = join(dist, 'assets');
   const initial = new Set(assets.js.map((h) => h.split('/').pop()));
+  const foliateSandboxAssign = /\.setAttribute\(\s*["']sandbox["']\s*,\s*["']allow-same-origin allow-scripts["']\s*\)/;
   if (existsSync(assetsDir)) {
+    for (const name of readdirSync(assetsDir).filter((n) => /^engine-foliate-/.test(n) && n.endsWith('.js'))) {
+      const text = readFileSync(join(assetsDir, name), 'utf8');
+      if (foliateSandboxAssign.test(text)) {
+        ok = false;
+        lines.push(`FAIL ${name}: foliate iframe sandbox setAttribute still present (WebKit EPUB break)`);
+      }
+    }
     for (const name of readdirSync(assetsDir)
       .filter((n) => n.endsWith('.js') && !initial.has(n))
       .sort()) {

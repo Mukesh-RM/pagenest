@@ -74,7 +74,8 @@ export async function waitForFoliateBookTextLive(
     return await waitForFoliateBookText(page, { ...options, timeout });
   } catch (first) {
     if (process.env.PAGENEST_SMOKE_LIVE !== '1') throw first;
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    // WebKit + service worker: reload() can fail with "Response served by service worker has redirections".
+    await page.goto(page.url(), { waitUntil: 'domcontentloaded' });
     await dismissReaderInterstitials(page);
     return waitForFoliateBookText(page, { ...options, timeout });
   }

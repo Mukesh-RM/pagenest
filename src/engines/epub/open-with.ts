@@ -10,10 +10,10 @@ export type Loader = (source: ReaderSource) => Promise<LoadedFoliateBook>;
 /** Shared engine body: pick a loader, make a foliate view, open at the saved locator. */
 export async function openWith(load: Loader, source: ReaderSource, host: HTMLElement, options: OpenOptions | undefined): Promise<FoliateReaderDocument> {
   throwIfAborted(options?.signal);
+  installWebKitFoliateIframeFix();
   const loaded = await load(source);
   throwIfAborted(options?.signal);
   const appearance = options?.appearance ?? DEFAULT_APPEARANCE;
-  installWebKitFoliateIframeFix();
   await import('foliate-js/view.js'); // registers <foliate-view>
   const view = document.createElement('foliate-view') as unknown as ConstructorParameters<typeof FoliateReaderDocument>[0];
   view.style.display = 'block';
