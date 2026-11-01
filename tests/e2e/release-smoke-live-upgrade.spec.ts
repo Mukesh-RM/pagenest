@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, expect, test, webkit } from '@playwright/test';
-import { dismissReaderInterstitials, waitForFoliateBookTextLiveLive } from './support/foliate-reader';
+import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
 import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
