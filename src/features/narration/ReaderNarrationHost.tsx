@@ -8,9 +8,8 @@ import { SharedSleepTimerSheet } from '@/features/playback/SharedSleepTimerSheet
 import { formatClock } from '@/engines/audio/util';
 import type { VoiceEngine, VoiceInfo } from '@/engines/tts/types';
 import { buildNarrationPlan } from '@/engines/emotion/pipeline';
-import { createNarrationVoiceEngine } from '@/engines/tts';
+import { createNarrationVoiceEngine, pickDefaultSpeechVoice } from '@/engines/tts';
 import { createPiperModelStore } from '@/engines/tts/piper/model-store';
-import { PIPER_DEFAULT_VOICE } from '@/engines/tts/piper/voices';
 import { getDb } from '@/data/db';
 import { createFileStore } from '@/data/opfs';
 import { readChapterText } from './chapter-text';
@@ -63,7 +62,16 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         { db, files },
       );
       setEngine(eng);
-      void eng.listVoices(book.language?.slice(0, 2) ?? 'en').then(setVoices);
+      void eng.listVoices(book.language?.slice(0, 2) ?? 'en').then((list) => {
+        if (cancelled) return;
+        setVoices(list);
+        setSettings((s) => {
+          if (s.voiceId && list.some((v) => v.id === s.voiceId)) return s;
+          const device = pickDefaultSpeechVoice(list, book.language);
+          if (!device) return s;
+          return { ...s, engine: 'speech', voiceId: device.id };
+        });
+      });
     });
     return () => {
       cancelled = true;
@@ -78,7 +86,11 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
 
   useEffect(() => {
     if (!engine) return;
-    sessionRef.current = new NarrationSession({ engine, audio });
+    sessionRef.current = new NarrationSession({
+      engine,
+      audio,
+      onError: (err) => setError(formatNarrationError(err)),
+    });
     return () => sessionRef.current?.stop();
   }, [engine, audio]);
 
@@ -108,6 +120,12 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
     setActive(st.activeSentence);
   }, []);
 
+  const resolvedVoice = useCallback((): VoiceInfo | undefined => {
+    const picked = voices.find((v) => v.id === settings.voiceId);
+    if (picked) return picked;
+    return pickDefaultSpeechVoice(voices, book.language);
+  }, [book.language, settings.voiceId, voices]);
+
   const onPlayPause = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
@@ -116,19 +134,25 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
       sync();
       return;
     }
+    if (session.canResumeLive()) {
+      session.resumeLive();
+      sync();
+      return;
+    }
     setError(undefined);
     setPreparing(true);
     setPrepMessage(undefined);
     try {
       const text = readChapterText(hostRef);
-      const voice = voices.find((v) => v.id === settings.voiceId);
+      const voice = resolvedVoice();
+      if (!voice) throw new Error('No read-aloud voice is available on this device.');
       session.configure({
         ...settings,
-        engine: voice?.isOwnVoice ? 'helper' : 'piper',
-        voiceId: settings.voiceId || PIPER_DEFAULT_VOICE,
+        engine: voice.engine,
+        voiceId: voice.id,
       });
       await session.prepare(book.id, book.title, text, Math.max(0, active), (msg) => setPrepMessage(msg));
-      await session.playFromUserGesture(Math.max(0, active));
+      session.playFromUserGesture(Math.max(0, active));
     } catch (err) {
       sessionRef.current?.pause();
       setError(formatNarrationError(err));
@@ -137,7 +161,7 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
       setPreparing(false);
       setPrepMessage(undefined);
     }
-  }, [active, book.id, book.title, hostRef, playing, settings, sync, voices]);
+  }, [active, book.id, book.title, hostRef, playing, resolvedVoice, settings, sync]);
 
   const sleepLabel = useMemo(() => {
     if (!audioSleep) return 'Off';
@@ -156,7 +180,10 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         prepMessage={prepMessage}
         error={error}
         onPlayPause={() => void onPlayPause()}
-        onSpeed={(speed) => setSettings((s) => ({ ...s, speed }))}
+        onSpeed={(speed) => {
+          setSettings((s) => ({ ...s, speed }));
+          sessionRef.current?.configure({ speed });
+        }}
         onVoice={() => setVoiceOpen(true)}
         onExpressive={(expressive) =>
           setSettings((s) => ({ ...s, expressive, style: expressive ? 'expressive' : s.style === 'cast' ? 'cast' : 'natural' }))
@@ -170,7 +197,7 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
       <NarrationSheet
         open={voiceOpen}
         voices={voices}
-        selectedId={settings.voiceId}
+        selectedId={settings.voiceId || resolvedVoice()?.id || ''}
         onClose={() => setVoiceOpen(false)}
         onPick={(voiceId, engineId) => {
           setError(undefined);

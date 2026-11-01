@@ -1,5 +1,12 @@
 import type { AudioController, AudioItem } from '@/engines/audio/types';
 import type { VoiceEngine } from '@/engines/tts/types';
+import {
+  cancelSpeechSynthesis,
+  pauseSpeechSynthesis,
+  resumeSpeechSynthesis,
+  speechSynthesisPaused,
+  speechSynthesisSpeaking,
+} from '@/engines/tts/speech-engine';
 import { buildNarrationPlan } from '@/engines/emotion/pipeline';
 import { encodeWav } from './wav-encode';
 import type { NarrationSettings, SentenceTiming } from './types';
@@ -7,9 +14,10 @@ import type { NarrationSettings, SentenceTiming } from './types';
 export interface NarrationSessionDeps {
   readonly engine: VoiceEngine;
   readonly audio: AudioController;
+  readonly onError?: (err: unknown) => void;
 }
 
-/** Sentence-at-a-time read-aloud with prefetch (target: first audio <1.5 s once the voice is cached). */
+/** Sentence-at-a-time read-aloud; device voices speak live, HD voices render to WAV buffers. */
 export class NarrationSession {
   private plan = buildNarrationPlan('');
   private timings: SentenceTiming[] = [];
@@ -17,10 +25,11 @@ export class NarrationSession {
   private active = -1;
   private playing = false;
   private preparing = false;
+  private livePaused = false;
   private abort?: AbortController;
   private bookId = '';
   private title = '';
-  private settings: NarrationSettings = { engine: 'piper', voiceId: 'en_US-libritts-high', speed: 1, style: 'natural', expressive: false };
+  private settings: NarrationSettings = { engine: 'speech', voiceId: '', speed: 1, style: 'natural', expressive: false };
 
   constructor(private readonly deps: NarrationSessionDeps) {}
 
@@ -34,6 +43,17 @@ export class NarrationSession {
     };
   }
 
+  canResumeLive(): boolean {
+    return this.livePaused && speechSynthesisPaused() && speechSynthesisSpeaking();
+  }
+
+  resumeLive(): void {
+    if (!this.canResumeLive()) return;
+    this.playing = true;
+    this.livePaused = false;
+    resumeSpeechSynthesis();
+  }
+
   configure(settings: Partial<NarrationSettings>): void {
     this.settings = { ...this.settings, ...settings };
     if (settings.expressive !== undefined) {
@@ -42,6 +62,10 @@ export class NarrationSession {
         style: settings.expressive ? 'expressive' : this.settings.style === 'cast' ? 'cast' : 'natural',
       };
     }
+  }
+
+  private usesLiveOutput(): boolean {
+    return this.settings.engine === 'speech';
   }
 
   async prepare(
@@ -64,10 +88,12 @@ export class NarrationSession {
     this.preparing = true;
     this.abort = new AbortController();
     try {
+      const needsDownload = this.settings.engine === 'piper' || this.settings.engine === 'helper';
       await this.deps.engine.prepareVoice(this.settings.voiceId, {
-        allowDownload: true,
+        allowDownload: needsDownload,
         signal: this.abort.signal,
         onProgress: (p) => {
+          if (!needsDownload) return;
           if (p.total) {
             const pct = Math.round((p.done / p.total) * 100);
             onPrepMessage?.(`Downloading voice… ${pct}%`);
@@ -76,6 +102,7 @@ export class NarrationSession {
           }
         },
       });
+      if (this.usesLiveOutput()) return;
       await this.ensureBuffer(startSentence);
       void this.prefetch(startSentence + 1);
       void this.prefetch(startSentence + 2);
@@ -84,15 +111,25 @@ export class NarrationSession {
     }
   }
 
-  async playFromUserGesture(startSentence = this.active >= 0 ? this.active : 0): Promise<void> {
+  playFromUserGesture(startSentence = this.active >= 0 ? this.active : 0): void {
     if (!this.plan.length) return;
     this.playing = true;
+    this.livePaused = false;
     this.active = startSentence;
-    await this.playSentence(startSentence);
+    void this.playSentence(startSentence).catch((err) => {
+      this.playing = false;
+      this.deps.onError?.(err);
+    });
   }
 
   pause(): void {
     this.playing = false;
+    if (this.usesLiveOutput() && speechSynthesisSpeaking()) {
+      pauseSpeechSynthesis();
+      this.livePaused = true;
+      return;
+    }
+    this.livePaused = false;
     this.deps.audio.pause();
   }
 
@@ -102,13 +139,21 @@ export class NarrationSession {
 
   private stopInternal(clearAudio: boolean): void {
     this.playing = false;
+    this.livePaused = false;
     this.abort?.abort();
+    cancelSpeechSynthesis();
     if (clearAudio) void this.deps.audio.stop();
   }
 
   private async playSentence(index: number): Promise<void> {
     if (!this.playing || index >= this.plan.length) {
       this.playing = false;
+      return;
+    }
+    this.active = index;
+    if (this.usesLiveOutput()) {
+      await this.playLiveSentence(index);
+      if (this.playing) await this.playSentence(index + 1);
       return;
     }
     await this.ensureBuffer(index);
@@ -120,12 +165,26 @@ export class NarrationSession {
     await this.deps.audio.load(item);
     this.deps.audio.setSpeed(this.settings.speed);
     await this.deps.audio.play();
-    this.active = index;
     void this.prefetch(index + 1);
     void this.prefetch(index + 2);
     const duration = await waitForTrackEnd(this.deps.audio);
     this.timings[index] = { index, startSec: 0, endSec: duration };
     if (this.playing) await this.playSentence(index + 1);
+  }
+
+  private async playLiveSentence(index: number): Promise<void> {
+    const sentence = this.plan[index]!;
+    const delivery = { ...sentence.delivery, rate: sentence.delivery.rate * this.settings.speed };
+    const result = await this.deps.engine.synthesize({
+      voiceId: this.settings.voiceId,
+      text: sentence.text,
+      language: 'en-US',
+      delivery,
+      signal: this.abort?.signal,
+    });
+    if (result.kind !== 'live') {
+      throw new Error('Speech synthesis did not start.');
+    }
   }
 
   private async ensureBuffer(index: number): Promise<void> {

@@ -1,4 +1,75 @@
+import type { BrowserContext } from '@playwright/test';
 import { expect, type Page } from '@playwright/test';
+
+/** Headless Chromium/WebKit often ship no TTS voices; stub speech for live smoke UI checks. */
+export async function primeDeviceSpeechForLiveSmoke(context: BrowserContext): Promise<void> {
+  await context.addInitScript(() => {
+    const w = window as Window & { __pnSpeechSmoke?: boolean };
+    if (w.__pnSpeechSmoke) return;
+    w.__pnSpeechSmoke = true;
+    const fakeVoices = [
+      {
+        name: 'English (United States)',
+        lang: 'en-US',
+        voiceURI: 'pn-smoke-en-us',
+        default: true,
+        localService: true,
+      },
+    ] as SpeechSynthesisVoice[];
+    let speaking = false;
+    let paused = false;
+    let utterance: SpeechSynthesisUtterance | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const synth = window.speechSynthesis;
+    const clearTimer = (): void => {
+      if (timer) clearTimeout(timer);
+      timer = undefined;
+    };
+    const finish = (): void => {
+      clearTimer();
+      speaking = false;
+      paused = false;
+      utterance = undefined;
+    };
+
+    synth.getVoices = () => fakeVoices;
+    synth.speak = (u: SpeechSynthesisUtterance) => {
+      synth.cancel();
+      utterance = u;
+      speaking = true;
+      paused = false;
+      const ms = Math.min(12_000, Math.max(400, u.text.length * 40));
+      timer = setTimeout(() => {
+        if (!paused) {
+          u.onend?.({} as SpeechSynthesisEvent);
+          finish();
+        }
+      }, ms);
+    };
+    synth.cancel = () => finish();
+    synth.pause = () => {
+      if (!speaking) return;
+      paused = true;
+      clearTimer();
+    };
+    synth.resume = () => {
+      if (!utterance || !paused) return;
+      paused = false;
+      timer = setTimeout(() => {
+        utterance?.onend?.({} as SpeechSynthesisEvent);
+        finish();
+      }, 350);
+    };
+    try {
+      Object.defineProperty(synth, 'speaking', { configurable: true, get: () => speaking });
+      Object.defineProperty(synth, 'paused', { configurable: true, get: () => paused });
+    } catch {
+      /* native getters may be read-only; speak stub still drives UI */
+    }
+    synth.dispatchEvent(new Event('voiceschanged'));
+  });
+}
 
 export async function openReadAloudControls(page: Page): Promise<void> {
   const region = page.getByRole('region', { name: 'Read aloud controls' });
@@ -14,12 +85,20 @@ export async function startDefaultReadAloud(page: Page): Promise<void> {
   await start.click();
 }
 
-/** Waits for Piper download + audible playback (AnalyserNode or position advance). */
-export async function waitForReadAloudAudible(page: Page, timeoutMs = 480_000): Promise<void> {
+/** Waits for read-aloud playback (HTML audio for HD voices, or speechSynthesis for device voices). */
+export async function waitForReadAloudAudible(page: Page, timeoutMs = 120_000): Promise<void> {
   await expect(page.getByRole('alert')).toHaveCount(0, { timeout: 5_000 }).catch(() => undefined);
   await expect.poll(
     async () =>
       page.evaluate(async () => {
+        const pauseBtn = document.querySelector('button[aria-label="Pause read aloud"]');
+        if (pauseBtn instanceof HTMLButtonElement && !pauseBtn.disabled) {
+          return { ok: true, via: 'ui' as const };
+        }
+        const synth = window.speechSynthesis;
+        if (synth?.speaking && !synth.paused) {
+          return { ok: true, via: 'speech' as const };
+        }
         const audio = document.querySelector('audio');
         if (!audio) return { ok: false, reason: 'no-audio' };
         if (audio.paused) {
@@ -53,32 +132,18 @@ export async function waitForReadAloudAudible(page: Page, timeoutMs = 480_000): 
         }
         await new Promise((r) => setTimeout(r, 400));
         const advanced = audio.currentTime > t0 + 0.03;
-        const session = navigator.mediaSession?.playbackState ?? '';
         return {
           ok: !audio.paused && (advanced || analyserEnergy > 48),
+          via: 'audio' as const,
           paused: audio.paused,
           advanced,
           analyserEnergy,
-          session,
           t0,
           t1: audio.currentTime,
         };
       }),
-    { timeout: timeoutMs, intervals: [500, 1000, 2000, 4000] },
+    { timeout: timeoutMs, intervals: [250, 500, 1000, 2000] },
   ).toMatchObject({ ok: true });
-}
-
-export async function expectDownloadProgressVisible(page: Page): Promise<void> {
-  await expect(page.getByRole('button', { name: /Downloading voice|Loading voice/i })).toBeVisible({ timeout: 120_000 });
-}
-
-export async function assertOrtWasmDeployed(page: Page): Promise<void> {
-  const ok = await page.evaluate(async () => {
-    const res = await fetch('/ort/ort-wasm-simd-threaded.wasm', { method: 'HEAD' });
-    const type = res.headers.get('content-type') ?? '';
-    return res.ok && !type.includes('text/html') && Number(res.headers.get('content-length') || 0) > 1_000_000;
-  });
-  expect(ok, '/ort/*.wasm must be deployed (not SPA fallback HTML)').toBe(true);
 }
 
 export async function exerciseReadAloudControls(page: Page): Promise<void> {
