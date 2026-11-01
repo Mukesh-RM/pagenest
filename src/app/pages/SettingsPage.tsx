@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { formatBytes, getStorageStatus, requestPersistentStorage, type StorageStatus } from '@/data/storage';
+import { whenIdle } from '@/app/idle';
 import { InstallHelp } from '@/ui';
 import { SettingsScreen, type SettingsStorage } from '@/ui/screens';
 import type { CustomThemeInput } from '@/ui/theme/custom';
@@ -11,6 +12,10 @@ import '../screen-styles';
 
 // Backup, restore and the storage breakdown come from the Library; they are loaded with the screen, not with the app shell.
 const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
+const SyncSettingsPanel = lazy(() => import('../components/SyncSettingsPanel').then((m) => ({ default: m.SyncSettingsPanel })));
+const DictionarySettingsPanel = lazy(() =>
+  import('@/features/dictionary/DictionarySettingsPanel').then((m) => ({ default: m.DictionarySettingsPanel })),
+);
 const VoiceStudioSettingsPanel = lazy(() =>
   import('../components/VoiceStudioSettingsPanel').then((m) => ({ default: m.VoiceStudioSettingsPanel })),
 );
@@ -43,6 +48,11 @@ export function SettingsPage() {
   const setCustom = useSettings((s) => s.setCustomTheme);
   const setSize = useSettings((s) => s.setFontSizePx);
   const [status, setStatus] = useState<StorageStatus | undefined>();
+  const [deferPanels, setDeferPanels] = useState(false);
+
+  useEffect(() => {
+    return whenIdle(() => setDeferPanels(true), 0);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -81,12 +91,29 @@ export function SettingsPage() {
       install={<InstallHelp />}
       storage={storage}
     >
-      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
-        <VoiceStudioSettingsPanel />
-      </Suspense>
-      <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
-        <LibrarySettingsPanels />
-      </Suspense>
+      {deferPanels ? (
+        <>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+            <SyncSettingsPanel />
+          </Suspense>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+            <VoiceStudioSettingsPanel />
+          </Suspense>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: '14rem' }} />}>
+            <DictionarySettingsPanel />
+          </Suspense>
+          <Suspense fallback={<div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />}>
+            <LibrarySettingsPanels />
+          </Suspense>
+        </>
+      ) : (
+        <>
+          <div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />
+          <div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />
+          <div aria-hidden="true" style={{ height: '14rem' }} />
+          <div aria-hidden="true" style={{ height: `${PANELS_RESERVE_REM}rem` }} />
+        </>
+      )}
     </SettingsScreen>
   );
 }

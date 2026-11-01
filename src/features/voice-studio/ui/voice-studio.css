@@ -162,8 +162,10 @@
 }
 
 .pn-voice-studio__input {
+  box-sizing: border-box;
+  height: var(--pn-touch);
   min-height: var(--pn-touch);
-  padding: var(--pn-space-2) var(--pn-space-3);
+  padding: 0 var(--pn-space-3);
   border-radius: var(--pn-radius-control);
   border: var(--pn-border-width, 1px) solid rgb(var(--pn-line));
   background: rgb(var(--pn-surface));

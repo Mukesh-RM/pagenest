@@ -1,15 +1,40 @@
 import { test, expect, type Page } from '@playwright/test';
 /** Must match `SEED_AUDIO_BOOK_ID` in src/features/player/seed/seed-audiobook.ts */
 const SEED_AUDIO_BOOK_ID = 'pn-review-seed-audiobook';
-import { skipOnboarding } from './support/app';
+import { skipOnboarding, waitForIndexedDbReady } from './support/app';
 
 const themes = ['light', 'sepia', 'dark', 'black'] as const;
 
 async function openSeedPlayer(page: Page): Promise<void> {
   await page.goto(`./?pn_seed_audio=1`);
   await skipOnboarding(page);
+  await waitForIndexedDbReady(page);
   await page.goto(`./listen/${SEED_AUDIO_BOOK_ID}?pn_seed_audio=1`);
   await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 30_000 });
+}
+
+async function waitForSkipBackSecInIdb(page: Page, seconds: number): Promise<void> {
+  await page.waitForFunction(
+    (sec) =>
+      new Promise<boolean>((resolve) => {
+        const req = indexedDB.open('pagenest');
+        req.onerror = () => resolve(false);
+        req.onsuccess = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains('settings')) {
+            db.close();
+            resolve(false);
+            return;
+          }
+          const tx = db.transaction('settings', 'readonly');
+          const get = tx.objectStore('settings').get('skipBackSec');
+          get.onerror = () => resolve(false);
+          get.onsuccess = () => resolve(get.result?.value === sec);
+        };
+      }),
+    seconds,
+    { timeout: 15_000 },
+  );
 }
 
 test.describe('integrated audio player', () => {
@@ -72,8 +97,10 @@ test.describe('integrated audio player', () => {
     await expect(page.getByRole('dialog', { name: 'Skip buttons' })).toBeVisible();
     await page.getByLabel('Back, seconds').getByRole('radio', { name: '30 seconds' }).click();
     await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible();
+    await waitForSkipBackSecInIdb(page, 30);
 
     await page.reload();
+    await waitForIndexedDbReady(page);
     await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('button', { name: 'Back 30 seconds' })).toBeVisible({ timeout: 30_000 });
   });

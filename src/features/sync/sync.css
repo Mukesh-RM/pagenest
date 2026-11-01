@@ -1,0 +1,104 @@
+/* Sync devices panel (Settings). Uses library panel spacing and design tokens. */
+
+.pn-sync-panel p {
+  margin: 0 0 0.75rem;
+  color: var(--pn-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.pn-sync-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem;
+  border-radius: 12px;
+  background: var(--pn-surface-raised);
+}
+
+.pn-sync-code__label {
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pn-text-muted);
+}
+
+.pn-sync-code__value {
+  font-family: var(--pn-font-mono, ui-monospace, monospace);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--pn-accent, #2f6f6b);
+}
+
+.pn-sync-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.pn-sync-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.pn-sync-qr img {
+  width: min(280px, 80vw);
+  height: auto;
+  border-radius: 12px;
+  background: #fafaf7;
+}
+
+.pn-sync-scan video {
+  width: min(320px, 90vw);
+  border-radius: 12px;
+  background: #000;
+}
+
+.pn-sync-field {
+  margin: 0.5rem 0 0.75rem;
+}
+
+.pn-sync-field label {
+  display: block;
+  font-size: 0.875rem;
+  margin-bottom: 0.35rem;
+}
+
+.pn-sync-field input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+  height: var(--pn-touch);
+  min-height: var(--pn-touch);
+  padding: 0 var(--pn-space-3);
+  border-radius: 12px;
+  border: 1px solid var(--pn-border);
+  font-size: 1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.pn-sync-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.75rem;
+  min-height: var(--pn-touch);
+  font-size: 0.875rem;
+}
+
+.pn-sync-status {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.pn-sync-error {
+  color: var(--pn-danger, #b42318);
+  font-size: 0.875rem;
+}

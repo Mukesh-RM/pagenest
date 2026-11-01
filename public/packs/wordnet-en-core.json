@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "entries": {
+    "wonder": { "pos": "n", "glosses": ["a state in which you want to learn more about something"] },
+    "rabbit": { "pos": "n", "glosses": ["any of various burrowing animals with long ears and short tails"] },
+    "hole": { "pos": "n", "glosses": ["an opening into or through something"] },
+    "earth": { "pos": "n", "glosses": ["the third planet from the sun; the world we live on"] },
+    "hurry": { "pos": "v", "glosses": ["move or act very fast"] },
+    "late": { "pos": "adj", "glosses": ["being or occurring at an advanced period of time"] },
+    "time": { "pos": "n", "glosses": ["the continuum of experience in which events pass from the future through the present to the past"] },
+    "watch": { "pos": "n", "glosses": ["a small portable timepiece"] },
+    "curious": { "pos": "adj", "glosses": ["eager to investigate and learn or learn more"] },
+    "fall": { "pos": "v", "glosses": ["descend in free fall under the influence of gravity"] },
+    "deep": { "pos": "adj", "glosses": ["having great spatial extension downward or inward"] },
+    "slow": { "pos": "adj", "glosses": ["not moving quickly; taking a comparatively long time"] },
+    "door": { "pos": "n", "glosses": ["a swinging or sliding barrier that closes an entrance"] },
+    "key": { "pos": "n", "glosses": ["metal instrument used to unlock a lock"] },
+    "small": { "pos": "adj", "glosses": ["limited in size or scope"] },
+    "queen": { "pos": "n", "glosses": ["the only fertile female in a colony of social insects"] },
+    "king": { "pos": "n", "glosses": ["a male sovereign; ruler of a kingdom"] },
+    "tea": { "pos": "n", "glosses": ["a beverage made by steeping tea leaves in water"] },
+    "party": { "pos": "n", "glosses": ["an organization to gain political power"] },
+    "mad": { "pos": "adj", "glosses": ["affected with madness or insanity"] },
+    "cat": { "pos": "n", "glosses": ["feline mammal usually having thick soft fur"] },
+    "smile": { "pos": "n", "glosses": ["a facial expression characterized by turning up the corners of the mouth"] },
+    "dream": { "pos": "n", "glosses": ["a series of mental images and emotions occurring during sleep"] },
+    "book": { "pos": "n", "glosses": ["a written work or composition that has been published"] },
+    "read": { "pos": "v", "glosses": ["interpret something that is written or printed"] }
+  }
+}

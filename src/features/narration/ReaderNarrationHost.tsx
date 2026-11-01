@@ -3,10 +3,16 @@ import type { BookScreenProps } from '@/app/components/BookSummary';
 import type { ReaderDocumentExt } from '@/features/reader/core/ext-types';
 import { sectionText } from '@/features/reader/core/text-offsets';
 import { useAudioController } from '@/features/player/PlayerProvider';
-import type { VoiceInfo } from '@/engines/tts/types';
+import { usePlayerStore } from '@/features/player/audio-store';
+import { DriveModeOverlay } from '@/features/drive-mode/DriveModeOverlay';
+import { SharedSleepTimerSheet } from '@/features/playback/SharedSleepTimerSheet';
+import { formatClock } from '@/engines/audio/util';
+import type { VoiceEngine, VoiceInfo } from '@/engines/tts/types';
 import { buildNarrationPlan } from '@/engines/emotion/pipeline';
-import { createPiperEngine } from '@/engines/tts/piper/piper-engine';
+import { createNarrationVoiceEngine } from '@/engines/tts';
 import { PIPER_DEFAULT_VOICE } from '@/engines/tts/piper/voices';
+import { getDb } from '@/data/db';
+import { createFileStore } from '@/data/opfs';
 import { NarrationControls } from './NarrationControls';
 import { NarrationSheet } from './NarrationSheet';
 import { NarrationSession } from './narration-session';
@@ -23,31 +29,49 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
   const audio = useAudioController();
   const [settings, setSettings] = useState<NarrationSettings>(DEFAULT_NARRATION_SETTINGS);
   const [voiceOpen, setVoiceOpen] = useState(false);
+  const [sleepOpen, setSleepOpen] = useState(false);
+  const [driveOpen, setDriveOpen] = useState(false);
+  const audioSleep = usePlayerStore((s) => s.state.sleep);
   const [voices, setVoices] = useState<readonly VoiceInfo[]>([]);
   const [playing, setPlaying] = useState(false);
   const [preparing, setPreparing] = useState(false);
+  const [prepMessage, setPrepMessage] = useState<string>();
   const [active, setActive] = useState(-1);
+  const [engine, setEngine] = useState<VoiceEngine>();
   const sessionRef = useRef<NarrationSession>();
+  const db = useMemo(() => getDb(), []);
 
-  const engine = useMemo(() => {
+  useEffect(() => {
+    let cancelled = false;
     const models = new Map<string, ArrayBuffer>();
-    return createPiperEngine({
-      readModel: async (id) => models.get(id),
-      writeModel: async (id, data) => {
-        models.set(id, data);
-      },
-      createWorker: () => new Worker(new URL('../../engines/tts/piper/piper.worker.ts', import.meta.url), { type: 'module' }),
+    void createFileStore().then((files) => {
+      if (cancelled) return;
+      const eng = createNarrationVoiceEngine(
+        {
+          readModel: async (id) => models.get(id),
+          writeModel: async (id, data) => {
+            models.set(id, data);
+          },
+          createWorker: () => new Worker(new URL('../../engines/tts/piper/piper.worker.ts', import.meta.url), { type: 'module' }),
+        },
+        { db, files },
+      );
+      setEngine(eng);
+      void eng.listVoices(book.language?.slice(0, 2) ?? 'en').then(setVoices);
     });
-  }, []);
-
-  useEffect(() => {
-    void engine.listVoices(book.language?.slice(0, 2) ?? 'en').then(setVoices);
     return () => {
-      void engine.dispose();
+      cancelled = true;
     };
-  }, [book.language, engine]);
+  }, [book.language, db]);
 
   useEffect(() => {
+    return () => {
+      void engine?.dispose();
+    };
+  }, [engine]);
+
+  useEffect(() => {
+    if (!engine) return;
     sessionRef.current = new NarrationSession({ engine, audio });
     return () => sessionRef.current?.stop();
   }, [engine, audio]);
@@ -85,15 +109,29 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
       return;
     }
     setPreparing(true);
+    setPrepMessage(undefined);
     try {
-      await session.prepare(book.id, book.title, chapterText, Math.max(0, active));
-      session.configure({ ...settings, voiceId: settings.voiceId || PIPER_DEFAULT_VOICE });
+      const voice = voices.find((v) => v.id === settings.voiceId);
+      session.configure({
+        ...settings,
+        engine: voice?.isOwnVoice ? 'helper' : 'piper',
+        voiceId: settings.voiceId || PIPER_DEFAULT_VOICE,
+      });
+      await session.prepare(book.id, book.title, chapterText, Math.max(0, active), (msg) => setPrepMessage(msg));
       await session.playFromUserGesture(Math.max(0, active));
     } finally {
       sync();
       setPreparing(false);
+      setPrepMessage(undefined);
     }
-  }, [active, book.id, book.title, chapterText, playing, settings, sync]);
+  }, [active, book.id, book.title, chapterText, playing, settings, sync, voices]);
+
+  const sleepLabel = useMemo(() => {
+    if (!audioSleep) return 'Off';
+    if (audioSleep.spec.kind === 'endOfChapter') return 'End of chapter';
+    if (audioSleep.spec.kind === 'minutes' && audioSleep.spec.minutes) return `${audioSleep.spec.minutes} min`;
+    return formatClock(audioSleep.remainingSec);
+  }, [audioSleep]);
 
   return (
     <>
@@ -101,17 +139,23 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         settings={settings}
         playing={playing}
         preparing={preparing}
+        sleepLabel={sleepLabel}
+        prepMessage={prepMessage}
         onPlayPause={() => void onPlayPause()}
         onSpeed={(speed) => setSettings((s) => ({ ...s, speed }))}
         onVoice={() => setVoiceOpen(true)}
         onExpressive={(expressive) => setSettings((s) => ({ ...s, expressive, style: expressive ? 'expressive' : 'natural' }))}
+        onSleep={() => setSleepOpen(true)}
+        onDriveMode={() => setDriveOpen(true)}
       />
+      <SharedSleepTimerSheet open={sleepOpen} onClose={() => setSleepOpen(false)} controller={audio} />
+      <DriveModeOverlay open={driveOpen} controller={audio} onClose={() => setDriveOpen(false)} />
       <NarrationSheet
         open={voiceOpen}
         voices={voices}
         selectedId={settings.voiceId}
         onClose={() => setVoiceOpen(false)}
-        onPick={(voiceId) => setSettings((s) => ({ ...s, voiceId }))}
+        onPick={(voiceId, engineId) => setSettings((s) => ({ ...s, voiceId, engine: engineId }))}
       />
     </>
   );

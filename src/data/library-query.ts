@@ -1,5 +1,6 @@
 import Dexie from 'dexie';
 import type { PageNestDB } from './db';
+import { yieldToMain } from './yield-main';
 import { compareText, indexBook, scoreBook, searchTerms, type IndexedBook } from './library-index';
 import type { BookRecord, ProgressRow } from './schema';
 
@@ -124,7 +125,12 @@ export class LibraryQueryService {
       this.pending.clear();
       const books = await this.db.books.toArray();
       this.byId.clear();
-      for (const book of books) this.byId.set(book.id, indexBook(book));
+      const CHUNK = 80;
+      for (let i = 0; i < books.length; i += 1) {
+        const book = books[i]!;
+        this.byId.set(book.id, indexBook(book));
+        if (i > 0 && i % CHUNK === 0) await yieldToMain();
+      }
       this.docs = [...this.byId.values()];
       this.sortedCache.clear();
       return;

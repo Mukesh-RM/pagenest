@@ -6,10 +6,14 @@ export interface NarrationControlsProps {
   readonly settings: NarrationSettings;
   readonly playing: boolean;
   readonly preparing: boolean;
+  readonly sleepLabel?: string;
+  readonly prepMessage?: string;
   readonly onPlayPause: () => void;
   readonly onSpeed: (speed: number) => void;
   readonly onVoice: () => void;
   readonly onExpressive: (on: boolean) => void;
+  readonly onSleep?: () => void;
+  readonly onDriveMode?: () => void;
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2] as const;
@@ -18,10 +22,14 @@ export function NarrationControls({
   settings,
   playing,
   preparing,
+  sleepLabel = 'Off',
+  prepMessage,
   onPlayPause,
   onSpeed,
   onVoice,
   onExpressive,
+  onSleep,
+  onDriveMode,
 }: NarrationControlsProps) {
   return (
     <section className="pn-narration" aria-label="Read aloud controls">
@@ -33,11 +41,21 @@ export function NarrationControls({
           disabled={preparing}
           onClick={onPlayPause}
         >
-          {playing ? 'Pause' : preparing ? 'Loading voice…' : 'Read aloud'}
+          {playing ? 'Pause' : preparing ? prepMessage ?? 'Loading voice…' : 'Read aloud'}
         </Button>
         <Button variant="secondary" aria-label="Choose voice" onClick={onVoice}>
           Voice
         </Button>
+        {onSleep ? (
+          <Button variant="secondary" icon="timer" aria-label={`Sleep timer: ${sleepLabel}. Change`} onClick={onSleep}>
+            Sleep: {sleepLabel}
+          </Button>
+        ) : null}
+        {onDriveMode ? (
+          <Button variant="secondary" icon="headphones" aria-label="Open drive mode" onClick={onDriveMode}>
+            Drive mode
+          </Button>
+        ) : null}
         <label className="pn-narration__chip">
           <input
             type="checkbox"

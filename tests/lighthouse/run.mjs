@@ -14,6 +14,7 @@
 // Lighthouse is pinned to 11.x because Lighthouse 12 removed the PWA category that blueprint 19 asks for.
 // Exit code 0 = all categories pass, 1 = a score is below the threshold, 2 = the audit could not run.
 import { spawn, spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -50,11 +51,24 @@ async function waitForUrl(url, ms = 15000) {
   throw new Error(`Server did not answer at ${url}`);
 }
 
+const qaBuildEnv = {
+  ...process.env,
+  VITE_PN_MOCK_DICTIONARY: '1',
+  VITE_PN_MOCK_BERGAMOT: '1',
+  VITE_PN_SEED_AUDIO: '1',
+};
+
 const args = parseArgs(process.argv.slice(2));
 if (!args.url && !process.env.PAGENEST_BASE_URL && process.env.PAGENEST_LIGHTHOUSE_SKIP_BUILD !== '1') {
-  console.log('Building dist with VITE_PN_SEED_AUDIO=1 for Lighthouse (audio player route)…');
-  const built = spawnSync('npm', ['run', 'build:seed-audio'], { cwd: repoRoot, stdio: 'inherit', env: process.env });
-  if (built.status !== 0) process.exit(built.status ?? 1);
+  const distReady = existsSync(resolve(repoRoot, 'dist/index.html'));
+  const skipRebuild = process.env.CI === 'true' && distReady;
+  if (skipRebuild) {
+    console.log('Reusing existing dist/ for Lighthouse (CI build artifact).');
+  } else {
+    console.log('Building dist with VITE_PN_MOCK_DICTIONARY=1 VITE_PN_MOCK_BERGAMOT=1 VITE_PN_SEED_AUDIO=1 for Lighthouse…');
+    const built = spawnSync('npm', ['run', 'build'], { cwd: repoRoot, stdio: 'inherit', env: qaBuildEnv });
+    if (built.status !== 0) process.exit(built.status ?? 1);
+  }
 }
 if (args.port === undefined && !args.url && !process.env.PAGENEST_BASE_URL) {
   args.port = await resolveE2ePort('PAGENEST_LIGHTHOUSE_PORT');
@@ -211,12 +225,19 @@ async function auditTarget(chrome, config, { title, target, slug, storageReset, 
 }
 
 /** One in-app visit so the next Lighthouse run hits a warm shell (same Chrome profile). */
-async function warmShellVisit(chromePort, target) {
+async function warmShellVisit(chromePort, target, { settle = false } = {}) {
   const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chromePort}`);
   try {
     const page = await (browser.contexts()[0] ?? (await browser.newContext())).newPage();
     await page.goto(target, { waitUntil: 'domcontentloaded' });
     await page.getByRole('navigation').first().waitFor({ timeout: 15000 }).catch(() => undefined);
+    if (settle) {
+      await page.getByRole('main').waitFor({ timeout: 15000 }).catch(() => undefined);
+      await page.evaluate(() => new Promise((resolve) => {
+        if (typeof requestIdleCallback === 'function') requestIdleCallback(() => resolve(), { timeout: 3000 });
+        else setTimeout(() => resolve(), 300);
+      }));
+    }
     await page.close();
   } finally {
     await browser.close();
@@ -234,12 +255,18 @@ try {
 
   chrome = await chromeLauncher.launch({ chromePath, chromeFlags });
   await skipOnboardingInProfile(chrome.port);
+  await warmShellVisit(chrome.port, base, { settle: true });
+  await warmShellVisit(chrome.port, base, { settle: true });
   for (const screen of args.scenarios === 'only' ? [] : screens) {
     const needsPrep = ['Reader', 'Audio player', 'Voice Studio'].includes(screen.name);
     const target = needsPrep
       ? await preparedAuditUrl(chrome.port, base, screen)
       : new URL(screen.path.replace(/^\//, ''), base).toString();
-    if (screen.path === '/') await warmShellVisit(chrome.port, target);
+    if (screen.path === '/') {
+      await warmShellVisit(chrome.port, target, { settle: true });
+      await warmShellVisit(chrome.port, target, { settle: true });
+      await warmShellVisit(chrome.port, target, { settle: true });
+    }
     await auditTarget(chrome, config, {
       title: screen.name, target,
       slug: screen.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), storageReset: false,
@@ -260,6 +287,9 @@ try {
       });
       await page.close();
     } finally { await browser.close(); }
+    await warmShellVisit(chrome.port, base, { settle: true });
+    await warmShellVisit(chrome.port, base, { settle: true });
+    await warmShellVisit(chrome.port, base, { settle: true });
     await auditTarget(chrome, config, { title: `Library with ${books}+ books`, target: base, slug: 'library-seeded', storageReset: false });
 
     // Scenario 1b: the same library with a "Welcome back" resume card (a book read to RESUME_BOOK.percent %, saved just now).

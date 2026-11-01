@@ -131,8 +131,9 @@ jobs:
 
       - name: Build (includes the bundle size budget)
         if: steps.detect.outputs.has_build == 'true'
+        # Same Vite flags as tests/playwright.config.ts webServer build: dictionary e2e mocks, Bergamot mock, seeded audiobook routes.
         # `npm run build` ends with scripts/check-bundle.mjs: the build fails when the first load grows past its budget.
-        run: npm run build
+        run: VITE_PN_MOCK_DICTIONARY=1 VITE_PN_MOCK_BERGAMOT=1 VITE_PN_SEED_AUDIO=1 npm run build
 
       - name: Upload the production build for the other job
         if: steps.detect.outputs.has_build == 'true'

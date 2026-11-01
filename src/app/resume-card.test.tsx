@@ -6,7 +6,7 @@ import type { ResumeInfo } from '@/data/resume';
 import { LibraryResume } from './components/LibraryResume';
 import { LibraryRoute } from './pages/LibraryRoute';
 import { ServicesProvider } from './services';
-import { makeServices, renderApp, resetSettings } from './test-utils';
+import { closeServices, makeServices, renderApp, resetSettings } from './test-utils';
 import { setSetting } from '@/data/settings';
 import { waitFor } from '@testing-library/react';
 
@@ -71,7 +71,9 @@ describe('Library resume card', () => {
     resetSettings();
     localStorage.clear();
   });
-  afterEach(() => localStorage.clear());
+  afterEach(async () => {
+    localStorage.clear();
+  });
 
   async function launch() {
     const services = makeServices('resume-lib');
@@ -84,7 +86,7 @@ describe('Library resume card', () => {
     renderApp(services);
     await screen.findByText('Your library is empty');
     expect(screen.queryByText(/Welcome back/)).toBeNull();
-    services.db.close();
+    await closeServices(services);
   });
 
   it('shows the last-read book and chapter from the saved progress, linking to its real route', async () => {
@@ -114,7 +116,7 @@ describe('Library resume card', () => {
         name: 'The Long Road Home',
       }),
     ).toBeInTheDocument();
-    services.db.close();
+    await closeServices(services);
   });
 
   it('appears when progress is saved while the Library is open, and goes when the book is finished', async () => {
@@ -136,7 +138,7 @@ describe('Library resume card', () => {
     expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     await services.db.books.update('b1', { finished: true });
     await waitFor(() => expect(screen.queryByText(/Welcome back/)).toBeNull());
-    services.db.close();
+    await closeServices(services);
   });
 
   it('draws the Library and the Welcome back card in the same frame: the title and toolbar never move when the card arrives', async () => {
@@ -159,7 +161,7 @@ describe('Library resume card', () => {
     // The moment the title exists, the card is already there.
     expect(title).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
-    services.db.close();
+    await closeServices(services);
   });
 
   it('does not offer to resume a book that was opened but not read yet (0 %)', async () => {
@@ -169,6 +171,6 @@ describe('Library resume card', () => {
     renderApp(services);
     await screen.findAllByText('Not Started Yet');
     expect(screen.queryByText(/Welcome back/)).toBeNull();
-    services.db.close();
+    await closeServices(services);
   });
 });
