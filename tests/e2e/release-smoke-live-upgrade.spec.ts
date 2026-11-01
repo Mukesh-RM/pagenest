@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, expect, test, webkit } from '@playwright/test';
+import { isBenignReleaseSmokePageError } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
 import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 
@@ -33,9 +34,15 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   });
   await primeSmokeHints(browser);
   const page = browser.pages()[0] ?? (await browser.newPage());
-  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('pageerror', (e) => {
+    if (isBenignReleaseSmokePageError(e.message)) return;
+    errors.push(e.message);
+  });
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
+    if (m.type() !== 'error') return;
+    const text = m.text();
+    if (isBenignReleaseSmokePageError(text)) return;
+    errors.push(text);
   });
 
   await page.goto('./');

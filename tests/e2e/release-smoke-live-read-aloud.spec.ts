@@ -9,6 +9,7 @@ import {
   waitForIndexedDbReady,
   waitForServiceWorkerControl,
 } from './support/app';
+import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
 import { exerciseReadAloudControls, openReadAloudControls, primeDeviceSpeechForLiveSmoke, seedLegacyPiperNarrationSettings, waitForReadAloudAudible } from './support/narration-live';
 
@@ -58,10 +59,7 @@ test.describe('live read-aloud produces audible audio', () => {
     test.setTimeout(600_000);
     const project = testInfo.project.name;
     const consoleErrors: string[] = [];
-    page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') consoleErrors.push(`console: ${msg.text()}`);
-    });
+    attachReleaseSmokeConsoleGuard(page, consoleErrors);
 
     await importAliceEpub(page);
     await snap(page, project, '01-reader');
@@ -90,10 +88,7 @@ test.describe('live read-aloud produces audible audio', () => {
     test.setTimeout(600_000);
     const project = testInfo.project.name;
     const consoleErrors: string[] = [];
-    page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') consoleErrors.push(`console: ${msg.text()}`);
-    });
+    attachReleaseSmokeConsoleGuard(page, consoleErrors);
 
     await importAliceEpub(page);
     await seedLegacyPiperNarrationSettings(page);

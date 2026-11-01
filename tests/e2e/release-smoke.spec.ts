@@ -17,20 +17,7 @@ function readFixture(rel: string): Buffer {
   return readFileSync(join(repoRoot, rel));
 }
 
-function isBenignReleaseSmokePageError(message: string): boolean {
-  // Vite lazy-route CSS preload throws on WebKit; the stylesheet still loads and the reader opens.
-  return /Unable to preload CSS for \/assets\/[^ ]+\.css/i.test(message);
-}
-
-function attachConsoleGuard(page: Page, errors: string[]): void {
-  page.on('pageerror', (e) => {
-    if (isBenignReleaseSmokePageError(e.message)) return;
-    errors.push(`pageerror: ${e.message}`);
-  });
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') errors.push(`console: ${msg.text()}`);
-  });
-}
+import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 
 async function snap(page: Page, name: string): Promise<void> {
   mkdirSync(shotDir, { recursive: true });
@@ -116,7 +103,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
   test('fresh profile imports EPUB, PDF, MP3; opens; survives reload and SW bump', async ({ page, context }) => {
     test.setTimeout(600_000);
     const consoleErrors: string[] = [];
-    attachConsoleGuard(page, consoleErrors);
+    attachReleaseSmokeConsoleGuard(page, consoleErrors);
     const swVersion = 1;
     await page.route('**/sw.js', async (route) => {
       const response = await route.fetch();
@@ -197,7 +184,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     test.skip(process.env.PAGENEST_SMOKE_LIVE === '1', 'Local profile only (live smoke uses real OPFS).');
     test.setTimeout(300_000);
     const consoleErrors: string[] = [];
-    attachConsoleGuard(page, consoleErrors);
+    attachReleaseSmokeConsoleGuard(page, consoleErrors);
 
     await context.addInitScript(() => {
       sessionStorage.setItem('pn_no_opfs', '1');

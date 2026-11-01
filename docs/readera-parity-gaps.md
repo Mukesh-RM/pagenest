@@ -44,5 +44,5 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| Open | WebKit foliate wait (PR #27) |
+| Done | WebKit foliate open (`f42e514` — sandbox patch for closed shadow) |
 | Open | Re-run full `smoke:live` after each parity PR with 360px screenshots |
