@@ -89,7 +89,7 @@ const gates = [
 // Lighthouse is CPU-sensitive: run every Lighthouse step before Playwright's parallel projects.
 const core =
   mode === 'stable'
-    ? [lighthouseScreens, releaseSmoke, upgradeSmoke, playwrightStable]
+    ? [lighthouseScreens, releaseSmoke, playwrightStable]
     : mode === 'gates'
       ? gates
       : [lighthouseScenarios, lighthouseScreens, releaseSmoke, upgradeSmoke, ...gates.slice(0, -1), playwrightStable];

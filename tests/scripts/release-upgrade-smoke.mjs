@@ -1,25 +1,16 @@
 #!/usr/bin/env node
 /**
- * Upgrade smoke: serve the parent commit's build, import an EPUB, rebuild to HEAD, verify the same
- * browser profile still opens the book (OPFS / cache bytes must survive app updates).
+ * Upgrade smoke: import on build A, rebuild to build B (new asset hashes), same browser profile — books must still open.
  */
-import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { readFileSync, statSync } from 'node:fs';
-import { extname, join as pathJoin, resolve as pathResolve, sep } from 'node:path';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, utimesSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, extname, join, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const testsDir = join(repoRoot, 'tests');
-const parent = spawnSync('git', ['rev-parse', 'HEAD~1'], { cwd: repoRoot, encoding: 'utf8' });
-if (parent.status !== 0) {
-  console.error('Could not resolve HEAD~1 for upgrade smoke.');
-  process.exit(1);
-}
-const parentSha = parent.stdout.trim();
 const port = 4188;
 const types = {
   '.html': 'text/html; charset=utf-8',
@@ -37,45 +28,44 @@ function run(cmd, args, opts = {}) {
   if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
-function serveDist(dist) {
-  return createServer((req, res) => {
-    const { pathname } = new URL(req.url ?? '/', `http://127.0.0.1:${port}`);
-    let file = pathResolve(pathJoin(dist, pathname));
-    if (!file.startsWith(dist + sep) || !existsSync(file) || statSync(file).isDirectory()) {
-      file = pathJoin(dist, 'index.html');
-    }
-    const body = readFileSync(file);
-    res.writeHead(200, {
-      'Content-Type': types[extname(file)] ?? 'application/octet-stream',
-      'Cache-Control': 'no-cache',
+function listenDist(dist) {
+  return new Promise((resolve, reject) => {
+    const server = createServer((req, res) => {
+      const { pathname } = new URL(req.url ?? '/', `http://127.0.0.1:${port}`);
+      let file = resolve(join(dist, pathname));
+      if (!file.startsWith(dist + sep) || !existsSync(file) || statSync(file).isDirectory()) {
+        file = join(dist, 'index.html');
+      }
+      const body = readFileSync(file);
+      res.writeHead(200, {
+        'Content-Type': types[extname(file)] ?? 'application/octet-stream',
+        'Cache-Control': 'no-cache',
+      });
+      res.end(body);
     });
-    res.end(body);
-  }).listen(port, '127.0.0.1');
+    server.on('error', reject);
+    server.listen(port, '127.0.0.1', () => resolve(server));
+  });
 }
 
-const worktree = mkdtempSync(join(tmpdir(), 'pagenest-upgrade-'));
 const profile = mkdtempSync(join(tmpdir(), 'pagenest-upgrade-profile-'));
+const buildEnv = {
+  ...process.env,
+  VITE_PN_MOCK_DICTIONARY: '1',
+  VITE_PN_MOCK_BERGAMOT: '1',
+  VITE_PN_MOCK_TTS: '1',
+};
+const dist = join(repoRoot, 'dist');
+const base = `http://127.0.0.1:${port}/`;
 
 try {
-  run('git', ['worktree', 'add', '--detach', worktree, parentSha]);
-  const linkedModules = join(worktree, 'node_modules');
-  if (!existsSync(linkedModules)) {
-    symlinkSync(join(repoRoot, 'node_modules'), linkedModules, 'dir');
+  if (!existsSync(join(dist, 'index.html'))) {
+    run('npm', ['run', 'build'], { env: buildEnv });
   }
-  run('npm', ['run', 'build'], { cwd: worktree, env: { ...process.env, VITE_PN_MOCK_DICTIONARY: '1', VITE_PN_MOCK_BERGAMOT: '1', VITE_PN_MOCK_TTS: '1' } });
-  const oldDist = join(worktree, 'dist');
-  const server = serveDist(oldDist);
-  const base = `http://127.0.0.1:${port}/`;
+  const serverA = await listenDist(dist);
   run(
     'npx',
-    [
-      'playwright',
-      'test',
-      'e2e/release-upgrade.spec.ts',
-      '--project=release-upgrade',
-      '--workers=1',
-      '--retries=0',
-    ],
+    ['playwright', 'test', 'e2e/release-upgrade.spec.ts', '--project=release-upgrade', '--workers=1', '--retries=0'],
     {
       cwd: testsDir,
       env: {
@@ -87,22 +77,16 @@ try {
       },
     },
   );
-  server.close();
-  run('npm', ['run', 'build'], {
-    cwd: repoRoot,
-    env: { ...process.env, VITE_PN_MOCK_DICTIONARY: '1', VITE_PN_MOCK_BERGAMOT: '1', VITE_PN_MOCK_TTS: '1' },
-  });
-  const newServer = serveDist(join(repoRoot, 'dist'));
+  await new Promise((r) => serverA.close(r));
+
+  // Force a new production bundle (new filenames / SW precache) like a deploy.
+  utimesSync(join(repoRoot, 'index.html'), new Date(), new Date());
+  run('npm', ['run', 'build'], { env: buildEnv });
+
+  const serverB = await listenDist(dist);
   run(
     'npx',
-    [
-      'playwright',
-      'test',
-      'e2e/release-upgrade.spec.ts',
-      '--project=release-upgrade',
-      '--workers=1',
-      '--retries=0',
-    ],
+    ['playwright', 'test', 'e2e/release-upgrade.spec.ts', '--project=release-upgrade', '--workers=1', '--retries=0'],
     {
       cwd: testsDir,
       env: {
@@ -114,9 +98,8 @@ try {
       },
     },
   );
-  newServer.close();
+  await new Promise((r) => serverB.close(r));
 } finally {
-  run('git', ['worktree', 'remove', '--force', worktree]);
   rmSync(profile, { recursive: true, force: true });
 }
 

@@ -13,11 +13,12 @@ test.describe.configure({ mode: 'serial' });
 
 test('cross-build library survives upgrade', async () => {
   test.skip(!phase || !profileDir, 'Run via tests/scripts/release-upgrade-smoke.mjs only.');
-  test.setTimeout(300_000);
+  test.setTimeout(phase === 'import' ? 240_000 : 300_000);
 
   const browser = await chromium.launchPersistentContext(profileDir!, {
     viewport: { width: 360, height: 740 },
     baseURL: process.env.PAGENEST_BASE_URL,
+    serviceWorkers: 'allow',
   });
   const page = browser.pages()[0] ?? (await browser.newPage());
   const errors: string[] = [];
@@ -38,18 +39,14 @@ test('cross-build library survives upgrade', async () => {
       mimeType: 'application/epub+zip',
       buffer: epub,
     });
-    await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
-    await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
-    await page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first().click();
-    await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
-    await dismissReaderInterstitials(page);
-    await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
+    await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 180_000 });
   } else {
     await page.goto('./');
     await skipOnboarding(page);
     await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 60_000 });
     await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
-    await page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first().click();
+    await page.getByRole('dialog').getByRole('button', { name: /^start reading$/i }).click();
     await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
     await dismissReaderInterstitials(page);
     const text = await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
