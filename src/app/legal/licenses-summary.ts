@@ -13,4 +13,4 @@ export const LICENSE_ATTRIBUTIONS = [
 ] as const;
 
 export const LICENSES_FOOTNOTE =
-  'Shipped builds exclude GPL phonemizers and any model marked NOT OK in the project license audit. Voice models download only after you choose them.';
+  'Shipped builds exclude components marked NOT OK in the project model audit. Optional voice models download only when you choose them.';
