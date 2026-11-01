@@ -33,7 +33,7 @@ test.describe('360px audit screenshots (real fixtures)', () => {
     const card = page.getByRole('button', { name: /Alice|Wonderland/i }).first();
     await expect(card).toBeVisible({ timeout: 60_000 });
     await card.click();
-    const read = page.getByRole('dialog').getByRole('button', { name: /^read$/i }).first();
+    const read = page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first();
     await read.click();
     await expect(page).toHaveURL(/\/read\//, { timeout: 90_000 });
     await dismissReaderInterstitials(page);
