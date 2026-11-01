@@ -108,8 +108,13 @@ export function createPiperEngine(deps: {
 async function downloadVoice(voiceId: string, options?: PrepareOptions): Promise<ArrayBuffer> {
   const urls = modelUrls(voiceId);
   if (!urls) throw voiceError('voice-not-found', 'That voice is not available.');
-  const res = await fetch(urls.weights, { signal: options?.signal });
-  if (!res.ok) throw voiceError('failed', 'Could not download the voice model.');
+  let res: Response;
+  try {
+    res = await fetch(urls.weights, { signal: options?.signal });
+  } catch {
+    throw voiceError('failed', 'Could not download the voice. Check your connection or try again on Wi‑Fi.');
+  }
+  if (!res.ok) throw voiceError('failed', `Could not download the voice model (${res.status}).`);
   const total = Number(res.headers.get('content-length') || 0);
   const reader = res.body?.getReader();
   if (!reader) return res.arrayBuffer();
@@ -134,7 +139,12 @@ async function downloadVoice(voiceId: string, options?: PrepareOptions): Promise
 }
 
 async function fetchText(url: string, signal?: AbortSignal): Promise<string> {
-  const res = await fetch(url, { signal });
+  let res: Response;
+  try {
+    res = await fetch(url, { signal });
+  } catch {
+    throw voiceError('failed', 'Could not load the voice configuration. Check your connection.');
+  }
   if (!res.ok) throw voiceError('failed', 'Could not load the voice configuration.');
   return res.text();
 }

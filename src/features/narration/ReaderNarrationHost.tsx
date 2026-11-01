@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { BookScreenProps } from '@/app/components/BookSummary';
 import type { ReaderDocumentExt } from '@/features/reader/core/ext-types';
-import { sectionText } from '@/features/reader/core/text-offsets';
 import { useAudioController } from '@/features/player/PlayerProvider';
 import { usePlayerStore } from '@/features/player/audio-store';
 import { DriveModeOverlay } from '@/features/drive-mode/DriveModeOverlay';
@@ -10,9 +9,11 @@ import { formatClock } from '@/engines/audio/util';
 import type { VoiceEngine, VoiceInfo } from '@/engines/tts/types';
 import { buildNarrationPlan } from '@/engines/emotion/pipeline';
 import { createNarrationVoiceEngine } from '@/engines/tts';
+import { createPiperModelStore } from '@/engines/tts/piper/model-store';
 import { PIPER_DEFAULT_VOICE } from '@/engines/tts/piper/voices';
 import { getDb } from '@/data/db';
 import { createFileStore } from '@/data/opfs';
+import { readChapterText } from './chapter-text';
 import { NarrationDock } from './NarrationDock';
 import { NarrationSheet } from './NarrationSheet';
 import { NarrationSession } from './narration-session';
@@ -23,6 +24,11 @@ export interface ReaderNarrationHostProps {
   readonly book: BookScreenProps['book'];
   readonly doc: ReaderDocumentExt;
   readonly hostRef: React.RefObject<HTMLDivElement | null>;
+}
+
+function formatNarrationError(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  return 'Read aloud failed. Try again or pick another voice.';
 }
 
 export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrationHostProps) {
@@ -36,22 +42,22 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
   const [playing, setPlaying] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [prepMessage, setPrepMessage] = useState<string>();
+  const [error, setError] = useState<string>();
   const [active, setActive] = useState(-1);
+  const [chapterText, setChapterText] = useState('');
   const [engine, setEngine] = useState<VoiceEngine>();
   const sessionRef = useRef<NarrationSession>();
   const db = useMemo(() => getDb(), []);
 
   useEffect(() => {
     let cancelled = false;
-    const models = new Map<string, ArrayBuffer>();
     void createFileStore().then((files) => {
       if (cancelled) return;
+      const piperStore = createPiperModelStore(files);
       const eng = createNarrationVoiceEngine(
         {
-          readModel: async (id) => models.get(id),
-          writeModel: async (id, data) => {
-            models.set(id, data);
-          },
+          readModel: piperStore.readModel,
+          writeModel: piperStore.writeModel,
           createWorker: () => new Worker(new URL('../../engines/tts/piper/piper.worker.ts', import.meta.url), { type: 'module' }),
         },
         { db, files },
@@ -76,10 +82,12 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
     return () => sessionRef.current?.stop();
   }, [engine, audio]);
 
-  const chapterText = useMemo(() => {
-    const el = hostRef.current?.querySelector('section, body, .foliate-view') ?? hostRef.current;
-    if (el instanceof HTMLElement && el.ownerDocument) return sectionText(el.ownerDocument);
-    return '';
+  useEffect(() => {
+    if (!doc) return undefined;
+    const refresh = (): void => setChapterText(readChapterText(hostRef));
+    refresh();
+    const id = window.setInterval(refresh, 500);
+    return () => window.clearInterval(id);
   }, [doc, hostRef]);
 
   const plan = useMemo(() => buildNarrationPlan(chapterText, settings.style), [chapterText, settings.style]);
@@ -108,23 +116,28 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
       sync();
       return;
     }
+    setError(undefined);
     setPreparing(true);
     setPrepMessage(undefined);
     try {
+      const text = readChapterText(hostRef);
       const voice = voices.find((v) => v.id === settings.voiceId);
       session.configure({
         ...settings,
         engine: voice?.isOwnVoice ? 'helper' : 'piper',
         voiceId: settings.voiceId || PIPER_DEFAULT_VOICE,
       });
-      await session.prepare(book.id, book.title, chapterText, Math.max(0, active), (msg) => setPrepMessage(msg));
+      await session.prepare(book.id, book.title, text, Math.max(0, active), (msg) => setPrepMessage(msg));
       await session.playFromUserGesture(Math.max(0, active));
+    } catch (err) {
+      sessionRef.current?.pause();
+      setError(formatNarrationError(err));
     } finally {
       sync();
       setPreparing(false);
       setPrepMessage(undefined);
     }
-  }, [active, book.id, book.title, chapterText, playing, settings, sync, voices]);
+  }, [active, book.id, book.title, hostRef, playing, settings, sync, voices]);
 
   const sleepLabel = useMemo(() => {
     if (!audioSleep) return 'Off';
@@ -141,6 +154,7 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         preparing={preparing}
         sleepLabel={sleepLabel}
         prepMessage={prepMessage}
+        error={error}
         onPlayPause={() => void onPlayPause()}
         onSpeed={(speed) => setSettings((s) => ({ ...s, speed }))}
         onVoice={() => setVoiceOpen(true)}
@@ -158,7 +172,10 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
         voices={voices}
         selectedId={settings.voiceId}
         onClose={() => setVoiceOpen(false)}
-        onPick={(voiceId, engineId) => setSettings((s) => ({ ...s, voiceId, engine: engineId }))}
+        onPick={(voiceId, engineId) => {
+          setError(undefined);
+          setSettings((s) => ({ ...s, voiceId, engine: engineId }));
+        }}
       />
     </>
   );

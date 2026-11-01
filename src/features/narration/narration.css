@@ -4,6 +4,16 @@
   border-top: 1px solid rgb(var(--pn-accent-rgb) / 0.18);
 }
 
+.pn-narration__error {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: var(--pn-radius-md, 8px);
+  background: rgb(var(--pn-danger-rgb, 220 53 69) / 0.12);
+  color: rgb(var(--pn-danger-rgb, 180 40 50));
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .pn-narration__row {
   display: flex;
   flex-wrap: wrap;

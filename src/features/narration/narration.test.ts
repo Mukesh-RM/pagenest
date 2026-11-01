@@ -4,6 +4,7 @@ import { phonemesToIds, runPiperInference } from '@/engines/tts/piper/inference'
 import { encodeWav, concatSamples } from './wav-encode';
 import { buildNarrationPlan } from '@/engines/emotion/pipeline';
 import { OK_PIPER_VOICES } from '@/engines/tts/piper/voices';
+import { readChapterText } from './chapter-text';
 
 describe('wav encode', () => {
   it('writes a RIFF header', () => {
@@ -47,6 +48,22 @@ describe('speech engine', () => {
 describe('narration plan length', () => {
   it('builds one entry per sentence', () => {
     expect(buildNarrationPlan('One. Two.').length).toBe(2);
+  });
+});
+
+describe('chapter text', () => {
+  it('reads foliate iframe body text', () => {
+    const host = document.createElement('div');
+    const iframe = document.createElement('iframe');
+    host.appendChild(iframe);
+    document.body.appendChild(host);
+    const doc = iframe.contentDocument!;
+    doc.open();
+    doc.write('<body><p>Hello world.</p></body>');
+    doc.close();
+    const ref = { current: host };
+    expect(readChapterText(ref)).toContain('Hello world');
+    host.remove();
   });
 });
 
