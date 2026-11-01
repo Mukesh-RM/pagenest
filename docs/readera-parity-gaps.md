@@ -6,7 +6,7 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| Open | All / Books / Audio segment (query exists, UI not wired) |
+| In PR | **All / Books / Audio segment** (`LibraryQuery.segment` wired to toolbar chips) |
 | Open | Format tag on grid/list cards |
 | Open | Collection shelf cover collages |
 | Open | Book detail: Read aloud, tabs (chapters, marks, info) |
@@ -16,8 +16,8 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| In PR | **Tap zones on book content** (`doc.onTap` → turn / chrome; foliate tap x fix) |
-| Open | Page turn mode in Aa (slide / scroll / none) |
+| Done | **Tap zones on book content** (`e0ec133`, #30) |
+| Done | **Page turn mode in Aa** (`e214e66`, #31) |
 | Open | Align, hyphenation, paragraph spacing in Aa |
 | Open | Edge brightness / warm filter |
 | Open | Open &lt;1.5 s gate on imported EPUB in release smoke |
@@ -44,5 +44,6 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| Done | WebKit foliate open (`f42e514` — sandbox patch for closed shadow) |
-| Open | Re-run full `smoke:live` after each parity PR with 360px screenshots |
+| Done | WebKit foliate engine fix (`109a37b` bootstrap + sandbox strip; `#35`) |
+| Done | Pages `_headers` CSP/COOP scoped to HTML only (`b7ec1fc`, `#36`) |
+| Open | Full green `smoke:live` on Pages after `b7ec1fc` deploy (360px screenshots) |
