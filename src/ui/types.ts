@@ -41,6 +41,7 @@ export interface ReaderFontOption {
 
 export type LineSpacing = 'compact' | 'comfortable' | 'airy';
 export type MarginSize = 'narrow' | 'medium' | 'wide';
+export type PageTurnStyle = 'slide' | 'scroll' | 'none';
 
 export interface ReaderSettings {
   /** Text size in px at 100%. */
@@ -50,6 +51,8 @@ export interface ReaderSettings {
   theme: ThemeName;
   lineSpacing: LineSpacing;
   margins: MarginSize;
+  /** How reflow books turn pages (blueprint Aa sheet). */
+  pageTurn: PageTurnStyle;
 }
 
 export interface VoiceOption {

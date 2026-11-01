@@ -24,10 +24,12 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   theme: 'light',
   lineSpacing: 'comfortable',
   margins: 'medium',
+  pageTurn: 'slide',
 };
 
 const SPACINGS = ['compact', 'comfortable', 'airy'] as const;
 const MARGINS = ['narrow', 'medium', 'wide'] as const;
+const PAGE_TURNS = ['slide', 'scroll', 'none'] as const;
 
 /** Read a saved value: every field is checked, and anything wrong falls back to its default. */
 export function parseReaderSettings(value: unknown, fallback: ReaderSettings = DEFAULT_READER_SETTINGS): ReaderSettings {
@@ -42,6 +44,7 @@ export function parseReaderSettings(value: unknown, fallback: ReaderSettings = D
     theme: typeof v.theme === 'string' && isThemeName(v.theme) ? v.theme : fallback.theme,
     lineSpacing: SPACINGS.find((s) => s === v.lineSpacing) ?? fallback.lineSpacing,
     margins: MARGINS.find((m) => m === v.margins) ?? fallback.margins,
+    pageTurn: PAGE_TURNS.find((p) => p === v.pageTurn) ?? fallback.pageTurn,
   };
 }
 

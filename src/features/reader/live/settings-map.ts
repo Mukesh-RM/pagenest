@@ -17,5 +17,6 @@ export function settingsToAppearance(settings: ReaderSettings): ReaderAppearance
     fontSizePx: settings.fontSize,
     lineHeight: LINE_HEIGHT[settings.lineSpacing],
     margins: settings.margins === 'medium' ? 'normal' : settings.margins,
+    pageTurn: settings.pageTurn,
   };
 }
