@@ -46,6 +46,12 @@ export async function skipOnboarding(page: Page): Promise<void> {
   }
 }
 
+/** Closes library coach marks and import toasts that block taps during smoke tests. */
+export async function dismissLibraryOverlays(page: Page): Promise<void> {
+  await page.getByRole('button', { name: 'Got it' }).click({ timeout: 2000 }).catch(() => undefined);
+  await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 2000 }).catch(() => undefined);
+}
+
 /** Opens the app at its start URL, skips onboarding, and waits for the library screen (the home tab). */
 export async function launch(page: Page): Promise<void> {
   await page.goto('./');

@@ -1,9 +1,9 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium, expect, test } from '@playwright/test';
+import { chromium, expect, test, webkit } from '@playwright/test';
 import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
-import { skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -24,7 +24,8 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   const epub = readFileSync(join(repoRoot, 'src/features/reader/fixtures/alice.epub'));
   const errors: string[] = [];
 
-  const browser = await chromium.launchPersistentContext(profile, {
+  const browserType = testInfo.project.name === 'release-smoke-webkit' ? webkit : chromium;
+  const browser = await browserType.launchPersistentContext(profile, {
     viewport: { width: 360, height: 740 },
     baseURL: process.env.PAGENEST_BASE_URL,
     serviceWorkers: 'allow',
@@ -51,7 +52,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   });
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
   await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
-  await page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first().click();
+  await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
   await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
   await dismissReaderInterstitials(page);
   await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
@@ -59,8 +60,10 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
 
   await page.reload();
   await waitForServiceWorkerControl(page);
+  await page.goto('./');
+  await dismissLibraryOverlays(page);
   await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
-  await page.getByRole('dialog').getByRole('button', { name: /^(read|continue|open|start)/i }).first().click();
+  await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
   await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
   await expect(page.getByText(/file for this book is missing/i)).toHaveCount(0);
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-03-after-reload.png`), fullPage: true });
