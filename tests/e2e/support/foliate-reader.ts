@@ -61,6 +61,18 @@ export async function waitForFoliateBookTextLive(
   }
 }
 
+/** Tap a left/center/right zone on the live reader host (foliate/PDF engine tap handling). */
+export async function tapReaderZone(page: Page, zone: 'left' | 'center' | 'right'): Promise<void> {
+  const host = page.locator('.pn-live__host');
+  await host.waitFor({ state: 'visible', timeout: 30_000 });
+  const box = await host.boundingBox();
+  if (!box) throw new Error('Reader host has no layout box.');
+  const x =
+    zone === 'left' ? box.x + box.width * 0.12 : zone === 'right' ? box.x + box.width * 0.88 : box.x + box.width * 0.5;
+  const y = box.y + box.height * 0.45;
+  await page.mouse.click(x, y);
+}
+
 /** Dismiss welcome, iOS install sheet, and similar overlays on the reader route. */
 export async function dismissReaderInterstitials(page: Page): Promise<void> {
   await page.getByRole('dialog', { name: 'Add InkQuiet to your iPhone' }).waitFor({ state: 'visible', timeout: 3000 }).catch(() => undefined);
