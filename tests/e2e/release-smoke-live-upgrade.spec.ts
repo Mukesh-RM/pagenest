@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, expect, test, webkit } from '@playwright/test';
-import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
+import { dismissReaderInterstitials, waitForFoliateBookTextLiveLive } from './support/foliate-reader';
 import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -56,7 +56,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
   await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
   await dismissReaderInterstitials(page);
-  await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-02-epub-open.png`), fullPage: true });
 
   await page.reload();
@@ -67,7 +67,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
   await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
   await dismissReaderInterstitials(page);
-  await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
   await expect(page.getByText(/file for this book is missing/i)).toHaveCount(0);
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-03-after-reload.png`), fullPage: true });
 
