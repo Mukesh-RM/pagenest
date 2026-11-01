@@ -1,5 +1,5 @@
 // Static server for the built app (dist/) used by the reader e2e tests.
-//  - Sends the Content-Security-Policy and other headers from public/_headers (the first "/*" block), so the tests run
+//  - Sends the Content-Security-Policy and other headers from public/_headers (the `/` document rule) on HTML only,
 //    under the same CSP as production: no inline scripts, blob: frames and workers only.
 //  - Serves module workers (.mjs) and wasm with the right MIME types, like real static hosts.
 //  - Supports HTTP Range requests.
@@ -28,27 +28,34 @@ const types = {
   '.json': 'application/json',
 };
 
-/** Headers of the first "/*" rule in _headers. */
-function globalHeaders() {
+/** Headers of the first `/` rule in _headers (document shell only). */
+function documentHeaders() {
   const text = readFileSync(join(root, 'public', '_headers'), 'utf8');
   const headers = {};
   let inGlobal = false;
   for (const line of text.split('\n')) {
-    if (/^\S/.test(line) && !line.startsWith('#')) inGlobal = line.trim() === '/*';
+    if (/^\S/.test(line) && !line.startsWith('#')) inGlobal = line.trim() === '/';
     else if (inGlobal && /^\s+\S+:/.test(line)) {
       const i = line.indexOf(':');
       headers[line.slice(0, i).trim()] = line.slice(i + 1).trim();
-    }
+    } else if (inGlobal && /^\S/.test(line)) break;
   }
   return headers;
 }
-const baseHeaders = globalHeaders();
+const docHeaders = documentHeaders();
 
 function send(req, res, file, extra = {}) {
   const size = statSync(file).size;
   const type = types[extname(file)] ?? 'application/octet-stream';
   const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range ?? '');
-  const headers = { ...baseHeaders, 'Content-Type': type, 'Accept-Ranges': 'bytes', 'Cache-Control': 'no-cache', ...extra };
+  const isHtml = type.startsWith('text/html');
+  const headers = {
+    ...(isHtml ? docHeaders : {}),
+    'Content-Type': type,
+    'Accept-Ranges': 'bytes',
+    'Cache-Control': isHtml ? 'no-cache' : 'no-cache',
+    ...extra,
+  };
   if (range) {
     const start = range[1] ? Number(range[1]) : size - Number(range[2]);
     const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
