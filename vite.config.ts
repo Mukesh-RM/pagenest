@@ -3,9 +3,11 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { configDefaults } from 'vitest/config';
+import { foliateWebKitSandboxPlugin } from './scripts/vite/foliate-webkit-sandbox-plugin';
 
 export default defineConfig({
   plugins: [
+    foliateWebKitSandboxPlugin(),
     react(),
     // PWA (owner: Shell and PWA). The manifest is public/manifest.webmanifest, so the plugin does not generate one.
     VitePWA({

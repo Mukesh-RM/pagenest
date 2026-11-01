@@ -1,6 +1,10 @@
+import { installWebKitFoliateIframeFix } from '@/engines/epub/foliate-webkit';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
+
+// Before any lazy engine chunk or service worker warms foliate-js (closed shadow iframes).
+installWebKitFoliateIframeFix();
 import { preloadCriticalFonts, preloadHeadingFonts } from '@/ui';
 import { registerServiceWorker } from './sw';
 import { whenIdle } from './app/idle';
