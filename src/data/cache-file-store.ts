@@ -2,7 +2,9 @@ import type { FileRef } from '@/app/contracts';
 import type { FileData, FileStore } from './opfs';
 import { FileStoreError, MemoryFileStore, parsePath } from './opfs';
 
-const CACHE_NAME = 'pagenest-file-bytes-v1';
+export const BOOK_FILE_BYTES_CACHE = 'pagenest-file-bytes-v1';
+
+const CACHE_NAME = BOOK_FILE_BYTES_CACHE;
 
 function cacheUrl(path: FileRef): string {
   return `https://pagenest.invalid/${encodeURI(path)}`;

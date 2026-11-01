@@ -16,6 +16,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const testsDir = resolve(repoRoot, 'tests');
 
 const mode = process.argv[2] ?? 'all';
 if (!['all', 'stable', 'gates'].includes(mode)) {
@@ -51,6 +52,28 @@ const playwrightStable = [
   ['npx', 'playwright', 'test', ...e2eProjects, ...(process.env.CI ? ['--workers=1'] : [])],
   { env: process.env },
 ];
+const releaseSmokeProjects = [
+  '--project=release-smoke-chromium',
+  ...(webkit ? ['--project=release-smoke-webkit'] : []),
+];
+const releaseSmoke = [
+  'Release smoke: import/open/reload/SW (Pixel + iPhone)',
+  [
+    'npx',
+    'playwright',
+    'test',
+    'e2e/release-smoke.spec.ts',
+    ...releaseSmokeProjects,
+    '--workers=1',
+    '--retries=0',
+  ],
+  { env: process.env, cwd: testsDir },
+];
+const upgradeSmoke = [
+  'Release upgrade smoke (previous commit → HEAD)',
+  ['node', 'scripts/release-upgrade-smoke.mjs'],
+  { env: process.env, cwd: testsDir },
+];
 // Two separate Playwright runs so timing-sensitive performance gates never share the machine with excellence tests.
 const lighthouseScenarios = [
   'Lighthouse scenarios: mid-size library and first launch',
@@ -65,10 +88,10 @@ const gates = [
 // Lighthouse is CPU-sensitive: run every Lighthouse step before Playwright's parallel projects.
 const core =
   mode === 'stable'
-    ? [lighthouseScreens, playwrightStable]
+    ? [lighthouseScreens, releaseSmoke, playwrightStable]
     : mode === 'gates'
       ? gates
-      : [lighthouseScenarios, lighthouseScreens, ...gates.slice(0, -1), playwrightStable];
+      : [lighthouseScenarios, lighthouseScreens, releaseSmoke, upgradeSmoke, ...gates.slice(0, -1), playwrightStable];
 const steps = [...vitestStep, ...core];
 
 let failed = 0;

@@ -1,6 +1,7 @@
 /// <reference lib="webworker" />
 import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
 import { NavigationRoute, registerRoute } from 'workbox-routing';
+import { BOOK_FILE_BYTES_CACHE } from '@/data/cache-file-store';
 import { engineCacheFirst, pruneEngineCache } from './engine-cache';
 import { cacheFirst } from './font-cache';
 import { handleShareRequest, SHARE_PATH } from './share-target';
@@ -40,6 +41,8 @@ self.addEventListener('activate', (event) => {
     (async () => {
       await self.clients.claim();
       await pruneEngineCache(self.caches).catch(() => undefined);
+      // Book bytes live in BOOK_FILE_BYTES_CACHE when OPFS is blocked; Workbox precache cleanup must never remove it.
+      void BOOK_FILE_BYTES_CACHE;
     })(),
   );
 });

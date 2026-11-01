@@ -6,6 +6,7 @@ import { DEFAULT_READER_SETTINGS, loadReaderSettings, READER_FONTS, saveReaderSe
 import { useRouteChrome } from '@/app/route-chrome';
 import { useServices } from '@/app/services-context';
 import { resolveFileStore, newId } from '@/data';
+import { openBookFile } from '@/data/book-file';
 import type { BookmarkRecord, HighlightRecord } from '@/data/schema';
 import type { HighlightColor, ReaderPosition, ReaderSelection } from '@/engines/reader/types';
 import { Button, useTheme, type ReaderSettings } from '@/ui';
@@ -150,7 +151,9 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       try {
         slowTimer = window.setTimeout(() => setPhase({ status: 'loading', message: 'Still opening. Large files take a moment.' }), SLOW_OPEN_MS);
         const fileRef = book.fileRef;
-        const filePromise = fileRef ? resolveFileStore().then((store) => store.open(fileRef)) : Promise.reject(new Error('no file'));
+        const filePromise = fileRef
+          ? resolveFileStore().then((store) => openBookFile(store, book))
+          : Promise.reject(new Error('no file'));
         filePromise.catch(() => undefined);
         const saved = await loadReaderSettings(db, { ...DEFAULT_READER_SETTINGS, theme: appTheme });
         if (abort.signal.aborted) return;
