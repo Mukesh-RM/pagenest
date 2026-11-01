@@ -1,11 +1,21 @@
 import type { Frame, Page } from '@playwright/test';
 import { waitForBookText } from './app';
 
+function isFoliateContentFrame(frame: Frame, main: Frame): boolean {
+  if (frame === main) return false;
+  const url = frame.url();
+  if (url.startsWith('blob:') || url === 'about:blank') return true;
+  // WebKit live smoke: book text often lands in non-blob child frames after sandbox strip.
+  if (!url.startsWith('http')) return true;
+  return false;
+}
+
 /** Foliate EPUB iframe that actually contains book text (there may be empty blob frames). */
 export async function foliateBookFrame(page: Page, needle?: string): Promise<Frame | undefined> {
   let best: { frame: Frame; len: number } | undefined;
+  const main = page.mainFrame();
   for (const frame of page.frames()) {
-    if (frame === page.mainFrame() || !frame.url().startsWith('blob:')) continue;
+    if (!isFoliateContentFrame(frame, main)) continue;
     const text = await frame.evaluate(() => document.body?.innerText ?? '').catch(() => '');
     if (needle && !text.includes(needle)) continue;
     if (!best || text.length > best.len) best = { frame, len: text.length };
@@ -32,10 +42,11 @@ export async function waitForFoliateBookText(
       })
       .catch(() => '');
     if (hostText.length >= min && (!needle || hostText.includes(needle))) return hostText;
+    const main = page.mainFrame();
     for (const frame of page.frames()) {
-      if (frame === page.mainFrame() || !frame.url().startsWith('blob:')) continue;
-      const blobText = await frame.evaluate(() => document.body?.innerText ?? '').catch(() => '');
-      if (blobText.length >= min && (!needle || blobText.includes(needle))) return blobText;
+      if (!isFoliateContentFrame(frame, main)) continue;
+      const frameText = await frame.evaluate(() => document.body?.innerText ?? '').catch(() => '');
+      if (frameText.length >= min && (!needle || frameText.includes(needle))) return frameText;
     }
     if (Date.now() > deadline) {
       throw new Error(`Foliate book text did not appear within ${options?.timeout ?? 90_000} ms`);
@@ -45,19 +56,27 @@ export async function waitForFoliateBookText(
   }
 }
 
+const LIVE_FOLIATE_TEXT_TIMEOUT_MS = 240_000;
+
+function liveFoliateTextTimeout(requested?: number): number {
+  if (process.env.PAGENEST_SMOKE_LIVE !== '1') return requested ?? 120_000;
+  const floor = LIVE_FOLIATE_TEXT_TIMEOUT_MS;
+  return Math.max(requested ?? floor, floor);
+}
+
 /** Live smoke: longer foliate wait + one reload retry (WebKit + service worker). */
 export async function waitForFoliateBookTextLive(
   page: Page,
   options?: { min?: number; needle?: string; timeout?: number },
 ): Promise<string> {
-  const timeout = options?.timeout ?? (process.env.PAGENEST_SMOKE_LIVE === '1' ? 180_000 : 120_000);
+  const timeout = liveFoliateTextTimeout(options?.timeout);
   try {
     return await waitForFoliateBookText(page, { ...options, timeout });
   } catch (first) {
     if (process.env.PAGENEST_SMOKE_LIVE !== '1') throw first;
     await page.reload({ waitUntil: 'domcontentloaded' });
     await dismissReaderInterstitials(page);
-    return waitForFoliateBookText(page, { ...options, timeout: 120_000 });
+    return waitForFoliateBookText(page, { ...options, timeout });
   }
 }
 

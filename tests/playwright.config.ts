@@ -95,7 +95,11 @@ export default defineConfig({
       ? [
           {
             name: 'release-smoke-webkit',
-            testMatch: ['e2e/release-smoke.spec.ts', 'e2e/release-smoke-live-upgrade.spec.ts'],
+            testMatch: [
+              'e2e/release-smoke.spec.ts',
+              'e2e/release-smoke-live-upgrade.spec.ts',
+              'e2e/release-smoke-live-read-aloud.spec.ts',
+            ],
             use: { ...devices['iPhone 14'] },
           },
         ]
