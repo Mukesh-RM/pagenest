@@ -8,6 +8,7 @@ export interface NarrationControlsProps {
   readonly preparing: boolean;
   readonly sleepLabel?: string;
   readonly prepMessage?: string;
+  readonly error?: string;
   readonly onPlayPause: () => void;
   readonly onSpeed: (speed: number) => void;
   readonly onVoice: () => void;
@@ -25,6 +26,7 @@ export function NarrationControls({
   preparing,
   sleepLabel = 'Off',
   prepMessage,
+  error,
   onPlayPause,
   onSpeed,
   onVoice,
@@ -35,6 +37,11 @@ export function NarrationControls({
 }: NarrationControlsProps) {
   return (
     <section className="pn-narration" aria-label="Read aloud controls">
+      {error ? (
+        <p className="pn-narration__error" role="alert">
+          {error}
+        </p>
+      ) : null}
       <div className="pn-narration__row">
         <Button
           variant="primary"

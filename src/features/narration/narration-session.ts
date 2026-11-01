@@ -55,6 +55,9 @@ export class NarrationSession {
     this.bookId = bookId;
     this.title = title;
     this.plan = buildNarrationPlan(chapterText, this.settings.style);
+    if (!this.plan.length) {
+      throw new Error('No text to read in this chapter.');
+    }
     this.buffers = new Array(this.plan.length);
     this.timings = [];
     this.active = startSentence;
@@ -67,9 +70,9 @@ export class NarrationSession {
         onProgress: (p) => {
           if (p.total) {
             const pct = Math.round((p.done / p.total) * 100);
-            onPrepMessage?.(`Preparing voice… ${pct}%`);
+            onPrepMessage?.(`Downloading voice… ${pct}%`);
           } else {
-            onPrepMessage?.('Preparing your voice…');
+            onPrepMessage?.('Downloading voice…');
           }
         },
       });
@@ -110,7 +113,9 @@ export class NarrationSession {
     }
     await this.ensureBuffer(index);
     const blob = this.buffers[index];
-    if (!blob) return;
+    if (!blob) {
+      throw new Error('Could not generate speech for this sentence.');
+    }
     const item = sentenceAudioItem(this.bookId, this.title, blob, index, this.plan.length);
     await this.deps.audio.load(item);
     this.deps.audio.setSpeed(this.settings.speed);
@@ -134,7 +139,9 @@ export class NarrationSession {
       delivery,
       signal: this.abort?.signal,
     });
-    if (result.kind !== 'buffer') return;
+    if (result.kind !== 'buffer') {
+      throw new Error('Speech synthesis did not return audio.');
+    }
     this.buffers[index] = encodeWav(result.samples, result.sampleRate);
   }
 

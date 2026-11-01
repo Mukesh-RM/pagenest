@@ -71,10 +71,16 @@ check(st.action.startsWith('/') && st.action.startsWith(manifest.scope), 'share_
 const headers = readFileSync(pub('_headers'), 'utf8');
 const csp = /Content-Security-Policy: (.*)/.exec(headers)?.[1] ?? '';
 check(/default-src 'self'/.test(csp), "CSP needs default-src 'self'");
-check(!/https?:\/\//.test(csp) && !/\*/.test(csp), 'CSP must not name any external origin or wildcard');
 check(!/'unsafe-eval'/.test(csp), "CSP must not allow 'unsafe-eval'");
 check(/script-src 'self' 'wasm-unsafe-eval'/.test(csp), 'script-src must allow wasm only');
+const connect = /connect-src ([^;]+)/.exec(csp)?.[1] ?? '';
+check(connect.includes("'self'"), "connect-src must include 'self'");
+check(!/\*/.test(connect.replace(/https:\/\/\*\.hf\.co/g, '').replace(/https:\/\/\*\.huggingface\.co/g, '')), 'connect-src must not use bare wildcards');
+check(
+  connect.includes('https://huggingface.co') && connect.includes('https://*.huggingface.co') && connect.includes('https://*.hf.co'),
+  'connect-src must allow approved Hugging Face model hosts',
+);
 for (const d of ['worker-src', 'media-src', 'img-src', 'font-src', 'connect-src', 'frame-ancestors', 'object-src']) check(csp.includes(d), `CSP missing ${d}`);
 
 if (problems.length) { console.error('FAILED:\n- ' + problems.join('\n- ')); process.exit(1); }
-console.log(`OK: manifest valid (${manifest.icons.length} icons), icon dimensions match, share target present, CSP self-only.`);
+console.log(`OK: manifest valid (${manifest.icons.length} icons), icon dimensions match, share target present, CSP configured.`);
