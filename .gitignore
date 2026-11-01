@@ -10,6 +10,7 @@ coverage/
 
 # Build output
 dist/
+public/ort/
 .wrangler/
 playwright-report/
 test-results/

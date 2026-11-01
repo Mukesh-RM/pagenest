@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
-import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
+import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const liveHost = process.env.PAGENEST_SMOKE_LIVE_HOST;
@@ -130,7 +130,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await snap(page, '02-imported-epub');
 
     await openBookCard(page, /Alice|Wonderland/i);
-    const text = await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    const text = await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(text).toContain('Alice');
     const epubReadUrl = page.url();
     await snap(page, '03-epub-open');
@@ -155,7 +155,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible({ timeout: 30_000 });
 
     await page.goto(epubReadUrl);
-    await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await snap(page, '07-epub-after-reload');
 
     const swBump = { version: 1 };
@@ -163,7 +163,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await page.goto('./');
     await snap(page, '08-library-after-sw-bump');
     await page.goto(epubReadUrl);
-    await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await page.goto(pdfReadUrl);
     await page.locator('.pn-pdf-page[data-rendered="true"] canvas').first().waitFor({ state: 'visible', timeout: 120_000 });
     await page.goto(listenUrl);
@@ -193,14 +193,14 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     const epub = readFixture('src/features/reader/fixtures/alice.epub');
     await importFiles(page, [{ name: 'alice.epub', mimeType: 'application/epub+zip', buffer: epub }], /Alice|Wonderland/i);
     await openBookCard(page, /Alice|Wonderland/i);
-    await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await page.reload();
     await waitForServiceWorkerControl(page);
     await page.goto('./?pn_no_opfs=1');
     await dismissLibraryOverlays(page);
     await waitForIndexedDbReady(page);
     await openBookCard(page, /Alice|Wonderland/i);
-    await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 });

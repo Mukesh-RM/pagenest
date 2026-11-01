@@ -25,7 +25,12 @@ const api = {
     state.session = undefined;
     if (state.mock || !payload.modelBuffer) return;
     const ort = await import('onnxruntime-web/wasm');
-    ort.env.wasm.wasmPaths = `${self.location.origin}/ort/`;
+    const ortBase = `${self.location.origin}/ort/`;
+    ort.env.wasm.wasmPaths = {
+      mjs: `${ortBase}ort-wasm-simd-threaded.mjs`,
+      wasm: `${ortBase}ort-wasm-simd-threaded.wasm`,
+    };
+    ort.env.wasm.numThreads = 1;
     state.session = (await ort.InferenceSession.create(payload.modelBuffer, {
       executionProviders: ['wasm'],
     })) as unknown as PiperSession;

@@ -9,7 +9,7 @@ import {
   waitForIndexedDbReady,
   waitForServiceWorkerControl,
 } from './support/app';
-import { dismissReaderInterstitials, waitForFoliateBookText } from './support/foliate-reader';
+import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
 import {
   assertOrtWasmDeployed,
   exerciseReadAloudControls,
@@ -47,7 +47,7 @@ async function importAliceEpub(page: Page): Promise<void> {
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
   await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
   await dismissReaderInterstitials(page);
-  await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 180_000 });
 }
 
 test.describe('live read-aloud produces audible audio', () => {

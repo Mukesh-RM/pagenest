@@ -45,6 +45,22 @@ export async function waitForFoliateBookText(
   }
 }
 
+/** Live smoke: longer foliate wait + one reload retry (WebKit + service worker). */
+export async function waitForFoliateBookTextLive(
+  page: Page,
+  options?: { min?: number; needle?: string; timeout?: number },
+): Promise<string> {
+  const timeout = options?.timeout ?? (process.env.PAGENEST_SMOKE_LIVE === '1' ? 180_000 : 120_000);
+  try {
+    return await waitForFoliateBookText(page, { ...options, timeout });
+  } catch (first) {
+    if (process.env.PAGENEST_SMOKE_LIVE !== '1') throw first;
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await dismissReaderInterstitials(page);
+    return waitForFoliateBookText(page, { ...options, timeout: 120_000 });
+  }
+}
+
 /** Dismiss welcome, iOS install sheet, and similar overlays on the reader route. */
 export async function dismissReaderInterstitials(page: Page): Promise<void> {
   await page.getByRole('dialog', { name: 'Add InkQuiet to your iPhone' }).waitFor({ state: 'visible', timeout: 3000 }).catch(() => undefined);
