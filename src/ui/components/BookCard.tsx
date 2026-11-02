@@ -3,7 +3,7 @@ import { Icon } from '../icons';
 import { cx } from '../utils/cx';
 import { measure, rememberFlipOrigin, type RectLike } from '../utils/flip';
 import type { BookSummary } from '../types';
-import { BookCover } from './BookCover';
+import { BookCover, monogramLetter } from './BookCover';
 import { Card } from './Card';
 import { FavoriteBadge } from './FavoriteBadge';
 import { ProgressBar } from './ProgressBar';
@@ -37,10 +37,12 @@ export function progressWords(book: Pick<BookSummary, 'progress' | 'audio'>): st
 export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'grid', className }: BookCardProps) {
   const coverRef = useRef<HTMLSpanElement>(null);
   const words = progressWords(book);
+  const monogram = monogramLetter(book.title);
+  const coverVisible = book.format && monogram ? `${monogram} ${book.format}` : '';
   const detail =
     [book.title, book.author].filter(Boolean).join(', ') +
     `. ${words}${book.format ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
-  const label = detail;
+  const label = coverVisible ? `${coverVisible} ${detail}` : detail;
   return (
     <Card
       flush
