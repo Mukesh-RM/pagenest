@@ -75,7 +75,7 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
       <span className="pn-bookcard__body" aria-hidden="true">
         <span className="pn-bookcard__title">{book.title}</span>
         <span className="pn-bookcard__author">{book.author ?? 'Unknown author'}</span>
-        <span className="pn-bookcard__progress">
+        <span className="pn-bookcard__progress" aria-hidden="true">
           <ProgressBar value={book.progress} label={words} />
         </span>
         {layout === 'list' ? <span className="pn-bookcard__words">{words}</span> : null}

@@ -110,6 +110,14 @@ export async function launch(page: Page): Promise<void> {
   await waitForIndexedDbReady(page);
   await expect(primaryNav(page)).toBeVisible();
   await expect(screenHeading(page, 'Library')).toBeVisible();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+        if (typeof idle === 'function') idle(() => resolve(), { timeout: 3000 });
+        else window.setTimeout(() => resolve(), 700);
+      }),
+  );
 }
 
 /**

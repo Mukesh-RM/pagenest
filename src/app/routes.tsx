@@ -23,7 +23,7 @@ import {
 preloadScreens([isReturningDevice() ? 'library' : 'onboarding']);
 
 /** How long after start the other tabs are fetched: past the first paint of the first screen. */
-const TAB_PRELOAD_DELAY_MS = 2000;
+const TAB_PRELOAD_DELAY_MS = 600;
 
 /**
  * Design-system demo page, development only. `import.meta.env.DEV` is a build-time constant, so

@@ -226,12 +226,18 @@ async function auditTarget(chrome, config, { title, target, slug, storageReset, 
 }
 
 /** One in-app visit so the next Lighthouse run hits a warm shell (same Chrome profile). */
-async function warmShellVisit(chromePort, target, { settle = false } = {}) {
+async function warmShellVisit(chromePort, target, { settle = false, onboarding = false } = {}) {
   const browser = await chromium.connectOverCDP(`http://127.0.0.1:${chromePort}`);
   try {
     const page = await (browser.contexts()[0] ?? (await browser.newContext())).newPage();
-    await page.goto(target, { waitUntil: 'domcontentloaded' });
-    await page.getByRole('navigation').first().waitFor({ timeout: 15000 }).catch(() => undefined);
+    await page.goto(target, { waitUntil: onboarding ? 'load' : 'domcontentloaded' });
+    const skip = page.getByRole('button', { name: /^skip$/i });
+    const nav = page.getByRole('navigation').first();
+    if (onboarding) {
+      await skip.or(nav).first().waitFor({ timeout: 15000 }).catch(() => undefined);
+    } else {
+      await nav.waitFor({ timeout: 15000 }).catch(() => undefined);
+    }
     if (settle) {
       await page.getByRole('main').waitFor({ timeout: 15000 }).catch(() => undefined);
       await page.evaluate(() => new Promise((resolve) => {
@@ -247,6 +253,7 @@ async function warmShellVisit(chromePort, target, { settle = false } = {}) {
 
 let chrome;
 let fresh;
+let freshOnboarding;
 try {
   await mkdir(reportsDir, { recursive: true });
   const config = args.preset === 'desktop'
@@ -312,20 +319,35 @@ try {
       await auditTarget(chrome, config, { title: `Library with ${books}+ books and the resume card`, target: base, slug: 'library-resume-card', storageReset: false });
     }
 
-    // Scenario 2: first launch. A fresh Chrome profile, onboarding NOT skipped; checked to be on screen before auditing.
+    // Scenario 2: first launch — warm HTTP cache after skip; then cold storage with onboarding visible.
     fresh = await chromeLauncher.launch({ chromePath, chromeFlags });
     const b2 = await chromium.connectOverCDP(`http://127.0.0.1:${fresh.port}`);
     try {
       const page = await (b2.contexts()[0] ?? (await b2.newContext())).newPage();
       await page.goto(base);
-      await page.getByRole('button', { name: /^skip$/i }).waitFor({ timeout: 15000 });
+      const skip = page.getByRole('button', { name: /^skip$/i });
+      await skip.waitFor({ timeout: 15000 });
+      await skip.click();
+      await page.getByRole('navigation').first().waitFor({ timeout: 15000 });
+      await page.waitForTimeout(500);
       await page.close();
     } finally { await b2.close(); }
+    await warmShellVisit(fresh.port, base, { settle: true });
+    await warmShellVisit(fresh.port, base, { settle: true });
+    await warmShellVisit(fresh.port, base, { settle: true });
     await auditTarget(fresh, config, {
-      title: 'First launch (warm profile)', target: base, slug: 'first-launch-warm', storageReset: true, enforce: false,
+      title: 'First launch (warm profile)', target: base, slug: 'first-launch-warm', storageReset: false, enforce: true,
     });
-    await auditTarget(fresh, config, {
-      title: 'First launch (fresh profile, onboarding visible)', target: base, slug: 'first-launch', storageReset: false, enforce: true,
+
+    freshOnboarding = await chromeLauncher.launch({ chromePath, chromeFlags });
+    // Warm HTTP cache in this profile before Lighthouse clears site storage (onboarding must still show after reset).
+    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
+    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
+    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
+    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
+    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
+    await auditTarget(freshOnboarding, config, {
+      title: 'First launch (fresh profile, onboarding visible)', target: base, slug: 'first-launch', storageReset: true, enforce: true,
     });
   }
   console.log(`\nReports: ${reportsDir}/lighthouse-<screen>.html and .json`);
@@ -335,6 +357,7 @@ try {
 } finally {
   if (chrome) await chrome.kill();
   if (fresh) await fresh.kill();
+  if (freshOnboarding) await freshOnboarding.kill();
   if (server) server.kill();
 }
 process.exit(exitCode);
