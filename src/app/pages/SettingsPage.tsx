@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import { formatBytes, getStorageStatus, requestPersistentStorage, type StorageStatus } from '@/data/storage';
 import { whenIdle } from '@/app/idle';
 import { InstallHelp } from '@/ui';
@@ -11,16 +12,16 @@ import type { ThemePreference } from '../themes';
 import '../screen-styles';
 
 // Backup, restore and the storage breakdown come from the Library; they are loaded with the screen, not with the app shell.
-const LibrarySettingsPanels = lazy(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
-const SyncSettingsPanel = lazy(() => import('../components/SyncSettingsPanel').then((m) => ({ default: m.SyncSettingsPanel })));
-const DictionarySettingsPanel = lazy(() =>
+const LibrarySettingsPanels = lazyWithRetry(() => import('../components/LibrarySettingsPanels').then((m) => ({ default: m.LibrarySettingsPanels })));
+const SyncSettingsPanel = lazyWithRetry(() => import('../components/SyncSettingsPanel').then((m) => ({ default: m.SyncSettingsPanel })));
+const DictionarySettingsPanel = lazyWithRetry(() =>
   import('@/features/dictionary/DictionarySettingsPanel').then((m) => ({ default: m.DictionarySettingsPanel })),
 );
-const VoiceStudioSettingsPanel = lazy(() =>
+const VoiceStudioSettingsPanel = lazyWithRetry(() =>
   import('../components/VoiceStudioSettingsPanel').then((m) => ({ default: m.VoiceStudioSettingsPanel })),
 );
-const LegalSettingsPanel = lazy(() => import('../components/LegalSettingsPanel').then((m) => ({ default: m.LegalSettingsPanel })));
-const LanguageSettingsPanel = lazy(() =>
+const LegalSettingsPanel = lazyWithRetry(() => import('../components/LegalSettingsPanel').then((m) => ({ default: m.LegalSettingsPanel })));
+const LanguageSettingsPanel = lazyWithRetry(() =>
   import('../components/LanguageSettingsPanel').then((m) => ({ default: m.LanguageSettingsPanel })),
 );
 

@@ -1,8 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import { whenIdle } from '../idle';
 
 const loadHost = () => import('./PwaPromptsHost').then((m) => ({ default: m.PwaPromptsHost }));
-const PwaPromptsHost = lazy(loadHost);
+const PwaPromptsHost = lazyWithRetry(loadHost);
 
 /**
  * The PWA prompts (update notice, install banner, iPhone steps) are overlays that are never part of

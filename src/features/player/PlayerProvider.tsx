@@ -7,6 +7,7 @@ import { useEnginePlayerStore } from './engine-store';
 import { chromeSnapshotFromAudioState, resetChromeCoverCacheForTests } from './sync-chrome-from-engine';
 import { attachPlayerKeyboard } from './keyboard-shortcuts';
 import { SleepShakeBridge } from '@/features/playback/SleepShakeBridge';
+import { usePlaybackWakeLock } from '@/features/playback/use-playback-wake-lock';
 
 const AudioControllerContext = createContext<AudioController | undefined>(undefined);
 
@@ -73,23 +74,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     );
   }, [controller, db]);
 
-  useEffect(() => {
-    let lock: WakeLockSentinel | undefined;
-    const unsub = useChromePlayerStore.subscribe((s) => {
-      if (s.chrome.playing && 'wakeLock' in navigator) {
-        void navigator.wakeLock.request('screen').then((sentinel) => {
-          lock = sentinel;
-        }).catch(() => undefined);
-      } else {
-        void lock?.release();
-        lock = undefined;
-      }
-    });
-    return () => {
-      unsub();
-      void lock?.release();
-    };
-  }, []);
+  const playing = useChromePlayerStore((s) => s.chrome.playing);
+  usePlaybackWakeLock(playing);
 
   return (
     <AudioControllerContext.Provider value={controller}>

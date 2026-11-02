@@ -112,3 +112,15 @@ export async function readVoiceManifest(files: FileStore, voiceId: string): Prom
 export async function openVoiceSample(files: FileStore, voiceId: string, fileName: string): Promise<File> {
   return files.open(`${voiceDir(voiceId)}/${fileName}`);
 }
+
+/** WAV prompt samples for on-device clone training (Phase 6). */
+export async function readVoiceSampleWavs(files: FileStore, voiceId: string): Promise<ArrayBuffer[]> {
+  const manifest = await readVoiceManifest(files, voiceId);
+  if (!manifest) return [];
+  const buffers: ArrayBuffer[] = [];
+  for (const prompt of manifest.prompts) {
+    const file = await openVoiceSample(files, voiceId, prompt.file);
+    buffers.push(await file.arrayBuffer());
+  }
+  return buffers;
+}

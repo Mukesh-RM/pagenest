@@ -5,12 +5,19 @@ import { BOOK_FILE_BYTES_CACHE } from '@/data/cache-file-store';
 import { engineCacheFirst, pruneEngineCache } from './engine-cache';
 import { cacheFirst } from './font-cache';
 import { handleShareRequest, SHARE_PATH } from './share-target';
+import { snapshotOutdatedPrecacheToEngine } from './preserve-precache';
 
 declare const self: ServiceWorkerGlobalScope;
 
 // 1. App shell: precache what the build lists (see vite.config.ts) and answer every page request with
 //    index.html, so the installed app launches offline.
 precacheAndRoute(self.__WB_MANIFEST);
+
+// Snapshot outdated precache into the engine cache before Workbox deletes it (listener order: before cleanupOutdatedCaches).
+self.addEventListener('activate', (event) => {
+  event.waitUntil(snapshotOutdatedPrecacheToEngine(self.caches).catch(() => 0));
+});
+
 cleanupOutdatedCaches();
 registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html'), { denylist: [/^\/share-target/] }));
 
@@ -31,10 +38,13 @@ registerRoute(
   ({ request }) => engineCacheFirst(request, self.caches),
 );
 
-// 3. Updates activate promptly: skipWaiting on install and claim open clients on activate, so users are not stuck on an old
-//    precache. The page shows "Update available, reload" and reloads only when the user taps Refresh (never while audio plays).
+// 3. Updates: first install activates immediately; later versions wait until the page posts SKIP_WAITING (never mid-playback).
 self.addEventListener('install', (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil(
+    (async () => {
+      if (!self.registration.active) await self.skipWaiting();
+    })(),
+  );
 });
 self.addEventListener('activate', (event) => {
   event.waitUntil(

@@ -83,8 +83,17 @@ async function bumpServiceWorker(page: Page, bump: { version: number }): Promise
   await page.evaluate(async () => {
     const reg = await navigator.serviceWorker.getRegistration();
     await reg?.update();
+    await new Promise((r) => setTimeout(r, 400));
+    reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
   });
-  await page.waitForTimeout(500);
+  await page.waitForFunction(
+    async () => {
+      const reg = await navigator.serviceWorker.getRegistration();
+      return reg?.active?.state === 'activated' && !!navigator.serviceWorker.controller;
+    },
+    undefined,
+    { timeout: 30_000 },
+  );
   await page.reload();
   await waitForServiceWorkerControl(page);
 }

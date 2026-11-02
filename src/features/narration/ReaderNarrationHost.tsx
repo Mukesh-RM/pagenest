@@ -18,6 +18,8 @@ import { NarrationSheet } from './NarrationSheet';
 import { NarrationSession } from './narration-session';
 import { useRegisterNarrationReaderBridge } from './narration-reader-bridge';
 import { applySentenceHighlights, clearSentenceHighlights, scrollSentenceIntoView } from './sentence-highlight';
+import { clearNarrationMediaSession, syncNarrationMediaSession } from './narration-media-session';
+import { usePlaybackWakeLock } from '@/features/playback/use-playback-wake-lock';
 import { loadNarrationSettings, saveNarrationSettings, type StoredNarrationSettings } from './narration-settings';
 import { DEFAULT_NARRATION_SETTINGS } from './types';
 
@@ -191,6 +193,12 @@ export default function ReaderNarrationHost({ book, doc, hostRef, openDockOnMoun
     });
     return () => registerBridge(undefined);
   }, [registerBridge, speakText]);
+
+  usePlaybackWakeLock(playing);
+  useEffect(() => {
+    syncNarrationMediaSession({ title: book.title, author: book.author, playing });
+    return () => clearNarrationMediaSession();
+  }, [book.author, book.title, playing]);
 
   const sleepLabel = useMemo(() => {
     if (!audioSleep) return 'Off';

@@ -1,11 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
 import { ImmersiveFallback } from '../ScreenFallback';
 import { BookRouteShell } from './book-route-shared';
 import '../screen-styles';
 
-const ReadRouteInner = lazy(() => import('./ReadRouteInner').then((m) => ({ default: m.ReadRouteInner })));
+const ReadRouteInner = lazyWithRetry(() => import('./ReadRouteInner').then((m) => ({ default: m.ReadRouteInner })));
 
 export function ReadRoute() {
   return (

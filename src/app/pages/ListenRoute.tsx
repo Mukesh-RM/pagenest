@@ -1,11 +1,12 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
 import { ImmersiveFallback } from '../ScreenFallback';
 import { BookRouteShell } from './book-route-shared';
 import '../screen-styles';
 
-const PlayerScreen = lazy(() => import('./PlayerScreen'));
+const PlayerScreen = lazyWithRetry(() => import('./PlayerScreen'));
 
 export function ListenRoute() {
   return (
