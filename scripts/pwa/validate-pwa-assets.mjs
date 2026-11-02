@@ -80,7 +80,7 @@ check(
   connect.includes('https://huggingface.co') && connect.includes('https://*.huggingface.co') && connect.includes('https://*.hf.co'),
   'connect-src must allow approved Hugging Face model hosts',
 );
-for (const d of ['worker-src', 'media-src', 'img-src', 'font-src', 'connect-src', 'frame-ancestors', 'object-src']) check(csp.includes(d), `CSP missing ${d}`);
+for (const d of ['worker-src', 'media-src', 'img-src', 'font-src', 'connect-src', 'object-src']) check(csp.includes(d), `CSP missing ${d}`);
 
 if (problems.length) { console.error('FAILED:\n- ' + problems.join('\n- ')); process.exit(1); }
 console.log(`OK: manifest valid (${manifest.icons.length} icons), icon dimensions match, share target present, CSP configured.`);
