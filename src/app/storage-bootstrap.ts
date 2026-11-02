@@ -3,14 +3,14 @@ import { getDb } from '@/data/db';
 import { createCacheBackedFileStore } from '@/data/cache-file-store';
 import { OpfsFileStore, openOpfsRoot } from '@/data/opfs';
 import { importModule } from '@/app/chunk-import';
-import { clearStorageBootstrap, setStorageBootstrap, storageBootstrap, type StorageBootstrap } from './storage-bootstrap-state';
+import { setStorageBootstrap, storageBootstrap, type StorageBootstrap } from './storage-bootstrap-state';
 
 let booting: Promise<void> | undefined;
 
 /** Tests only: forget module bootstrap state between isolated databases. */
 export function resetStorageBootstrapForTests(): void {
   booting = undefined;
-  clearStorageBootstrap();
+  setStorageBootstrap(undefined);
 }
 
 /**

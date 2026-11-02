@@ -15,17 +15,15 @@ export function ServicesProvider({ services, children }: { services?: AppService
 
   useEffect(() => {
     if (services || storageReady) return;
-    let cancelled = false;
-    const cancelIdle = whenIdle(() => {
+    let live = true;
+    const off = whenIdle(() => {
       void import('./storage-bootstrap')
-        .then(({ bootstrapStorage }) => bootstrapStorage())
-        .then(() => {
-          if (!cancelled) setStorageReady(true);
-        });
+        .then((m) => m.bootstrapStorage())
+        .then(() => live && setStorageReady(true));
     }, 400);
     return () => {
-      cancelled = true;
-      cancelIdle();
+      live = false;
+      off();
     };
   }, [services, storageReady]);
 

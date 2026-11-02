@@ -1,5 +1,4 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { preloadScreens } from '../screens';
 import { isReturningDevice } from '../first-run-hint';
 import { useSettings } from '../settings-store';
 
@@ -11,10 +10,6 @@ export function FirstRunGate({ children, onboarding }: { children: ReactNode; on
   const loaded = useSettings((s) => s.loaded);
   const done = useSettings((s) => s.onboardingDone);
   const wasOnboarding = useRef(false);
-
-  useEffect(() => {
-    if (loaded && done) preloadScreens(['collections', 'stats', 'settings']);
-  }, [loaded, done]);
 
   useEffect(() => {
     if (loaded && !done) wasOnboarding.current = true;
