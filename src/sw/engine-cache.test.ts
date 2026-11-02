@@ -33,14 +33,18 @@ describe('lineageOf', () => {
 });
 
 describe('pruneEngineCache', () => {
-  it('keeps only the newest copy of each file, and every other file', async () => {
+  it('keeps the newest two copies of each lineage, and every other file', async () => {
     const caches = memoryCaches();
     const cache = await caches.open(ENGINE_CACHE);
     for (const p of ['/assets/engine-pdf-AAAAAAAA.js', '/assets/engine-foliate-BBBBBBBB.js', '/assets/engine-pdf-CCCCCCCC.js']) {
       await cache.put(req(p), new Response('x'));
     }
-    expect(await pruneEngineCache(caches)).toBe(1);
-    expect(await names(caches)).toEqual(['/assets/engine-foliate-BBBBBBBB.js', '/assets/engine-pdf-CCCCCCCC.js']);
+    expect(await pruneEngineCache(caches)).toBe(0);
+    expect(await names(caches)).toEqual([
+      '/assets/engine-pdf-AAAAAAAA.js',
+      '/assets/engine-foliate-BBBBBBBB.js',
+      '/assets/engine-pdf-CCCCCCCC.js',
+    ]);
   });
 
   it('caps the cache, dropping the oldest', async () => {
@@ -68,12 +72,12 @@ describe('engineCacheFirst', () => {
     expect(fetches).toBe(1);
   });
 
-  it('stores a new build and removes the old one', async () => {
+  it('stores a new build without dropping the previous hash (lineage retain)', async () => {
     const caches = memoryCaches();
     const ok = async (): Promise<Response> => new Response('x');
     await engineCacheFirst(req('/assets/engine-pdf-AAAAAAAA.js'), caches, ok);
     await engineCacheFirst(req('/assets/engine-pdf-CCCCCCCC.js'), caches, ok);
-    expect(await names(caches)).toEqual(['/assets/engine-pdf-CCCCCCCC.js']);
+    expect(await names(caches)).toEqual(['/assets/engine-pdf-AAAAAAAA.js', '/assets/engine-pdf-CCCCCCCC.js']);
   });
 
   it('does not store a failed response', async () => {

@@ -1,4 +1,5 @@
 import { installWebKitFoliateIframeFix } from '@/engines/epub/foliate-webkit';
+import { clearChunkReloadGuard } from '@/app/chunk-import';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './app/App';
@@ -19,6 +20,7 @@ preloadCriticalFonts();
 void import('./app/storage-bootstrap')
   .then(({ bootstrapStorage }) => bootstrapStorage())
   .then(() => {
+    clearChunkReloadGuard();
     createRoot(root).render(
       <StrictMode>
         <App />

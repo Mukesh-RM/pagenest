@@ -1,16 +1,14 @@
 /**
- * Runtime cache of the Reader's lazy engines, the pdf.js worker and the sample book (Decision 15, docs/DEPLOY.md).
- * They are not precached (they are large); each is stored the first time it loads and then served from here, so a format
- * keeps working offline.
- *
- * Built file names carry a content hash (`engine-pdf-D_i92D7q.js`). A new build means new names, so the old files could
- * never be asked for again. `pruneEngineCache` removes them: of every file name with the hash taken off, only the newest
- * stored copy stays, and the cache never holds more than `MAX_ENGINE_ENTRIES` files.
+ * Runtime cache of large Reader assets and the sample book (Decision 15, docs/DEPLOY.md).
+ * Lazy engines are also in the Workbox precache; this cache keeps **older hashed builds** around after an update so an
+ * open tab or a slow reload can still import the previous chunk once.
  */
 import { cacheFirst } from './font-cache';
 
 export const ENGINE_CACHE = 'pn-engines-v1';
 export const MAX_ENGINE_ENTRIES = 40;
+/** How many hashed builds of the same logical file (lineage) to keep. */
+export const LINEAGE_RETAIN = 2;
 
 const HASHED = /^(.*)-[A-Za-z0-9_-]{8}(\.[A-Za-z0-9]+)$/;
 
@@ -23,10 +21,19 @@ export function lineageOf(pathname: string): string {
 export async function pruneEngineCache(cacheStorage: CacheStorage, max: number = MAX_ENGINE_ENTRIES): Promise<number> {
   const cache = await cacheStorage.open(ENGINE_CACHE);
   const keys = await cache.keys(); // oldest first
-  const newestOfLineage = new Map<string, number>();
-  keys.forEach((request, i) => newestOfLineage.set(lineageOf(new URL(request.url).pathname), i));
-  let kept = keys.filter((request, i) => newestOfLineage.get(lineageOf(new URL(request.url).pathname)) === i);
-  const stale = keys.filter((request) => !kept.includes(request));
+  const byLineage = new Map<string, number[]>();
+  keys.forEach((request, i) => {
+    const lineage = lineageOf(new URL(request.url).pathname);
+    const list = byLineage.get(lineage) ?? [];
+    list.push(i);
+    byLineage.set(lineage, list);
+  });
+  const keep = new Set<number>();
+  for (const indices of byLineage.values()) {
+    for (const i of indices.slice(-LINEAGE_RETAIN)) keep.add(i);
+  }
+  let kept = keys.filter((_, i) => keep.has(i));
+  const stale = keys.filter((_, i) => !keep.has(i));
   if (kept.length > max) {
     stale.push(...kept.slice(0, kept.length - max));
     kept = kept.slice(kept.length - max);
@@ -35,7 +42,7 @@ export async function pruneEngineCache(cacheStorage: CacheStorage, max: number =
   return stale.length;
 }
 
-/** Cache first, in the engine cache. A newly stored file also prunes the older builds of itself. */
+/** Cache first, in the engine cache. Pruning runs on activate, not on every fetch. */
 export async function engineCacheFirst(
   request: Request,
   cacheStorage: CacheStorage,
@@ -45,6 +52,5 @@ export async function engineCacheFirst(
   const hit = await cache.match(request);
   if (hit) return hit;
   const response = await cacheFirst(request, cacheStorage, fetcher, ENGINE_CACHE);
-  await pruneEngineCache(cacheStorage).catch(() => undefined);
   return response;
 }

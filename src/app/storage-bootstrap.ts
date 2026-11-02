@@ -1,6 +1,7 @@
 import { getDb } from '@/data/db';
 import { createCacheBackedFileStore } from '@/data/cache-file-store';
 import { OpfsFileStore, openOpfsRoot } from '@/data/opfs';
+import { importModule } from '@/app/chunk-import';
 import { setStorageBootstrap, type StorageBootstrap } from './storage-bootstrap-state';
 
 /**
@@ -13,8 +14,8 @@ export async function bootstrapStorage(): Promise<void> {
   const files = root ? new OpfsFileStore(root) : createCacheBackedFileStore();
 
   const [{ inProcessImportBackend }, { setImportBackend }] = await Promise.all([
-    import('@/features/library/in-process-import'),
-    import('@/features/library/registry'),
+    importModule(() => import('@/features/library/in-process-import')),
+    importModule(() => import('@/features/library/registry')),
   ]);
 
   const db = getDb();
