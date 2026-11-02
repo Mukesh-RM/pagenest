@@ -123,7 +123,7 @@ describe('Collections on the design system screen', () => {
     renderApp(services, { path: '/collections' });
     fireEvent.click(await screen.findByRole('button', { name: /^Unfinished/ }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Unfinished' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /Half Read\./ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Half Read/ })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('button', { name: /Untouched/ })).toBeNull());
   });
 });

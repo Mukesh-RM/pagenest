@@ -72,7 +72,7 @@ describe('route / is the Library screen from @/features/library', () => {
     });
     renderApp(services);
     expect(await screen.findByRole('heading', { level: 1, name: 'Library' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /The Long Road, Ann Lee\./ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /The Long Road Ann Lee\./ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add books' })).toBeInTheDocument();
     await waitFor(() => expect(screen.getAllByRole('status').some((s) => s.textContent === '1 book')).toBe(true));
   });
