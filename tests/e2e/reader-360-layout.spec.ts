@@ -64,22 +64,22 @@ test.describe('reader at 360px', () => {
     await page.setViewportSize(VIEW);
   });
 
-  test('EPUB shows book text; narration is collapsed; header tools do not overlap', async ({ page }) => {
-    await launchFresh(page);
-    const buffer = readFixture('src/features/reader/fixtures/alice.epub');
+  test('EPUB shows book text; footer read aloud; header tools do not overlap', async ({ page }) => {
     await importEpub(page, buffer);
     const text = await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(text.length).toBeGreaterThan(200);
     await expect(page.getByRole('region', { name: 'Read aloud controls' })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Read aloud' })).toBeVisible();
+    const footerReadAloud = page.locator('footer').getByRole('button', { name: 'Read aloud' });
+    await expect(footerReadAloud).toBeVisible();
     await assertNoOverlap(page, [
       'button[aria-label="Search in this book"]',
       'button[aria-label="Add bookmark here"]',
       'button[aria-label="Bookmarks and highlights"]',
       'button[aria-label="Reading settings"]',
+      '.pn-reader__footer-read-aloud',
       '.pn-narration-dock__toggle',
     ]);
-    await page.getByRole('button', { name: 'Read aloud' }).click();
+    await footerReadAloud.click();
     await expect(page.getByRole('dialog', { name: 'Read aloud' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Read aloud controls' })).toBeVisible();
   });
