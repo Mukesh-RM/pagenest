@@ -67,7 +67,8 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-02-epub-open.png`), fullPage: true });
 
-  await page.reload();
+  // WebKit + service worker: reload() can surface "Importing a module script failed" (redirected SW responses).
+  await page.goto(page.url(), { waitUntil: 'domcontentloaded' });
   await waitForServiceWorkerControl(page);
   await page.goto('./');
   await dismissLibraryOverlays(page);
