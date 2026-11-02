@@ -6,10 +6,11 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| In PR | **All / Books / Audio segment** (`LibraryQuery.segment` wired to toolbar chips) |
-| Open | Format tag on grid/list cards |
-| Open | Collection shelf cover collages |
-| Open | Book detail: Read aloud, tabs (chapters, marks, info) |
+| Done | **All / Books / Audio segment** (`663d74f`, #37) |
+| Done | Format tag on grid/list cards |
+| Done | Collection shelf cover collages |
+| Done | Book detail: Read aloud (`LibraryScreen` → reader + narration sheet) |
+| Open | Book detail: tabs (chapters, marks, info) |
 | Open | Pull-to-refresh folder list |
 
 ## Reader feel
@@ -26,9 +27,10 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| Open | Selection bar: copy, note shortcut, read-aloud from selection |
+| Open | Selection bar: read-aloud from selection |
+| Done | Selection bar: copy, note shortcut |
 | Open | Bookmark ticks on scrubber |
-| Open | Release smoke: assert saved read position after reload |
+| Done | Release smoke: assert saved read position after reload (live upgrade spec) |
 | Open | MiniSearch background index (blueprint §7) |
 
 ## Read aloud
@@ -36,7 +38,7 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 | Status | Gap |
 |--------|-----|
 | Done | Device Web Speech default (`753d761`) |
-| Open | Read aloud from library detail |
+| Done | Read aloud from library detail |
 | Open | Footer headphone opens narration |
 | Open | PDF read-aloud |
 
@@ -46,4 +48,5 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 |--------|-----|
 | Done | WebKit foliate engine fix (`109a37b` bootstrap + sandbox strip; `#35`) |
 | Done | Pages `_headers` CSP/COOP scoped to HTML only (`b7ec1fc`, `#36`) |
-| Open | Full green `smoke:live` on Pages after `b7ec1fc` deploy (360px screenshots) |
+| Done | WebKit upgrade after SW reload (`67f4221` precache + import retry; no console allowlist) |
+| Open | Full green `smoke:live` on Pages after `67f4221` deploy (360px screenshots) |

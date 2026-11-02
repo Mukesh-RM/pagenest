@@ -135,6 +135,13 @@ describe('BookDetailSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledWith('close-button');
   });
+
+  it('shows Read aloud when onReadAloud is provided', () => {
+    const onReadAloud = vi.fn();
+    render(<BookDetailSheet open book={SAMPLE_DETAIL} onClose={noop} onRead={noop} onReadAloud={onReadAloud} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Read aloud' }));
+    expect(onReadAloud).toHaveBeenCalledWith(SAMPLE_DETAIL);
+  });
 });
 
 describe('ReaderScreen', () => {

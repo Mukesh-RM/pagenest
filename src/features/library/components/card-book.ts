@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useCoverUrl } from '@/app/library-hooks';
 import type { BookSummary as DataBook } from '@/data/library-query';
 import type { BookSummary as CardBook } from '@/ui';
+import { formatTag } from '../model';
 
 const COVER_DELAY_MS = 90;
 
@@ -25,6 +26,7 @@ export function toCardBook(book: DataBook, coverUrl: string | undefined): CardBo
     progress: book.finished ? 1 : Math.max(0, Math.min(100, book.percent)) / 100,
     audio: book.kind === 'audio',
     ...(book.favorite ? { favorite: true } : {}),
+    format: formatTag(book),
   };
 }
 

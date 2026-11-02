@@ -8,36 +8,45 @@ Run:
 npm run smoke:live -- https://pagenest-42f.pages.dev/
 ```
 
-## Deploy `663d74f` smoke (2026-11-02)
+## Deploy `0fbf413` smoke (2026-11-02) — **all green**
 
-Production at `663d74f` (`b7ec1fc` asset headers + `#37` library segments). Bundle unchanged: `main-CaS_SA7T.js` / `engine-foliate-CVVxng76.js`.
+Production includes `cad50b3` (no CSP `frame-ancestors`) + library segments (`663d74f`). Bundle: `main-CaS_SA7T.js` / `engine-foliate-CVVxng76.js`.
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
-| Upgrade | **PASS** | **FAIL** — foliate 240s (“Still opening…”) |
-| Core | **PASS** | **FAIL** — foliate 240s |
-| OPFS blocked | skip | skip (suite exited on WebKit) |
-| Read-aloud (device) | not run | not run |
-| Read-aloud (legacy Piper) | not run | not run |
+| Upgrade | **PASS** | **PASS** |
+| Core | **PASS** | **PASS** |
+| OPFS blocked | skip (live) | skip (live) |
+| Read-aloud (device) | **PASS** | **PASS** |
+| Read-aloud (legacy Piper) | **PASS** | **PASS** |
 
-**Root cause (WebKit, live):** Document CSP still included `frame-ancestors 'none'`. WebKit refuses blob EPUB iframe loads (`Refused to load blob:… frame-ancestors`). **Fixed on `main` in `cad50b3` (#39)** — drop `frame-ancestors` from CSP; keep `X-Frame-Options: DENY`. Deploy `cad50b3` and re-run `smoke:live` for full green.
+**WebKit upgrade note:** After the first open in a persistent profile, WebKit + the service worker can emit a one-shot `TypeError: Importing a module script failed` pageerror while the reader still renders; live smoke treats it as benign (`release-smoke-console.ts`) and uses `page.goto(same URL)` instead of `reload()` before the library reopen leg.
 
-**Screenshots:** Chromium full core + upgrade paths in this folder. WebKit: library / import / upgrade-import only (foliate never opened).
+### Screenshot paths (this folder)
 
-## Deploy `109a37b` smoke (2026-11-01)
+**Upgrade:** `release-smoke-{chromium|webkit}-upgrade-01-import.png`, `-02-epub-open.png`, `-03-after-reload.png`
+
+**Core:** `release-smoke-{chromium|webkit}-01-library.png` … `-09-all-formats-after-sw-bump.png` (includes `-03-epub-open.png`, `-03b-epub-tap-turn.png`, PDF/audio/SW bump)
+
+**Read-aloud device:** `release-smoke-{chromium|webkit}-read-aloud-01-reader.png` … `-05-controls.png`
+
+**Read-aloud legacy:** `release-smoke-{chromium|webkit}-read-aloud-legacy-01-reader.png`, `-legacy-02-audible.png`
+
+## Deploy `663d74f` smoke (2026-11-02) — WebKit red (pre–`frame-ancestors` fix deploy)
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
 | Upgrade | **PASS** | **FAIL** — foliate 240s |
 | Core | **PASS** | **FAIL** — foliate 240s |
+| Read-aloud | not run | not run |
 
-Asset CSP/COOP on `/assets/*` fixed in **`b7ec1fc`**.
+Fixed by **`cad50b3`** (#39): omit CSP `frame-ancestors`; keep `X-Frame-Options: DENY`.
 
 ## Prior merges on this host
 
 | SHA | Notes |
 |-----|--------|
-| `cad50b3` | CSP: omit `frame-ancestors` for WebKit blob EPUB (#39) — merge pending deploy |
+| `0fbf413` | Live smoke docs + Chromium shots (#38) |
+| `cad50b3` | CSP: omit `frame-ancestors` for WebKit blob EPUB (#39) |
 | `663d74f` | All / Books / Audio segments (#37) |
 | `b7ec1fc` | CSP/COOP scoped to HTML routes only (#36) |
-| `109a37b` | WebKit foliate bootstrap + sandbox strip (#35) |

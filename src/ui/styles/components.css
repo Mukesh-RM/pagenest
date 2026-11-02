@@ -1175,6 +1175,21 @@
   color: rgb(var(--pn-inverse-accent));
 }
 
+.pn-bookcard__format {
+  position: absolute;
+  top: var(--pn-space-2);
+  left: var(--pn-space-2);
+  padding: 0 var(--pn-space-2);
+  border-radius: var(--pn-radius-pill);
+  background: rgb(var(--pn-inverse-surface) / 0.88);
+  color: rgb(var(--pn-inverse-text));
+  font-size: var(--pn-text-xs);
+  font-weight: var(--pn-weight-semibold);
+  letter-spacing: 0.04em;
+  line-height: var(--pn-space-6);
+  text-transform: uppercase;
+}
+
 .pn-bookcard__body {
   display: flex;
   flex-direction: column;

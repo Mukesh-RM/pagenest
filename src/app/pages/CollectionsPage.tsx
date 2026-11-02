@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { LibraryScreen } from '@/features/library';
 import { useNavigate } from 'react-router-dom';
 import type { CollectionSummary } from '@/data/collections';
@@ -32,11 +32,12 @@ const SMART_PRESETS: Readonly<Record<string, Partial<LibraryQuery>>> = {
  * `CollectionBooksEmpty` while it is empty). Delete keeps its Undo snackbar.
  */
 export function CollectionsPage() {
-  const { data } = useServices();
+  const { data, covers } = useServices();
   const navigate = useNavigate();
   const snackbar = useSnackbar();
   const revision = useLibraryRevision();
   const [shelves, setShelves] = useState<CollectionSummary[] | undefined>();
+  const [shelfCovers, setShelfCovers] = useState<Readonly<Record<string, readonly string[]>>>({});
   const [opened, setOpened] = useState<Opened | undefined>();
   const [naming, setNaming] = useState<{ id?: string; name: string } | undefined>();
   const [problem, setProblem] = useState<string | undefined>();
@@ -55,6 +56,52 @@ export function CollectionsPage() {
   useEffect(() => {
     if (revision !== undefined) void load();
   }, [revision, load]);
+
+  useEffect(() => {
+    if (!shelves?.length) {
+      setShelfCovers({});
+      return undefined;
+    }
+    let cancelled = false;
+    const leases: Array<{ release: () => void }> = [];
+    void (async () => {
+      const next: Record<string, string[]> = {};
+      for (const shelf of shelves) {
+        if (shelf.bookCount === 0) {
+          next[shelf.id] = [];
+          continue;
+        }
+        const books = await data.collections.booksIn(shelf.id);
+        const urls: string[] = [];
+        for (const book of books) {
+          if (book.coverRef === undefined) continue;
+          if (urls.length >= 4) break;
+          const lease = await covers.acquire(book.id);
+          if (lease) {
+            leases.push(lease);
+            urls.push(lease.url);
+          }
+        }
+        next[shelf.id] = urls;
+      }
+      if (!cancelled) setShelfCovers(next);
+    })();
+    return () => {
+      cancelled = true;
+      for (const lease of leases) lease.release();
+    };
+  }, [shelves, data, covers]);
+
+  const shelfRows = useMemo<readonly CollectionShelf[]>(
+    () =>
+      (shelves ?? []).map((shelf) => ({
+        id: shelf.id,
+        name: shelf.name,
+        bookCount: shelf.bookCount,
+        ...(shelfCovers[shelf.id]?.length ? { covers: shelfCovers[shelf.id] } : {}),
+      })),
+    [shelves, shelfCovers],
+  );
 
   const move = async (shelf: CollectionShelf, by: -1 | 1): Promise<void> => {
     if (!shelves) return;
@@ -128,7 +175,7 @@ export function CollectionsPage() {
   return (
     <>
       <CollectionsScreen
-        shelves={shelves ?? []}
+        shelves={shelfRows}
         loading={shelves === undefined}
         smart={DEFAULT_SMART_COLLECTIONS}
         onOpenShelf={(shelf) => setOpened({ name: shelf.name, shelfId: shelf.id, empty: shelf.bookCount === 0 })}
