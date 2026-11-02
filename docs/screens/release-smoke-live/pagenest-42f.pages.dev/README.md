@@ -8,7 +8,9 @@ Run:
 npm run smoke:live -- https://pagenest-42f.pages.dev/
 ```
 
-## Deploy **`be3c58a`** (Read aloud selection + footer) — prior **`bfcc583`** ReadEra live shots
+## Deploy **`dfe1b23`** — **all green** @ live re-run (2026-11-02)
+
+Includes backup/formats phases through **`dfe1b23`**. Read-aloud live smoke needs **`openReadAloudControls`** dock-toggle fix (this PR) after footer headphone shipped in **`be3c58a`**.
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
@@ -20,6 +22,8 @@ npm run smoke:live -- https://pagenest-42f.pages.dev/
 | ReadEra parity shots | **PASS** | **PASS** |
 | Format fixtures (MOBI, FB2, TXT, CBZ, PDF) | **PASS** | **PASS** |
 | Backup / restore | **PASS** | **PASS** |
+
+## Prior deploy notes
 
 ### Format fixture screenshots (360px)
 
@@ -63,7 +67,7 @@ Paths are under this folder (`docs/screens/release-smoke-live/pagenest-42f.pages
 
 | SHA | Notes |
 |-----|--------|
-| `76bb353` | Live smoke table (docs) |
-| `a4c7e87` | ReadEra parity batch (#42) |
-| `67f4221` | SW precache + import retry (#41) |
-| `663d74f` | All / Books / Audio segments (#37) |
+| `dfe1b23` | Backup live smoke + full stack on Pages |
+| `b4af337` | Document engine + format fixture live shots |
+| `be3c58a` | Selection/footer read-aloud (#44) |
+| `bfcc583` | ReadEra live shots (#43) |

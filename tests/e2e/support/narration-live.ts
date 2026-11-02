@@ -103,7 +103,12 @@ export async function primeDeviceSpeechForLiveSmoke(context: BrowserContext): Pr
 export async function openReadAloudControls(page: Page): Promise<void> {
   const region = page.getByRole('region', { name: 'Read aloud controls' });
   if (await region.isVisible().catch(() => false)) return;
-  await page.getByRole('button', { name: 'Read aloud' }).click();
+  const dockToggle = page.locator('.pn-narration-dock__toggle');
+  if (await dockToggle.isVisible().catch(() => false)) {
+    await dockToggle.click();
+  } else {
+    await page.locator('footer').getByRole('button', { name: 'Read aloud' }).click();
+  }
   await expect(region).toBeVisible({ timeout: 15_000 });
 }
 

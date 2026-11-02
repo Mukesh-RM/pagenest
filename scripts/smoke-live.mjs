@@ -26,6 +26,7 @@ const env = {
   PAGENEST_SKIP_BUILD: '1',
   PAGENEST_SMOKE_LIVE: '1',
   PAGENEST_SMOKE_LIVE_HOST: host,
+  PAGENEST_WEBKIT: '1',
 };
 
 const args = [
