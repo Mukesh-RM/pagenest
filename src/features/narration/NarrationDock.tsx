@@ -4,13 +4,19 @@ import { Button } from '@/ui/components/Button';
 import { NarrationControls, type NarrationControlsProps } from './NarrationControls';
 import './narration-dock.css';
 
-export type NarrationDockProps = NarrationControlsProps;
+export type NarrationDockProps = NarrationControlsProps & {
+  readonly initialOpen?: boolean;
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
+};
 
 /**
  * Read-aloud controls stay off the book page: a compact strip by default, full controls in a bottom sheet.
  */
-export function NarrationDock({ initialOpen, ...props }: NarrationDockProps & { readonly initialOpen?: boolean }) {
-  const [open, setOpen] = useState(Boolean(initialOpen));
+export function NarrationDock({ initialOpen, open: openControlled, onOpenChange, ...props }: NarrationDockProps) {
+  const [openInternal, setOpenInternal] = useState(Boolean(initialOpen));
+  const open = openControlled ?? openInternal;
+  const setOpen = onOpenChange ?? setOpenInternal;
   const { playing, preparing } = props;
 
   return (
@@ -23,7 +29,7 @@ export function NarrationDock({ initialOpen, ...props }: NarrationDockProps & { 
           aria-expanded={open}
           aria-controls="pn-narration-sheet"
           aria-label="Read aloud"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(!open)}
         >
           {playing ? 'Pause' : preparing ? 'Loading…' : 'Read aloud'}
         </Button>

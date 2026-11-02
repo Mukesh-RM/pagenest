@@ -23,6 +23,7 @@ import { NoteEditorSheet } from './NoteEditorSheet';
 import { SearchSheet } from './SearchSheet';
 import { SelectionBar } from './SelectionBar';
 import { ensureReadableStart } from './open-position';
+import { useNarrationReaderBridge } from '@/features/narration/narration-reader-bridge';
 import { settingsToAppearance } from './settings-map';
 import { currentReaderTocId, locatorForReaderTocId, readerTocFromEngine } from './toc-map';
 import './live.css';
@@ -93,6 +94,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const navigate = useNavigate();
   const location = useLocation();
   const openNarrationOnMount = Boolean((location.state as { narrationOpen?: boolean } | null)?.narrationOpen);
+  const narration = useNarrationReaderBridge();
   const appTheme = useTheme().theme;
   const hostRef = useRef<HTMLDivElement>(null);
   const [settings, setSettings] = useState<ReaderSettings>({ ...DEFAULT_READER_SETTINGS, theme: appTheme });
@@ -341,6 +343,13 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     setSelection(undefined);
   }, [book.id, db, doc, openNoteEditor, selection]);
 
+  const readSelectionAloud = useCallback(() => {
+    if (!selection || !narration) return;
+    void narration.speakSelection(selection.text).catch(() => undefined);
+    doc?.clearSelection();
+    setSelection(undefined);
+  }, [doc, narration, selection]);
+
   const onSettingsChange = useCallback(
     (next: ReaderSettings) => {
       setSettings(next);
@@ -462,6 +471,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const minutes = doc && doc.layout === 'reflow' && position ? doc.minutesLeft() : undefined;
   const tocCurrentId = currentReaderTocId(engineTocFlat, position, tocEntries);
   const flip = doc?.direction === 'rtl';
+  const narrationReady = phase.status === 'ready' && doc !== undefined;
 
   return (
     <ReaderScreen
@@ -509,6 +519,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
           : undefined
       }
       statusMessage={announce}
+      {...(narrationReady && narration ? { onFooterReadAloud: () => narration.openDock() } : {})}
       barTools={
         <>
           <Button iconOnly variant="ghost" icon="search" aria-label="Search in this book" disabled={!doc} onClick={() => setSearchOpen(true)} />
@@ -527,6 +538,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
               onHighlight={saveHighlight}
               onCopy={copySelection}
               onNote={noteFromSelection}
+              {...(narration ? { onReadAloud: readSelectionAloud } : {})}
               onDefine={() => {
                 setDictMode('define');
                 setDictOpen(true);
@@ -563,7 +575,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
           ) : null}
           {welcome ? <WelcomeCard welcome={welcome} onDismiss={() => setWelcome(undefined)} /> : null}
         </div>
-        {phase.status === 'ready' && doc && doc.layout === 'reflow' ? (
+        {narrationReady && doc ? (
           <Suspense fallback={null}>
             <ReaderNarration book={book} doc={doc} hostRef={hostRef} openDockOnMount={openNarrationOnMount} />
           </Suspense>

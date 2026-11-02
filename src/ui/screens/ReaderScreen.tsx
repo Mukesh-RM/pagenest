@@ -63,6 +63,8 @@ export interface ReaderScreenProps {
   statusMessage?: string;
   /** Extra icon buttons in the top bar (search, bookmarks, …). Wraps on narrow viewports. */
   barTools?: ReactNode;
+  /** Opens read-aloud controls from the footer (headphone). */
+  onFooterReadAloud?: () => void;
   /** The page content (the reader engine renders here). */
   children: ReactNode;
 }
@@ -112,6 +114,7 @@ export function ReaderScreen({
   onPageNext,
   statusMessage,
   barTools,
+  onFooterReadAloud,
   children,
 }: ReaderScreenProps) {
   const [chromeVisibleInternal, setChromeVisibleInternal] = useState(true);
@@ -260,6 +263,16 @@ export function ReaderScreen({
         </article>
 
         <footer className="pn-reader__footer">
+          {onFooterReadAloud ? (
+            <Button
+              iconOnly
+              variant="secondary"
+              icon="headphones"
+              className="pn-reader__footer-read-aloud"
+              aria-label="Read aloud"
+              onClick={onFooterReadAloud}
+            />
+          ) : null}
           {hasScrubber ? (
             <ReaderScrubber
               value={progress}
