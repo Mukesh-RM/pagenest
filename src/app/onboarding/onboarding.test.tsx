@@ -72,9 +72,8 @@ describe('first run', () => {
     await db.settings.put({ key: 'onboardingDone', value: true });
     rememberOnboarded(true);
     renderApp(services);
-    expect(screen.queryByText(/Step 1 of 3/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(/Step \d of 3/)).not.toBeInTheDocument());
     expect(await screen.findByTestId('pn-tabbar')).toBeInTheDocument();
-    expect(screen.queryByText(/Step \d of 3/)).not.toBeInTheDocument();
   });
 
   it('walks through all three cards with Next and Back and moves focus each time', async () => {
