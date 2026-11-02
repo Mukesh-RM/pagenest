@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { launch } from '../e2e/support/app';
+import { launch, waitForStorageBootstrap } from '../e2e/support/app';
 import { bookCards, filterChip, searchField, seedLibrary, SEED } from '../e2e/support/library';
 import { flingScroll, touchScroll, longTasks, measureInput, recordLongTasks, throttleCpu } from '../e2e/support/perf';
 import { BUDGETS } from './budgets';
@@ -21,9 +21,15 @@ const allCardsMatch = (pattern: string) =>
 
 test(`a ${BUDGETS.library.sizeForOpenAndSearch}-book library opens in ${BUDGETS.library.openMs} ms without a long task`, async ({ page }) => {
   await openSeededLibrary(page, BUDGETS.library.sizeForOpenAndSearch);
+  await waitForStorageBootstrap(page);
+  await page.evaluate(() => {
+    (window as unknown as { __longTasks?: number[] }).__longTasks = [];
+  });
+  await recordLongTasks(page);
   const t0 = Date.now();
   await page.reload({ waitUntil: 'commit' });
   await expect(bookCards(page).first(), 'the seeded books must appear on the Library screen').toBeVisible({ timeout: 15_000 });
+  await waitForStorageBootstrap(page);
   const elapsed = Date.now() - t0;
   const tasks = await longTasks(page);
   console.log(`library open (${BUDGETS.library.sizeForOpenAndSearch} books, ${BUDGETS.tap.cpuThrottle}x CPU slowdown): ${elapsed} ms, long tasks ${JSON.stringify(tasks.map(Math.round))}`);
@@ -78,6 +84,7 @@ test(`search narrows a ${BUDGETS.library.sizeForOpenAndSearch}-book library with
 
 test(`the Favorites filter responds within ${BUDGETS.library.filterMs} ms on a ${BUDGETS.library.sizeForOpenAndSearch}-book library (blueprint 5.5)`, async ({ page }) => {
   await openSeededLibrary(page, BUDGETS.library.sizeForOpenAndSearch);
+  await waitForStorageBootstrap(page);
   await expect(bookCards(page).first()).toBeVisible({ timeout: 15_000 });
   const chip = filterChip(page, 'Favorites');
   await expect(chip, 'Library has no "Favorites" filter chip (blueprint 5.5)').toBeVisible();
