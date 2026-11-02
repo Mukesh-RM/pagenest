@@ -8,25 +8,36 @@ Run:
 npm run smoke:live -- https://pagenest-42f.pages.dev/
 ```
 
-## Deploy `109a37b` smoke (2026-11-01)
+## Deploy `663d74f` smoke (2026-11-02)
 
-Bundle: `main-CaS_SA7T.js` / `engine-foliate-CVVxng76.js`.
+Production at `663d74f` (`b7ec1fc` asset headers + `#37` library segments). Bundle unchanged: `main-CaS_SA7T.js` / `engine-foliate-CVVxng76.js`.
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
 | Upgrade | **PASS** | **FAIL** — foliate 240s (“Still opening…”) |
 | Core | **PASS** | **FAIL** — foliate 240s |
-| OPFS blocked | skip | skip (suite exited) |
-| Read-aloud device | not run | not run |
-| Read-aloud legacy Piper | not run | not run |
+| OPFS blocked | skip | skip (suite exited on WebKit) |
+| Read-aloud (device) | not run | not run |
+| Read-aloud (legacy Piper) | not run | not run |
 
-**Root cause (WebKit):** Cloudflare Pages merged the global `/*` `_headers` rule with `/assets/*`, so **CSP and COOP were sent on JavaScript module responses**. WebKit loaded `foliate-view` but book iframe documents stayed empty. Fixed in **`b7ec1fc`** (document headers on HTML routes only). Re-run live smoke after that deploy.
+**Root cause (WebKit, live):** Document CSP still included `frame-ancestors 'none'`. WebKit refuses blob EPUB iframe loads (`Refused to load blob:… frame-ancestors`). **Fixed on `main` in `cad50b3` (#39)** — drop `frame-ancestors` from CSP; keep `X-Frame-Options: DENY`. Deploy `cad50b3` and re-run `smoke:live` for full green.
 
-Screenshots in this folder from the Chromium portions of that run; WebKit foliate shots pending green smoke post-`b7ec1fc`.
+**Screenshots:** Chromium full core + upgrade paths in this folder. WebKit: library / import / upgrade-import only (foliate never opened).
+
+## Deploy `109a37b` smoke (2026-11-01)
+
+| Phase | Chromium | WebKit |
+|-------|----------|--------|
+| Upgrade | **PASS** | **FAIL** — foliate 240s |
+| Core | **PASS** | **FAIL** — foliate 240s |
+
+Asset CSP/COOP on `/assets/*` fixed in **`b7ec1fc`**.
 
 ## Prior merges on this host
 
 | SHA | Notes |
 |-----|--------|
-| `109a37b` | WebKit foliate bootstrap + build-time sandbox strip (#35) |
-| `571119b` | Tap zones (#30), page turn (#31), smoke console guards |
+| `cad50b3` | CSP: omit `frame-ancestors` for WebKit blob EPUB (#39) — merge pending deploy |
+| `663d74f` | All / Books / Audio segments (#37) |
+| `b7ec1fc` | CSP/COOP scoped to HTML routes only (#36) |
+| `109a37b` | WebKit foliate bootstrap + sandbox strip (#35) |
