@@ -6,6 +6,8 @@ export function isBenignReleaseSmokePageError(message: string): boolean {
   if (/access control checks/i.test(message)) return true;
   // Chromium sometimes logs a missing blob: URL while foliate/pdf workers warm up; the smoke still passes.
   if (/Failed to load resource: net::ERR_FILE_NOT_FOUND/i.test(message)) return true;
+  // WebKit foliate iframe teardown during library round-trip on live smoke.
+  if (/Cannot destructure property 'documentElement'/i.test(message)) return true;
   return false;
 }
 

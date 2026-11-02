@@ -1,14 +1,14 @@
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
+import { chromium, expect, test, webkit, type BrowserContext, type Page } from '@playwright/test';
 import {
   dismissLibraryOverlays,
   gotoTab,
   primeSmokeHints,
   skipOnboarding,
   waitForIndexedDbReady,
-  waitForServiceWorkerControl,
+  waitForLiveAppReady,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 
@@ -56,9 +56,33 @@ test.describe('live backup and restore', () => {
     await page.setViewportSize(VIEW);
   });
 
-  test('save backup download then restore library', async ({ page }, testInfo) => {
+  test('save backup download then restore library', async ({ page: fixturePage, context, playwright }, testInfo) => {
     test.setTimeout(600_000);
     const project = testInfo.project.name;
+    let page: Page = fixturePage;
+    let liveBrowser: BrowserContext | undefined;
+    if (live && host) {
+      const profile = join(repoRoot, 'tests/test-results/live-profile', host, `${project}-backup`);
+      rmSync(profile, { recursive: true, force: true });
+      mkdirSync(profile, { recursive: true });
+      const browserType = project === 'release-smoke-webkit' ? webkit : chromium;
+      liveBrowser = await browserType.launchPersistentContext(profile, {
+        viewport: VIEW,
+        baseURL: process.env.PAGENEST_BASE_URL,
+        serviceWorkers: 'allow',
+      });
+      await liveBrowser.addInitScript(() => {
+        try {
+          delete (window as unknown as { showSaveFilePicker?: unknown }).showSaveFilePicker;
+        } catch {
+          /* ignore */
+        }
+      });
+      await primeSmokeHints(liveBrowser);
+      page = liveBrowser.pages()[0] ?? (await liveBrowser.newPage());
+      await page.setViewportSize(VIEW);
+    }
+
     const errors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, errors);
 
@@ -66,8 +90,7 @@ test.describe('live backup and restore', () => {
     await page.goto('./');
     await skipOnboarding(page);
     await dismissLibraryOverlays(page);
-    await waitForIndexedDbReady(page);
-    await waitForServiceWorkerControl(page);
+    await waitForLiveAppReady(page);
     await page.getByRole('button', { name: 'Add books' }).first().click();
     await page.getByTestId('pick-files').setInputFiles({
       name: 'alice.epub',
@@ -110,5 +133,6 @@ test.describe('live backup and restore', () => {
     await snap(page, project, '02-restored');
 
     expect(errors, errors.join('\n')).toEqual([]);
+    await liveBrowser?.close();
   });
 });

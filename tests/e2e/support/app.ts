@@ -92,7 +92,7 @@ export async function dismissLibraryOverlays(page: Page): Promise<void> {
 
 /** Leave the reader/player and show the library grid (WebKit live may resume into `/read/` on `goto('./')`). */
 export async function openLibraryFromAnyRoute(page: Page): Promise<void> {
-  const back = page.getByRole('button', { name: 'Back to library' });
+  const back = page.getByLabel('Back to library').first();
   if (await back.isVisible().catch(() => false)) {
     await back.click();
   } else {
@@ -123,8 +123,40 @@ export async function launch(page: Page): Promise<void> {
 /** OPFS/import bootstrap finished (shared file store + import backend). */
 export async function waitForStorageBootstrap(page: Page): Promise<void> {
   await page.waitForFunction(() => (window as Window & { __pnStorageBoot?: boolean }).__pnStorageBoot === true, null, {
-    timeout: 30_000,
+    timeout: 60_000,
   });
+}
+
+/** Live deploy defers SW registration and storage bootstrap until idle (main.tsx / ServicesProvider). */
+export async function waitForLiveDeferredShell(page: Page): Promise<void> {
+  if (process.env.PAGENEST_SMOKE_LIVE !== '1') return;
+  await page.evaluate(async () => {
+    await new Promise<void>((resolve) => {
+      const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
+      if (typeof w.requestIdleCallback === 'function') {
+        w.requestIdleCallback(() => resolve(), { timeout: 15_000 });
+      } else {
+        window.setTimeout(() => resolve(), 1500);
+      }
+    });
+  });
+}
+
+/** IndexedDB, deferred idle hooks, service worker control, and storage bootstrap — live smoke entry point. */
+export async function waitForLiveAppReady(page: Page): Promise<void> {
+  await waitForIndexedDbReady(page);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await waitForLiveDeferredShell(page);
+    try {
+      await waitForServiceWorkerControl(page);
+      await waitForStorageBootstrap(page);
+      return;
+    } catch (error) {
+      if (attempt === 1 || process.env.PAGENEST_SMOKE_LIVE !== '1') throw error;
+      await page.goto('./', { waitUntil: 'domcontentloaded' });
+      await dismissLibraryOverlays(page);
+    }
+  }
 }
 
 /**
@@ -231,21 +263,39 @@ export async function waitForBookText(page: Page, opts?: { needle?: string; min?
   }
 }
 
+/** Pick up a new service worker controller without WebKit SW redirect errors on reader routes. */
+export async function reloadForServiceWorkerControl(page: Page): Promise<void> {
+  const webkitLive =
+    process.env.PAGENEST_SMOKE_LIVE === '1' && page.context().browser()?.browserType().name() === 'webkit';
+  if (webkitLive) {
+    const onShell = /\/(read|listen|pdf)\//.test(new URL(page.url()).pathname);
+    if (onShell) {
+      await openLibraryFromAnyRoute(page);
+      return;
+    }
+    await page.goto('./', { waitUntil: 'domcontentloaded' });
+    return;
+  }
+  await page.reload();
+}
+
 /**
  * Resolves once the service worker is active AND controls the page. If the worker was installed during this
  * very load, a reload is needed before it controls the page, so we do exactly that once.
  */
 export async function waitForServiceWorkerControl(page: Page): Promise<void> {
+  const timeoutMs = process.env.PAGENEST_SMOKE_LIVE === '1' ? 45_000 : 8_000;
   // `ready` never settles when the app registers no service worker, so race it against a timeout and fail with a clear reason.
-  await page.evaluate(async (timeoutMs) => {
+  await page.evaluate(async (ms) => {
     if (!('serviceWorker' in navigator)) throw new Error('Service workers are not supported');
     const none = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`No service worker became active within ${timeoutMs} ms (is one registered?)`)), timeoutMs));
+      setTimeout(() => reject(new Error(`No service worker became active within ${ms} ms (is one registered?)`)), ms));
     await Promise.race([navigator.serviceWorker.ready, none]);
-  }, 8_000);
+  }, timeoutMs);
   const controlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
   if (!controlled) {
-    await page.reload();
-    await page.waitForFunction(() => !!navigator.serviceWorker.controller, undefined, { timeout: 15_000 });
+    await reloadForServiceWorkerControl(page);
+    const controlTimeout = process.env.PAGENEST_SMOKE_LIVE === '1' ? 30_000 : 15_000;
+    await page.waitForFunction(() => !!navigator.serviceWorker.controller, undefined, { timeout: controlTimeout });
   }
 }

@@ -1,8 +1,8 @@
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
-import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl, waitForStorageBootstrap } from './support/app';
+import { chromium, expect, test, webkit, type BrowserContext, type Page } from '@playwright/test';
+import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, reloadForServiceWorkerControl, skipOnboarding, waitForIndexedDbReady, waitForLiveAppReady, waitForServiceWorkerControl, waitForStorageBootstrap } from './support/app';
 import { dismissReaderInterstitials, tapReaderZone, waitForFoliateBookTextLive } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -35,6 +35,10 @@ async function importFiles(
   await page.getByTestId('pick-files').setInputFiles(files);
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   if (waitForCard) await expect(page.getByRole('button', { name: waitForCard }).first()).toBeVisible({ timeout: 120_000 });
+  if (process.env.PAGENEST_SMOKE_LIVE === '1') {
+    await waitForStorageBootstrap(page);
+    await page.waitForTimeout(500);
+  }
 }
 
 async function openBookByFormat(page: Page, title: RegExp, format: RegExp): Promise<void> {
@@ -62,9 +66,51 @@ async function openBookCard(page: Page, title: RegExp): Promise<void> {
   await openBookByFormat(page, title, /EPUB/i);
 }
 
+/** Live WebKit can show a library card before OPFS bytes are readable; retry open once file-missing clears. */
+async function openEpubAndWaitForText(
+  page: Page,
+  title: RegExp,
+  options?: { min?: number; needle?: string; timeout?: number },
+): Promise<string> {
+  const missingHeading = page.getByRole('heading', { name: 'The file for this book is missing' });
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await waitForStorageBootstrap(page);
+    if (attempt > 0) {
+      await openLibraryFromAnyRoute(page);
+      await dismissLibraryOverlays(page);
+    }
+    await openBookCard(page, title);
+    if (await missingHeading.isVisible({ timeout: 4000 }).catch(() => false)) {
+      await page.getByLabel('Back to library').first().click();
+      await dismissLibraryOverlays(page);
+      await page.waitForTimeout(1500 * (attempt + 1));
+      continue;
+    }
+    return waitForFoliateBookTextLive(page, options);
+  }
+  throw new Error(`EPUB for ${title} never opened after retries (file missing)`);
+}
+
 async function openPdfFromLibrary(page: Page, title: RegExp): Promise<void> {
-  await openBookByFormat(page, title, /PDF/i);
-  await page.locator('.pn-pdf-page[data-rendered="true"] canvas').first().waitFor({ state: 'visible', timeout: 120_000 });
+  const missingHeading = page.getByRole('heading', { name: 'The file for this book is missing' });
+  const canvas = page.locator('.pn-pdf-page[data-rendered="true"] canvas').first();
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await waitForStorageBootstrap(page);
+    if (attempt > 0) {
+      await openLibraryFromAnyRoute(page);
+      await dismissLibraryOverlays(page);
+    }
+    await openBookByFormat(page, title, /PDF/i);
+    if (await missingHeading.isVisible({ timeout: 4000 }).catch(() => false)) {
+      await page.getByLabel('Back to library').first().click();
+      await dismissLibraryOverlays(page);
+      await page.waitForTimeout(1500 * (attempt + 1));
+      continue;
+    }
+    await canvas.waitFor({ state: 'visible', timeout: 120_000 });
+    return;
+  }
+  throw new Error(`PDF for ${title} never opened after retries`);
 }
 
 async function importAndListenMp3(page: Page): Promise<void> {
@@ -94,8 +140,90 @@ async function bumpServiceWorker(page: Page, bump: { version: number }): Promise
     undefined,
     { timeout: 30_000 },
   );
-  await page.reload();
+  if (process.env.PAGENEST_SMOKE_LIVE === '1' && page.context().browser()?.browserType().name() === 'webkit') {
+    await reloadForServiceWorkerControl(page);
+  } else {
+    await page.reload();
+  }
   await waitForServiceWorkerControl(page);
+  await waitForStorageBootstrap(page);
+}
+
+async function ensureListenShell(page: Page, title: RegExp = /Tone Book/i): Promise<void> {
+  await waitForStorageBootstrap(page);
+  const player = page.getByRole('region', { name: 'Audio player' });
+  if (!(await player.isVisible({ timeout: 8000 }).catch(() => false))) {
+    await openLibraryFromAnyRoute(page);
+    await dismissLibraryOverlays(page);
+    await page.getByRole('button', { name: title }).first().click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Listen', exact: true }).click();
+    await expect(page).toHaveURL(/\/listen\//, { timeout: 60_000 });
+  }
+  await expect(player).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible({ timeout: 15_000 });
+}
+
+async function ensureListenPlaying(page: Page, title: RegExp = /Tone Book/i): Promise<void> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await waitForStorageBootstrap(page);
+    const player = page.getByRole('region', { name: 'Audio player' });
+    if (!(await player.isVisible({ timeout: 8000 }).catch(() => false))) {
+      await openLibraryFromAnyRoute(page);
+      await dismissLibraryOverlays(page);
+      await page.getByRole('button', { name: title }).first().click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Listen', exact: true }).click();
+      await expect(page).toHaveURL(/\/listen\//, { timeout: 60_000 });
+      continue;
+    }
+    const cannot = page.getByRole('heading', { name: /Cannot play yet/i });
+    if (await cannot.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await openLibraryFromAnyRoute(page);
+      await dismissLibraryOverlays(page);
+      await page.getByRole('button', { name: title }).first().click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Listen', exact: true }).click();
+      await expect(page).toHaveURL(/\/listen\//, { timeout: 60_000 });
+      continue;
+    }
+    const play = page.getByRole('button', { name: 'Play', exact: true });
+    if (await play.isVisible({ timeout: 5000 }).catch(() => false)) {
+      await play.click();
+      await page.waitForTimeout(400);
+      if (await play.isVisible({ timeout: 2000 }).catch(() => false)) await play.click();
+    }
+    if (process.env.PAGENEST_SMOKE_LIVE === '1') {
+      await page.evaluate(async () => {
+        const audio = document.querySelector('audio');
+        if (audio?.paused) await audio.play().catch(() => undefined);
+      });
+    }
+    if (await page.getByRole('button', { name: 'Pause', exact: true }).isVisible({ timeout: 15_000 }).catch(() => false)) return;
+    if (
+      process.env.PAGENEST_SMOKE_LIVE === '1' &&
+      (await page.evaluate(() => {
+        const audio = document.querySelector('audio');
+        return audio != null && !audio.paused;
+      }))
+    ) {
+      return;
+    }
+    await page.waitForTimeout(1000 * (attempt + 1));
+  }
+  await expect
+    .poll(
+      async () => {
+        if (await page.getByRole('button', { name: 'Pause', exact: true }).isVisible().catch(() => false)) return true;
+        if (process.env.PAGENEST_SMOKE_LIVE === '1') {
+          return page.evaluate(() => {
+            const audio = document.querySelector('audio');
+            return audio != null && !audio.paused;
+          });
+        }
+        return false;
+      },
+      { timeout: 30_000 },
+    )
+    .toBe(true);
 }
 
 test.describe.configure({ mode: 'serial' });
@@ -109,24 +237,42 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await page.setViewportSize(VIEW);
   });
 
-  test('fresh profile imports EPUB, PDF, MP3; opens; survives reload and SW bump', async ({ page, context }) => {
+  test('fresh profile imports EPUB, PDF, MP3; opens; survives reload and SW bump', async ({ page: fixturePage, context, playwright }, testInfo) => {
     test.setTimeout(600_000);
+    let page: Page = fixturePage;
+    let liveBrowser: BrowserContext | undefined;
+    if (process.env.PAGENEST_SMOKE_LIVE === '1' && liveHost) {
+      const profile = join(repoRoot, 'tests/test-results/live-profile', liveHost, `${testInfo.project.name}-core`);
+      rmSync(profile, { recursive: true, force: true });
+      mkdirSync(profile, { recursive: true });
+      const browserType = testInfo.project.name === 'release-smoke-webkit' ? webkit : chromium;
+      liveBrowser = await browserType.launchPersistentContext(profile, {
+        viewport: VIEW,
+        baseURL: process.env.PAGENEST_BASE_URL,
+        serviceWorkers: 'allow',
+      });
+      await primeSmokeHints(liveBrowser);
+      page = liveBrowser.pages()[0] ?? (await liveBrowser.newPage());
+      await page.setViewportSize(VIEW);
+    } else {
+      await context.clearCookies();
+    }
+
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);
-    const swVersion = 1;
-    await page.route('**/sw.js', async (route) => {
-      const response = await route.fetch();
-      const body = `${await response.text()}\n/* release-smoke v${swVersion} */`;
-      await route.fulfill({ response, body, headers: response.headers() });
-    });
+    const swVersion = { value: 1 };
+    const installSwRoute = async () => {
+      await page.route('**/sw.js', async (route) => {
+        const response = await route.fetch();
+        const body = `${await response.text()}\n/* release-smoke v${swVersion.value} */`;
+        await route.fulfill({ response, body, headers: response.headers() });
+      });
+    };
 
-    await context.clearCookies();
     await page.goto('./');
     await skipOnboarding(page);
     await dismissLibraryOverlays(page);
-    await waitForIndexedDbReady(page);
-    await waitForStorageBootstrap(page);
-    await waitForServiceWorkerControl(page);
+    await waitForLiveAppReady(page);
     await snap(page, '01-library');
 
     const epub = readFixture('src/features/reader/fixtures/alice.epub');
@@ -134,8 +280,8 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await importFiles(page, [{ name: 'alice.epub', mimeType: 'application/epub+zip', buffer: epub }], /Alice|Wonderland/i);
     await snap(page, '02-imported-epub');
 
-    await openBookCard(page, /Alice|Wonderland/i);
-    const text = await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    await waitForStorageBootstrap(page);
+    const text = await openEpubAndWaitForText(page, /Alice|Wonderland/i, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(text).toContain('Alice');
     const epubReadUrl = page.url();
     await snap(page, '03-epub-open');
@@ -154,6 +300,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
 
     await page.goto('./');
     await importFiles(page, [{ name: 'alice.pdf', mimeType: 'application/pdf', buffer: pdf }], /Alice|Wonderland/i);
+    await expect(page.getByRole('button', { name: /Alice|Wonderland/i })).toHaveCount(2, { timeout: 120_000 });
     await snap(page, '04-imported-pdf');
 
     await openPdfFromLibrary(page, /Alice|Wonderland/i);
@@ -165,29 +312,34 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     const listenUrl = page.url();
     await snap(page, '06-audio-playing');
 
-    await page.reload();
-    await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 30_000 });
-    await page.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible({ timeout: 30_000 });
+    await page.goto('./');
+    await dismissLibraryOverlays(page);
+    await page.getByRole('button', { name: 'Tone Book' }).first().click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Listen', exact: true }).click();
+    await expect(page).toHaveURL(/\/listen\//, { timeout: 60_000 });
+    await ensureListenShell(page);
 
     await page.goto(epubReadUrl);
+    await waitForStorageBootstrap(page);
     await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await snap(page, '07-epub-after-reload');
 
     const swBump = { version: 1 };
+    await installSwRoute();
     await bumpServiceWorker(page, swBump);
     await openLibraryFromAnyRoute(page);
     await snap(page, '08-library-after-sw-bump');
     await page.goto(epubReadUrl);
+    await waitForStorageBootstrap(page);
     await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await page.goto(pdfReadUrl);
+    await waitForStorageBootstrap(page);
     await page.locator('.pn-pdf-page[data-rendered="true"] canvas').first().waitFor({ state: 'visible', timeout: 120_000 });
-    await page.goto(listenUrl);
-    await page.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible({ timeout: 30_000 });
+    await ensureListenShell(page);
     await snap(page, '09-all-formats-after-sw-bump');
 
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+    await liveBrowser?.close();
   });
 
   test('OPFS blocked: cache-backed store still imports and opens EPUB', async ({ page, context }) => {

@@ -8,9 +8,9 @@ Run:
 npm run smoke:live -- https://pagenest-42f.pages.dev/
 ```
 
-## Deploy **`f2a8e72`** — **all green** @ live (2026-11-02)
+## Deploy **`4bb85d9`** — **all green** @ live (2026-11-02)
 
-Marks export (#47), read-aloud dock toggle fix, WebKit backup in `testMatch`, refreshed PNGs. Share-target live smoke lands in the next docs PR (`release-smoke-live-share-target.spec.ts`).
+Warm first-launch perf (#50): deferred service worker + storage bootstrap. Live smoke waits for idle registration, uses persistent profiles where WebKit OPFS needs them, and avoids WebKit same-URL navigations on SW-controlled reader routes.
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
@@ -19,13 +19,24 @@ Marks export (#47), read-aloud dock toggle fix, WebKit backup in `testMatch`, re
 | OPFS blocked | skip (live) | skip (live) |
 | Read-aloud (device) | **PASS** | **PASS** |
 | Read-aloud (legacy Piper) | **PASS** | **PASS** |
+| Voice clone gate | **PASS** | **PASS** |
 | ReadEra parity shots | **PASS** | **PASS** |
 | Format fixtures (MOBI, FB2, TXT, CBZ, PDF) | **PASS** | **PASS** |
 | Backup / restore | **PASS** | **PASS** |
+| Share target (manifest + POST) | **PASS** | **PASS** |
 
-## Prior deploy **`dfe1b23`**
+Log: `npm run smoke:live -- https://pagenest-42f.pages.dev/` (all phases, 2026-11-02).
 
-Includes backup/formats phases through **`dfe1b23`**. Read-aloud live smoke needs **`openReadAloudControls`** dock-toggle fix ( **`f2a8e72`** ) after footer headphone shipped in **`be3c58a`**.
+### Voice gate screenshots (360px)
+
+| Step | Chromium | WebKit |
+|------|----------|--------|
+| Voice Studio (no Train on device) | `release-smoke-chromium-voice-gate-01-voice-studio.png` | `release-smoke-webkit-voice-gate-01-voice-studio.png` |
+| Narration voices (no My voice) | `…-voice-gate-02-narration-voices.png` | `…-voice-gate-02-narration-voices.png` |
+
+## Prior deploy **`f2a8e72`**
+
+Marks export (#47), read-aloud dock toggle fix, WebKit backup in `testMatch`, refreshed PNGs.
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
@@ -68,8 +79,6 @@ Paths are under this folder (`docs/screens/release-smoke-live/pagenest-42f.pages
 | Selection **Copy / Note** | `…-readera-03-selection-copy-note.png` | `…-readera-03-selection-copy-note.png` |
 | Collection **cover collage** | `…-readera-04-collection-collage.png` | `…-readera-04-collection-collage.png` |
 
-Paths are under this folder (`docs/screens/release-smoke-live/pagenest-42f.pages.dev/`).
-
 ### Other smoke paths
 
 **Upgrade:** `release-smoke-{chromium|webkit}-upgrade-01-import.png`, `-02-epub-open.png`, `-03-after-reload.png`
@@ -82,6 +91,7 @@ Paths are under this folder (`docs/screens/release-smoke-live/pagenest-42f.pages
 
 | SHA | Notes |
 |-----|--------|
+| `4bb85d9` | Warm perf + deferred bootstrap; live smoke hardened (#50) |
 | `f2a8e72` | Marks export, live all-green, phase audit (#47) |
 | `dfe1b23` | Backup live smoke + full stack on Pages |
 | `b4af337` | Document engine + format fixture live shots |

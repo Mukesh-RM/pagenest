@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium, expect, test, webkit } from '@playwright/test';
 import { isBenignReleaseSmokePageError } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
-import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForLiveAppReady, waitForServiceWorkerControl } from './support/app';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -48,8 +48,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   await page.goto('./');
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
-  await waitForIndexedDbReady(page);
-  await waitForServiceWorkerControl(page);
+  await waitForLiveAppReady(page);
   mkdirSync(shotDir, { recursive: true });
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-01-import.png`), fullPage: true });
 
@@ -75,9 +74,9 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   expect(savedProgress).toBeGreaterThan(0.02);
   await page.waitForTimeout(2_000);
 
-  // WebKit + service worker: reload() can throw "Response served by service worker has redirections" on live Pages.
+  // WebKit + service worker: reload()/same-URL goto on `/read/` throws "Response served by service worker has redirections".
   if (testInfo.project.name === 'release-smoke-webkit') {
-    await page.goto(page.url(), { waitUntil: 'domcontentloaded' });
+    await openLibraryFromAnyRoute(page);
   } else {
     await page.reload();
   }
