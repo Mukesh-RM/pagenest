@@ -120,6 +120,13 @@ export async function launch(page: Page): Promise<void> {
   );
 }
 
+/** OPFS/import bootstrap finished (shared file store + import backend). */
+export async function waitForStorageBootstrap(page: Page): Promise<void> {
+  await page.waitForFunction(() => (window as Window & { __pnStorageBoot?: boolean }).__pnStorageBoot === true, null, {
+    timeout: 30_000,
+  });
+}
+
 /**
  * WebKit can open IndexedDB before Dexie has finished upgrading schema; wait until the `settings` store accepts reads.
  */

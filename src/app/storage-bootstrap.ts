@@ -32,6 +32,10 @@ export async function bootstrapStorage(): Promise<void> {
     };
     setStorageBootstrap(boot);
 
+    if (typeof window !== 'undefined') {
+      (window as Window & { __pnStorageBoot?: boolean }).__pnStorageBoot = true;
+    }
+
     void import('@/sw/persist').then((m) => m.requestPersistence());
   })();
   return booting;

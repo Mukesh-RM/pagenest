@@ -37,9 +37,12 @@ export function progressWords(book: Pick<BookSummary, 'progress' | 'audio'>): st
 export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'grid', className }: BookCardProps) {
   const coverRef = useRef<HTMLSpanElement>(null);
   const words = progressWords(book);
-  const label =
+  const monogram = book.title.trim().charAt(0)?.toUpperCase() ?? '';
+  const coverVisible = book.format && monogram ? `${monogram} ${book.format}` : '';
+  const detail =
     [book.title, book.author].filter(Boolean).join(', ') +
     `. ${words}${book.format ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
+  const label = coverVisible ? `${coverVisible} ${detail}` : detail;
   return (
     <Card
       flush

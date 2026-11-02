@@ -18,7 +18,7 @@ export function ServicesProvider({ services, children }: { services?: AppService
       void import('./storage-bootstrap')
         .then(({ bootstrapStorage }) => bootstrapStorage())
         .then(() => setStorageReady(true));
-    }, 2500);
+    }, 400);
   }, [services, storageReady]);
 
   const value = useMemo<AppServices>(() => {
