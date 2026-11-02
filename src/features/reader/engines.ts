@@ -1,5 +1,5 @@
 import { importModule } from '@/app/chunk-import';
-import { FOLIATE_FORMATS } from '@/engines/epub/formats';
+import { DOCUMENT_FORMATS, FOLIATE_FORMATS } from '@/engines/epub/formats';
 import { PDF_FORMATS } from '@/engines/pdf/formats';
 import { ReaderRegistry } from './core/registry';
 
@@ -19,5 +19,10 @@ export function createDefaultRegistry(): ReaderRegistry {
       id: 'foliate',
       formats: FOLIATE_FORMATS,
       load: async () => new (await importModule(() => import('@/engines/epub/epub-engine'))).FoliateEngine(),
+    })
+    .register({
+      id: 'documents',
+      formats: DOCUMENT_FORMATS,
+      load: async () => new (await importModule(() => import('@/engines/epub/document-engine'))).DocumentEngine(),
     });
 }

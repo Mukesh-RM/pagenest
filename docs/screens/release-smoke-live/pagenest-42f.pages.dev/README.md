@@ -8,7 +8,7 @@ Run:
 npm run smoke:live -- https://pagenest-42f.pages.dev/
 ```
 
-## Deploy **`76bb353`** (`a4c7e87` ReadEra + `67f4221` SW) — **all green** (2026-11-02)
+## Deploy **`be3c58a`** (Read aloud selection + footer) — prior **`bfcc583`** ReadEra live shots
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
@@ -18,6 +18,19 @@ npm run smoke:live -- https://pagenest-42f.pages.dev/
 | Read-aloud (device) | **PASS** | **PASS** |
 | Read-aloud (legacy Piper) | **PASS** | **PASS** |
 | ReadEra parity shots | **PASS** | **PASS** |
+| Format fixtures (MOBI, FB2, TXT, CBZ, PDF) | **PASS** | **PASS** |
+
+### Format fixture screenshots (360px)
+
+| Format | Chromium | WebKit |
+|--------|----------|--------|
+| MOBI | `release-smoke-chromium-formats-mobi-open.png` | `release-smoke-webkit-formats-mobi-open.png` |
+| FB2 | `…-formats-fb2-open.png` | `…-formats-fb2-open.png` |
+| TXT | `…-formats-txt-open.png` | `…-formats-txt-open.png` |
+| CBZ | `…-formats-cbz-open.png` | `…-formats-cbz-open.png` |
+| PDF | `…-formats-pdf-open.png` | `…-formats-pdf-open.png` |
+
+Paths are under this folder (`docs/screens/release-smoke-live/pagenest-42f.pages.dev/`).
 
 ### ReadEra UI screenshots (360px)
 
