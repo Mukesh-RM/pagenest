@@ -4,9 +4,8 @@ import { isReturningDevice } from '../first-run-hint';
 import { useSettings } from '../settings-store';
 
 /**
- * Shows `onboarding` (a lazily loaded screen) on first run and the app afterwards. While saved settings
- * are still loading it shows an empty themed page, so returning users never
- * see onboarding flash by. When onboarding ends, focus moves to the new screen's heading.
+ * Shows `onboarding` on first run and the app afterwards. While settings load, returning devices see a
+ * busy shell; brand-new devices may show onboarding immediately (before IndexedDB answers).
  */
 export function FirstRunGate({ children, onboarding }: { children: ReactNode; onboarding: ReactNode }) {
   const loaded = useSettings((s) => s.loaded);
@@ -43,9 +42,15 @@ export function FirstRunGate({ children, onboarding }: { children: ReactNode; on
   }, [loaded, done]);
 
   if (!loaded) {
-    if (!isReturningDevice()) return <>{onboarding}</>;
+    if (!isReturningDevice()) {
+      wasOnboarding.current = true;
+      return <>{onboarding}</>;
+    }
     return <div aria-busy="true" className="h-full" />;
   }
-  if (!done) return <>{onboarding}</>;
+  if (!done) {
+    wasOnboarding.current = true;
+    return <>{onboarding}</>;
+  }
   return <>{children}</>;
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { SampleBookInfo } from '@/app/contracts';
 import { useSnackbar } from '@/ui';
 import { OnboardingScreen, ONBOARDING_STEP_COUNT, type StarterBookOffer } from '@/ui/screens';
+import '../screen-styles';
 import { FontSizeControl } from '../components/FontSizeControl';
 import { ThemeSwatches } from '../components/ThemeSwatches';
 import { pathForBook } from '../route-paths';
