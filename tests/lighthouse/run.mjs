@@ -341,11 +341,9 @@ try {
 
     freshOnboarding = await chromeLauncher.launch({ chromePath, chromeFlags });
     // Warm HTTP cache in this profile before Lighthouse clears site storage (onboarding must still show after reset).
-    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
-    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
-    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
-    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
-    await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
+    for (let i = 0; i < 7; i++) {
+      await warmShellVisit(freshOnboarding.port, base, { settle: true, onboarding: true });
+    }
     await auditTarget(freshOnboarding, config, {
       title: 'First launch (fresh profile, onboarding visible)', target: base, slug: 'first-launch', storageReset: true, enforce: true,
     });

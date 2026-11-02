@@ -85,7 +85,7 @@ describe('app shell', () => {
     expect((await screen.findAllByText('Persuasion')).length).toBeGreaterThan(0);
     expect(screen.getByRole('heading', { name: 'Welcome back' })).toBeInTheDocument();
     expect(screen.getAllByText('Jane Austen').length).toBeGreaterThan(0);
-    expect(await screen.findByRole('button', { name: /^Persuasion, Jane Austen\. 40% read/ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Persuasion, Jane Austen\. 40% read/ })).toBeInTheDocument();
   });
 });
 

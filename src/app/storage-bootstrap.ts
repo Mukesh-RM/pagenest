@@ -1,3 +1,4 @@
+import type { PageNestDB } from '@/data/db';
 import { getDb } from '@/data/db';
 import { createCacheBackedFileStore } from '@/data/cache-file-store';
 import { OpfsFileStore, openOpfsRoot } from '@/data/opfs';
@@ -11,7 +12,7 @@ let booting: Promise<void> | undefined;
  * so book bytes are never written to a separate worker memory store (Android Chrome can expose OPFS on the page but not
  * in the import worker).
  */
-export async function bootstrapStorage(): Promise<void> {
+export async function bootstrapStorage(db: PageNestDB = getDb()): Promise<void> {
   if (storageBootstrap()) return;
   if (booting) return booting;
   booting = (async () => {
@@ -23,7 +24,6 @@ export async function bootstrapStorage(): Promise<void> {
       importModule(() => import('@/features/library/registry')),
     ]);
 
-    const db = getDb();
     setImportBackend(() => inProcessImportBackend(db, files));
 
     const boot: StorageBootstrap = {
