@@ -1,10 +1,12 @@
-import { lazy, Suspense, type ComponentProps } from 'react';
+import { Suspense, type ComponentProps } from 'react';
+import { importModule } from '@/app/chunk-import';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import { ScreenFallback } from '@/app/ScreenFallback';
 
-const VoiceStudioApp = lazy(() => import('./VoiceStudioApp'));
+const VoiceStudioApp = lazyWithRetry(() => import('./VoiceStudioApp'));
 
 export function preloadVoiceStudio(): void {
-  void import('./VoiceStudioApp');
+  void importModule(() => import('./VoiceStudioApp'));
 }
 
 export function LazyVoiceStudioRoot(props: ComponentProps<typeof VoiceStudioApp>) {

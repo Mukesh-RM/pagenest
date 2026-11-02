@@ -7,11 +7,12 @@ export interface MyVoicesPanelProps {
   voices: readonly VoiceRecord[];
   onRecordNew: () => void;
   onExport: (voice: VoiceRecord) => void;
+  onTrain?: (voice: VoiceRecord) => void;
   onDelete: (voice: VoiceRecord) => void;
   busy?: boolean;
 }
 
-export function MyVoicesPanel({ voices, onRecordNew, onExport, onDelete, busy }: MyVoicesPanelProps) {
+export function MyVoicesPanel({ voices, onRecordNew, onExport, onTrain, onDelete, busy }: MyVoicesPanelProps) {
   return (
     <div className="pn-voice-studio">
       <header className="pn-voice-studio__hero">
@@ -41,6 +42,11 @@ export function MyVoicesPanel({ voices, onRecordNew, onExport, onDelete, busy }:
                   </span>
                 </div>
                 <div className="pn-voice-studio__voice-actions">
+                  {onTrain ? (
+                    <Button variant="secondary" onClick={() => onTrain(v)} disabled={busy}>
+                      Train on device
+                    </Button>
+                  ) : null}
                   <Button variant="secondary" onClick={() => onExport(v)} disabled={busy}>
                     Export pack
                   </Button>

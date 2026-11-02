@@ -1,6 +1,6 @@
 # Blueprint section 20 — Definition of Done (status)
 
-Tracked against **`dfe1b23`** on `https://pagenest-42f.pages.dev/`. Automated evidence links point at CI, perf gates, and live smoke docs.
+Tracked against **`f2a8e72`** on `https://pagenest-42f.pages.dev/`. Automated evidence links point at CI, perf gates, and live smoke docs.
 
 | Item | Status | Evidence |
 | --- | --- | --- |
@@ -14,6 +14,7 @@ Tracked against **`dfe1b23`** on `https://pagenest-42f.pages.dev/`. Automated ev
 | Voice Studio train + chapter | **Partial** | `src/features/voice-studio/e2e/`; full ONNX train optional (~55 MB helper) |
 | Backup restores library, progress, notes | **Yes** | `workers/import/backup.ts` tests; `release-smoke-live-backup.spec.ts` + PNGs |
 | 5,000-book library scrolls smoothly | **Yes (CI)** | `tests/perf/library.spec.ts` (`sizeForScroll: 5000`); Phase 1 **500 import** in `src/features/library/e2e/import.spec.ts` |
+| Android share target (POST) | **Yes** | `src/sw/e2e/pwa-shell.spec.mjs`; live `release-smoke-live-share-target.spec.ts` |
 | Screen reader + contrast | **Partial** | `src/ui/styles/contrast.test.ts`; Lighthouse a11y ≥90; full SR walkthrough manual |
 
 Live smoke matrix: `docs/screens/release-smoke-live/pagenest-42f.pages.dev/README.md`.

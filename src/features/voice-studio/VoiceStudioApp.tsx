@@ -16,6 +16,7 @@ import {
 import { loadVoiceRecorder, type VoiceRecorder, type RecordedClip } from './audio/recorder';
 import { deleteOwnVoice, listOwnVoices, saveOwnVoicePack } from './data/voice-pack';
 import { exportOwnVoiceZip } from './data/export-pack';
+import { trainVoiceOnDevice } from './data/train-on-device';
 import { useVoiceStudioStore } from './store/voice-studio-store';
 import { MyVoicesPanel } from './ui/MyVoicesPanel';
 import { IntroStep } from './ui/IntroStep';
@@ -242,6 +243,15 @@ export function VoiceStudioApp({ services }: VoiceStudioAppProps) {
     })();
   };
 
+  const onTrain = (voice: VoiceRecord) => {
+    setBusy(true);
+    setError(undefined);
+    void (async () => {
+      const result = await trainVoiceOnDevice(services.files, services.db, voice);
+      if (!result.ok) setError(result.message ?? 'On-device training failed.');
+    })().finally(() => setBusy(false));
+  };
+
   const onExport = (voice: VoiceRecord) => {
     setBusy(true);
     void (async () => {
@@ -342,7 +352,7 @@ export function VoiceStudioApp({ services }: VoiceStudioAppProps) {
   }
 
   return (
-    <MyVoicesPanel voices={voices} onRecordNew={beginRecordingFlow} onExport={onExport} onDelete={onDelete} busy={busy} />
+    <MyVoicesPanel voices={voices} onRecordNew={beginRecordingFlow} onExport={onExport} onTrain={onTrain} onDelete={onDelete} busy={busy} />
   );
 }
 

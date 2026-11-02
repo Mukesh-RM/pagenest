@@ -94,4 +94,17 @@ const backupArgs = [
   '--retries=0',
 ];
 r = spawnSync('npx', backupArgs, { cwd: testsDir, env, stdio: 'inherit' });
+if (r.status !== 0) process.exit(r.status ?? 1);
+
+console.log(`\n=== Live Share Target (manifest + POST) @ ${baseURL} ===\n`);
+const shareArgs = [
+  'playwright',
+  'test',
+  'e2e/release-smoke-live-share-target.spec.ts',
+  '--project=release-smoke-chromium',
+  '--project=release-smoke-webkit',
+  '--workers=1',
+  '--retries=0',
+];
+r = spawnSync('npx', shareArgs, { cwd: testsDir, env, stdio: 'inherit' });
 process.exit(r.status ?? 1);

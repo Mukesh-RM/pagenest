@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { isLocatorForMode, type Locator } from '@/app/contracts';
 import type { BookScreenProps } from '@/app/components/BookSummary';
@@ -29,7 +30,7 @@ import { settingsToAppearance } from './settings-map';
 import { currentReaderTocId, locatorForReaderTocId, readerTocFromEngine } from './toc-map';
 import './live.css';
 
-const ReaderNarration = lazy(() =>
+const ReaderNarration = lazyWithRetry(() =>
   Promise.all([
     import('@/features/player/PlayerProvider'),
     import('@/features/narration/ReaderNarrationHost'),
@@ -45,7 +46,7 @@ const ReaderNarration = lazy(() =>
     },
   })),
 );
-const DictionaryHost = lazy(() => import('@/features/dictionary/DictionaryHost'));
+const DictionaryHost = lazyWithRetry(() => import('@/features/dictionary/DictionaryHost'));
 
 type Phase =
   | { readonly status: 'loading'; readonly message: string }

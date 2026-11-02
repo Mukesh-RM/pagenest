@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
+import { Suspense, useCallback, useMemo, useState } from 'react';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import { useNavigate } from 'react-router-dom';
 import type { BookRecord } from '@/data/schema';
 import type { ResumeInfo } from '@/data/resume';
@@ -10,7 +11,7 @@ import { useAudioPlayerController, type PlayerSheet } from './useAudioPlayerCont
 import { DriveModeOverlay } from '@/features/drive-mode/DriveModeOverlay';
 import { ChaptersSheet, SleepTimerSheet } from './player-sheets';
 
-const AudioPlayerScreen = lazy(() =>
+const AudioPlayerScreen = lazyWithRetry(() =>
   import('@/ui/screens/AudioPlayerScreen').then((m) => ({ default: m.AudioPlayerScreen })),
 );
 

@@ -44,7 +44,14 @@ test('a new version activates after install (skipWaiting) and shows reload when 
     const reg = await navigator.serviceWorker.getRegistration();
     return reg?.waiting?.state === 'installed' || reg?.installing?.state === 'installing';
   });
-  await page.waitForTimeout(800);
+  await page.evaluate(async () => {
+    const reg = await navigator.serviceWorker.getRegistration();
+    reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+  });
+  await page.waitForFunction(async () => {
+    const reg = await navigator.serviceWorker.getRegistration();
+    return reg?.active?.state === 'activated' && !!navigator.serviceWorker.controller;
+  });
   const state = await page.evaluate(async () => {
     const reg = await navigator.serviceWorker.getRegistration();
     return { waiting: reg?.waiting?.state, active: reg?.active?.state, controller: !!navigator.serviceWorker.controller };

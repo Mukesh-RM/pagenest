@@ -1,7 +1,8 @@
 import '../library.css';
 import '@/ui/styles/screens.css';
 import '@/ui/styles/surfaces.css';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/app/components/PageHeader';
 import { SampleBookCard } from '@/app/components/SampleBookCard';
@@ -42,7 +43,7 @@ import { ShelfSheet } from './ShelfSheet';
 import { Toolbar } from './Toolbar';
 
 /** The design system's book detail sheet loads when the first book is tapped, not with the list. */
-const BookDetailSheet = lazy(() => import('@/ui/screens/BookDetailSheet'));
+const BookDetailSheet = lazyWithRetry(() => import('@/ui/screens/BookDetailSheet'));
 
 const SKELETON_CARDS = 4;
 

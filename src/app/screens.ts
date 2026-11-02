@@ -1,4 +1,6 @@
-import { lazy, type ComponentType } from 'react';
+import { type ComponentType } from 'react';
+import { importModule } from '@/app/chunk-import';
+import { lazyWithRetry } from '@/app/lazy-with-retry';
 
 /**
  * Route-level code splitting. Each tab and onboarding is its own chunk, so the first paint only
@@ -17,17 +19,17 @@ const loaders = {
 
 export type ScreenName = keyof typeof loaders;
 
-export const LibraryScreen = lazy(loaders.library);
-export const CollectionsScreen = lazy(loaders.collections);
-export const StatsScreen = lazy(loaders.stats);
-export const SettingsScreen = lazy(loaders.settings);
-export const ReadScreen = lazy(loaders.read);
-export const ListenScreen = lazy(loaders.listen);
-export const OnboardingScreen = lazy(loaders.onboarding);
+export const LibraryScreen = lazyWithRetry(loaders.library);
+export const CollectionsScreen = lazyWithRetry(loaders.collections);
+export const StatsScreen = lazyWithRetry(loaders.stats);
+export const SettingsScreen = lazyWithRetry(loaders.settings);
+export const ReadScreen = lazyWithRetry(loaders.read);
+export const ListenScreen = lazyWithRetry(loaders.listen);
+export const OnboardingScreen = lazyWithRetry(loaders.onboarding);
 
 /** Start downloading screens now. Safe to call many times: the browser and bundler cache the module. */
 export function preloadScreens(names: readonly ScreenName[]): void {
-  for (const name of names) void loaders[name]();
+  for (const name of names) void importModule(loaders[name]);
 }
 
 /**
