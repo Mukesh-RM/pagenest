@@ -40,7 +40,7 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
   const monogram = monogramLetter(book.title);
   const coverVisible = book.format && monogram ? `${monogram} ${book.format}` : '';
   const titleAuthor = [book.title, book.author ?? 'Unknown author'].join(' ');
-  const suffix = `. ${words}${book.format ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
+  const suffix = `. ${words}${book.format && !coverVisible ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
   const label = coverVisible ? `${coverVisible} ${titleAuthor}${suffix}` : `${titleAuthor}${suffix}`;
   return (
     <Card
@@ -62,7 +62,11 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
             <Icon name="headphones" size={16} />
           </span>
         ) : null}
-        {book.favorite ? <FavoriteBadge /> : null}
+        {book.favorite ? (
+          <span aria-hidden="true">
+            <FavoriteBadge />
+          </span>
+        ) : null}
         {book.format ? (
           <span className="pn-bookcard__format" aria-hidden="true">
             {book.format}
