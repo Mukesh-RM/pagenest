@@ -54,4 +54,17 @@ const readAloudArgs = [
   '--retries=0',
 ];
 r = spawnSync('npx', readAloudArgs, { cwd: testsDir, env, stdio: 'inherit' });
+if (r.status !== 0) process.exit(r.status ?? 1);
+
+console.log(`\n=== Live ReadEra parity shots @ ${baseURL} ===\n`);
+const readeraArgs = [
+  'playwright',
+  'test',
+  'e2e/release-smoke-live-readera.spec.ts',
+  '--project=release-smoke-chromium',
+  '--project=release-smoke-webkit',
+  '--workers=1',
+  '--retries=0',
+];
+r = spawnSync('npx', readeraArgs, { cwd: testsDir, env, stdio: 'inherit' });
 process.exit(r.status ?? 1);

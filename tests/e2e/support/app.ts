@@ -22,6 +22,31 @@ export function screenHeading(page: Page, name: TabName): Locator {
   return page.getByRole('heading', { level: 1, name: new RegExp(`^${name}$`, 'i') });
 }
 
+/** 500 ms long-press on a library card (multi-select). */
+export async function longPress(locator: Locator): Promise<void> {
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('Element has no layout box for long press');
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await locator.dispatchEvent('pointerdown', {
+    pointerId: 1,
+    pointerType: 'touch',
+    clientX: x,
+    clientY: y,
+    isPrimary: true,
+    button: 0,
+  });
+  await locator.page().waitForTimeout(550);
+  await locator.dispatchEvent('pointerup', {
+    pointerId: 1,
+    pointerType: 'touch',
+    clientX: x,
+    clientY: y,
+    isPrimary: true,
+    button: 0,
+  });
+}
+
 export async function gotoTab(page: Page, name: TabName): Promise<void> {
   await tab(page, name).click();
   await expect(tab(page, name)).toHaveAttribute('aria-current', 'page');
@@ -63,6 +88,19 @@ export async function dismissLibraryOverlays(page: Page): Promise<void> {
   await page.getByRole('dialog', { name: 'Add InkQuiet to your iPhone' }).waitFor({ state: 'visible', timeout: 2000 }).catch(() => undefined);
   await page.getByRole('button', { name: 'Got it' }).click({ timeout: 2000 }).catch(() => undefined);
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 2000 }).catch(() => undefined);
+}
+
+/** Leave the reader/player and show the library grid (WebKit live may resume into `/read/` on `goto('./')`). */
+export async function openLibraryFromAnyRoute(page: Page): Promise<void> {
+  const back = page.getByRole('button', { name: 'Back to library' });
+  if (await back.isVisible().catch(() => false)) {
+    await back.click();
+  } else {
+    await page.goto('./', { waitUntil: 'domcontentloaded' }).catch(() => undefined);
+    if (await back.isVisible().catch(() => false)) await back.click();
+  }
+  await dismissLibraryOverlays(page);
+  await expect(screenHeading(page, 'Library')).toBeVisible({ timeout: 60_000 });
 }
 
 /** Opens the app at its start URL, skips onboarding, and waits for the library screen (the home tab). */
