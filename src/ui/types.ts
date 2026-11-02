@@ -14,6 +14,8 @@ export interface BookSummary {
   audio?: boolean;
   /** A favorite: a small heart on the cover, "Favorite" in the card's spoken name. */
   favorite?: boolean;
+  /** Short format label on the cover, e.g. "EPUB", "PDF". */
+  format?: string;
 }
 
 export interface BookDetail extends BookSummary {

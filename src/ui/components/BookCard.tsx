@@ -37,7 +37,9 @@ export function progressWords(book: Pick<BookSummary, 'progress' | 'audio'>): st
 export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'grid', className }: BookCardProps) {
   const coverRef = useRef<HTMLSpanElement>(null);
   const words = progressWords(book);
-  const label = [book.title, book.author].filter(Boolean).join(', ') + `. ${words}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
+  const label =
+    [book.title, book.author].filter(Boolean).join(', ') +
+    `. ${words}${book.format ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
   return (
     <Card
       flush
@@ -59,6 +61,11 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
           </span>
         ) : null}
         {book.favorite ? <FavoriteBadge /> : null}
+        {book.format ? (
+          <span className="pn-bookcard__format" aria-hidden="true">
+            {book.format}
+          </span>
+        ) : null}
         {book.progress >= 1 ? (
           <span className="pn-bookcard__badge pn-bookcard__badge--done" aria-hidden="true">
             <Icon name="check" size={16} />

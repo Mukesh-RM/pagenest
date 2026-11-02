@@ -9,8 +9,8 @@ export type NarrationDockProps = NarrationControlsProps;
 /**
  * Read-aloud controls stay off the book page: a compact strip by default, full controls in a bottom sheet.
  */
-export function NarrationDock(props: NarrationDockProps) {
-  const [open, setOpen] = useState(false);
+export function NarrationDock({ initialOpen, ...props }: NarrationDockProps & { readonly initialOpen?: boolean }) {
+  const [open, setOpen] = useState(Boolean(initialOpen));
   const { playing, preparing } = props;
 
   return (

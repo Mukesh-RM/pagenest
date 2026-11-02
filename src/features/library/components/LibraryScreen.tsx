@@ -6,7 +6,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { PageHeader } from '@/app/components/PageHeader';
 import { SampleBookCard } from '@/app/components/SampleBookCard';
 import { useCoverUrl } from '@/app/library-hooks';
-import { pathForBook } from '@/app/route-paths';
+import { pathForBook, readPath } from '@/app/route-paths';
 import { useServices } from '@/app/services-context';
 import type { BookSummary, LibraryQuery } from '@/data/library-query';
 import { getSetting, setSetting } from '@/data/settings';
@@ -63,7 +63,21 @@ interface Detail {
 }
 
 /** The design system's book sheet for the tapped book: Read or Listen, progress, and Remove in the ⋯ menu. */
-function DetailHost({ detail, onClose, onOpenBook, onRemove, onEdit }: { detail: Detail; onClose: (reason: SheetCloseReason) => void; onOpenBook: (book: BookSummary) => void; onRemove: (book: BookSummary) => void; onEdit: (book: BookSummary) => void }) {
+function DetailHost({
+  detail,
+  onClose,
+  onOpenBook,
+  onReadAloud,
+  onRemove,
+  onEdit,
+}: {
+  detail: Detail;
+  onClose: (reason: SheetCloseReason) => void;
+  onOpenBook: (book: BookSummary) => void;
+  onReadAloud: (book: BookSummary) => void;
+  onRemove: (book: BookSummary) => void;
+  onEdit: (book: BookSummary) => void;
+}) {
   const { book } = detail;
   const coverUrl = useCoverUrl(book.id, book.coverRef !== undefined);
   const shown = useMemo<BookDetail>(
@@ -83,7 +97,7 @@ function DetailHost({ detail, onClose, onOpenBook, onRemove, onEdit }: { detail:
       book={shown}
       onClose={onClose}
       {...(detail.rect ? { originRect: detail.rect } : {})}
-      {...(listen ? { onListen: () => onOpenBook(book) } : { onRead: () => onOpenBook(book) })}
+      {...(listen ? { onListen: () => onOpenBook(book) } : { onRead: () => onOpenBook(book), onReadAloud: () => onReadAloud(book) })}
       onRemove={() => onRemove(book)}
       onEdit={() => onEdit(book)}
     />
@@ -187,6 +201,13 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
     (book: BookSummary) => {
       setDetail(undefined);
       navigate(pathForBook(book));
+    },
+    [navigate],
+  );
+  const goReadAloud = useCallback(
+    (book: BookSummary) => {
+      setDetail(undefined);
+      navigate(readPath(book.id), { state: { narrationOpen: true } });
     },
     [navigate],
   );
@@ -393,7 +414,7 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
 
       {detail ? (
         <Suspense fallback={null}>
-          <DetailHost detail={detail} onClose={closeDetail} onOpenBook={goToBook} onRemove={askRemove} onEdit={editFromDetail} />
+          <DetailHost detail={detail} onClose={closeDetail} onOpenBook={goToBook} onReadAloud={goReadAloud} onRemove={askRemove} onEdit={editFromDetail} />
         </Suspense>
       ) : null}
       <ConfirmDialog

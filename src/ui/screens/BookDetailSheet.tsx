@@ -21,6 +21,8 @@ export interface BookDetailSheetProps {
   originRect?: RectLike;
   onRead?: (book: BookDetail) => void;
   onListen?: (book: BookDetail) => void;
+  /** Opens the reader with read-aloud controls (reflow books). */
+  onReadAloud?: (book: BookDetail) => void;
   /** "Remove from library" in the ⋯ menu beside the main actions. The app answers with a ConfirmDialog; nothing is deleted here. */
   onRemove?: (book: BookDetail) => void;
   /** "Edit details" in the ⋯ menu, placed before Remove. Without it the item is not offered. The app opens its own editor. */
@@ -31,7 +33,7 @@ export interface BookDetailSheetProps {
  * Book detail (blueprint 5.6): bottom sheet on phones, a two-pane dialog from 1024 px (cover and facts on the left,
  * description and actions on the right). The background takes a tint from the cover, clamped so text stays AA.
  */
-export function BookDetailSheet({ open, book, onClose, originRect, onRead, onListen, onRemove, onEdit }: BookDetailSheetProps) {
+export function BookDetailSheet({ open, book, onClose, originRect, onRead, onListen, onReadAloud, onRemove, onEdit }: BookDetailSheetProps) {
   const tint = useCoverTint(book?.coverUrl);
   const coverRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +83,11 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
               {onListen && book.audio ? (
                 <Button variant="secondary" icon="headphones" onClick={() => onListen(book)}>
                   {started ? 'Keep listening' : 'Listen'}
+                </Button>
+              ) : null}
+              {onReadAloud && !audioOnly ? (
+                <Button variant="secondary" icon="volume" onClick={() => onReadAloud(book)}>
+                  Read aloud
                 </Button>
               ) : null}
             </>

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { isLocatorForMode, type Locator } from '@/app/contracts';
 import type { BookScreenProps } from '@/app/components/BookSummary';
 import { DEFAULT_READER_SETTINGS, loadReaderSettings, READER_FONTS, saveReaderSettings } from '@/app/reader-settings';
@@ -91,6 +91,8 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   useRouteChrome('immersive');
   const { db, progress } = useServices();
   const navigate = useNavigate();
+  const location = useLocation();
+  const openNarrationOnMount = Boolean((location.state as { narrationOpen?: boolean } | null)?.narrationOpen);
   const appTheme = useTheme().theme;
   const hostRef = useRef<HTMLDivElement>(null);
   const [settings, setSettings] = useState<ReaderSettings>({ ...DEFAULT_READER_SETTINGS, theme: appTheme });
@@ -323,6 +325,22 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     [book.id, db, doc, selection],
   );
 
+  const copySelection = useCallback(() => {
+    if (!selection) return;
+    void navigator.clipboard.writeText(selection.text).catch(() => undefined);
+    doc?.clearSelection();
+    setSelection(undefined);
+  }, [doc, selection]);
+
+  const noteFromSelection = useCallback(() => {
+    if (!doc || !selection) return;
+    void addHighlight(db, book.id, doc, selection.range, selection.text, 'yellow').then((row) => {
+      setHighlights((list) => [...list, row]);
+      openNoteEditor(row);
+    });
+    setSelection(undefined);
+  }, [book.id, db, doc, openNoteEditor, selection]);
+
   const onSettingsChange = useCallback(
     (next: ReaderSettings) => {
       setSettings(next);
@@ -507,6 +525,8 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
             <SelectionBar
               selection={selection}
               onHighlight={saveHighlight}
+              onCopy={copySelection}
+              onNote={noteFromSelection}
               onDefine={() => {
                 setDictMode('define');
                 setDictOpen(true);
@@ -545,7 +565,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         </div>
         {phase.status === 'ready' && doc && doc.layout === 'reflow' ? (
           <Suspense fallback={null}>
-            <ReaderNarration book={book} doc={doc} hostRef={hostRef} />
+            <ReaderNarration book={book} doc={doc} hostRef={hostRef} openDockOnMount={openNarrationOnMount} />
           </Suspense>
         ) : null}
       </div>

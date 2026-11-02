@@ -24,6 +24,7 @@ export interface ReaderNarrationHostProps {
   readonly book: BookScreenProps['book'];
   readonly doc: ReaderDocumentExt;
   readonly hostRef: React.RefObject<HTMLDivElement | null>;
+  readonly openDockOnMount?: boolean;
 }
 
 function formatNarrationError(err: unknown): string {
@@ -31,7 +32,7 @@ function formatNarrationError(err: unknown): string {
   return 'Read aloud failed. Try again or pick another voice.';
 }
 
-export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrationHostProps) {
+export default function ReaderNarrationHost({ book, doc, hostRef, openDockOnMount }: ReaderNarrationHostProps) {
   const audio = useAudioController();
   const [settings, setSettings] = useState<StoredNarrationSettings>(DEFAULT_NARRATION_SETTINGS);
   const narrationPrefsHydrated = useRef(false);
@@ -179,6 +180,7 @@ export default function ReaderNarrationHost({ book, doc, hostRef }: ReaderNarrat
   return (
     <>
       <NarrationDock
+        initialOpen={openDockOnMount}
         settings={settings}
         playing={playing}
         preparing={preparing}

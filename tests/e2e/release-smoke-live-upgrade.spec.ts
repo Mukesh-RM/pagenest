@@ -67,16 +67,30 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-02-epub-open.png`), fullPage: true });
 
+  const scrub = page.getByRole('slider', { name: 'Position in the book' });
+  const beforeTurn = Number((await scrub.inputValue().catch(() => '0')) || 0);
+  await page.keyboard.press('ArrowRight');
+  await expect.poll(async () => Number((await scrub.inputValue().catch(() => '0')) || 0), { timeout: 15_000 }).not.toBe(beforeTurn);
+  const savedProgress = Number((await scrub.inputValue().catch(() => '0')) || 0);
+  expect(savedProgress).toBeGreaterThan(0.02);
+  await page.waitForTimeout(2_000);
+
   // WebKit + service worker: full reload() matches real users; chunk precache + importModule handle stale hashes.
   await page.reload();
   await waitForServiceWorkerControl(page);
   await page.goto('./');
   await dismissLibraryOverlays(page);
   await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
+  await expect(page.getByRole('dialog').getByRole('button', { name: /^(continue reading|keep reading)/i }).first()).toBeVisible({
+    timeout: 30_000,
+  });
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
   await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
   await dismissReaderInterstitials(page);
   await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+  await expect.poll(async () => Number((await scrub.inputValue().catch(() => '0')) || 0), { timeout: 30_000 }).toBeGreaterThanOrEqual(
+    savedProgress * 0.85,
+  );
   await expect(page.getByText(/file for this book is missing/i)).toHaveCount(0);
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-03-after-reload.png`), fullPage: true });
 
