@@ -92,7 +92,7 @@ export default defineConfig({
     ...(includeWebkit
       ? [{ name: 'webkit-iphone', testMatch: 'e2e/**/*.spec.ts', testIgnore: ['**/release-smoke.spec.ts', '**/release-upgrade.spec.ts', '**/release-smoke-live-upgrade.spec.ts', '**/release-smoke-live-read-aloud.spec.ts'], use: { ...devices['iPhone 14'] } }]
       : []),
-    { name: 'release-smoke-chromium', testMatch: ['e2e/release-smoke.spec.ts', 'e2e/release-smoke-live-upgrade.spec.ts', 'e2e/release-smoke-live-read-aloud.spec.ts'], use: { ...devices['Pixel 7'] } },
+    { name: 'release-smoke-chromium', testMatch: ['e2e/release-smoke.spec.ts', 'e2e/release-smoke-live-upgrade.spec.ts', 'e2e/release-smoke-live-read-aloud.spec.ts', 'e2e/release-smoke-live-readera.spec.ts'], use: { ...devices['Pixel 7'] } },
     ...(includeWebkit
       ? [
           {
@@ -101,6 +101,7 @@ export default defineConfig({
               'e2e/release-smoke.spec.ts',
               'e2e/release-smoke-live-upgrade.spec.ts',
               'e2e/release-smoke-live-read-aloud.spec.ts',
+              'e2e/release-smoke-live-readera.spec.ts',
             ],
             use: { ...devices['iPhone 14'] },
           },

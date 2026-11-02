@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 import { dismissReaderInterstitials, tapReaderZone, waitForFoliateBookTextLive } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -166,7 +166,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
 
     const swBump = { version: 1 };
     await bumpServiceWorker(page, swBump);
-    await page.goto('./');
+    await openLibraryFromAnyRoute(page);
     await snap(page, '08-library-after-sw-bump');
     await page.goto(epubReadUrl);
     await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });

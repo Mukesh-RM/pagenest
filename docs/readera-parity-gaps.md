@@ -49,4 +49,4 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 | Done | WebKit foliate engine fix (`109a37b` bootstrap + sandbox strip; `#35`) |
 | Done | Pages `_headers` CSP/COOP scoped to HTML only (`b7ec1fc`, `#36`) |
 | Done | WebKit upgrade after SW reload (`67f4221` precache + import retry; no console allowlist) |
-| Open | Full green `smoke:live` on Pages after `67f4221` deploy (360px screenshots) |
+| Done | Full green `smoke:live` on Pages after `76bb353` deploy (360px screenshots + ReadEra shots) |

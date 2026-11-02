@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium, expect, test, webkit } from '@playwright/test';
 import { isBenignReleaseSmokePageError } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
-import { dismissLibraryOverlays, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -78,17 +78,22 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   // WebKit + service worker: full reload() matches real users; chunk precache + importModule handle stale hashes.
   await page.reload();
   await waitForServiceWorkerControl(page);
-  await page.goto('./');
-  await dismissLibraryOverlays(page);
-  await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
-  await expect(page.getByRole('dialog').getByRole('button', { name: /^(continue reading|keep reading)/i }).first()).toBeVisible({
-    timeout: 30_000,
-  });
-  await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
-  await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
-  await dismissReaderInterstitials(page);
-  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
-  await expect.poll(async () => Number((await scrub.inputValue().catch(() => '0')) || 0), { timeout: 30_000 }).toBeGreaterThanOrEqual(
+  if (page.url().includes('/read/')) {
+    await dismissReaderInterstitials(page);
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+  } else {
+    await openLibraryFromAnyRoute(page);
+    await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
+    await expect(page.getByRole('dialog').getByRole('button', { name: /^(continue reading|keep reading)/i }).first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();
+    await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
+    await dismissReaderInterstitials(page);
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+  }
+  const scrubAfter = page.getByRole('slider', { name: 'Position in the book' });
+  await expect.poll(async () => Number((await scrubAfter.inputValue().catch(() => '0')) || 0), { timeout: 30_000 }).toBeGreaterThanOrEqual(
     savedProgress * 0.85,
   );
   await expect(page.getByText(/file for this book is missing/i)).toHaveCount(0);
