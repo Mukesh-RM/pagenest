@@ -1,6 +1,6 @@
 # Phase 0–7 audit (vs `docs/BLUEPRINT.md` §18 and §20)
 
-Last updated: **2026-11-02** (deploy **`dfe1b23`**, live smoke + marks export PR in flight).
+Last updated: **2026-11-02** (deploy **`f2a8e72`**, marks export + live smoke all-green).
 
 | Phase | Status | Evidence | Honest gaps |
 | --- | --- | --- | --- |
@@ -19,7 +19,7 @@ Last updated: **2026-11-02** (deploy **`dfe1b23`**, live smoke + marks export PR
 | --- | --- |
 | Highlights/notes **export** | `src/features/reader/live/marks-export.ts`, Marks sheet button |
 | **500-file** library perf | `src/features/library/e2e/import.spec.ts` (500 mixed, no 50 ms long tasks) |
-| **Share target** | `src/sw/share-target.ts` + SW e2e POST |
+| **Share target** | `src/sw/share-target.ts` + SW e2e POST; **live** `release-smoke-live-share-target.spec.ts` |
 | Sentence-highlight **polish** | `narration.css`, reduced-motion scroll in `sentence-highlight.ts` |
 | More free **Piper voices** | `src/engines/tts/piper/voices.ts` (audit-OK set) |
 | **Cast voices** (Phase 5) | `style: 'cast'` in delivery planner + narration UI |

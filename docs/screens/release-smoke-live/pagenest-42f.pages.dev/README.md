@@ -8,9 +8,24 @@ Run:
 npm run smoke:live -- https://pagenest-42f.pages.dev/
 ```
 
-## Deploy **`dfe1b23`** — **all green** @ live re-run (2026-11-02)
+## Deploy **`f2a8e72`** — **all green** @ live (2026-11-02)
 
-Includes backup/formats phases through **`dfe1b23`**. Read-aloud live smoke needs **`openReadAloudControls`** dock-toggle fix (this PR) after footer headphone shipped in **`be3c58a`**.
+Marks export (#47), read-aloud dock toggle fix, WebKit backup in `testMatch`, refreshed PNGs. Share-target live smoke lands in the next docs PR (`release-smoke-live-share-target.spec.ts`).
+
+| Phase | Chromium | WebKit |
+|-------|----------|--------|
+| Upgrade | **PASS** | **PASS** |
+| Core | **PASS** | **PASS** |
+| OPFS blocked | skip (live) | skip (live) |
+| Read-aloud (device) | **PASS** | **PASS** |
+| Read-aloud (legacy Piper) | **PASS** | **PASS** |
+| ReadEra parity shots | **PASS** | **PASS** |
+| Format fixtures (MOBI, FB2, TXT, CBZ, PDF) | **PASS** | **PASS** |
+| Backup / restore | **PASS** | **PASS** |
+
+## Prior deploy **`dfe1b23`**
+
+Includes backup/formats phases through **`dfe1b23`**. Read-aloud live smoke needs **`openReadAloudControls`** dock-toggle fix ( **`f2a8e72`** ) after footer headphone shipped in **`be3c58a`**.
 
 | Phase | Chromium | WebKit |
 |-------|----------|--------|
@@ -67,6 +82,7 @@ Paths are under this folder (`docs/screens/release-smoke-live/pagenest-42f.pages
 
 | SHA | Notes |
 |-----|--------|
+| `f2a8e72` | Marks export, live all-green, phase audit (#47) |
 | `dfe1b23` | Backup live smoke + full stack on Pages |
 | `b4af337` | Document engine + format fixture live shots |
 | `be3c58a` | Selection/footer read-aloud (#44) |
