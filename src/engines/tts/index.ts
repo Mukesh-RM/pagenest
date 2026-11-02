@@ -4,6 +4,7 @@ import type { VoiceEngine, VoiceEngineId } from './types';
 import { createCloneEngine } from './helper/clone-engine';
 import { createCloneModelStore } from './helper/clone-model-store';
 import { canUseClonedVoice } from './helper/consent-gate';
+import { isOwnVoicePlaybackEnabled } from './helper/clone-shipping';
 import { createKokoroEngine } from './kokoro/kokoro-engine';
 import { createPiperEngine } from './piper/piper-engine';
 import { piperVoiceById } from './piper/voices';
@@ -33,7 +34,7 @@ export function createNarrationVoiceEngine(
 
   const pick = async (voiceId: string): Promise<VoiceEngine> => {
     if (isSpeechVoiceId(voiceId)) return speech;
-    if (await canUseClonedVoice(cloneDeps.db, cloneDeps.files, voiceId)) return clone;
+    if (isOwnVoicePlaybackEnabled() && (await canUseClonedVoice(cloneDeps.db, cloneDeps.files, voiceId))) return clone;
     if (piperVoiceById(voiceId)) return piper;
     return speech;
   };
@@ -46,7 +47,7 @@ export function createNarrationVoiceEngine(
       backgroundSafe: false,
       supportsProsody: true,
       supportsEmotion: false,
-      supportsOwnVoice: true,
+      supportsOwnVoice: isOwnVoicePlaybackEnabled(),
       needsDownload: false,
     },
     async checkAvailability() {
@@ -55,11 +56,12 @@ export function createNarrationVoiceEngine(
       return piper.checkAvailability();
     },
     async listVoices(language?: string) {
-      const [device, own, hd] = await Promise.all([
+      const [device, ownRaw, hd] = await Promise.all([
         speech.listVoices(language),
-        clone.listVoices(language),
+        isOwnVoicePlaybackEnabled() ? clone.listVoices(language) : Promise.resolve([]),
         piper.listVoices(language),
       ]);
+      const own = ownRaw;
       return [...device, ...own, ...hd];
     },
     async prepareVoice(voiceId: string, options?) {

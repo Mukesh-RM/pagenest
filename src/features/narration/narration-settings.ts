@@ -2,6 +2,7 @@ import { getSetting, setSetting, SETTING_KEYS } from '@/data/settings';
 import type { PageNestDB } from '@/data/db';
 import { isSpeechVoiceId, pickDefaultSpeechVoice } from '@/engines/tts/speech-engine';
 import { piperVoiceById } from '@/engines/tts/piper/voices';
+import { isOwnVoicePlaybackEnabled } from '@/engines/tts/helper/clone-shipping';
 import type { VoiceInfo } from '@/engines/tts/types';
 import { DEFAULT_NARRATION_SETTINGS, type NarrationSettings } from './types';
 
@@ -39,10 +40,13 @@ export function migrateNarrationSettings(
   if (!device) return { ...saved, engine: 'speech' };
 
   const match = voices.find((v) => v.id === saved.voiceId);
-  if (saved.hdVoiceExplicit && match && (match.engine === 'piper' || match.isOwnVoice)) {
+  if (match?.isOwnVoice) {
+    if (isOwnVoicePlaybackEnabled()) return saved;
+    return { ...saved, engine: 'speech', voiceId: device.id, hdVoiceExplicit: false };
+  }
+  if (saved.hdVoiceExplicit && match && match.engine === 'piper') {
     return saved;
   }
-  if (match?.isOwnVoice) return saved;
   if (saved.engine === 'speech' && match?.engine === 'speech' && isSpeechVoiceId(saved.voiceId)) {
     return saved;
   }
