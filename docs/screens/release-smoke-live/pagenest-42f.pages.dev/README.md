@@ -19,6 +19,7 @@ npm run smoke:live -- https://pagenest-42f.pages.dev/
 | Read-aloud (legacy Piper) | **PASS** | **PASS** |
 | ReadEra parity shots | **PASS** | **PASS** |
 | Format fixtures (MOBI, FB2, TXT, CBZ, PDF) | **PASS** | **PASS** |
+| Backup / restore | **PASS** | **PASS** |
 
 ### Format fixture screenshots (360px)
 
@@ -29,6 +30,13 @@ npm run smoke:live -- https://pagenest-42f.pages.dev/
 | TXT | `…-formats-txt-open.png` | `…-formats-txt-open.png` |
 | CBZ | `…-formats-cbz-open.png` | `…-formats-cbz-open.png` |
 | PDF | `…-formats-pdf-open.png` | `…-formats-pdf-open.png` |
+
+### Backup / restore screenshots (360px)
+
+| Step | Chromium | WebKit |
+|------|----------|--------|
+| Settings panel | `release-smoke-chromium-backup-01-settings.png` | `release-smoke-webkit-backup-01-settings.png` |
+| Library after restore | `…-backup-02-restored.png` | `…-backup-02-restored.png` |
 
 Paths are under this folder (`docs/screens/release-smoke-live/pagenest-42f.pages.dev/`).
 

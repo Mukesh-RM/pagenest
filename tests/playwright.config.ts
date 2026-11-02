@@ -100,6 +100,7 @@ export default defineConfig({
         'e2e/release-smoke-live-read-aloud.spec.ts',
         'e2e/release-smoke-live-readera.spec.ts',
         'e2e/release-smoke-live-formats.spec.ts',
+        'e2e/release-smoke-live-backup.spec.ts',
       ],
       use: { ...devices['Pixel 7'] },
     },
