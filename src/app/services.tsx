@@ -11,20 +11,22 @@ import { ServicesContext, type AppServices } from './services-context';
 
 /** Provide services. Pass `services` in tests; the app uses the shared database. */
 export function ServicesProvider({ services, children }: { services?: AppServices; children: ReactNode }) {
-  const [storageReady, setStorageReady] = useState(() => Boolean(storageBootstrap()));
+  const [storageReady, setStorageReady] = useState(() => Boolean(services) || Boolean(storageBootstrap()));
 
   useEffect(() => {
-    if (storageReady) return;
-    const run = (): void => {
+    if (services || storageReady) return;
+    let cancelled = false;
+    const cancelIdle = whenIdle(() => {
       void import('./storage-bootstrap')
-        .then(({ bootstrapStorage }) => bootstrapStorage(services?.db))
-        .then(() => setStorageReady(true));
+        .then(({ bootstrapStorage }) => bootstrapStorage())
+        .then(() => {
+          if (!cancelled) setStorageReady(true);
+        });
+    }, 400);
+    return () => {
+      cancelled = true;
+      cancelIdle();
     };
-    if (services) {
-      run();
-      return;
-    }
-    return whenIdle(run, 400);
   }, [services, storageReady]);
 
   const value = useMemo<AppServices>(() => {

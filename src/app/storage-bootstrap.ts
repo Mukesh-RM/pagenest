@@ -3,9 +3,15 @@ import { getDb } from '@/data/db';
 import { createCacheBackedFileStore } from '@/data/cache-file-store';
 import { OpfsFileStore, openOpfsRoot } from '@/data/opfs';
 import { importModule } from '@/app/chunk-import';
-import { setStorageBootstrap, storageBootstrap, type StorageBootstrap } from './storage-bootstrap-state';
+import { clearStorageBootstrap, setStorageBootstrap, storageBootstrap, type StorageBootstrap } from './storage-bootstrap-state';
 
 let booting: Promise<void> | undefined;
+
+/** Tests only: forget module bootstrap state between isolated databases. */
+export function resetStorageBootstrapForTests(): void {
+  booting = undefined;
+  clearStorageBootstrap();
+}
 
 /**
  * One shared file store for imports, the data client, and the reader. Imports always run in-process on this store

@@ -15,3 +15,8 @@ export function setStorageBootstrap(next: StorageBootstrap): void {
 export function storageBootstrap(): StorageBootstrap | undefined {
   return bootstrap;
 }
+
+/** Tests only: each `makeServices()` needs a fresh bootstrap. */
+export function clearStorageBootstrap(): void {
+  bootstrap = undefined;
+}
