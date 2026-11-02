@@ -45,7 +45,7 @@ describe('LibraryScreen windowing', () => {
     expect(items.length).toBeGreaterThan(0);
     expect(items.length).toBeLessThan(80);
     expect(items[0]).toHaveAttribute('aria-setsize', '5000');
-    expect(screen.getByRole('button', { name: /Title 1, Author 0/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Title 1 Author 0/ })).toBeInTheDocument();
     restore();
   });
 

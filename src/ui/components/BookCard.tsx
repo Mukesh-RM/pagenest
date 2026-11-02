@@ -32,17 +32,16 @@ export function progressWords(book: Pick<BookSummary, 'progress' | 'audio'>): st
 
 /**
  * Library card: cover (or generated title card), title, author, progress bar, headphone badge for audio.
- * A single 44 px+ button, named "Title, Author. Progress".
+ * A single 44 px+ button. The accessible name includes the same title and author text shown on the card (WCAG 2.5.3).
  */
 export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'grid', className }: BookCardProps) {
   const coverRef = useRef<HTMLSpanElement>(null);
   const words = progressWords(book);
   const monogram = monogramLetter(book.title);
   const coverVisible = book.format && monogram ? `${monogram} ${book.format}` : '';
-  const detail =
-    [book.title, book.author].filter(Boolean).join(', ') +
-    `. ${words}${book.format ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
-  const label = coverVisible ? `${coverVisible} ${detail}` : detail;
+  const titleAuthor = [book.title, book.author ?? 'Unknown author'].join(' ');
+  const suffix = `. ${words}${book.format ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
+  const label = coverVisible ? `${coverVisible} ${titleAuthor}${suffix}` : `${titleAuthor}${suffix}`;
   return (
     <Card
       flush

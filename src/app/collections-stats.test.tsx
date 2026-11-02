@@ -92,7 +92,7 @@ describe('Collections on the design system screen', () => {
     renderApp(services, { path: '/collections' });
     fireEvent.click(await screen.findByRole('button', { name: /^Classics/ }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Classics' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /Emma, Jane Austen\./ })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Emma Jane Austen\./ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Dracula/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Collections' })).toBeInTheDocument();
