@@ -1,13 +1,12 @@
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
+import { chromium, expect, test, webkit, type BrowserContext, type Page } from '@playwright/test';
 import {
   dismissLibraryOverlays,
   primeSmokeHints,
   skipOnboarding,
-  waitForIndexedDbReady,
-  waitForServiceWorkerControl,
+  waitForLiveAppReady,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
@@ -31,8 +30,7 @@ async function primeLibrary(page: Page): Promise<void> {
   await page.goto('./');
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
-  await waitForIndexedDbReady(page);
-  await waitForServiceWorkerControl(page);
+  await waitForLiveAppReady(page);
 }
 
 async function openByFormatLabel(page: Page, format: RegExp): Promise<void> {
@@ -107,9 +105,26 @@ test.describe('live format fixtures open in the reader', () => {
     await page.setViewportSize(VIEW);
   });
 
-  test('MOBI, FB2, TXT, CBZ, PDF from repo fixtures', async ({ page }, testInfo) => {
+  test('MOBI, FB2, TXT, CBZ, PDF from repo fixtures', async ({ page: fixturePage, context, playwright }, testInfo) => {
     test.setTimeout(900_000);
     const project = testInfo.project.name;
+    let page: Page = fixturePage;
+    let liveBrowser: BrowserContext | undefined;
+    if (live && host) {
+      const profile = join(repoRoot, 'tests/test-results/live-profile', host, `${project}-formats`);
+      rmSync(profile, { recursive: true, force: true });
+      mkdirSync(profile, { recursive: true });
+      const browserType = project === 'release-smoke-webkit' ? webkit : chromium;
+      liveBrowser = await browserType.launchPersistentContext(profile, {
+        viewport: VIEW,
+        baseURL: process.env.PAGENEST_BASE_URL,
+        serviceWorkers: 'allow',
+      });
+      await primeSmokeHints(liveBrowser);
+      page = liveBrowser.pages()[0] ?? (await liveBrowser.newPage());
+      await page.setViewportSize(VIEW);
+    }
+
     const errors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, errors);
 
@@ -134,5 +149,6 @@ test.describe('live format fixtures open in the reader', () => {
     }
 
     expect(errors, errors.join('\n')).toEqual([]);
+    await liveBrowser?.close();
   });
 });

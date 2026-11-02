@@ -74,8 +74,14 @@ export async function waitForFoliateBookTextLive(
     return await waitForFoliateBookText(page, { ...options, timeout });
   } catch (first) {
     if (process.env.PAGENEST_SMOKE_LIVE !== '1') throw first;
-    // WebKit + service worker: reload() can fail with "Response served by service worker has redirections".
-    await page.goto(page.url(), { waitUntil: 'domcontentloaded' });
+    // WebKit + service worker: same-URL navigation can throw "Response served by service worker has redirections".
+    const readPath = page.url().match(/\/read\/[^/?#]+/)?.[0];
+    const webkit = page.context().browser()?.browserType().name() === 'webkit';
+    if (webkit && readPath) {
+      await page.goto(`.${readPath}`, { waitUntil: 'domcontentloaded' });
+    } else {
+      await page.goto(page.url(), { waitUntil: 'domcontentloaded' });
+    }
     await dismissReaderInterstitials(page);
     return waitForFoliateBookText(page, { ...options, timeout });
   }

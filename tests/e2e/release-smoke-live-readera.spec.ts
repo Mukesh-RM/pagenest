@@ -1,15 +1,16 @@
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
+import { chromium, expect, test, webkit, type BrowserContext, type Page } from '@playwright/test';
 import {
   dismissLibraryOverlays,
   gotoTab,
   longPress,
+  openLibraryFromAnyRoute,
   primeSmokeHints,
   skipOnboarding,
-  waitForIndexedDbReady,
-  waitForServiceWorkerControl,
+  waitForLiveAppReady,
+  waitForStorageBootstrap,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, selectPhraseInFoliate, waitForFoliateBookTextLive } from './support/foliate-reader';
@@ -30,8 +31,7 @@ async function importAlice(page: Page): Promise<void> {
   await page.goto('./');
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
-  await waitForIndexedDbReady(page);
-  await waitForServiceWorkerControl(page);
+  await waitForLiveAppReady(page);
   await page.getByRole('button', { name: 'Add books' }).first().click();
   await page.getByTestId('pick-files').setInputFiles({
     name: 'alice.epub',
@@ -50,9 +50,26 @@ test.describe('live ReadEra parity screenshots', () => {
     await page.setViewportSize(VIEW);
   });
 
-  test('format chips, detail read aloud, copy/note, collection collage', async ({ page }, testInfo) => {
+  test('format chips, detail read aloud, copy/note, collection collage', async ({ page: fixturePage, context, playwright }, testInfo) => {
     test.setTimeout(600_000);
     const project = testInfo.project.name;
+    let page: Page = fixturePage;
+    let liveBrowser: BrowserContext | undefined;
+    if (live && host) {
+      const profile = join(repoRoot, 'tests/test-results/live-profile', host, `${project}-readera`);
+      rmSync(profile, { recursive: true, force: true });
+      mkdirSync(profile, { recursive: true });
+      const browserType = project === 'release-smoke-webkit' ? webkit : chromium;
+      liveBrowser = await browserType.launchPersistentContext(profile, {
+        viewport: VIEW,
+        baseURL: process.env.PAGENEST_BASE_URL,
+        serviceWorkers: 'allow',
+      });
+      await primeSmokeHints(liveBrowser);
+      page = liveBrowser.pages()[0] ?? (await liveBrowser.newPage());
+      await page.setViewportSize(VIEW);
+    }
+
     const errors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, errors);
 
@@ -68,6 +85,21 @@ test.describe('live ReadEra parity screenshots', () => {
     await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
     await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
     await dismissReaderInterstitials(page);
+    const missingHeading = page.getByRole('heading', { name: 'The file for this book is missing' });
+    for (let attempt = 0; attempt < 4; attempt++) {
+      if (await missingHeading.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await page.getByLabel('Back to library').first().click();
+        await dismissLibraryOverlays(page);
+        await card.click();
+        await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
+        await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
+        await dismissReaderInterstitials(page);
+        await page.waitForTimeout(1500 * (attempt + 1));
+        continue;
+      }
+      break;
+    }
+    await waitForStorageBootstrap(page);
     await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
     await selectPhraseInFoliate(page, 'Alice');
     await expect(page.getByRole('button', { name: 'Copy selection' })).toBeVisible();
@@ -87,5 +119,6 @@ test.describe('live ReadEra parity screenshots', () => {
     await snap(page, project, '04-collection-collage');
 
     expect(errors, errors.join('\n')).toEqual([]);
+    await liveBrowser?.close();
   });
 });

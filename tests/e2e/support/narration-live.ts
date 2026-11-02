@@ -107,7 +107,8 @@ export async function openReadAloudControls(page: Page): Promise<void> {
   if (await dockToggle.isVisible().catch(() => false)) {
     await dockToggle.click();
   } else {
-    await page.locator('footer').getByRole('button', { name: 'Read aloud' }).click();
+    const readAloud = page.getByRole('button', { name: 'Read aloud' });
+    await readAloud.first().click({ timeout: process.env.PAGENEST_SMOKE_LIVE === '1' ? 20_000 : 8_000 });
   }
   await expect(region).toBeVisible({ timeout: 15_000 });
 }

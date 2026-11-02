@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { skipOnboarding, waitForServiceWorkerControl } from './support/app';
+import { skipOnboarding, waitForLiveAppReady, waitForServiceWorkerControl } from './support/app';
 
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
 
@@ -19,7 +19,7 @@ async function loadManifest(page: Page): Promise<Manifest> {
 async function primeServiceWorker(page: Page): Promise<void> {
   await page.goto('./');
   await skipOnboarding(page);
-  await page.evaluate(() => navigator.serviceWorker.ready);
+  await waitForLiveAppReady(page);
   await page.reload();
   await waitForServiceWorkerControl(page);
 }

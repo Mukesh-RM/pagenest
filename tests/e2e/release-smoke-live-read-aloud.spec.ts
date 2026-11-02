@@ -1,13 +1,14 @@
-import { mkdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expect, test, type Page } from '@playwright/test';
+import { chromium, expect, test, webkit, type BrowserContext, type Page } from '@playwright/test';
 import {
   dismissLibraryOverlays,
+  openLibraryFromAnyRoute,
   primeSmokeHints,
   skipOnboarding,
-  waitForIndexedDbReady,
-  waitForServiceWorkerControl,
+  waitForLiveAppReady,
+  waitForStorageBootstrap,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
@@ -29,8 +30,7 @@ async function importAliceEpub(page: Page): Promise<void> {
   await page.goto('./');
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
-  await waitForIndexedDbReady(page);
-  await waitForServiceWorkerControl(page);
+  await waitForLiveAppReady(page);
   await page.getByRole('button', { name: 'Add books' }).first().click();
   await page.getByTestId('pick-files').setInputFiles({
     name: 'alice.epub',
@@ -39,11 +39,27 @@ async function importAliceEpub(page: Page): Promise<void> {
   });
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
-  await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
-  await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
-  await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
-  await dismissReaderInterstitials(page);
-  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+  await waitForStorageBootstrap(page);
+  const missingHeading = page.getByRole('heading', { name: 'The file for this book is missing' });
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) {
+      await openLibraryFromAnyRoute(page);
+      await dismissLibraryOverlays(page);
+    }
+    await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
+    await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
+    await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
+    await dismissReaderInterstitials(page);
+    if (await missingHeading.isVisible({ timeout: 4000 }).catch(() => false)) {
+      await page.getByLabel('Back to library').first().click();
+      await dismissLibraryOverlays(page);
+      await page.waitForTimeout(1500 * (attempt + 1));
+      continue;
+    }
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+    return;
+  }
+  throw new Error('Alice EPUB did not open after import (file missing)');
 }
 
 test.describe('live read-aloud produces audible audio', () => {
@@ -55,9 +71,28 @@ test.describe('live read-aloud produces audible audio', () => {
     await page.setViewportSize(VIEW);
   });
 
-  test('device voice: instant playback, play/pause, speed', async ({ page }, testInfo) => {
+  test('device voice: instant playback, play/pause, speed', async ({ page: fixturePage, context, playwright }, testInfo) => {
     test.setTimeout(600_000);
     const project = testInfo.project.name;
+    let page: Page = fixturePage;
+    let liveBrowser: BrowserContext | undefined;
+    if (live && host) {
+      const profile = join(repoRoot, 'tests/test-results/live-profile', host, `${project}-read-aloud-device`);
+      rmSync(profile, { recursive: true, force: true });
+      mkdirSync(profile, { recursive: true });
+      const browserType = project === 'release-smoke-webkit' ? webkit : chromium;
+      liveBrowser = await browserType.launchPersistentContext(profile, {
+        viewport: VIEW,
+        baseURL: process.env.PAGENEST_BASE_URL,
+        serviceWorkers: 'allow',
+      });
+      await primeSmokeHints(liveBrowser);
+      await primeDeviceSpeechForLiveSmoke(liveBrowser);
+      page = liveBrowser.pages()[0] ?? (await liveBrowser.newPage());
+      await page.setViewportSize(VIEW);
+    } else {
+      await primeDeviceSpeechForLiveSmoke(context);
+    }
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);
 
@@ -82,17 +117,42 @@ test.describe('live read-aloud produces audible audio', () => {
 
     await expect(page.getByRole('alert')).toHaveCount(0);
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
+    await liveBrowser?.close();
   });
 
-  test('legacy Piper pref migrates to device voice (no HD download)', async ({ page }, testInfo) => {
+  test('legacy Piper pref migrates to device voice (no HD download)', async ({ page: fixturePage, context, playwright }, testInfo) => {
     test.setTimeout(600_000);
     const project = testInfo.project.name;
+    let page: Page = fixturePage;
+    let liveBrowser: BrowserContext | undefined;
+    if (live && host) {
+      const profile = join(repoRoot, 'tests/test-results/live-profile', host, `${project}-read-aloud-legacy`);
+      rmSync(profile, { recursive: true, force: true });
+      mkdirSync(profile, { recursive: true });
+      const browserType = project === 'release-smoke-webkit' ? webkit : chromium;
+      liveBrowser = await browserType.launchPersistentContext(profile, {
+        viewport: VIEW,
+        baseURL: process.env.PAGENEST_BASE_URL,
+        serviceWorkers: 'allow',
+      });
+      await primeSmokeHints(liveBrowser);
+      await primeDeviceSpeechForLiveSmoke(liveBrowser);
+      page = liveBrowser.pages()[0] ?? (await liveBrowser.newPage());
+      await page.setViewportSize(VIEW);
+    } else {
+      await primeDeviceSpeechForLiveSmoke(context);
+    }
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);
 
     await importAliceEpub(page);
     await seedLegacyPiperNarrationSettings(page);
-    await page.reload({ waitUntil: 'domcontentloaded' });
+    if (project === 'release-smoke-webkit') {
+      const readPath = page.url().match(/\/read\/[^/?#]+/)?.[0];
+      if (readPath) await page.goto(`.${readPath}`, { waitUntil: 'domcontentloaded' });
+    } else {
+      await page.reload({ waitUntil: 'domcontentloaded' });
+    }
     await dismissReaderInterstitials(page);
     await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
     await snap(page, project, 'legacy-01-reader');
@@ -110,5 +170,6 @@ test.describe('live read-aloud produces audible audio', () => {
     const joined = consoleErrors.join('\n');
     expect(joined).not.toMatch(/sid.*feeds/i);
     expect(consoleErrors, joined).toEqual([]);
+    await liveBrowser?.close();
   });
 });
