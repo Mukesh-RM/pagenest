@@ -27,8 +27,8 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 
 | Status | Gap |
 |--------|-----|
-| Open | Selection bar: read-aloud from selection |
 | Done | Selection bar: copy, note shortcut |
+| Done | Selection bar: read-aloud from selection |
 | Open | Bookmark ticks on scrubber |
 | Done | Release smoke: assert saved read position after reload (live upgrade spec) |
 | Open | MiniSearch background index (blueprint §7) |
@@ -39,8 +39,8 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 |--------|-----|
 | Done | Device Web Speech default (`753d761`) |
 | Done | Read aloud from library detail |
-| Open | Footer headphone opens narration |
-| Open | PDF read-aloud |
+| Done | Footer headphone opens narration |
+| Done | PDF read-aloud (visible page text) |
 
 ## Live smoke
 

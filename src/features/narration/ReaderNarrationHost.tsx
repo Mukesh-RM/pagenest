@@ -12,10 +12,11 @@ import { createNarrationVoiceEngine, pickDefaultSpeechVoice } from '@/engines/tt
 import { createPiperModelStore } from '@/engines/tts/piper/model-store';
 import { getDb } from '@/data/db';
 import { createFileStore } from '@/data/opfs';
-import { readChapterText } from './chapter-text';
+import { readNarrationSourceText } from './chapter-text';
 import { NarrationDock } from './NarrationDock';
 import { NarrationSheet } from './NarrationSheet';
 import { NarrationSession } from './narration-session';
+import { useRegisterNarrationReaderBridge } from './narration-reader-bridge';
 import { applySentenceHighlights, clearSentenceHighlights, scrollSentenceIntoView } from './sentence-highlight';
 import { loadNarrationSettings, saveNarrationSettings, type StoredNarrationSettings } from './narration-settings';
 import { DEFAULT_NARRATION_SETTINGS } from './types';
@@ -39,6 +40,8 @@ export default function ReaderNarrationHost({ book, doc, hostRef, openDockOnMoun
   const [voiceOpen, setVoiceOpen] = useState(false);
   const [sleepOpen, setSleepOpen] = useState(false);
   const [driveOpen, setDriveOpen] = useState(false);
+  const [dockOpen, setDockOpen] = useState(Boolean(openDockOnMount));
+  const registerBridge = useRegisterNarrationReaderBridge();
   const audioSleep = usePlayerStore((s) => s.state.sleep);
   const [voices, setVoices] = useState<readonly VoiceInfo[]>([]);
   const [playing, setPlaying] = useState(false);
@@ -103,7 +106,7 @@ export default function ReaderNarrationHost({ book, doc, hostRef, openDockOnMoun
 
   useEffect(() => {
     if (!doc) return undefined;
-    const refresh = (): void => setChapterText(readChapterText(hostRef));
+    const refresh = (): void => setChapterText(readNarrationSourceText(hostRef, doc));
     refresh();
     const id = window.setInterval(refresh, 500);
     return () => window.clearInterval(id);
@@ -133,6 +136,38 @@ export default function ReaderNarrationHost({ book, doc, hostRef, openDockOnMoun
     return pickDefaultSpeechVoice(voices, book.language);
   }, [book.language, settings.voiceId, voices]);
 
+  const speakText = useCallback(
+    async (text: string, startSentence = 0) => {
+      const session = sessionRef.current;
+      if (!session) return;
+      const trimmed = text.trim();
+      if (!trimmed) throw new Error('No text to read.');
+      setError(undefined);
+      setPreparing(true);
+      setPrepMessage(undefined);
+      try {
+        const voice = resolvedVoice();
+        if (!voice) throw new Error('No read-aloud voice is available on this device.');
+        session.configure({
+          ...settings,
+          engine: voice.engine,
+          voiceId: voice.id,
+        });
+        await session.prepare(book.id, book.title, trimmed, Math.max(0, startSentence), (msg) => setPrepMessage(msg));
+        session.playFromUserGesture(Math.max(0, startSentence));
+      } catch (err) {
+        sessionRef.current?.pause();
+        setError(formatNarrationError(err));
+        throw err;
+      } finally {
+        sync();
+        setPreparing(false);
+        setPrepMessage(undefined);
+      }
+    },
+    [book.id, book.title, resolvedVoice, settings, sync],
+  );
+
   const onPlayPause = useCallback(async () => {
     const session = sessionRef.current;
     if (!session) return;
@@ -146,29 +181,16 @@ export default function ReaderNarrationHost({ book, doc, hostRef, openDockOnMoun
       sync();
       return;
     }
-    setError(undefined);
-    setPreparing(true);
-    setPrepMessage(undefined);
-    try {
-      const text = readChapterText(hostRef);
-      const voice = resolvedVoice();
-      if (!voice) throw new Error('No read-aloud voice is available on this device.');
-      session.configure({
-        ...settings,
-        engine: voice.engine,
-        voiceId: voice.id,
-      });
-      await session.prepare(book.id, book.title, text, Math.max(0, active), (msg) => setPrepMessage(msg));
-      session.playFromUserGesture(Math.max(0, active));
-    } catch (err) {
-      sessionRef.current?.pause();
-      setError(formatNarrationError(err));
-    } finally {
-      sync();
-      setPreparing(false);
-      setPrepMessage(undefined);
-    }
-  }, [active, book.id, book.title, hostRef, playing, resolvedVoice, settings, sync]);
+    await speakText(readNarrationSourceText(hostRef, doc), Math.max(0, active));
+  }, [active, doc, hostRef, playing, speakText, sync]);
+
+  useEffect(() => {
+    registerBridge({
+      openDock: () => setDockOpen(true),
+      speakSelection: (text) => speakText(text, 0),
+    });
+    return () => registerBridge(undefined);
+  }, [registerBridge, speakText]);
 
   const sleepLabel = useMemo(() => {
     if (!audioSleep) return 'Off';
@@ -180,7 +202,8 @@ export default function ReaderNarrationHost({ book, doc, hostRef, openDockOnMoun
   return (
     <>
       <NarrationDock
-        initialOpen={openDockOnMount}
+        open={dockOpen}
+        onOpenChange={setDockOpen}
         settings={settings}
         playing={playing}
         preparing={preparing}

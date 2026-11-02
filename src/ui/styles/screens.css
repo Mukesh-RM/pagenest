@@ -328,6 +328,10 @@
   box-shadow: 0 -4px 16px rgb(var(--pn-scrim) / 0.05);
 }
 
+.pn-reader__footer-read-aloud {
+  align-self: flex-start;
+}
+
 .pn-reader__percent {
   margin: 0;
   color: rgb(var(--pn-muted));
