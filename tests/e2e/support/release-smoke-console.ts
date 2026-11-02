@@ -4,8 +4,6 @@ import type { Page } from '@playwright/test';
 export function isBenignReleaseSmokePageError(message: string): boolean {
   if (/Unable to preload CSS for \/assets\/[^ ]+\.css/i.test(message)) return true;
   if (/access control checks/i.test(message)) return true;
-  // WebKit + live SW: a lazy chunk can log this while the reader still opens (upgrade persistent profile).
-  if (process.env.PAGENEST_SMOKE_LIVE === '1' && /Importing a module script failed/i.test(message)) return true;
   return false;
 }
 

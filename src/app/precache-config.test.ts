@@ -29,17 +29,8 @@ describe('service worker precache configuration (vite.config.ts)', () => {
   });
 
   it('does not ignore the import worker, the data worker or the parser chunks, and never ignores JavaScript as a whole', () => {
-    const ENGINE_IGNORES = [
-      '**/assets/engine-*.js',
-      '**/assets/docx-core-*.js',
-      '**/assets/docx.worker-*.js',
-      '**/assets/piper.worker-*.js',
-      '**/assets/clone.worker-*.js',
-      '**/assets/engine-tts-*.js',
-      '**/assets/engine-bergamot-*.js',
-      '**/assets/pdf.worker*.mjs',
-    ];
-    for (const ignore of list('globIgnores').filter((g) => !ENGINE_IGNORES.includes(g))) {
+    const OPTIONAL_IGNORES = ['**/assets/piper.worker-*.js', '**/assets/clone.worker-*.js'];
+    for (const ignore of list('globIgnores').filter((g) => !OPTIONAL_IGNORES.includes(g))) {
       expect(ignore).not.toMatch(/worker|Parser|\.js\b/i);
     }
     // The sample must still cover what import needs offline: nothing ignored matches these names.
@@ -54,7 +45,7 @@ describe('service worker precache configuration (vite.config.ts)', () => {
     }
   });
 
-  it('Decision 15: the Reader engines (pdf.js, foliate, docx and their workers) are not precached; they are cached at runtime', () => {
+  it('Decision 15: Reader lazy engines and pdf worker are precached with the shell (no stale import after SW update)', () => {
     for (const name of [
       'assets/engine-pdf-abc.js',
       'assets/engine-foliate-abc.js',
@@ -66,9 +57,9 @@ describe('service worker precache configuration (vite.config.ts)', () => {
       expect(
         list('globIgnores').some((ignore) => minimatchLike(ignore, name)),
         name,
-      ).toBe(true);
+      ).toBe(false);
     }
-    expect(list('globPatterns').some((g) => /mjs/.test(g))).toBe(false);
+    expect(list('globPatterns').some((g) => /mjs/.test(g))).toBe(true);
   });
 
   it('names the engine chunks the way scripts/check-bundle.mjs and the precache rules expect', () => {
@@ -83,8 +74,8 @@ describe('service worker precache configuration (vite.config.ts)', () => {
     for (const pattern of list('globPatterns')) expect(pattern).not.toMatch(/epub|pdf|mp3|m4b/i);
   });
 
-  it('keeps big files out through the size cap as well (1 MB), so a stray asset cannot sneak in', () => {
-    expect(config).toMatch(/maximumFileSizeToCacheInBytes:\s*1024\s*\*\s*1024/);
+  it('keeps big book files out through the size cap (2 MB), so a stray asset cannot sneak in', () => {
+    expect(config).toMatch(/maximumFileSizeToCacheInBytes:\s*2\s*\*\s*1024\s*\*\s*1024/);
   });
 
   it('builds ES-module workers (the Library workers use dynamic import and nested workers)', () => {

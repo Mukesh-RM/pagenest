@@ -90,10 +90,10 @@ describe('SampleBookProvider (contract in src/app/contracts/sample-book.ts)', ()
     expect(await services.db.books.count()).toBe(0);
   });
 
-  it('is not precached by the service worker', () => {
+  it('is not precached by the service worker (fetched on tap only)', () => {
     const config = readFileSync(resolve(__dirname, '../../../vite.config.ts'), 'utf8');
-    expect(config).toMatch(/globIgnores:[\s\S]*engine-foliate/);
-    expect(config).toMatch(/globPatterns:\s*\['\*\*\/\*\.\{js,css,html,png,svg,ico,webmanifest\}'/);
+    expect(config).toMatch(/globPatterns:[\s\S]*mjs/);
+    expect(config).not.toMatch(/globPatterns:[\s\S]*epub/i);
   });
 
   it('has its provenance and license written down', () => {
