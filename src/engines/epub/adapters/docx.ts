@@ -17,18 +17,20 @@ export async function checkDocx(file: Blob): Promise<void> {
 
 export async function convertDocx(file: Blob): Promise<DocxResult> {
   await checkDocx(file);
-  const buffer = await file.arrayBuffer();
-  if (typeof Worker === 'undefined') return (await import('./docx-core')).convertDocxInline(buffer);
+  const inline = async (): Promise<DocxResult> =>
+    (await import('./docx-core')).convertDocxInline(await file.arrayBuffer());
+  if (typeof Worker === 'undefined') return inline();
   const worker = new Worker(new URL('./docx.worker.ts', import.meta.url), { type: 'module' });
+  const buffer = await file.arrayBuffer();
   try {
     return await new Promise<DocxResult>((resolve, reject) => {
       worker.onmessage = (event: MessageEvent<{ ok: true; result: DocxResult } | { ok: false }>): void => {
         if (event.data.ok) resolve(event.data.result);
-        else reject(readerError('corrupt'));
+        else reject(new Error('docx worker conversion failed'));
       };
-      worker.onerror = (): void => reject(readerError('corrupt'));
-      worker.postMessage(buffer, [buffer]);
-    });
+      worker.onerror = (): void => reject(new Error('docx worker failed'));
+      worker.postMessage(buffer.slice(0), [buffer.slice(0)]);
+    }).catch(() => inline());
   } finally {
     worker.terminate();
   }
