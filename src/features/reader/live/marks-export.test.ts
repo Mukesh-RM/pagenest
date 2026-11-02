@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildMarksExportText, marksExportFileName } from './marks-export';
-import type { BookmarkRecord, HighlightRecord } from '@/data/schema';
+import type { HighlightRecord } from '@/data/schema';
 
 const hl = (partial: Partial<HighlightRecord> & Pick<HighlightRecord, 'text'>): HighlightRecord => ({
   id: 'h1',
