@@ -3,7 +3,7 @@ import { Icon } from '../icons';
 import { cx } from '../utils/cx';
 import { measure, rememberFlipOrigin, type RectLike } from '../utils/flip';
 import type { BookSummary } from '../types';
-import { BookCover } from './BookCover';
+import { BookCover, monogramLetter } from './BookCover';
 import { Card } from './Card';
 import { FavoriteBadge } from './FavoriteBadge';
 import { ProgressBar } from './ProgressBar';
@@ -32,14 +32,16 @@ export function progressWords(book: Pick<BookSummary, 'progress' | 'audio'>): st
 
 /**
  * Library card: cover (or generated title card), title, author, progress bar, headphone badge for audio.
- * A single 44 px+ button, named "Title, Author. Progress".
+ * A single 44 px+ button. The accessible name includes the same title and author text shown on the card (WCAG 2.5.3).
  */
 export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'grid', className }: BookCardProps) {
   const coverRef = useRef<HTMLSpanElement>(null);
   const words = progressWords(book);
-  const label =
-    [book.title, book.author].filter(Boolean).join(', ') +
-    `. ${words}${book.format ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
+  const monogram = monogramLetter(book.title);
+  const coverVisible = book.format && monogram ? `${monogram} ${book.format}` : '';
+  const titleAuthor = [book.title, book.author ?? 'Unknown author'].join(' ');
+  const suffix = `. ${words}${book.format && !coverVisible ? `. ${book.format}` : ''}${book.audio ? '. Has audio' : ''}${book.favorite ? '. Favorite' : ''}`;
+  const label = coverVisible ? `${coverVisible} ${titleAuthor}${suffix}` : `${titleAuthor}${suffix}`;
   return (
     <Card
       flush
@@ -60,7 +62,11 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
             <Icon name="headphones" size={16} />
           </span>
         ) : null}
-        {book.favorite ? <FavoriteBadge /> : null}
+        {book.favorite ? (
+          <span aria-hidden="true">
+            <FavoriteBadge />
+          </span>
+        ) : null}
         {book.format ? (
           <span className="pn-bookcard__format" aria-hidden="true">
             {book.format}
@@ -75,8 +81,8 @@ export function BookCard({ book, onOpen, onSelect, selected, eager, layout = 'gr
       <span className="pn-bookcard__body" aria-hidden="true">
         <span className="pn-bookcard__title">{book.title}</span>
         <span className="pn-bookcard__author">{book.author ?? 'Unknown author'}</span>
-        <span className="pn-bookcard__progress">
-          <ProgressBar value={book.progress} label={words} />
+        <span className="pn-bookcard__progress" aria-hidden="true">
+          <ProgressBar value={book.progress} label={words} decorative />
         </span>
         {layout === 'list' ? <span className="pn-bookcard__words">{words}</span> : null}
       </span>

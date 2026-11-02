@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { gotoTab, launch, TABS } from '../e2e/support/app';
+import { gotoTab, launch, TABS, waitForStorageBootstrap } from '../e2e/support/app';
 import { expectLabelInName } from '../e2e/support/axe';
 import { seedLibrary } from '../e2e/support/library';
 import { expectResumeCardRendered, seedResumeBook } from '../e2e/support/resume';
@@ -12,6 +12,7 @@ test.describe('label in name (WCAG 2.5.3)', () => {
     await seedLibrary(page, { count: 30 });
     await seedResumeBook(page);
     await expectResumeCardRendered(page);
+    await waitForStorageBootstrap(page);
     await expectLabelInName(page, 'Library');
   });
 

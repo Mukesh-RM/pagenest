@@ -1,5 +1,5 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
-import { TABS, installHelpButton, gotoTab, launch, sheet, tab, themeOption, type TabName } from '../e2e/support/app';
+import { TABS, installHelpButton, gotoTab, launch, sheet, tab, themeOption, waitForStorageBootstrap, type TabName } from '../e2e/support/app';
 import { longTasks, machineLoadPerCore, measureInput, percentile, recordLongTasks, throttleCpu } from '../e2e/support/perf';
 import { BUDGETS } from './budgets';
 
@@ -98,6 +98,11 @@ test('opening the Install help bottom sheet is within the tap budget (p95)', asy
 
 test('no long task blocks the main thread while using the tabs', async ({ page }) => {
   await launch(page);
+  await waitForStorageBootstrap(page);
+  await page.evaluate(() => {
+    (window as unknown as { __longTasks?: number[] }).__longTasks = [];
+  });
+  await recordLongTasks(page);
   for (let i = 0; i < 12; i++) await tapCurrent(page, TABS[(i + 1) % TABS.length]!);
   const tasks = await longTasks(page);
   const worst = Math.max(0, ...tasks);

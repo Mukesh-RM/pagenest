@@ -75,8 +75,12 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   expect(savedProgress).toBeGreaterThan(0.02);
   await page.waitForTimeout(2_000);
 
-  // WebKit + service worker: full reload() matches real users; chunk precache + importModule handle stale hashes.
-  await page.reload();
+  // WebKit + service worker: reload() can throw "Response served by service worker has redirections" on live Pages.
+  if (testInfo.project.name === 'release-smoke-webkit') {
+    await page.goto(page.url(), { waitUntil: 'domcontentloaded' });
+  } else {
+    await page.reload();
+  }
   await waitForServiceWorkerControl(page);
   if (page.url().includes('/read/')) {
     await dismissReaderInterstitials(page);

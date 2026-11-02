@@ -103,7 +103,7 @@ describe('LibraryScreen', () => {
   it('opening a book passes the book and the cover box (for the shared transition)', () => {
     const onOpenBook = vi.fn();
     render(library({ onOpenBook }));
-    fireEvent.click(screen.getAllByRole('button', { name: /^Nightjar, Priya Raman/ })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: /^Nightjar Priya Raman/ })[0]!);
     expect(onOpenBook).toHaveBeenCalledTimes(1);
     expect(onOpenBook.mock.calls[0]![0]).toMatchObject({ title: 'Nightjar' });
     expect(onOpenBook.mock.calls[0]![1]).toHaveProperty('width');

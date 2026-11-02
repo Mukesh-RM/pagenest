@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl, waitForStorageBootstrap } from './support/app';
 import { dismissReaderInterstitials, tapReaderZone, waitForFoliateBookTextLive } from './support/foliate-reader';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -125,6 +125,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await skipOnboarding(page);
     await dismissLibraryOverlays(page);
     await waitForIndexedDbReady(page);
+    await waitForStorageBootstrap(page);
     await waitForServiceWorkerControl(page);
     await snap(page, '01-library');
 

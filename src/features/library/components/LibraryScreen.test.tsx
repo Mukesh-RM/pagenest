@@ -102,7 +102,7 @@ async function seed(count: number): Promise<void> {
   );
 }
 const cards = () => screen.queryAllByRole('listitem').filter((li) => li.classList.contains('pn-vlist__item'));
-const anyCard = async (): Promise<HTMLElement> => (await screen.findAllByRole('button', { name: /, Author \d/ }))[0] as HTMLElement;
+const anyCard = async (): Promise<HTMLElement> => (await screen.findAllByRole('button', { name: / Author \d/ }))[0] as HTMLElement;
 
 describe('the library list', () => {
   it('shows books seeded straight into the database, with nothing else set up', async () => {

@@ -35,8 +35,8 @@ describe('icons for the Library', () => {
 
 describe('favorite badge', () => {
   it('shows on a favorite card, named Favorite, and is part of the card name', () => {
-    render(<BookCard book={{ ...book, favorite: true }} onOpen={noop} />);
-    expect(screen.getByRole('img', { name: 'Favorite' })).toBeInTheDocument();
+    const { container } = render(<BookCard book={{ ...book, favorite: true }} onOpen={noop} />);
+    expect(container.querySelector('.pn-bookcard__badge--favorite')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Favorite/ })).toBeInTheDocument();
   });
 

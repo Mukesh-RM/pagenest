@@ -110,6 +110,21 @@ export async function launch(page: Page): Promise<void> {
   await waitForIndexedDbReady(page);
   await expect(primaryNav(page)).toBeVisible();
   await expect(screenHeading(page, 'Library')).toBeVisible();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const idle = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+        if (typeof idle === 'function') idle(() => resolve(), { timeout: 3000 });
+        else window.setTimeout(() => resolve(), 700);
+      }),
+  );
+}
+
+/** OPFS/import bootstrap finished (shared file store + import backend). */
+export async function waitForStorageBootstrap(page: Page): Promise<void> {
+  await page.waitForFunction(() => (window as Window & { __pnStorageBoot?: boolean }).__pnStorageBoot === true, null, {
+    timeout: 30_000,
+  });
 }
 
 /**

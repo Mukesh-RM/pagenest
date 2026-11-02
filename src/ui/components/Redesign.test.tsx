@@ -134,10 +134,10 @@ describe('ChoiceGroup', () => {
 });
 
 describe('BookCard and BookCover', () => {
-  it('is one button named "Title, Author. Progress. Has audio"', () => {
+  it('is one button whose name includes the visible title, author, and progress', () => {
     const onOpen = vi.fn();
     render(<BookCard book={book} onOpen={onOpen} />);
-    const card = screen.getByRole('button', { name: 'Nightjar, Priya Raman. 87% listened. Has audio' });
+    const card = screen.getByRole('button', { name: 'Nightjar Priya Raman. 87% listened. Has audio' });
     fireEvent.click(card);
     expect(onOpen).toHaveBeenCalledTimes(1);
     expect(onOpen.mock.calls[0]![0]).toMatchObject({ id: 'x' });
@@ -153,7 +153,7 @@ describe('BookCard and BookCover', () => {
 
   it('a book without an author or cover still renders a title card and a label', () => {
     render(<BookCard book={{ id: 'y', title: 'Untitled Scans, Box 4', progress: 0.11 }} onOpen={() => undefined} />);
-    expect(screen.getByRole('button', { name: 'Untitled Scans, Box 4. 11% read' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Untitled Scans, Box 4 Unknown author. 11% read' })).toBeInTheDocument();
     expect(screen.getByText('Unknown author')).toBeInTheDocument();
     // Cards use the monogram tile; the detail sheet keeps the full title card (no monogram prop).
     expect(document.querySelector('.pn-cover--monogram')).not.toBeNull();

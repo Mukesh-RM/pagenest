@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import type { SampleBookInfo } from '@/app/contracts';
 import { useSnackbar } from '@/ui';
 import { OnboardingScreen, ONBOARDING_STEP_COUNT, type StarterBookOffer } from '@/ui/screens';
+import '../screen-styles';
 import { FontSizeControl } from '../components/FontSizeControl';
 import { ThemeSwatches } from '../components/ThemeSwatches';
 import { pathForBook } from '../route-paths';
 import { useServices } from '../services-context';
 import { useSettings } from '../settings-store';
-import '../screen-styles';
 
 /** Number of onboarding cards (blueprint 5.6: three cards, skippable). */
 export const ONBOARDING_STEPS = ONBOARDING_STEP_COUNT;

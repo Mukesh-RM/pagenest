@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type * as OpfsModule from '@/data/opfs';
 import { getDb } from '@/data/db';
 import { openOpfsRoot } from '@/data/opfs';
-import { bootstrapStorage } from './storage-bootstrap';
+import { bootstrapStorage, resetStorageBootstrapForTests } from './storage-bootstrap';
 import { storageBootstrap } from './storage-bootstrap-state';
 
 vi.mock('@/data/opfs', async (importOriginal) => {
@@ -17,6 +17,7 @@ vi.mock('@/features/library/registry', () => ({
 
 describe('bootstrapStorage', () => {
   beforeEach(() => {
+    resetStorageBootstrapForTests();
     vi.mocked(openOpfsRoot).mockReset();
   });
 

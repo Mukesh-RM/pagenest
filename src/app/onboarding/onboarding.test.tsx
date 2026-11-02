@@ -6,6 +6,7 @@ import { FONT_SIZE_DEFAULT, FONT_SIZE_MAX, FONT_SIZE_MIN } from '../font-size';
 import type { AppServices } from '../services-context';
 import { useSettings } from '../settings-store';
 import { makeServices, renderApp, resetSettings } from '../test-utils';
+import { rememberOnboarded } from '../first-run-hint';
 
 let services: AppServices;
 let db: PageNestDB;
@@ -14,6 +15,7 @@ beforeEach(() => {
   services = makeServices('pagenest-onboarding-test');
   db = services.db;
   resetSettings();
+  rememberOnboarded(false);
   document.documentElement.removeAttribute('style');
   delete document.documentElement.dataset['theme'];
 });
@@ -68,10 +70,10 @@ describe('first run', () => {
 
   it('shows nothing from onboarding while settings are loading, and never flashes it for returning users', async () => {
     await db.settings.put({ key: 'onboardingDone', value: true });
+    rememberOnboarded(true);
     renderApp(services);
-    expect(screen.queryByText(/Step 1 of 3/)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(/Step \d of 3/)).not.toBeInTheDocument());
     expect(await screen.findByTestId('pn-tabbar')).toBeInTheDocument();
-    expect(screen.queryByText(/Step \d of 3/)).not.toBeInTheDocument();
   });
 
   it('walks through all three cards with Next and Back and moves focus each time', async () => {

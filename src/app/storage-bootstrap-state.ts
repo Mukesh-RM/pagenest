@@ -8,7 +8,7 @@ export interface StorageBootstrap {
 
 let bootstrap: StorageBootstrap | undefined;
 
-export function setStorageBootstrap(next: StorageBootstrap): void {
+export function setStorageBootstrap(next: StorageBootstrap | undefined): void {
   bootstrap = next;
 }
 

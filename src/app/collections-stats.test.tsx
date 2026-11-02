@@ -92,8 +92,8 @@ describe('Collections on the design system screen', () => {
     renderApp(services, { path: '/collections' });
     fireEvent.click(await screen.findByRole('button', { name: /^Classics/ }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Classics' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /^Emma/ })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^Dracula/ })).toBeNull();
+    expect(await screen.findByRole('button', { name: /Emma Jane Austen\./ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Dracula/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Collections' })).toBeInTheDocument();
   });
@@ -123,8 +123,8 @@ describe('Collections on the design system screen', () => {
     renderApp(services, { path: '/collections' });
     fireEvent.click(await screen.findByRole('button', { name: /^Unfinished/ }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Unfinished' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: /^Half Read/ })).toBeInTheDocument();
-    await waitFor(() => expect(screen.queryByRole('button', { name: /^Untouched/ })).toBeNull());
+    expect(await screen.findByRole('button', { name: /Half Read/ })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Untouched/ })).toBeNull());
   });
 });
 

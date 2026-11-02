@@ -7,6 +7,8 @@ import { PageNestDB } from '@/data/db';
 import { DexieProgressService } from '@/data/progress-service';
 import { DEFAULT_CUSTOM_THEME } from '@/ui/theme/custom';
 import { AppRoutes } from './routes';
+import { resetImportController } from '@/features/library/registry';
+import { resetStorageBootstrapForTests } from './storage-bootstrap';
 import { ServicesProvider } from './services';
 import type { AppServices } from './services-context';
 import { useSettings } from './settings-store';
@@ -19,6 +21,8 @@ let counter = 0;
 
 /** A fresh, isolated database and services for one test. Close `services.db` afterwards. */
 export function makeServices(prefix = 'pagenest-test'): AppServices {
+  resetStorageBootstrapForTests();
+  resetImportController();
   counter += 1;
   const db = new PageNestDB(`${prefix}-${counter}`);
   const data = createDataClient({ db, workerFactory: () => undefined });

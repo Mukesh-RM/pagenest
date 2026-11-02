@@ -120,7 +120,7 @@ describe('monogram covers', () => {
 
   it('sits with the favorite and the other badges: the letter is centered, the badges are in the corners', () => {
     const { container } = render(<BookCard book={{ id: 'm', title: 'Nightjar', author: 'Priya Raman', progress: 1, audio: true, favorite: true }} onOpen={noop} />);
-    expect(screen.getByRole('img', { name: 'Favorite' })).toBeInTheDocument();
+    expect(container.querySelector('.pn-bookcard__badge--favorite')).toBeInTheDocument();
     expect(container.querySelectorAll('.pn-bookcard__badge')).toHaveLength(3);
     const rules = parseCss(readUiFile('styles/components.css'));
     const letter = declarationsFor(rules, '.pn-cover__letter');

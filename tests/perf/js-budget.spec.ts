@@ -13,7 +13,8 @@ test(`initial JavaScript is under ${BUDGETS.initialJs.maxGzipKiB} KiB gzip on a 
     if (!isJs || res.status() !== 200) return;
     pending.push(res.body().then((b) => { scripts.set(new URL(res.url()).pathname, gzipSync(b, { level: 9 }).length); }, () => {}));
   });
-  await page.goto('./', { waitUntil: 'networkidle' });
+  // Stop at first meaningful paint (onboarding or Library h1), not networkidle — OPFS/import bootstrap is idle-deferred.
+  await page.goto('./', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await Promise.all(pending);
 

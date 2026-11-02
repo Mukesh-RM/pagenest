@@ -81,9 +81,9 @@ const lighthouseScenarios = [
   { env: process.env },
 ];
 const gates = [
+  lighthouseScenarios,
   ['Playwright: product excellence gates per screen', ['npx', 'playwright', 'test', '--project=excellence-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-excellence')],
   ['Playwright: performance gates (one worker)', ['npx', 'playwright', 'test', '--project=perf-chromium-mobile', '--workers=1', '--retries=0', reporter], gatesEnv('gates-perf')],
-  lighthouseScenarios,
 ];
 // Lighthouse is CPU-sensitive: run every Lighthouse step before Playwright's parallel projects.
 const core =
@@ -91,7 +91,7 @@ const core =
     ? [lighthouseScreens, releaseSmoke, playwrightStable]
     : mode === 'gates'
       ? gates
-      : [lighthouseScenarios, lighthouseScreens, releaseSmoke, upgradeSmoke, ...gates.slice(0, -1), playwrightStable];
+      : [lighthouseScenarios, lighthouseScreens, releaseSmoke, upgradeSmoke, ...gates.slice(1), playwrightStable];
 const steps = [...vitestStep, ...core];
 
 let failed = 0;
