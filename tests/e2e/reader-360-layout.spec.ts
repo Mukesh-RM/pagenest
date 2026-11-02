@@ -65,6 +65,8 @@ test.describe('reader at 360px', () => {
   });
 
   test('EPUB shows book text; footer read aloud; header tools do not overlap', async ({ page }) => {
+    await launchFresh(page);
+    const buffer = readFixture('src/features/reader/fixtures/alice.epub');
     await importEpub(page, buffer);
     const text = await waitForFoliateBookText(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(text.length).toBeGreaterThan(200);
