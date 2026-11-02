@@ -17,6 +17,7 @@ import { loadVoiceRecorder, type VoiceRecorder, type RecordedClip } from './audi
 import { deleteOwnVoice, listOwnVoices, saveOwnVoicePack } from './data/voice-pack';
 import { exportOwnVoiceZip } from './data/export-pack';
 import { trainVoiceOnDevice } from './data/train-on-device';
+import { isVoiceCloneDevPreviewEnabled } from '@/engines/tts/helper/clone-shipping';
 import { useVoiceStudioStore } from './store/voice-studio-store';
 import { MyVoicesPanel } from './ui/MyVoicesPanel';
 import { IntroStep } from './ui/IntroStep';
@@ -243,14 +244,16 @@ export function VoiceStudioApp({ services }: VoiceStudioAppProps) {
     })();
   };
 
-  const onTrain = (voice: VoiceRecord) => {
-    setBusy(true);
-    setError(undefined);
-    void (async () => {
-      const result = await trainVoiceOnDevice(services.files, services.db, voice);
-      if (!result.ok) setError(result.message ?? 'On-device training failed.');
-    })().finally(() => setBusy(false));
-  };
+  const onTrain = isVoiceCloneDevPreviewEnabled()
+    ? (voice: VoiceRecord) => {
+        setBusy(true);
+        setError(undefined);
+        void (async () => {
+          const result = await trainVoiceOnDevice(services.files, services.db, voice);
+          if (!result.ok) setError(result.message ?? 'On-device training failed.');
+        })().finally(() => setBusy(false));
+      }
+    : undefined;
 
   const onExport = (voice: VoiceRecord) => {
     setBusy(true);

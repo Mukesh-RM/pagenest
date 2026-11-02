@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import type { VoiceInfo } from '@/engines/tts/types';
 import { migrateNarrationSettings, parseNarrationSettings } from './narration-settings';
 import { DEFAULT_NARRATION_SETTINGS } from './types';
@@ -14,9 +14,21 @@ const voices: readonly VoiceInfo[] = [
     installed: true,
     sizeBytes: 60_000_000,
   },
+  {
+    id: 'own-voice',
+    name: 'Casey',
+    engine: 'helper',
+    language: 'en',
+    isOwnVoice: true,
+    installed: true,
+  },
 ];
 
 describe('migrateNarrationSettings', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('migrates legacy Piper default to device speech', () => {
     const saved = parseNarrationSettings({
       engine: 'piper',
@@ -47,5 +59,21 @@ describe('migrateNarrationSettings', () => {
   it('keeps device speech selection', () => {
     const saved = { ...DEFAULT_NARRATION_SETTINGS, engine: 'speech' as const, voiceId: 'speech-en' };
     expect(migrateNarrationSettings(saved, voices)).toEqual(saved);
+  });
+
+  it('migrates saved own voice to device speech when clone playback is gated off', () => {
+    vi.stubEnv('DEV', false);
+    vi.stubEnv('VITE_PN_VOICE_CLONE_PREVIEW', '');
+    vi.stubEnv('VITE_PN_PHONE_VOICE_CLONE', '');
+    const saved = {
+      ...DEFAULT_NARRATION_SETTINGS,
+      engine: 'helper' as const,
+      voiceId: 'own-voice',
+      hdVoiceExplicit: true,
+    };
+    const next = migrateNarrationSettings(saved, voices);
+    expect(next.engine).toBe('speech');
+    expect(next.voiceId).toBe('speech-en');
+    expect(next.hdVoiceExplicit).toBe(false);
   });
 });
