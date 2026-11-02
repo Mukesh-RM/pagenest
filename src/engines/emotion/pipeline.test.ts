@@ -27,9 +27,9 @@ describe('emotion pipeline', () => {
 
   it('assigns stable per-speaker pitch in cast mode', () => {
     const tagged: TaggedSentence[] = [
-      { index: 0, text: '"Hi."', start: 0, end: 5, kind: 'dialogue', speaker: 'Alice', emotion: 'neutral' },
-      { index: 1, text: '"Hey."', start: 5, end: 11, kind: 'dialogue', speaker: 'Bob', emotion: 'neutral' },
-      { index: 2, text: '"Again."', start: 11, end: 19, kind: 'dialogue', speaker: 'Alice', emotion: 'neutral' },
+      { index: 0, text: '"Hi."', start: 0, end: 5, kind: 'dialogue', speaker: 'Alice', emotion: 'calm' },
+      { index: 1, text: '"Hey."', start: 5, end: 11, kind: 'dialogue', speaker: 'Bob', emotion: 'calm' },
+      { index: 2, text: '"Again."', start: 11, end: 19, kind: 'dialogue', speaker: 'Alice', emotion: 'calm' },
     ];
     const plan = planDelivery(tagged, 'cast');
     expect(plan[0]!.delivery.pitch).toBe(plan[2]!.delivery.pitch);
