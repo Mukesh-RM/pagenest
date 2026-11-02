@@ -29,5 +29,7 @@ export function clearSentenceHighlights(doc: Document): void {
 
 export function scrollSentenceIntoView(doc: Document, index: number): void {
   const el = doc.querySelector(`.${MARK}[data-sentence-index="${index}"]`);
-  el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  const reduce =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  el?.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' });
 }

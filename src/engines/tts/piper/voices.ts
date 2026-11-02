@@ -46,6 +46,30 @@ export const OK_PIPER_VOICES = [
     sizeBytes: 136_673_811,
     dataset: 'Cori (permissive)',
   },
+  {
+    id: 'en_GB-cori-medium',
+    name: 'Cori (UK)',
+    language: 'en-GB',
+    hfPath: 'en/en_GB/cori/medium',
+    sizeBytes: 63_201_024,
+    dataset: 'Cori (permissive)',
+  },
+  {
+    id: 'en_US-ljspeech-high',
+    name: 'LJSpeech (US, high)',
+    language: 'en-US',
+    hfPath: 'en/en_US/ljspeech/high',
+    sizeBytes: 136_673_811,
+    dataset: 'LJ Speech (public domain)',
+  },
+  {
+    id: 'en_US-norman-medium',
+    name: 'Norman (US)',
+    language: 'en-US',
+    hfPath: 'en/en_US/norman/medium',
+    sizeBytes: 63_201_024,
+    dataset: 'Norman (permissive)',
+  },
 ] as const;
 
 export type OkPiperVoiceId = (typeof OK_PIPER_VOICES)[number]['id'];

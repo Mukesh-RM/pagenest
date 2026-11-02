@@ -14,6 +14,8 @@ interface Props {
   readonly onGoToBookmark: (row: BookmarkRecord) => void;
   readonly onGoToHighlight: (row: HighlightRecord) => void;
   readonly onEditNote: (row: HighlightRecord) => void;
+  readonly onExport?: () => void;
+  readonly exportDisabled?: boolean;
 }
 
 /** Bookmarks, highlights and notes for this book, with tap-to-jump. */
@@ -28,6 +30,8 @@ export function MarksSheet({
   onGoToBookmark,
   onGoToHighlight,
   onEditNote,
+  onExport,
+  exportDisabled,
 }: Props) {
   const empty =
     (panel === 'bookmarks' && !bookmarks.length) ||
@@ -99,6 +103,13 @@ export function MarksSheet({
             </li>
           ))}
         </ul>
+      ) : null}
+      {onExport ? (
+        <div className="pn-live-marks__export">
+          <Button block variant="secondary" disabled={exportDisabled} onClick={onExport}>
+            Export highlights and notes
+          </Button>
+        </div>
       ) : null}
     </BottomSheet>
   );

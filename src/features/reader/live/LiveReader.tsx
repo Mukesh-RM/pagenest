@@ -19,6 +19,7 @@ import { welcomeBackFor, chapterNumber, type WelcomeBack } from '../core/welcome
 import { getReaderRegistry } from '../registry-instance';
 import { addBookmark, addHighlight, applyHighlights, clearHighlightNote, deleteHighlight, highlightsWithNotes, loadBookmarks, loadHighlights, setHighlightNote } from './marks';
 import { MarksSheet } from './MarksSheet';
+import { downloadMarksExport } from './marks-export';
 import { NoteEditorSheet } from './NoteEditorSheet';
 import { SearchSheet } from './SearchSheet';
 import { SelectionBar } from './SelectionBar';
@@ -609,6 +610,8 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         onEditNote={(row) => {
           openNoteEditor(row);
         }}
+        onExport={() => downloadMarksExport({ bookTitle: book.title, exportedAt: new Date(), bookmarks, highlights })}
+        exportDisabled={!bookmarks.length && !highlights.length}
       />
       <NoteEditorSheet
         open={noteEditorOpen}

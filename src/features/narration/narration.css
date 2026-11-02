@@ -95,11 +95,15 @@
 
 :global(.pn-narration-highlight) {
   border-radius: 4px;
+  box-decoration-break: clone;
+  background: rgb(47 111 107 / 0.14);
 }
 
 :global(.pn-narration-highlight--active) {
-  background: rgb(47 111 107 / 0.28);
+  background: rgb(47 111 107 / 0.32);
   box-decoration-break: clone;
+  outline: 1px solid rgb(47 111 107 / 0.55);
+  outline-offset: 1px;
 }
 
 @media (forced-colors: active) {
