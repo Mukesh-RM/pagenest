@@ -37,4 +37,6 @@ export const SETTING_KEYS = {
   readerSettings: 'readerSettings',
   /** Read-aloud voice, speed, style (`StoredNarrationSettings`). */
   narrationSettings: 'narrationSettings',
+  /** User accepted the one-time ~180 MB SpeechT5 + x-vector download for on-phone cloning. */
+  phoneCloneModelDownloadConsent: 'phoneCloneModelDownloadConsent',
 } as const;

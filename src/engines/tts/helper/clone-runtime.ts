@@ -2,6 +2,7 @@ import { decodeWavMono } from './wav-decode';
 import { buildReferencePcm, colorizeWithReference } from './lite-vc';
 import { loadSpeechT5Tokenizer } from './speecht5-tokenizer';
 import { createSpeechT5Stack, type SpeechT5Stack } from './speecht5-onnx';
+import { isPhoneVoiceCloneEnabled } from './clone-shipping';
 
 export type CloneTier = 'full' | 'lite';
 
@@ -188,8 +189,14 @@ export function createCloneRuntime(): CloneWorkerApi {
             durationSec: samples.length / NEURAL_SAMPLE_RATE,
           };
         } catch {
-          /* fall back to lite colorization */
+          if (isPhoneVoiceCloneEnabled()) {
+            throw new Error('SpeechT5 synthesis failed. Try preparing your voice again.');
+          }
+          /* fall back to lite colorization in dev preview only */
         }
+      }
+      if (isPhoneVoiceCloneEnabled() && payload.tier === 'full') {
+        throw new Error('On-device voice model is not ready. Download the voice stack in Voice Studio.');
       }
       return synthesizeLite(payload);
     },

@@ -17,7 +17,15 @@ import { loadVoiceRecorder, type VoiceRecorder, type RecordedClip } from './audi
 import { deleteOwnVoice, listOwnVoices, saveOwnVoicePack } from './data/voice-pack';
 import { exportOwnVoiceZip } from './data/export-pack';
 import { trainVoiceOnDevice } from './data/train-on-device';
-import { isVoiceCloneDevPreviewEnabled } from '@/engines/tts/helper/clone-shipping';
+import { preparePhoneVoiceOnDevice } from './data/prepare-phone-voice';
+import {
+  hasAcceptedPhoneCloneModelDownload,
+  isPhoneCloneStackCached,
+  phoneCloneDownloadSummary,
+  recordPhoneCloneModelDownloadConsent,
+} from './data/phone-clone-consent';
+import { isPhoneVoiceCloneEnabled, isVoiceCloneDevPreviewEnabled } from '@/engines/tts/helper/clone-shipping';
+import { ConfirmDialog } from '@/ui/components/ConfirmDialog';
 import { useVoiceStudioStore } from './store/voice-studio-store';
 import { MyVoicesPanel } from './ui/MyVoicesPanel';
 import { IntroStep } from './ui/IntroStep';
@@ -70,6 +78,8 @@ export function VoiceStudioApp({ services }: VoiceStudioAppProps) {
 
   const [micState, setMicState] = useState<MicPermissionState>('unknown');
   const [recording, setRecording] = useState(false);
+  const [phoneStackReady, setPhoneStackReady] = useState(false);
+  const [modelDownloadVoice, setModelDownloadVoice] = useState<VoiceRecord | undefined>();
   const streamRef = useRef<MediaStream | undefined>();
   const recorderRef = useRef<VoiceRecorder | undefined>();
   const consentAbort = useRef<AbortController | undefined>();
@@ -90,6 +100,38 @@ export function VoiceStudioApp({ services }: VoiceStudioAppProps) {
     void refreshVoices();
     void queryMicPermission().then(setMicState);
   }, [refreshVoices]);
+
+  useEffect(() => {
+    if (!isPhoneVoiceCloneEnabled()) return;
+    void isPhoneCloneStackCached(services.files).then(setPhoneStackReady);
+  }, [services.files, voices]);
+
+  const runPhonePrepare = useCallback(
+    (voice: VoiceRecord) => {
+      setBusy(true);
+      setError(undefined);
+      void (async () => {
+        const result = await preparePhoneVoiceOnDevice(services.files, services.db, voice);
+        if (!result.ok) setError(result.message);
+        else setPhoneStackReady(await isPhoneCloneStackCached(services.files));
+      })().finally(() => setBusy(false));
+    },
+    [services.db, services.files, setBusy, setError],
+  );
+
+  const onPreparePhone = isPhoneVoiceCloneEnabled()
+    ? (voice: VoiceRecord) => {
+        void (async () => {
+          const accepted = await hasAcceptedPhoneCloneModelDownload(services.db);
+          const cached = await isPhoneCloneStackCached(services.files);
+          if (accepted || cached) {
+            runPhonePrepare(voice);
+            return;
+          }
+          setModelDownloadVoice(voice);
+        })();
+      }
+    : undefined;
 
   const ensureStream = useCallback(async () => {
     if (streamRef.current) return streamRef.current;
@@ -355,7 +397,34 @@ export function VoiceStudioApp({ services }: VoiceStudioAppProps) {
   }
 
   return (
-    <MyVoicesPanel voices={voices} onRecordNew={beginRecordingFlow} onExport={onExport} onTrain={onTrain} onDelete={onDelete} busy={busy} />
+    <>
+      <ConfirmDialog
+        open={Boolean(modelDownloadVoice)}
+        title="Download on-device voice models?"
+        description={phoneCloneDownloadSummary()}
+        confirmLabel="Download once"
+        onConfirm={() => {
+          const voice = modelDownloadVoice;
+          setModelDownloadVoice(undefined);
+          if (!voice) return;
+          void (async () => {
+            await recordPhoneCloneModelDownloadConsent(services.db);
+            runPhonePrepare(voice);
+          })();
+        }}
+        onCancel={() => setModelDownloadVoice(undefined)}
+      />
+      <MyVoicesPanel
+        voices={voices}
+        onRecordNew={beginRecordingFlow}
+        onExport={onExport}
+        onTrain={onTrain}
+        onPreparePhone={onPreparePhone}
+        phoneStackReady={phoneStackReady}
+        onDelete={onDelete}
+        busy={busy}
+      />
+    </>
   );
 }
 

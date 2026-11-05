@@ -11,6 +11,7 @@ import type {
   VoiceInfo,
 } from '../types';
 import { voiceError } from '../errors';
+import { isPhoneVoiceCloneEnabled } from './clone-shipping';
 import { listOwnVoices, openVoiceSample, readVoiceManifest } from '@/features/voice-studio/data/voice-pack';
 import { assertOwnVoiceConsent } from './consent-gate';
 import {
@@ -26,6 +27,7 @@ import {
 import type { CloneTier, CloneWorkerApi } from './clone.worker';
 
 function detectTier(): CloneTier {
+  if (isPhoneVoiceCloneEnabled()) return 'full';
   try {
     const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
     if (mem !== undefined && mem <= 3) return 'lite';
