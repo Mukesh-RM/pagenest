@@ -98,7 +98,8 @@
   gap: var(--pn-space-2);
 }
 
-.pn-word-sheet .pn-sheet__panel {
+.pn-word-sheet .pn-sheet__panel,
+.pn-word-sheet .pn-sheet__footer {
   background: rgb(var(--pn-surface-raised));
 }
 

@@ -2,6 +2,12 @@ import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent, 
 
 const THRESHOLD_PX = 72;
 const MAX_PULL_PX = 120;
+const NON_PULL_TARGET = 'button, a, input, textarea, select, label, [role="button"], [role="link"], [role="tab"]';
+
+function isPullGestureTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return !target.closest(NON_PULL_TARGET);
+}
 
 export interface PullToRefreshProps {
   readonly onRefresh: () => void | Promise<void>;
@@ -19,6 +25,7 @@ export function PullToRefresh({ onRefresh, disabled, children }: PullToRefreshPr
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {
+      if (!isPullGestureTarget(e.target)) return;
       if (disabled || refreshing) return;
       if (window.scrollY > 4) return;
       const y = e.touches[0]?.clientY;
@@ -73,6 +80,7 @@ export function PullToRefresh({ onRefresh, disabled, children }: PullToRefreshPr
   const onPtrDown = useCallback(
     (e: ReactPointerEvent) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (!isPullGestureTarget(e.target)) return;
       if (disabled || refreshing) return;
       if (window.scrollY > 4) return;
       startY.current = e.clientY;

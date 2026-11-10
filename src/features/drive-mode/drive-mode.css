@@ -78,7 +78,10 @@
 }
 
 .pn-drive__row--chapters {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  max-width: 320px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .pn-drive__row--transport {

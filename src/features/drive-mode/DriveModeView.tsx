@@ -70,32 +70,6 @@ export default function DriveModeView({ controller, onExit }: DriveModeViewProps
       </header>
 
       <div className="pn-drive__grid" aria-label="Playback">
-        <div className="pn-drive__row pn-drive__row--chapters">
-          <button
-            type="button"
-            className="pn-drive__cell"
-            aria-label="Previous chapter"
-            onClick={() => controller.previousChapter()}
-          >
-            <span className="pn-drive__cell-icon" aria-hidden="true">
-              ‹‹
-            </span>
-            <span className="pn-drive__cell-label">Prev</span>
-          </button>
-          <span className="pn-drive__cell pn-drive__cell--spacer" aria-hidden="true" />
-          <button
-            type="button"
-            className="pn-drive__cell"
-            aria-label="Next chapter"
-            onClick={() => controller.nextChapter()}
-          >
-            <span className="pn-drive__cell-icon" aria-hidden="true">
-              ››
-            </span>
-            <span className="pn-drive__cell-label">Next</span>
-          </button>
-        </div>
-
         <div className="pn-drive__row pn-drive__row--transport">
           <button
             type="button"
@@ -120,6 +94,31 @@ export default function DriveModeView({ controller, onExit }: DriveModeViewProps
             onClick={() => controller.skip(DRIVE_SKIP_SEC)}
           >
             <SkipGlyph direction="forward" seconds={DRIVE_SKIP_SEC} size={52} />
+          </button>
+        </div>
+
+        <div className="pn-drive__row pn-drive__row--chapters">
+          <button
+            type="button"
+            className="pn-drive__cell"
+            aria-label="Previous chapter"
+            onClick={() => controller.previousChapter()}
+          >
+            <span className="pn-drive__cell-icon" aria-hidden="true">
+              ‹‹
+            </span>
+            <span className="pn-drive__cell-label">Prev chapter</span>
+          </button>
+          <button
+            type="button"
+            className="pn-drive__cell"
+            aria-label="Next chapter"
+            onClick={() => controller.nextChapter()}
+          >
+            <span className="pn-drive__cell-icon" aria-hidden="true">
+              ››
+            </span>
+            <span className="pn-drive__cell-label">Next chapter</span>
           </button>
         </div>
 

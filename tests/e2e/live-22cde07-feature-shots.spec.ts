@@ -10,13 +10,14 @@ import {
   waitForIndexedDbReady,
   waitForServiceWorkerControl,
   waitForStorageBootstrap,
+  pickLibraryFiles,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, selectPhraseInFoliate, waitForFoliateBookTextLive } from './support/foliate-reader';
 import { releaseSmokeViewport } from './support/release-smoke-viewport';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const shotDir = join(repoRoot, process.env.PAGENEST_LIVE_SHOTS_DIR ?? 'docs/screens/live-22cde07');
+const shotDir = join(repoRoot, process.env.PAGENEST_LIVE_SHOTS_DIR ?? 'docs/screens/live-d16eff2');
 
 async function snap(page: Page, project: string, name: string): Promise<void> {
   mkdirSync(shotDir, { recursive: true });
@@ -32,16 +33,7 @@ async function importAlice(page: Page, home = './'): Promise<void> {
   if (process.env.PAGENEST_SMOKE_LIVE === '1') {
     await waitForServiceWorkerControl(page);
   }
-  await expect(page.getByRole('button', { name: 'Add books' }).first()).toBeVisible({ timeout: 120_000 });
-  await page.getByRole('button', { name: 'Add books' }).first().click();
-  await page.getByTestId('pick-files').setInputFiles(
-    {
-      name: 'alice.epub',
-      mimeType: 'application/epub+zip',
-      buffer: epub,
-    },
-    { timeout: 120_000 },
-  );
+  await pickLibraryFiles(page, [{ name: 'alice.epub', mimeType: 'application/epub+zip', buffer: epub }]);
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   await waitForStorageBootstrap(page);
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
@@ -152,8 +144,7 @@ test.describe('live 22cde07 feature screenshots', () => {
     await page.goto(home);
     await dismissLibraryOverlays(page);
     const mp3 = readFileSync(join(repoRoot, 'src/features/library/e2e/audio-fixtures/tone-book.mp3'));
-    await page.getByRole('button', { name: 'Add books' }).first().click();
-    await page.getByTestId('pick-files').setInputFiles([{ name: 'tones.mp3', mimeType: 'audio/mpeg', buffer: mp3 }]);
+    await pickLibraryFiles(page, [{ name: 'tones.mp3', mimeType: 'audio/mpeg', buffer: mp3 }]);
     await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
     await expect(page.getByRole('button', { name: 'Tone Book' }).first()).toBeVisible({ timeout: 120_000 });
     await page.getByRole('button', { name: 'Tone Book' }).first().click();

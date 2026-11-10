@@ -2,7 +2,16 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl, waitForStorageBootstrap } from './support/app';
+import {
+  dismissLibraryOverlays,
+  openLibraryFromAnyRoute,
+  pickLibraryFiles,
+  primeSmokeHints,
+  skipOnboarding,
+  waitForIndexedDbReady,
+  waitForServiceWorkerControl,
+  waitForStorageBootstrap,
+} from './support/app';
 import { dismissReaderInterstitials, tapReaderZone, waitForFoliateBookTextLive } from './support/foliate-reader';
 import {
   exerciseReadAloudControls,
@@ -36,11 +45,7 @@ async function importFiles(
   files: Array<{ name: string; mimeType: string; buffer: Buffer }>,
   waitForCard?: RegExp,
 ): Promise<void> {
-  await expect(
-    page.getByRole('heading', { name: 'Your library is empty' }).or(page.getByRole('button', { name: 'Add books' }).first()),
-  ).toBeVisible({ timeout: 120_000 });
-  await page.getByRole('button', { name: 'Add books' }).first().click();
-  await page.getByTestId('pick-files').setInputFiles(files, { timeout: 120_000 });
+  await pickLibraryFiles(page, files);
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   if (waitForCard) await expect(page.getByRole('button', { name: waitForCard }).first()).toBeVisible({ timeout: 120_000 });
 }

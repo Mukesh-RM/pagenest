@@ -84,6 +84,16 @@ export async function primeSmokeHints(context: BrowserContext): Promise<void> {
 }
 
 /** Closes library coach marks and import toasts that block taps during smoke tests. */
+/** Opens Add books and targets the hidden file input (sheet must render `data-testid="pick-files"`). */
+export async function pickLibraryFiles(
+  page: Page,
+  files: Array<{ name: string; mimeType: string; buffer: Buffer }>,
+): Promise<void> {
+  await page.getByRole('button', { name: 'Add books' }).first().click();
+  await expect(page.getByRole('dialog', { name: 'Add to your library' })).toBeVisible({ timeout: 30_000 });
+  await page.getByTestId('pick-files').setInputFiles(files, { timeout: 60_000 });
+}
+
 export async function dismissLibraryOverlays(page: Page): Promise<void> {
   await page.getByRole('dialog', { name: 'Add InkQuiet to your iPhone' }).waitFor({ state: 'visible', timeout: 2000 }).catch(() => undefined);
   await page.getByRole('button', { name: 'Got it' }).click({ timeout: 2000 }).catch(() => undefined);

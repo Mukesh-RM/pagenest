@@ -12,6 +12,7 @@ import {
   waitForIndexedDbReady,
   waitForServiceWorkerControl,
   waitForStorageBootstrap,
+  pickLibraryFiles,
 } from './support/app';
 import { releaseSmokeViewport } from './support/release-smoke-viewport';
 
@@ -62,12 +63,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
   mkdirSync(shotDir, { recursive: true });
   await page.screenshot({ path: join(shotDir, `${testInfo.project.name}-upgrade-01-import.png`), fullPage: true });
 
-  await page.getByRole('button', { name: 'Add books' }).first().click();
-  await page.getByTestId('pick-files').setInputFiles({
-    name: 'alice.epub',
-    mimeType: 'application/epub+zip',
-    buffer: epub,
-  });
+  await pickLibraryFiles(page, [{ name: 'alice.epub', mimeType: 'application/epub+zip', buffer: epub }]);
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   await waitForStorageBootstrap(page);
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
