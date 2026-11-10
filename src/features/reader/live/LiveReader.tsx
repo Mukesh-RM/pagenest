@@ -27,7 +27,6 @@ import { SearchSheet } from './SearchSheet';
 import { ReaderComfortOverlay } from './ReaderComfortOverlay';
 import { useReaderEdgeComfort } from './useReaderEdgeComfort';
 import { scheduleBookSearchIndex } from '../search/book-text-index';
-import { SelectionBar } from './SelectionBar';
 import { ensureReadableStart } from './open-position';
 import { useNarrationReaderBridge } from '@/features/narration/narration-reader-bridge';
 import { settingsToAppearance } from './settings-map';
@@ -50,7 +49,7 @@ const ReaderNarration = lazyWithRetry(() =>
     },
   })),
 );
-const DictionaryHost = lazyWithRetry(() => import('@/features/dictionary/DictionaryHost'));
+const WordLookupSheet = lazyWithRetry(() => import('@/features/dictionary/WordLookupSheet'));
 
 type Phase =
   | { readonly status: 'loading'; readonly message: string }
@@ -321,8 +320,6 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     return () => host.removeEventListener('pn-mock-word-tap', onMockTap);
   }, [doc]);
 
-  const selectionAnchor = doc && selection ? doc.selectionRect() : undefined;
-
   useEffect(() => {
     if (!marksOpen || !doc) return;
     void loadBookmarks(db, book.id).then(setBookmarks);
@@ -565,42 +562,40 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
           onPointerUp={edgeComfort.onPointerUp}
           onPointerCancel={edgeComfort.onPointerCancel}
         >
-          {selection ? (
-            <SelectionBar
-              selection={selection}
-              onHighlight={saveHighlight}
-              onCopy={copySelection}
-              onNote={noteFromSelection}
-              {...(narration ? { onReadAloud: readSelectionAloud } : {})}
-              onDefine={() => {
-                setDictMode('define');
-                setDictOpen(true);
-                setDictToken((n) => n + 1);
-              }}
-              onTranslate={() => {
-                setDictMode('translate');
-                setDictOpen(true);
-                setDictToken((n) => n + 1);
-              }}
-              onDismiss={() => {
-                doc?.clearSelection();
-                setSelection(undefined);
-              }}
-            />
-          ) : null}
           <div ref={hostRef} className="pn-live__host" tabIndex={-1} role="region" aria-label={`Reading ${book.title}`} />
           <ReaderComfortOverlay comfort={comfort} />
           {phase.status === 'ready' && doc ? (
             <Suspense fallback={null}>
-              <DictionaryHost
-                hostRef={hostRef}
+              <WordLookupSheet
+                open={Boolean(selection || wordTap)}
                 selection={selection}
-                {...(selectionAnchor ? { selectionAnchor } : {})}
                 {...(wordTap ? { wordTap } : {})}
                 {...(book.language ? { bookLanguage: book.language } : {})}
                 lookupToken={dictToken}
                 lookupMode={dictOpen ? dictMode : undefined}
-                onClose={() => {
+                onLookupClose={() => {
+                  setDictOpen(false);
+                  setDictMode(undefined);
+                  setWordTap(undefined);
+                }}
+                onHighlight={saveHighlight}
+                onCopy={copySelection}
+                onNote={noteFromSelection}
+                {...(narration ? { onReadAloud: readSelectionAloud } : {})}
+                onDefine={() => {
+                  setDictMode('define');
+                  setDictOpen(true);
+                  setDictToken((n) => n + 1);
+                }}
+                onTranslate={() => {
+                  setDictMode('translate');
+                  setDictOpen(true);
+                  setDictToken((n) => n + 1);
+                }}
+                onDismissSelection={() => {
+                  doc?.clearSelection();
+                  setSelection(undefined);
+                  setWordTap(undefined);
                   setDictOpen(false);
                   setDictMode(undefined);
                 }}

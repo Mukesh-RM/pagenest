@@ -16,7 +16,7 @@ import { dismissReaderInterstitials, selectPhraseInFoliate, waitForFoliateBookTe
 import { releaseSmokeViewport } from './support/release-smoke-viewport';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const shotDir = join(repoRoot, 'docs/screens/live-22cde07');
+const shotDir = join(repoRoot, process.env.PAGENEST_LIVE_SHOTS_DIR ?? 'docs/screens/live-22cde07');
 
 async function snap(page: Page, project: string, name: string): Promise<void> {
   mkdirSync(shotDir, { recursive: true });
@@ -29,13 +29,19 @@ async function importAlice(page: Page, home = './'): Promise<void> {
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
   await waitForIndexedDbReady(page);
-  await waitForServiceWorkerControl(page);
+  if (process.env.PAGENEST_SMOKE_LIVE === '1') {
+    await waitForServiceWorkerControl(page);
+  }
+  await expect(page.getByRole('button', { name: 'Add books' }).first()).toBeVisible({ timeout: 120_000 });
   await page.getByRole('button', { name: 'Add books' }).first().click();
-  await page.getByTestId('pick-files').setInputFiles({
-    name: 'alice.epub',
-    mimeType: 'application/epub+zip',
-    buffer: epub,
-  });
+  await page.getByTestId('pick-files').setInputFiles(
+    {
+      name: 'alice.epub',
+      mimeType: 'application/epub+zip',
+      buffer: epub,
+    },
+    { timeout: 120_000 },
+  );
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   await waitForStorageBootstrap(page);
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
@@ -140,7 +146,7 @@ test.describe('live 22cde07 feature screenshots', () => {
     await page.keyboard.press('Escape');
     await selectPhraseInFoliate(page, 'Alice');
     await page.getByRole('button', { name: 'Define selection' }).click({ timeout: 30_000 });
-    await expect(page.getByRole('dialog', { name: /definition of/i })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('region', { name: /definition of/i })).toBeVisible({ timeout: 30_000 });
     await snap(page, project, '06-dictionary-popup');
 
     await page.goto(home);

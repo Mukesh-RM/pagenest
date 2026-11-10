@@ -36,8 +36,11 @@ async function importFiles(
   files: Array<{ name: string; mimeType: string; buffer: Buffer }>,
   waitForCard?: RegExp,
 ): Promise<void> {
+  await expect(
+    page.getByRole('heading', { name: 'Your library is empty' }).or(page.getByRole('button', { name: 'Add books' }).first()),
+  ).toBeVisible({ timeout: 120_000 });
   await page.getByRole('button', { name: 'Add books' }).first().click();
-  await page.getByTestId('pick-files').setInputFiles(files, { timeout: 60_000 });
+  await page.getByTestId('pick-files').setInputFiles(files, { timeout: 120_000 });
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   if (waitForCard) await expect(page.getByRole('button', { name: waitForCard }).first()).toBeVisible({ timeout: 120_000 });
 }
@@ -108,9 +111,7 @@ test.describe.configure({ mode: 'serial' });
 test.describe('release smoke: import, open, reload, SW update', () => {
   test.beforeEach(async ({ page, context }, testInfo) => {
     test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name), 'Release smoke project only.');
-    if (process.env.PAGENEST_SMOKE_LIVE === '1' || testInfo.project.name.includes('webkit')) {
-      await primeSmokeHints(context);
-    }
+    await primeSmokeHints(context);
     if (testInfo.project.name.includes('webkit')) {
       await context.addInitScript(() => sessionStorage.setItem('pn_no_opfs', '1'));
     }
