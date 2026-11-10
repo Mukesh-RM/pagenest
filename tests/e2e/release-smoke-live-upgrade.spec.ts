@@ -4,7 +4,15 @@ import { fileURLToPath } from 'node:url';
 import { chromium, expect, test, webkit } from '@playwright/test';
 import { isBenignReleaseSmokePageError } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
-import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import {
+  dismissLibraryOverlays,
+  openLibraryFromAnyRoute,
+  primeSmokeHints,
+  skipOnboarding,
+  waitForIndexedDbReady,
+  waitForServiceWorkerControl,
+  waitForStorageBootstrap,
+} from './support/app';
 import { releaseSmokeViewport } from './support/release-smoke-viewport';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -60,6 +68,8 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
     mimeType: 'application/epub+zip',
     buffer: epub,
   });
+  await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
+  await waitForStorageBootstrap(page);
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
   await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading|read|open)/i }).first().click();

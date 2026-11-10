@@ -257,11 +257,18 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
 
   async *search(query: string, signal?: AbortSignal): AsyncGenerator<SearchHit> {
     if (this.#fixed) return;
+    for await (const { sectionIndex, text } of this.walkSectionsForIndex(signal)) {
+      for (const hit of searchText(text, query, (offset) => reflowAt(sectionIndex, offset))) yield hit;
+    }
+  }
+
+  async *walkSectionsForIndex(signal?: AbortSignal): AsyncGenerator<{ sectionIndex: number; text: string }> {
+    if (this.#fixed) return;
     const sections = this.#book.sections;
     for (let index = 0; index < sections.length; index++) {
       if (signal?.aborted || this.#closed) return;
       const text = await this.#sectionTextOf(index);
-      for (const hit of searchText(text, query, (offset) => reflowAt(index, offset))) yield hit;
+      yield { sectionIndex: index, text };
       if (index % 3 === 2) await new Promise<void>((r) => setTimeout(r, 0));
     }
   }

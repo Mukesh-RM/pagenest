@@ -10,8 +10,8 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 | Done | Format tag on grid/list cards |
 | Done | Collection shelf cover collages |
 | Done | Book detail: Read aloud (`LibraryScreen` → reader + narration sheet) |
-| Open | Book detail: tabs (chapters, marks, info) — single-pane sheet today |
-| Open | Pull-to-refresh folder list |
+| Done | Book detail: tabs (chapters, marks, info) |
+| Done | Pull-to-refresh library list |
 
 ## Reader feel
 
@@ -20,7 +20,7 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 | Done | **Tap zones on book content** (`e0ec133`, #30) |
 | Done | **Page turn mode in Aa** (`e214e66`, #31) |
 | Done | Align, hyphenation, paragraph spacing in Aa |
-| Open | Edge brightness / warm filter |
+| Done | Edge brightness / warm filter (left/right edge vertical swipe) |
 | Done | Warm EPUB reopen budget in `release-smoke.spec.ts` (8s headless; device target 1.5s) |
 
 ## Marks & resume
@@ -31,7 +31,16 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 | Done | Selection bar: read-aloud from selection |
 | Done | Bookmark ticks on scrubber (accent ticks; stores `fraction` on new bookmarks) |
 | Done | Release smoke: assert saved read position after reload (live upgrade spec) |
-| Open | MiniSearch background index (blueprint §7) |
+| Done | MiniSearch background index (in-book + library blurb search) |
+
+## Audio & tools (from prior PRs on main)
+
+| Status | Gap |
+|--------|-----|
+| Done | Drive mode (`DriveModeOverlay`) |
+| Done | Expanded sleep timer (`SleepTimerPanel`) |
+| Done | Account-free device sync (QR / `.pnsync` file) |
+| Done | Offline dictionary + translate on tap (`DictionaryHost`) |
 
 ## Read aloud
 

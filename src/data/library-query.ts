@@ -119,16 +119,40 @@ export class LibraryQueryService {
     }
   }
 
+  private async blurbsForBookIds(ids: readonly string[]): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    if (ids.length === 0) return map;
+    const rows = await this.db.settings.bulkGet(ids.map((id) => `bookSearch.${id}`));
+    for (const [i, id] of ids.entries()) {
+      const row = rows[i];
+      const blurb = (row?.value as { blurb?: string } | undefined)?.blurb;
+      if (blurb) map.set(id, blurb);
+    }
+    return map;
+  }
+
+  private async allSearchBlurbs(): Promise<Map<string, string>> {
+    const map = new Map<string, string>();
+    const rows = await this.db.settings.where('key').startsWith('bookSearch.').toArray();
+    for (const row of rows) {
+      const id = row.key.replace(/^bookSearch\./, '');
+      const blurb = (row.value as { blurb?: string } | undefined)?.blurb;
+      if (blurb) map.set(id, blurb);
+    }
+    return map;
+  }
+
   private async refresh(): Promise<void> {
     if (this.dirty) {
       this.dirty = false;
       this.pending.clear();
       const books = await this.db.books.toArray();
+      const blurbs = await this.allSearchBlurbs();
       this.byId.clear();
       const CHUNK = 80;
       for (let i = 0; i < books.length; i += 1) {
         const book = books[i]!;
-        this.byId.set(book.id, indexBook(book));
+        this.byId.set(book.id, indexBook(book, blurbs.get(book.id) ?? ''));
         if (i > 0 && i % CHUNK === 0) await yieldToMain();
       }
       this.docs = [...this.byId.values()];
@@ -138,6 +162,7 @@ export class LibraryQueryService {
     const ids = [...this.pending];
     this.pending.clear();
     const rows = await this.db.books.bulkGet(ids);
+    const blurbs = await this.blurbsForBookIds(ids);
     // Something we cannot patch happened meanwhile: the next round reads everything.
     if (this.dirty) return;
     const removed = new Set<string>();
@@ -145,7 +170,7 @@ export class LibraryQueryService {
     for (const [i, id] of ids.entries()) {
       const row = rows[i];
       if (row) {
-        const doc = indexBook(row);
+        const doc = indexBook(row, blurbs.get(row.id) ?? '');
         this.byId.set(id, doc);
         added.push(doc);
       } else {

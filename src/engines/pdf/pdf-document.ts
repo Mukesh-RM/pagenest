@@ -263,10 +263,16 @@ export class PdfReaderDocument implements ReaderDocumentExt {
   }
 
   async *search(query: string, signal?: AbortSignal): AsyncGenerator<SearchHit> {
+    for await (const { sectionIndex, text } of this.walkSectionsForIndex(signal)) {
+      for (const hit of searchText(text, query, (offset) => reflowAt(sectionIndex, offset))) yield hit;
+    }
+  }
+
+  async *walkSectionsForIndex(signal?: AbortSignal): AsyncGenerator<{ sectionIndex: number; text: string }> {
     for (let page = 1; page <= this.#pageCount; page++) {
       if (signal?.aborted || this.#closed) return;
       const text = await this.#pageText(page);
-      for (const hit of searchText(text.text, query, (offset) => reflowAt(page - 1, offset))) yield hit;
+      yield { sectionIndex: page - 1, text: text.text };
       if (page % 8 === 0) await new Promise<void>((r) => setTimeout(r, 0));
     }
   }

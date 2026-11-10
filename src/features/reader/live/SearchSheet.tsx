@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { SearchHit } from '@/engines/reader/types';
 import { BottomSheet, Button, cx, type SheetCloseReason } from '@/ui';
+import type { PageNestDB } from '@/data/db';
 import type { ReaderDocumentExt } from '../core/ext-types';
 import { collectSearchHits } from './marks';
 
@@ -8,11 +9,13 @@ interface Props {
   readonly open: boolean;
   readonly onClose: (reason: SheetCloseReason) => void;
   readonly doc: ReaderDocumentExt | undefined;
+  readonly bookId: string;
+  readonly db: PageNestDB;
   readonly onJump: (hit: SearchHit) => void;
 }
 
 /** In-book search: results list with jump and transient hit marks on the page. */
-export function SearchSheet({ open, onClose, doc, onJump }: Props) {
+export function SearchSheet({ open, onClose, doc, bookId, db, onJump }: Props) {
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<readonly SearchHit[]>([]);
   const [busy, setBusy] = useState(false);
@@ -35,7 +38,7 @@ export function SearchSheet({ open, onClose, doc, onJump }: Props) {
     const ac = new AbortController();
     abortRef.current = ac;
     setBusy(true);
-    void collectSearchHits(doc, query.trim(), ac.signal)
+    void collectSearchHits(doc, query.trim(), ac.signal, 80, db, bookId)
       .then((list) => {
         setHits(list);
         doc.showSearchHits(list.map((h) => h.range));

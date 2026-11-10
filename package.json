@@ -43,6 +43,7 @@
     "jsqr": "^1.4.0",
     "jszip": "^3.10.2",
     "mammoth": "^1.13.0",
+    "minisearch": "^7.2.0",
     "mp4box": "^2.4.1",
     "music-metadata": "^12.3.3",
     "onnxruntime-web": "^1.22.0",

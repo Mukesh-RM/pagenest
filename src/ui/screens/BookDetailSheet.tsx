@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BookCover } from '../components/BookCover';
 import { BottomSheet, type SheetCloseReason } from '../components/BottomSheet';
 import { Button } from '../components/Button';
+import { Chip, ChipGroup } from '../components/Chip';
 import { OverflowMenu, type OverflowMenuItem } from '../components/OverflowMenu';
 import { ProgressBar } from '../components/ProgressBar';
 import { progressWords } from '../components/BookCard';
@@ -13,12 +14,21 @@ import { playFlip, type RectLike } from '../utils/flip';
 import '../styles/screens.css';
 import '../styles/surfaces.css';
 
+type DetailTab = 'info' | 'chapters' | 'marks';
+
+export interface BookDetailMarks {
+  readonly bookmarks: readonly { label: string }[];
+  readonly highlights: readonly { text: string; note?: string }[];
+}
+
 export interface BookDetailSheetProps {
   open: boolean;
   book: BookDetail | undefined;
   onClose: (reason: SheetCloseReason) => void;
   /** Box of the card's cover when it was tapped. The cover grows out of it (transform and opacity only). */
   originRect?: RectLike;
+  chapters?: readonly { title: string }[];
+  marks?: BookDetailMarks;
   onRead?: (book: BookDetail) => void;
   onListen?: (book: BookDetail) => void;
   /** Opens the reader with read-aloud controls (reflow books). */
@@ -33,9 +43,26 @@ export interface BookDetailSheetProps {
  * Book detail (blueprint 5.6): bottom sheet on phones, a two-pane dialog from 1024 px (cover and facts on the left,
  * description and actions on the right). The background takes a tint from the cover, clamped so text stays AA.
  */
-export function BookDetailSheet({ open, book, onClose, originRect, onRead, onListen, onReadAloud, onRemove, onEdit }: BookDetailSheetProps) {
+export function BookDetailSheet({
+  open,
+  book,
+  onClose,
+  originRect,
+  chapters,
+  marks,
+  onRead,
+  onListen,
+  onReadAloud,
+  onRemove,
+  onEdit,
+}: BookDetailSheetProps) {
   const tint = useCoverTint(book?.coverUrl);
   const coverRef = useRef<HTMLDivElement>(null);
+  const [tab, setTab] = useState<DetailTab>('info');
+
+  useEffect(() => {
+    if (!open) setTab('info');
+  }, [open, book?.id]);
 
   // Shared transition: the cover grows from its card. Runs once per open, after the sheet is laid out.
   useEffect(() => {
@@ -57,6 +84,8 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
   const menuItems: OverflowMenuItem[] = [];
   if (onEdit) menuItems.push({ label: 'Edit details', icon: 'pencil', onSelect: () => onEdit(book) });
   if (onRemove) menuItems.push({ label: 'Remove from library', icon: 'trash', danger: true, onSelect: () => onRemove(book) });
+  const markCount = (marks?.bookmarks.length ?? 0) + (marks?.highlights.length ?? 0);
+
   return (
     <BottomSheet
       open={open}
@@ -67,7 +96,6 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
       footer={
         <div className="pn-detail__actions">
           {audioOnly ? (
-            // Audio only: Listen is THE action. There is nothing to read, so Read is not offered.
             onListen ? (
               <Button icon="headphones" onClick={() => onListen(book)}>
                 {started ? 'Keep listening' : book.progress >= 1 ? 'Listen again' : 'Listen'}
@@ -108,11 +136,62 @@ export function BookDetailSheet({ open, book, onClose, originRect, onRead, onLis
           </div>
         </div>
         <div className="pn-detail__main">
-          <div className="pn-detail__progress">
-            <ProgressBar value={book.progress} label={progressWords(book)} />
-            <p className="pn-detail__line">{progressWords(book)}</p>
-          </div>
-          {book.description ? <p className="pn-detail__description">{book.description}</p> : null}
+          <ChipGroup label="Book detail" className="pn-detail__tabs">
+            <Chip selected={tab === 'info'} onClick={() => setTab('info')}>
+              Info
+            </Chip>
+            <Chip selected={tab === 'chapters'} onClick={() => setTab('chapters')} disabled={!chapters?.length}>
+              Chapters
+            </Chip>
+            <Chip selected={tab === 'marks'} onClick={() => setTab('marks')} disabled={!markCount}>
+              Marks
+            </Chip>
+          </ChipGroup>
+          {tab === 'info' ? (
+            <>
+              <div className="pn-detail__progress">
+                <ProgressBar value={book.progress} label={progressWords(book)} />
+                <p className="pn-detail__line">{progressWords(book)}</p>
+              </div>
+              {book.description ? <p className="pn-detail__description">{book.description}</p> : null}
+            </>
+          ) : null}
+          {tab === 'chapters' ? (
+            <ol className="pn-detail__chapter-list" aria-label="Chapters">
+              {(chapters ?? []).map((c, i) => (
+                <li key={`${i}-${c.title}`} className="pn-detail__line">
+                  {c.title}
+                </li>
+              ))}
+            </ol>
+          ) : null}
+          {tab === 'marks' ? (
+            <div className="pn-detail__marks">
+              {marks?.bookmarks.length ? (
+                <section aria-label="Bookmarks">
+                  <p className="pn-detail__line">Bookmarks ({marks.bookmarks.length})</p>
+                  <ul className="pn-detail__mark-list">
+                    {marks.bookmarks.slice(0, 12).map((b, i) => (
+                      <li key={i}>{b.label}</li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+              {marks?.highlights.length ? (
+                <section aria-label="Highlights and notes">
+                  <p className="pn-detail__line">Highlights ({marks.highlights.length})</p>
+                  <ul className="pn-detail__mark-list">
+                    {marks.highlights.slice(0, 8).map((h, i) => (
+                      <li key={i}>
+                        <span className="pn-detail__mark-text">{h.text.slice(0, 120)}{h.text.length > 120 ? '…' : ''}</span>
+                        {h.note ? <span className="pn-detail__mark-note"> · {h.note}</span> : null}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </BottomSheet>
