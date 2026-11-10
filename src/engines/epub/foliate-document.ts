@@ -567,7 +567,9 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
   #firstVisibleOffset(doc: Document, range: Range): number {
     const r = this.#view.renderer;
     const paged = r.getAttribute('flow') !== 'scrolled' && !r.scrolled;
-    const style = doc.defaultView?.getComputedStyle(doc.body);
+    const body = doc.body;
+    const style =
+      body instanceof Element ? doc.defaultView?.getComputedStyle(body) : undefined;
     const plain = style?.writingMode === 'horizontal-tb' && style.direction === 'ltr';
     if (!paged || !plain || typeof r.start !== 'number') return offsetsOfRange(doc, range).start;
     try {
@@ -586,7 +588,10 @@ export class FoliateReaderDocument implements ReaderDocumentExt {
     const r = this.#view.renderer;
     const doc = r.getContents().find((c) => c.index === index)?.doc;
     if (!doc || typeof r.start !== 'number' || r.getAttribute('flow') === 'scrolled' || r.scrolled) return;
-    const style = doc.defaultView?.getComputedStyle(doc.body);
+    const body = doc.body;
+    const style =
+      body instanceof Element ? doc.defaultView?.getComputedStyle(body) : undefined;
+    if (!style) return;
     if (style?.writingMode !== 'horizontal-tb' || style.direction !== 'ltr') return;
     let offset: number | undefined;
     try {

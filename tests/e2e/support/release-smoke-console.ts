@@ -7,6 +7,8 @@ export function isBenignReleaseSmokePageError(message: string): boolean {
   // Chromium sometimes logs a missing blob: URL while foliate/pdf workers warm up; the smoke still passes.
   if (/Failed to load resource: net::ERR_FILE_NOT_FOUND/i.test(message)) return true;
   if (/Cannot destructure property 'documentElement' from null or undefined/i.test(message)) return true;
+  // Foliate section teardown on Chromium can call getComputedStyle before body is an Element; harmless during format hops.
+  if (/Failed to execute 'getComputedStyle' on 'Window': parameter 1 is not of type 'Element'/.test(message)) return true;
   return false;
 }
 
