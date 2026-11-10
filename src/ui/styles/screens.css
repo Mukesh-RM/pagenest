@@ -185,6 +185,37 @@
   background: rgb(var(--pn-surface));
 }
 
+.pn-detail__tabs {
+  margin-block-end: var(--pn-space-3);
+}
+
+.pn-detail__chapter-list {
+  margin: 0;
+  padding-inline-start: var(--pn-space-4);
+  display: grid;
+  gap: var(--pn-space-2);
+}
+
+.pn-detail__marks {
+  display: grid;
+  gap: var(--pn-space-3);
+}
+
+.pn-detail__mark-list {
+  margin: var(--pn-space-2) 0 0;
+  padding-inline-start: var(--pn-space-4);
+  display: grid;
+  gap: var(--pn-space-2);
+}
+
+.pn-detail__mark-text {
+  font-style: italic;
+}
+
+.pn-detail__mark-note {
+  color: rgb(var(--pn-text-muted));
+}
+
 .pn-detail__description {
   margin: 0;
   max-width: 68ch;

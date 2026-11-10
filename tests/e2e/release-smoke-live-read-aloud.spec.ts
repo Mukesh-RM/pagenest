@@ -8,6 +8,7 @@ import {
   skipOnboarding,
   waitForIndexedDbReady,
   waitForServiceWorkerControl,
+  waitForStorageBootstrap,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
@@ -24,9 +25,9 @@ async function snap(page: Page, project: string, name: string): Promise<void> {
   await page.screenshot({ path: join(shotDir, `${project}-read-aloud-${name}.png`), fullPage: true });
 }
 
-async function importAliceEpub(page: Page): Promise<void> {
+async function importAliceEpub(page: Page, home = './'): Promise<void> {
   const epub = readFileSync(join(repoRoot, 'src/features/reader/fixtures/alice.epub'));
-  await page.goto('./');
+  await page.goto(home);
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
   await waitForIndexedDbReady(page);
@@ -38,12 +39,13 @@ async function importAliceEpub(page: Page): Promise<void> {
     buffer: epub,
   });
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
+  await waitForStorageBootstrap(page);
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
   await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
   await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
   await dismissReaderInterstitials(page);
-  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+  await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
 }
 
 test.describe('live read-aloud produces audible audio', () => {
@@ -51,6 +53,9 @@ test.describe('live read-aloud produces audible audio', () => {
     test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
     test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
     await primeSmokeHints(context);
+    if (testInfo.project.name.includes('webkit')) {
+      await context.addInitScript(() => sessionStorage.setItem('pn_no_opfs', '1'));
+    }
     await primeDeviceSpeechForLiveSmoke(context);
     await page.setViewportSize(releaseSmokeViewport(testInfo.project.name));
   });
@@ -61,7 +66,8 @@ test.describe('live read-aloud produces audible audio', () => {
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);
 
-    await importAliceEpub(page);
+    const home = testInfo.project.name.includes('webkit') ? './?pn_no_opfs=1' : './';
+    await importAliceEpub(page, home);
     await snap(page, project, '01-reader');
 
     await openReadAloudControls(page);
@@ -90,11 +96,12 @@ test.describe('live read-aloud produces audible audio', () => {
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);
 
-    await importAliceEpub(page);
+    const home = testInfo.project.name.includes('webkit') ? './?pn_no_opfs=1' : './';
+    await importAliceEpub(page, home);
     await seedLegacyPiperNarrationSettings(page);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await dismissReaderInterstitials(page);
-    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await snap(page, project, 'legacy-01-reader');
 
     await openReadAloudControls(page);

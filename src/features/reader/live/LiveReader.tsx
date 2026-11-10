@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { isLocatorForMode, type Locator } from '@/app/contracts';
 import type { BookScreenProps } from '@/app/components/BookSummary';
 import { DEFAULT_READER_SETTINGS, loadReaderSettings, READER_FONTS, saveReaderSettings } from '@/app/reader-settings';
+import { DEFAULT_READER_COMFORT, loadReaderComfort, saveReaderComfort, type ReaderComfort } from '@/app/reader-comfort';
 import { useRouteChrome } from '@/app/route-chrome';
 import { useServices } from '@/app/services-context';
 import { resolveFileStore, newId } from '@/data';
@@ -23,6 +24,9 @@ import { MarksSheet } from './MarksSheet';
 import { downloadMarksExport } from './marks-export';
 import { NoteEditorSheet } from './NoteEditorSheet';
 import { SearchSheet } from './SearchSheet';
+import { ReaderComfortOverlay } from './ReaderComfortOverlay';
+import { useReaderEdgeComfort } from './useReaderEdgeComfort';
+import { scheduleBookSearchIndex } from '../search/book-text-index';
 import { SelectionBar } from './SelectionBar';
 import { ensureReadableStart } from './open-position';
 import { useNarrationReaderBridge } from '@/features/narration/narration-reader-bridge';
@@ -123,9 +127,18 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const [dictOpen, setDictOpen] = useState(false);
   const [wordTap, setWordTap] = useState<{ token: number; word: string; anchor: DOMRect } | undefined>();
   const [chromeVisible, setChromeVisible] = useState(true);
+  const [comfort, setComfort] = useState<ReaderComfort>(DEFAULT_READER_COMFORT);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
   const appliedRef = useRef<ReaderSettings>();
+  const edgeComfort = useReaderEdgeComfort(comfort, (next) => {
+    setComfort(next);
+    void saveReaderComfort(db, next);
+  });
+
+  useEffect(() => {
+    void loadReaderComfort(db).then(setComfort);
+  }, [db]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -212,6 +225,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         setDoc(document_);
         endSettling();
         setPhase({ status: 'ready' });
+        void scheduleBookSearchIndex(db, book.id, book.fingerprint, document_, abort.signal);
         void import('@/app/offline-assets')
           .then((m) =>
             book.format === 'pdf'
@@ -544,7 +558,13 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       }
     >
       <div className="pn-live">
-        <div className="pn-live__stage">
+        <div
+          className="pn-live__stage"
+          onPointerDown={edgeComfort.onPointerDown}
+          onPointerMove={edgeComfort.onPointerMove}
+          onPointerUp={edgeComfort.onPointerUp}
+          onPointerCancel={edgeComfort.onPointerCancel}
+        >
           {selection ? (
             <SelectionBar
               selection={selection}
@@ -569,6 +589,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
             />
           ) : null}
           <div ref={hostRef} className="pn-live__host" tabIndex={-1} role="region" aria-label={`Reading ${book.title}`} />
+          <ReaderComfortOverlay comfort={comfort} />
           {phase.status === 'ready' && doc ? (
             <Suspense fallback={null}>
               <DictionaryHost
@@ -598,6 +619,8 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         doc={doc}
+        bookId={book.id}
+        db={db}
         onJump={(hit) => {
           setSearchOpen(false);
           void doc?.goToRange(hit.range);

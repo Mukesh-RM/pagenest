@@ -4,6 +4,7 @@ import { newId } from '@/data';
 import type { BookmarkRecord, HighlightRecord } from '@/data/schema';
 import type { HighlightColor, SearchHit } from '@/engines/reader/types';
 import type { ReaderDocumentExt } from '../core/ext-types';
+import { searchWithBookIndex } from '../search/book-text-index';
 
 export async function loadHighlights(db: PageNestDB, bookId: string): Promise<HighlightRecord[]> {
   return db.highlights.where('bookId').equals(bookId).sortBy('createdAt');
@@ -72,7 +73,13 @@ export async function collectSearchHits(
   query: string,
   signal?: AbortSignal,
   limit = 80,
+  db?: PageNestDB,
+  bookId?: string,
 ): Promise<SearchHit[]> {
+  if (db && bookId) {
+    const indexed = await searchWithBookIndex(db, bookId, query, limit, signal);
+    if (indexed !== undefined) return indexed;
+  }
   const hits: SearchHit[] = [];
   for await (const hit of doc.search(query, signal)) {
     hits.push(hit);

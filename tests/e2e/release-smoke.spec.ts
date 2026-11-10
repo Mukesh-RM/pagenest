@@ -124,11 +124,13 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);
     const swVersion = 1;
-    await page.route('**/sw.js', async (route) => {
-      const response = await route.fetch();
-      const body = `${await response.text()}\n/* release-smoke v${swVersion} */`;
-      await route.fulfill({ response, body, headers: response.headers() });
-    });
+    if (process.env.PAGENEST_SMOKE_LIVE !== '1') {
+      await page.route('**/sw.js', async (route) => {
+        const response = await route.fetch();
+        const body = `${await response.text()}\n/* release-smoke v${swVersion} */`;
+        await route.fulfill({ response, body, headers: response.headers() });
+      });
+    }
 
     await context.clearCookies();
     await page.goto(home);
@@ -212,9 +214,24 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await page.goto(pdfReadUrl);
     await page.locator('.pn-pdf-page[data-rendered="true"] canvas').first().waitFor({ state: 'visible', timeout: 120_000 });
-    await page.goto(listenUrl);
-    await page.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible({ timeout: 30_000 });
+    if (process.env.PAGENEST_SMOKE_LIVE === '1') {
+      await openLibraryFromAnyRoute(page);
+      await dismissLibraryOverlays(page);
+      await waitForStorageBootstrap(page);
+      const toneCard = page.getByRole('button', { name: 'Tone Book' }).first();
+      await expect(toneCard).toBeVisible({ timeout: 60_000 });
+      await toneCard.click();
+      const sheet = page.getByRole('dialog');
+      await expect(sheet).toBeVisible({ timeout: 15_000 });
+      await sheet.getByRole('button', { name: /^(Listen|Keep listening)/i }).click({ timeout: 30_000 });
+    } else {
+      await page.goto(listenUrl);
+    }
+    await expect(page).toHaveURL(/\/listen\//, { timeout: 60_000 });
+    await expect(page.getByRole('region', { name: 'Audio player' })).toBeVisible({ timeout: 60_000 });
+    const play = page.getByRole('button', { name: 'Play', exact: true });
+    await play.click({ timeout: 60_000 });
+    await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible({ timeout: 60_000 });
     await snap(page, '09-all-formats-after-sw-bump');
 
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);

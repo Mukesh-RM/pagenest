@@ -33,12 +33,16 @@ export interface IndexedBook {
   /** Narrator and series together: searchable, ranked lowest. */
   readonly other: string;
   readonly otherWords: readonly string[];
+  /** Plain text blurb from the background full-text indexer (when built). */
+  readonly body: string;
+  readonly bodyWords: readonly string[];
 }
 
-export function indexBook(book: BookRecord): IndexedBook {
+export function indexBook(book: BookRecord, body = ''): IndexedBook {
   const title = normalizeText(book.title);
   const author = normalizeText(book.author ?? '');
   const other = normalizeText(`${book.narrator ?? ''} ${book.series ?? ''}`);
+  const bodyNorm = normalizeText(body);
   return {
     book,
     title,
@@ -47,6 +51,8 @@ export function indexBook(book: BookRecord): IndexedBook {
     authorWords: author === '' ? [] : author.split(' '),
     other,
     otherWords: other === '' ? [] : other.split(' '),
+    body: bodyNorm,
+    bodyWords: bodyNorm === '' ? [] : bodyNorm.split(' '),
   };
 }
 
@@ -67,6 +73,8 @@ function termScore(doc: IndexedBook, term: string): number {
   if (doc.title.includes(term)) return 3;
   if (doc.author.includes(term)) return 2;
   if (doc.other.includes(term)) return 1;
+  if (hasPrefix(doc.bodyWords, term)) return 2;
+  if (doc.body.includes(term)) return 1;
   return 0;
 }
 

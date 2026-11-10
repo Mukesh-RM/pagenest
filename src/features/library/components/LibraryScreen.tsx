@@ -41,6 +41,7 @@ import { ImportStatus } from './ImportStatus';
 import { SelectionBar } from './SelectionBar';
 import { ShelfSheet } from './ShelfSheet';
 import { Toolbar } from './Toolbar';
+import { PullToRefresh } from './PullToRefresh';
 
 /** The design system's book detail sheet loads when the first book is tapped, not with the list. */
 const BookDetailSheet = lazyWithRetry(() => import('@/ui/screens/BookDetailSheet'));
@@ -79,6 +80,7 @@ function DetailHost({
   onRemove: (book: BookSummary) => void;
   onEdit: (book: BookSummary) => void;
 }) {
+  const { db, data } = useServices();
   const { book } = detail;
   const coverUrl = useCoverUrl(book.id, book.coverRef !== undefined);
   const shown = useMemo<BookDetail>(
@@ -91,6 +93,31 @@ function DetailHost({
     }),
     [book, coverUrl],
   );
+  const [chapters, setChapters] = useState<readonly { title: string }[]>([]);
+  const [marks, setMarks] = useState<{ bookmarks: { label: string }[]; highlights: { text: string; note?: string }[] }>();
+  useEffect(() => {
+    if (!detail.open) {
+      setChapters([]);
+      setMarks(undefined);
+      return;
+    }
+    let live = true;
+    void Promise.all([
+      data.books.getChapters(book.id).catch(() => []),
+      db.bookmarks.where('bookId').equals(book.id).sortBy('createdAt'),
+      db.highlights.where('bookId').equals(book.id).sortBy('createdAt'),
+    ]).then(([chapterRows, bookmarkRows, highlightRows]) => {
+      if (!live) return;
+      setChapters(chapterRows.map((c) => ({ title: c.title })));
+      setMarks({
+        bookmarks: bookmarkRows.map((b) => ({ label: b.label })),
+        highlights: highlightRows.map((h) => ({ text: h.text, ...(h.note ? { note: h.note } : {}) })),
+      });
+    });
+    return () => {
+      live = false;
+    };
+  }, [book.id, data.books, db, detail.open]);
   const listen = book.kind === 'audio';
   return (
     <BookDetailSheet
@@ -98,6 +125,8 @@ function DetailHost({
       book={shown}
       onClose={onClose}
       {...(detail.rect ? { originRect: detail.rect } : {})}
+      chapters={chapters.length ? chapters : undefined}
+      marks={marks}
       {...(listen ? { onListen: () => onOpenBook(book) } : { onRead: () => onOpenBook(book), onReadAloud: () => onReadAloud(book) })}
       onRemove={() => onRemove(book)}
       onEdit={() => onEdit(book)}
@@ -318,7 +347,8 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
   const showEmptyLibrary = ready && libraryCount === 0 && !shelfId && !preset;
 
   return (
-    <>
+    <PullToRefresh onRefresh={() => reload()} disabled={!ready || selectingNow}>
+      <>
       <PageHeader title={title}>
         {onBack ? (
           <span className="pn-lib-headactions">
@@ -435,7 +465,8 @@ function LibraryBody({ shelfId, title = 'Library', onBack, preset, header }: Lib
       <BookSheet book={editing} onClose={() => setEditing(undefined)} onSave={saveDetails} />
       <ShelfSheet open={shelfPick} bookIds={chosen.map((b) => b.id)} onClose={() => setShelfPick(false)} onDone={(m) => (say(m), endSelect())} />
       <DropOverlay onDrop={startImport} />
-    </>
+      </>
+    </PullToRefresh>
   );
 }
 

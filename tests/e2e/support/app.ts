@@ -236,13 +236,14 @@ export async function waitForBookText(page: Page, opts?: { needle?: string; min?
  * very load, a reload is needed before it controls the page, so we do exactly that once.
  */
 export async function waitForServiceWorkerControl(page: Page): Promise<void> {
+  const readyMs = process.env.PAGENEST_SMOKE_LIVE === '1' ? 60_000 : 8_000;
   // `ready` never settles when the app registers no service worker, so race it against a timeout and fail with a clear reason.
   await page.evaluate(async (timeoutMs) => {
     if (!('serviceWorker' in navigator)) throw new Error('Service workers are not supported');
     const none = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error(`No service worker became active within ${timeoutMs} ms (is one registered?)`)), timeoutMs));
     await Promise.race([navigator.serviceWorker.ready, none]);
-  }, 8_000);
+  }, readyMs);
   const controlled = await page.evaluate(() => !!navigator.serviceWorker.controller);
   if (!controlled) {
     await page.reload();

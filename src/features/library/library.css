@@ -3,6 +3,20 @@
  * src/ui/styles/tokens.css (--pn-*); sizes sit on the 4 px grid. Nothing here sets a color value.
  */
 
+.pn-ptr__indicator {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  transition: opacity var(--pn-motion-fast);
+  color: rgb(var(--pn-text-muted));
+  font-size: var(--pn-text-sm);
+}
+
+.pn-ptr__label {
+  padding-block-end: var(--pn-space-2);
+}
+
 /* ---------- Dock: import status and selection bar, above the tab bar ---------- */
 .pn-lib-dock {
   position: fixed;
