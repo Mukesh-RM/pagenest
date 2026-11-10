@@ -37,7 +37,7 @@ describe('DriveModeView', () => {
     );
     expect(screen.getByRole('dialog', { name: 'Drive mode' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Night Road' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Exit' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Exit drive mode' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back 30 seconds' })).toBeInTheDocument();
   });
 });
