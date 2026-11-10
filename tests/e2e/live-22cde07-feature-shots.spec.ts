@@ -162,7 +162,7 @@ test.describe('live 22cde07 feature screenshots', () => {
     await page.getByTestId('player-drive-mode').click();
     await expect(page.getByTestId('drive-mode')).toBeVisible({ timeout: 15_000 });
     await snap(page, project, '07-drive-mode');
-    await page.getByTestId('drive-mode').getByRole('button', { name: 'Exit' }).click();
+    await page.getByTestId('drive-mode').getByRole('button', { name: /exit drive mode|^Exit$/i }).click();
     await expect(page.getByTestId('drive-mode')).toBeHidden({ timeout: 15_000 });
 
     await page.goto(home);
