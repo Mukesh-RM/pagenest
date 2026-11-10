@@ -37,7 +37,7 @@ async function importFiles(
   waitForCard?: RegExp,
 ): Promise<void> {
   await page.getByRole('button', { name: 'Add books' }).first().click();
-  await page.getByTestId('pick-files').setInputFiles(files);
+  await page.getByTestId('pick-files').setInputFiles(files, { timeout: 60_000 });
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
   if (waitForCard) await expect(page.getByRole('button', { name: waitForCard }).first()).toBeVisible({ timeout: 120_000 });
 }

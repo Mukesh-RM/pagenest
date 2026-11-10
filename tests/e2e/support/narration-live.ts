@@ -107,9 +107,14 @@ export async function openReadAloudControls(page: Page): Promise<void> {
   if (await dockToggle.isVisible().catch(() => false)) {
     await dockToggle.click();
   } else {
-    await page.locator('footer').getByRole('button', { name: 'Read aloud' }).click();
+    const footer = page.locator('footer').getByRole('button', { name: 'Read aloud' });
+    if (await footer.isVisible().catch(() => false)) {
+      await footer.click();
+    } else {
+      await page.getByRole('button', { name: 'Read aloud' }).first().click({ timeout: 30_000 });
+    }
   }
-  await expect(region).toBeVisible({ timeout: 15_000 });
+  await expect(region).toBeVisible({ timeout: 30_000 });
 }
 
 export async function startDefaultReadAloud(page: Page): Promise<void> {

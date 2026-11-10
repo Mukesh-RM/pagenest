@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 
 const THRESHOLD_PX = 72;
 const MAX_PULL_PX = 120;
@@ -70,8 +70,59 @@ export function PullToRefresh({ onRefresh, disabled, children }: PullToRefreshPr
     setPull(0);
   }, []);
 
+  const onPtrDown = useCallback(
+    (e: ReactPointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      if (disabled || refreshing) return;
+      if (window.scrollY > 4) return;
+      startY.current = e.clientY;
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    [disabled, refreshing],
+  );
+
+  const onPtrMove = useCallback(
+    (e: ReactPointerEvent) => {
+      if (startY.current === undefined || disabled || refreshing) return;
+      const delta = e.clientY - startY.current;
+      if (delta <= 0) {
+        setPull(0);
+        return;
+      }
+      if (window.scrollY > 4) {
+        startY.current = undefined;
+        setPull(0);
+        return;
+      }
+      setPull(Math.min(MAX_PULL_PX, delta));
+    },
+    [disabled, refreshing],
+  );
+
+  const onPtrUp = useCallback(
+    (e: ReactPointerEvent) => {
+      try {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      } catch {
+        /* released */
+      }
+      void finish();
+    },
+    [finish],
+  );
+
   return (
-    <div className="pn-ptr" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd} onTouchCancel={onTouchCancel}>
+    <div
+      className="pn-ptr"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+      onPointerDown={onPtrDown}
+      onPointerMove={onPtrMove}
+      onPointerUp={onPtrUp}
+      onPointerCancel={onPtrUp}
+    >
       <div
         className="pn-ptr__indicator"
         aria-hidden="true"

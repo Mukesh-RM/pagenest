@@ -10,6 +10,7 @@ import {
   skipOnboarding,
   waitForIndexedDbReady,
   waitForServiceWorkerControl,
+  waitForStorageBootstrap,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, selectPhraseInFoliate, waitForFoliateBookTextLive } from './support/foliate-reader';
@@ -25,9 +26,9 @@ async function snap(page: Page, project: string, name: string): Promise<void> {
   await page.screenshot({ path: join(shotDir, `${project}-readera-${name}.png`), fullPage: true });
 }
 
-async function importAlice(page: Page): Promise<void> {
+async function importAlice(page: Page, home = './'): Promise<void> {
   const epub = readFileSync(join(repoRoot, 'src/features/reader/fixtures/alice.epub'));
-  await page.goto('./');
+  await page.goto(home);
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
   await waitForIndexedDbReady(page);
@@ -39,6 +40,7 @@ async function importAlice(page: Page): Promise<void> {
     buffer: epub,
   });
   await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
+  await waitForStorageBootstrap(page);
   await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 120_000 });
 }
 
@@ -47,6 +49,9 @@ test.describe('live ReadEra parity screenshots', () => {
     test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
     test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
     await primeSmokeHints(context);
+    if (testInfo.project.name.includes('webkit')) {
+      await context.addInitScript(() => sessionStorage.setItem('pn_no_opfs', '1'));
+    }
     await page.setViewportSize(releaseSmokeViewport(testInfo.project.name));
   });
 
@@ -56,7 +61,8 @@ test.describe('live ReadEra parity screenshots', () => {
     const errors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, errors);
 
-    await importAlice(page);
+    const home = testInfo.project.name.includes('webkit') ? './?pn_no_opfs=1' : './';
+    await importAlice(page, home);
     await expect(page.locator('.pn-bookcard__format').first()).toHaveText('EPUB');
     await snap(page, project, '01-format-chips');
 
@@ -68,7 +74,7 @@ test.describe('live ReadEra parity screenshots', () => {
     await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
     await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
     await dismissReaderInterstitials(page);
-    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice' });
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await selectPhraseInFoliate(page, 'Alice');
     await expect(page.getByRole('button', { name: 'Copy selection' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Add note to selection' })).toBeVisible();

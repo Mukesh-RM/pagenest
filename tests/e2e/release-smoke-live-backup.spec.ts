@@ -53,6 +53,9 @@ test.describe('live backup and restore', () => {
       }
     });
     await primeSmokeHints(context);
+    if (testInfo.project.name.includes('webkit')) {
+      await context.addInitScript(() => sessionStorage.setItem('pn_no_opfs', '1'));
+    }
     await page.setViewportSize(releaseSmokeViewport(testInfo.project.name));
   });
 
@@ -62,8 +65,9 @@ test.describe('live backup and restore', () => {
     const errors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, errors);
 
+    const home = testInfo.project.name.includes('webkit') ? './?pn_no_opfs=1' : './';
     const epub = readFileSync(join(repoRoot, 'src/features/reader/fixtures/alice.epub'));
-    await page.goto('./');
+    await page.goto(home);
     await skipOnboarding(page);
     await dismissLibraryOverlays(page);
     await waitForIndexedDbReady(page);

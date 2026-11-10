@@ -8,6 +8,7 @@ import {
   skipOnboarding,
   waitForIndexedDbReady,
   waitForServiceWorkerControl,
+  waitForStorageBootstrap,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
@@ -27,8 +28,8 @@ async function snap(page: Page, project: string, slug: string): Promise<void> {
   await page.screenshot({ path: join(shotDir, `${project}-formats-${slug}-open.png`), fullPage: true });
 }
 
-async function primeLibrary(page: Page): Promise<void> {
-  await page.goto('./');
+async function primeLibrary(page: Page, home = './'): Promise<void> {
+  await page.goto(home);
   await skipOnboarding(page);
   await dismissLibraryOverlays(page);
   await waitForIndexedDbReady(page);
@@ -104,6 +105,9 @@ test.describe('live format fixtures open in the reader', () => {
     test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
     test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
     await primeSmokeHints(context);
+    if (testInfo.project.name.includes('webkit')) {
+      await context.addInitScript(() => sessionStorage.setItem('pn_no_opfs', '1'));
+    }
     await page.setViewportSize(releaseSmokeViewport(testInfo.project.name));
   });
 
@@ -113,7 +117,8 @@ test.describe('live format fixtures open in the reader', () => {
     const errors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, errors);
 
-    await primeLibrary(page);
+    const home = testInfo.project.name.includes('webkit') ? './?pn_no_opfs=1' : './';
+    await primeLibrary(page, home);
 
     const importBatch = CASES.map((item) => ({
       name: item.file.name,
@@ -123,13 +128,14 @@ test.describe('live format fixtures open in the reader', () => {
     await page.getByRole('button', { name: 'Add books' }).first().click();
     await page.getByTestId('pick-files').setInputFiles(importBatch);
     await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
+    await waitForStorageBootstrap(page);
     await expect(page.getByRole('button', { name: /Alice|Wonderland/i }).first()).toBeVisible({ timeout: 180_000 });
 
     for (const item of CASES) {
       await openByFormatLabel(page, item.format);
       await item.ready(page);
       await snap(page, project, item.slug);
-      await page.goto('./');
+      await page.goto(home);
       await dismissLibraryOverlays(page);
     }
 

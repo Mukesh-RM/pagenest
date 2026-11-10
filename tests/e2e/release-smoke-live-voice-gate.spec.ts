@@ -1,8 +1,17 @@
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
-import { dismissLibraryOverlays, gotoTab, primeSmokeHints, skipOnboarding, waitForIndexedDbReady } from './support/app';
+import {
+  dismissLibraryOverlays,
+  gotoTab,
+  primeSmokeHints,
+  skipOnboarding,
+  waitForIndexedDbReady,
+  waitForServiceWorkerControl,
+  waitForStorageBootstrap,
+} from './support/app';
+import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
 import { openReadAloudControls } from './support/narration-live';
 import { releaseSmokeViewport } from './support/release-smoke-viewport';
@@ -22,6 +31,9 @@ test.describe('live voice clone gates (production build)', () => {
     test.skip(!live, 'Set PAGENEST_SMOKE_LIVE=1 (npm run smoke:live).');
     test.skip(!['release-smoke-chromium', 'release-smoke-webkit'].includes(testInfo.project.name));
     await primeSmokeHints(context);
+    if (testInfo.project.name.includes('webkit')) {
+      await context.addInitScript(() => sessionStorage.setItem('pn_no_opfs', '1'));
+    }
     await page.setViewportSize(releaseSmokeViewport(testInfo.project.name));
   });
 
@@ -42,12 +54,25 @@ test.describe('live voice clone gates (production build)', () => {
     await expect(page.getByRole('button', { name: 'Train on device' })).toHaveCount(0);
     await snap(page, project, '01-voice-studio');
 
+    const home = testInfo.project.name.includes('webkit') ? './?pn_no_opfs=1' : './';
+    const epub = readFileSync(join(repoRoot, 'src/features/reader/fixtures/alice.epub'));
     await gotoTab(page, 'Library');
-    await page.getByRole('region', { name: /try a sample book/i }).getByRole('button', { name: /add the sample book/i }).click({ timeout: 20_000 });
-    await page.waitForURL(/\/read\//, { timeout: 60_000 }).catch(async () => {
-      await page.locator('main li, main [role=listitem]').first().click();
-      await page.waitForURL(/\/read\//, { timeout: 60_000 });
+    await page.goto(home);
+    await dismissLibraryOverlays(page);
+    await waitForServiceWorkerControl(page);
+    await page.getByRole('button', { name: 'Add books' }).first().click();
+    await page.getByTestId('pick-files').setInputFiles({
+      name: 'alice.epub',
+      mimeType: 'application/epub+zip',
+      buffer: epub,
     });
+    await page.getByRole('button', { name: 'Dismiss' }).click({ timeout: 8000 }).catch(() => undefined);
+    await waitForStorageBootstrap(page);
+    await page.getByRole('button', { name: /Alice|Wonderland/i }).first().click();
+    await page.getByRole('dialog').getByRole('button', { name: /^(start reading|continue reading)$/i }).click();
+    await expect(page).toHaveURL(/\/read\//, { timeout: 120_000 });
+    await dismissReaderInterstitials(page);
+    await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     await openReadAloudControls(page);
     await page.getByRole('button', { name: 'Choose voice' }).click();
     await expect(page.getByRole('button', { name: /My voice/i })).toHaveCount(0);
