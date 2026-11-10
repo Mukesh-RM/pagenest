@@ -40,6 +40,13 @@ describe('settings to appearance', () => {
     expect(settingsToAppearance({ ...DEFAULT_READER_SETTINGS, pageTurn: 'scroll' }).pageTurn).toBe('scroll');
   });
 
+  it('maps alignment, hyphenation and paragraph spacing', () => {
+    const a = settingsToAppearance({ ...DEFAULT_READER_SETTINGS, align: 'justify', hyphenate: false, paragraphSpacing: 'roomy' });
+    expect(a.align).toBe('justify');
+    expect(a.hyphenate).toBe(false);
+    expect(a.paragraphSpacingEm).toBeGreaterThan(1);
+  });
+
   it('normalizes mapped appearance for varied font sizes', () => {
     for (const fontSize of [14, 18, 32]) {
       const a = settingsToAppearance({ ...DEFAULT_READER_SETTINGS, fontSize });

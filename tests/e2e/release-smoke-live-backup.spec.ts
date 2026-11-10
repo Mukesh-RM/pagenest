@@ -11,12 +11,12 @@ import {
   waitForServiceWorkerControl,
 } from './support/app';
 import { attachReleaseSmokeConsoleGuard } from './support/release-smoke-console';
+import { releaseSmokeViewport } from './support/release-smoke-viewport';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
 const host = process.env.PAGENEST_SMOKE_LIVE_HOST ?? 'live';
 const shotDir = join(repoRoot, 'docs/screens/release-smoke-live', host);
-const VIEW = { width: 360, height: 740 };
 
 async function snap(page: Page, project: string, name: string): Promise<void> {
   mkdirSync(shotDir, { recursive: true });
@@ -53,7 +53,7 @@ test.describe('live backup and restore', () => {
       }
     });
     await primeSmokeHints(context);
-    await page.setViewportSize(VIEW);
+    await page.setViewportSize(releaseSmokeViewport(testInfo.project.name));
   });
 
   test('save backup download then restore library', async ({ page }, testInfo) => {

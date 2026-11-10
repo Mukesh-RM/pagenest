@@ -38,6 +38,8 @@ export interface ReaderScreenProps {
   onChromeVisibleChange?: (visible: boolean) => void;
   /** Chapter tick marks on the scrubber (each 0–1 through the book). With `onScrubCommit`, replaces the thin progress bar. */
   chapterTicks?: readonly number[];
+  /** Bookmark positions on the scrubber (each 0–1). */
+  bookmarkTicks?: readonly number[];
   /** Spoken scrubber value and the quiet footer line, e.g. "Page 5 of 39" or "42 percent". */
   progressLabel?: string;
   scrubDisabled?: boolean;
@@ -96,6 +98,7 @@ export function ReaderScreen({
   chromeVisible: chromeVisibleProp,
   onChromeVisibleChange,
   chapterTicks,
+  bookmarkTicks,
   progressLabel,
   scrubDisabled,
   onScrubPreview,
@@ -277,6 +280,7 @@ export function ReaderScreen({
             <ReaderScrubber
               value={progress}
               ticks={chapterTicks}
+              bookmarkTicks={bookmarkTicks}
               valueText={scrubLabel ?? `${Math.round(progress * 100)} percent`}
               disabled={scrubDisabled}
               onPreview={onScrubPreview}

@@ -17,7 +17,7 @@ export { ReaderScreen, type ReaderScreenProps } from './ReaderScreen';
 export { ReaderTocSheet, type ReaderTocSheetProps } from './ReaderTocSheet';
 export { ReaderScrubber, type ReaderScrubberProps } from '../components/ReaderScrubber';
 export { ReaderSettingsSheet, type ReaderSettingsSheetProps } from './ReaderSettingsSheet';
-export { LINE_HEIGHT, MARGIN_PX, READER_MAX_FONT, READER_MIN_FONT } from './readerOptions';
+export { LINE_HEIGHT, MARGIN_PX, PARAGRAPH_SPACING_EM, READER_MAX_FONT, READER_MIN_FONT } from './readerOptions';
 export { AudioPlayerScreen, type AudioPlayerController, type AudioPlayerScreenProps } from './AudioPlayerScreen';
 export { BookmarksSheet, type BookmarksSheetProps } from './BookmarksSheet';
 export { SkipIntervalSheet, type SkipIntervalSheetProps } from './SkipIntervalSheet';

@@ -25,11 +25,16 @@ export const DEFAULT_READER_SETTINGS: ReaderSettings = {
   lineSpacing: 'comfortable',
   margins: 'medium',
   pageTurn: 'slide',
+  align: 'left',
+  hyphenate: true,
+  paragraphSpacing: 'normal',
 };
 
 const SPACINGS = ['compact', 'comfortable', 'airy'] as const;
 const MARGINS = ['narrow', 'medium', 'wide'] as const;
 const PAGE_TURNS = ['slide', 'scroll', 'none'] as const;
+const ALIGNS = ['left', 'justify'] as const;
+const PARA_SPACING = ['tight', 'normal', 'roomy'] as const;
 
 /** Read a saved value: every field is checked, and anything wrong falls back to its default. */
 export function parseReaderSettings(value: unknown, fallback: ReaderSettings = DEFAULT_READER_SETTINGS): ReaderSettings {
@@ -45,6 +50,9 @@ export function parseReaderSettings(value: unknown, fallback: ReaderSettings = D
     lineSpacing: SPACINGS.find((s) => s === v.lineSpacing) ?? fallback.lineSpacing,
     margins: MARGINS.find((m) => m === v.margins) ?? fallback.margins,
     pageTurn: PAGE_TURNS.find((p) => p === v.pageTurn) ?? fallback.pageTurn,
+    align: ALIGNS.find((a) => a === v.align) ?? fallback.align,
+    hyphenate: typeof v.hyphenate === 'boolean' ? v.hyphenate : fallback.hyphenate,
+    paragraphSpacing: PARA_SPACING.find((p) => p === v.paragraphSpacing) ?? fallback.paragraphSpacing,
   };
 }
 

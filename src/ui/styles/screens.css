@@ -489,6 +489,14 @@
   background: rgb(var(--pn-border-strong));
 }
 
+.pn-scrubber__tick--bookmark {
+  width: 3px;
+  height: var(--pn-space-3);
+  margin-top: calc(var(--pn-space-2) * -1);
+  margin-left: -1.5px;
+  background: rgb(var(--pn-accent));
+}
+
 .pn-scrubber__input {
   --pn-fill-stop: calc(var(--pn-thumb) / 2 + (100% - var(--pn-thumb)) * var(--f, 0));
   appearance: none;

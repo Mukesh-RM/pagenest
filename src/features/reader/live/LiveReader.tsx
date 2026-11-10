@@ -157,6 +157,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
     void (async () => {
       try {
         slowTimer = window.setTimeout(() => setPhase({ status: 'loading', message: 'Still opening. Large files take a moment.' }), SLOW_OPEN_MS);
+        await import('@/app/storage-bootstrap').then((m) => m.bootstrapStorage(db));
         const fileRef = book.fileRef;
         const filePromise = fileRef
           ? resolveFileStore().then((store) => openBookFile(store, book))
@@ -317,7 +318,8 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   const saveBookmark = useCallback(() => {
     if (!doc) return;
     const locator = position?.locator ?? doc.position().locator;
-    void addBookmark(db, book.id, locator, doc.currentLabel()).then((row) => setBookmarks((list) => [...list, row]));
+    const fraction = Math.min(1, Math.max(0, (position?.percent ?? doc.position().percent ?? 0) / 100));
+    void addBookmark(db, book.id, locator, doc.currentLabel(), fraction).then((row) => setBookmarks((list) => [...list, row]));
   }, [book.id, db, doc, position]);
 
   const saveHighlight = useCallback(
@@ -466,6 +468,14 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
   }, [engineToc]);
 
   const ticks = useMemo(() => doc?.chapterTicks() ?? [], [doc, tocVersion]); // eslint-disable-line react-hooks/exhaustive-deps
+  const bookmarkTicks = useMemo(
+    () =>
+      bookmarks
+        .map((b) => b.fraction)
+        .filter((f): f is number => typeof f === 'number' && Number.isFinite(f))
+        .sort((a, b) => a - b),
+    [bookmarks],
+  );
   const fraction = Math.min(1, Math.max(0, (position?.percent ?? resume?.percent ?? 0) / 100));
   const pages = position?.pageCount;
   const shown = preview ?? fraction;
@@ -493,6 +503,7 @@ export default function LiveReader({ book, position: resume }: BookScreenProps) 
       onPagePrev={() => void turn(flip ? 1 : -1)}
       onPageNext={() => void turn(flip ? -1 : 1)}
       chapterTicks={ticks}
+      bookmarkTicks={bookmarkTicks.length ? bookmarkTicks : undefined}
       progressLabel={scrubText}
       scrubDisabled={!doc}
       onScrubPreview={setPreview}

@@ -21,6 +21,7 @@ describe('isOpfsHarnessDisabled', () => {
     sessionStorage.setItem('pn_no_opfs', '1');
     expect(isOpfsHarnessDisabled()).toBe(true);
   });
+
 });
 
 describe('openOpfsRoot', () => {
