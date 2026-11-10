@@ -5,6 +5,7 @@ import { chromium, expect, test, webkit } from '@playwright/test';
 import { isBenignReleaseSmokePageError } from './support/release-smoke-console';
 import { dismissReaderInterstitials, waitForFoliateBookTextLive } from './support/foliate-reader';
 import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl } from './support/app';
+import { releaseSmokeViewport } from './support/release-smoke-viewport';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const live = process.env.PAGENEST_SMOKE_LIVE === '1';
@@ -28,7 +29,7 @@ test('upgraded profile: import on live URL then reopen after reload', async ({ c
 
   const browserType = testInfo.project.name === 'release-smoke-webkit' ? webkit : chromium;
   const browser = await browserType.launchPersistentContext(profile, {
-    viewport: { width: 360, height: 740 },
+    viewport: releaseSmokeViewport(testInfo.project.name),
     baseURL: process.env.PAGENEST_BASE_URL,
     serviceWorkers: 'allow',
   });

@@ -5,6 +5,8 @@ export interface ReaderScrubberProps {
   readonly value: number;
   /** Chapter starts as fractions of the whole book (ticks on the track). */
   readonly ticks?: readonly number[];
+  /** Saved bookmarks on the track (distinct tick style). */
+  readonly bookmarkTicks?: readonly number[];
   /** Spoken value, for example "Page 5 of 39" or "42 percent". */
   readonly valueText: string;
   readonly disabled?: boolean;
@@ -18,7 +20,7 @@ const STEPS = 1000;
 const SETTLE_MS = 140;
 
 /** Book scrubber: drag to jump, ticks mark chapter starts. Keyboard: Page Up/Down jump by a tenth. */
-export function ReaderScrubber({ value, ticks = [], valueText, disabled, onPreview, onCommit }: ReaderScrubberProps) {
+export function ReaderScrubber({ value, ticks = [], bookmarkTicks = [], valueText, disabled, onPreview, onCommit }: ReaderScrubberProps) {
   const [drag, setDrag] = useState<number>();
   const timer = useRef(0);
   const release = useRef(0);
@@ -58,7 +60,10 @@ export function ReaderScrubber({ value, ticks = [], valueText, disabled, onPrevi
     <div className="pn-scrubber" data-disabled={disabled ? 'true' : undefined}>
       <div className="pn-scrubber__ticks" aria-hidden="true">
         {ticks.map((t, i) => (
-          <span key={`${i}-${t}`} className="pn-scrubber__tick" style={{ ['--t' as string]: Math.min(1, Math.max(0, t)) }} />
+          <span key={`c-${i}-${t}`} className="pn-scrubber__tick" style={{ ['--t' as string]: Math.min(1, Math.max(0, t)) }} />
+        ))}
+        {bookmarkTicks.map((t, i) => (
+          <span key={`b-${i}-${t}`} className="pn-scrubber__tick pn-scrubber__tick--bookmark" style={{ ['--t' as string]: Math.min(1, Math.max(0, t)) }} />
         ))}
       </div>
       <input

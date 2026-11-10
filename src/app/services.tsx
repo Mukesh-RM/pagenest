@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CoverUrlCache } from '@/data/cover-url';
 import { createDataClient } from '@/data/data-client';
 import { getDb } from '@/data/db';
-import { storageBootstrap } from './storage-bootstrap-state';
+import { storageBootstrap, storageHarnessEager } from './storage-bootstrap-state';
 import { DexieProgressService } from '@/data/progress-service';
 import { createLibraryProvider } from '@/features/library/provider';
 import { useChromeStore } from './route-chrome';
@@ -16,11 +16,18 @@ export function ServicesProvider({ services, children }: { services?: AppService
   useEffect(() => {
     if (services || storageReady) return;
     let live = true;
-    const off = whenIdle(() => {
+    const start = () => {
       void import('./storage-bootstrap')
         .then((m) => m.bootstrapStorage())
         .then(() => live && setStorageReady(true));
-    }, 400);
+    };
+    if (storageHarnessEager()) {
+      start();
+      return () => {
+        live = false;
+      };
+    }
+    const off = whenIdle(start, 400);
     return () => {
       live = false;
       off();

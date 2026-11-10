@@ -152,6 +152,52 @@ export function ReaderSettingsSheet({ open, onClose, settings, fonts, onChange }
           />
         </section>
 
+        <section className="pn-aa__group" aria-labelledby="pn-aa-align">
+          <h3 id="pn-aa-align" className="pn-aa__heading">
+            Alignment
+          </h3>
+          <ChoiceGroup
+            label="Alignment"
+            value={settings.align}
+            options={[
+              { value: 'left', label: 'Left' },
+              { value: 'justify', label: 'Justify' },
+            ]}
+            onChange={(align) => set({ align })}
+          />
+        </section>
+
+        <section className="pn-aa__group" aria-labelledby="pn-aa-hyphen">
+          <h3 id="pn-aa-hyphen" className="pn-aa__heading">
+            Hyphenation
+          </h3>
+          <ChoiceGroup
+            label="Hyphenation"
+            value={settings.hyphenate ? 'on' : 'off'}
+            options={[
+              { value: 'on', label: 'On' },
+              { value: 'off', label: 'Off' },
+            ]}
+            onChange={(v) => set({ hyphenate: v === 'on' })}
+          />
+        </section>
+
+        <section className="pn-aa__group" aria-labelledby="pn-aa-para">
+          <h3 id="pn-aa-para" className="pn-aa__heading">
+            Paragraph spacing
+          </h3>
+          <ChoiceGroup
+            label="Paragraph spacing"
+            value={settings.paragraphSpacing}
+            options={[
+              { value: 'tight', label: 'Tight' },
+              { value: 'normal', label: 'Normal' },
+              { value: 'roomy', label: 'Roomy' },
+            ]}
+            onChange={(paragraphSpacing) => set({ paragraphSpacing })}
+          />
+        </section>
+
         <section className="pn-aa__group" aria-labelledby="pn-aa-turn">
           <h3 id="pn-aa-turn" className="pn-aa__heading">
             Page turn

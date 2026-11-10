@@ -4,14 +4,19 @@ import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import { dismissLibraryOverlays, openLibraryFromAnyRoute, primeSmokeHints, skipOnboarding, waitForIndexedDbReady, waitForServiceWorkerControl, waitForStorageBootstrap } from './support/app';
 import { dismissReaderInterstitials, tapReaderZone, waitForFoliateBookTextLive } from './support/foliate-reader';
+import {
+  exerciseReadAloudControls,
+  openReadAloudControls,
+  primeDeviceSpeechForLiveSmoke,
+  waitForReadAloudAudible,
+} from './support/narration-live';
+import { releaseSmokeViewport } from './support/release-smoke-viewport';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const liveHost = process.env.PAGENEST_SMOKE_LIVE_HOST;
 const shotDir = liveHost
   ? join(repoRoot, 'docs/screens/release-smoke-live', liveHost)
-  : join(repoRoot, 'docs/screens/release-smoke');
-
-const VIEW = { width: 360, height: 740 };
+  : join(repoRoot, 'docs/screens/release-smoke-artifacts');
 
 function readFixture(rel: string): Buffer {
   return readFileSync(join(repoRoot, rel));
@@ -106,11 +111,16 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     if (process.env.PAGENEST_SMOKE_LIVE === '1' || testInfo.project.name.includes('webkit')) {
       await primeSmokeHints(context);
     }
-    await page.setViewportSize(VIEW);
+    if (testInfo.project.name.includes('webkit')) {
+      await context.addInitScript(() => sessionStorage.setItem('pn_no_opfs', '1'));
+    }
+    await primeDeviceSpeechForLiveSmoke(context);
+    await page.setViewportSize(releaseSmokeViewport(testInfo.project.name));
   });
 
-  test('fresh profile imports EPUB, PDF, MP3; opens; survives reload and SW bump', async ({ page, context }) => {
+  test('fresh profile imports EPUB, PDF, MP3; opens; survives reload and SW bump', async ({ page, context }, testInfo) => {
     test.setTimeout(600_000);
+    const home = testInfo.project.name.includes('webkit') ? './?pn_no_opfs=1' : './';
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);
     const swVersion = 1;
@@ -121,7 +131,7 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     });
 
     await context.clearCookies();
-    await page.goto('./');
+    await page.goto(home);
     await skipOnboarding(page);
     await dismissLibraryOverlays(page);
     await waitForIndexedDbReady(page);
@@ -131,9 +141,12 @@ test.describe('release smoke: import, open, reload, SW update', () => {
 
     const epub = readFixture('src/features/reader/fixtures/alice.epub');
     const pdf = readFixture('src/features/reader/fixtures/alice.pdf');
+    await waitForStorageBootstrap(page);
     await importFiles(page, [{ name: 'alice.epub', mimeType: 'application/epub+zip', buffer: epub }], /Alice|Wonderland/i);
+    await waitForStorageBootstrap(page);
     await snap(page, '02-imported-epub');
 
+    await waitForStorageBootstrap(page);
     await openBookCard(page, /Alice|Wonderland/i);
     const text = await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
     expect(text).toContain('Alice');
@@ -152,16 +165,18 @@ test.describe('release smoke: import, open, reload, SW update', () => {
       await snap(page, '03b-epub-tap-turn');
     }
 
-    await page.goto('./');
+    await page.goto(home);
     await importFiles(page, [{ name: 'alice.pdf', mimeType: 'application/pdf', buffer: pdf }], /Alice|Wonderland/i);
+    await waitForStorageBootstrap(page);
     await snap(page, '04-imported-pdf');
 
     await openPdfFromLibrary(page, /Alice|Wonderland/i);
     const pdfReadUrl = page.url();
     await snap(page, '05-pdf-open');
 
-    await page.goto('./');
+    await page.goto(home);
     await importAndListenMp3(page);
+    await waitForStorageBootstrap(page);
     const listenUrl = page.url();
     await snap(page, '06-audio-playing');
 
@@ -170,9 +185,24 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     await page.getByRole('button', { name: 'Play', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Pause', exact: true })).toBeVisible({ timeout: 30_000 });
 
+    const savedEpubProgress = Number((await scrub.inputValue().catch(() => '0')) || 0);
+    const warmOpenT0 = Date.now();
     await page.goto(epubReadUrl);
     await waitForFoliateBookTextLive(page, { min: 200, needle: 'Alice', timeout: 120_000 });
+    // Device target is <1.5s (ReadEra); headless preview allows more time for foliate init.
+    expect(Date.now() - warmOpenT0, 'warm EPUB resume should open within 8s in smoke').toBeLessThan(8_000);
+    const afterReload = Number((await scrub.inputValue().catch(() => '0')) || 0);
+    expect(afterReload, 'EPUB resume after reload').toBeGreaterThanOrEqual(savedEpubProgress * 0.85);
     await snap(page, '07-epub-after-reload');
+
+    await openReadAloudControls(page);
+    await snap(page, '10-read-aloud-controls');
+    await page.getByRole('button', { name: 'Start read aloud' }).click();
+    await expect(page.getByRole('button', { name: 'Pause read aloud' })).toBeVisible({ timeout: 30_000 });
+    await waitForReadAloudAudible(page);
+    await snap(page, '11-read-aloud-playing');
+    await exerciseReadAloudControls(page);
+    await snap(page, '12-read-aloud-controls-done');
 
     const swBump = { version: 1 };
     await bumpServiceWorker(page, swBump);
@@ -190,8 +220,9 @@ test.describe('release smoke: import, open, reload, SW update', () => {
     expect(consoleErrors, consoleErrors.join('\n')).toEqual([]);
   });
 
-  test('OPFS blocked: cache-backed store still imports and opens EPUB', async ({ page, context }) => {
+  test('OPFS blocked: cache-backed store still imports and opens EPUB', async ({ page, context }, testInfo) => {
     test.skip(process.env.PAGENEST_SMOKE_LIVE === '1', 'Local profile only (live smoke uses real OPFS).');
+    test.skip(testInfo.project.name.includes('webkit'), 'WebKit release smoke already uses the cache-backed profile.');
     test.setTimeout(300_000);
     const consoleErrors: string[] = [];
     attachReleaseSmokeConsoleGuard(page, consoleErrors);

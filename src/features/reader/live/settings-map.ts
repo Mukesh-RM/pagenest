@@ -1,6 +1,6 @@
 import type { ReaderAppearance } from '@/engines/reader/types';
 import type { ReaderSettings } from '@/ui';
-import { LINE_HEIGHT } from '@/ui/screens';
+import { LINE_HEIGHT, PARAGRAPH_SPACING_EM } from '@/ui/screens';
 import { READING_FONTS } from '../core/fonts';
 import { DEFAULT_APPEARANCE } from '../core/appearance';
 
@@ -18,5 +18,8 @@ export function settingsToAppearance(settings: ReaderSettings): ReaderAppearance
     lineHeight: LINE_HEIGHT[settings.lineSpacing],
     margins: settings.margins === 'medium' ? 'normal' : settings.margins,
     pageTurn: settings.pageTurn,
+    align: settings.align,
+    hyphenate: settings.hyphenate,
+    paragraphSpacingEm: PARAGRAPH_SPACING_EM[settings.paragraphSpacing],
   };
 }

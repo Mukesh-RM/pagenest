@@ -154,6 +154,9 @@ export const SAMPLE_READER_SETTINGS: ReaderSettings = {
   lineSpacing: 'comfortable',
   margins: 'medium',
   pageTurn: 'slide',
+  align: 'left',
+  hyphenate: true,
+  paragraphSpacing: 'normal',
 };
 
 export const SAMPLE_CHAPTER = 'Chapter 7: The orchard in March';

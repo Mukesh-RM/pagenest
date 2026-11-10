@@ -58,8 +58,10 @@ export async function addBookmark(
   bookId: string,
   locator: BookmarkRecord['locator'],
   label: string,
+  fraction?: number,
 ): Promise<BookmarkRecord> {
-  const row: BookmarkRecord = { id: newId(), bookId, locator, label, createdAt: Date.now() };
+  const f = typeof fraction === 'number' && Number.isFinite(fraction) ? Math.min(1, Math.max(0, fraction)) : undefined;
+  const row: BookmarkRecord = { id: newId(), bookId, locator, label, createdAt: Date.now(), ...(f !== undefined ? { fraction: f } : {}) };
   await db.bookmarks.put(row);
   return row;
 }

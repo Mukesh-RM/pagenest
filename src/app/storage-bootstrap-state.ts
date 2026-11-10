@@ -15,3 +15,11 @@ export function setStorageBootstrap(next: StorageBootstrap | undefined): void {
 export function storageBootstrap(): StorageBootstrap | undefined {
   return bootstrap;
 }
+
+export function storageHarnessEager(): boolean {
+  try {
+    return typeof window !== 'undefined' && sessionStorage.getItem('pn_no_opfs') === '1';
+  } catch {
+    return false;
+  }
+}

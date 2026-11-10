@@ -10,7 +10,7 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 | Done | Format tag on grid/list cards |
 | Done | Collection shelf cover collages |
 | Done | Book detail: Read aloud (`LibraryScreen` → reader + narration sheet) |
-| Open | Book detail: tabs (chapters, marks, info) |
+| Open | Book detail: tabs (chapters, marks, info) — single-pane sheet today |
 | Open | Pull-to-refresh folder list |
 
 ## Reader feel
@@ -19,9 +19,9 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 |--------|-----|
 | Done | **Tap zones on book content** (`e0ec133`, #30) |
 | Done | **Page turn mode in Aa** (`e214e66`, #31) |
-| Open | Align, hyphenation, paragraph spacing in Aa |
+| Done | Align, hyphenation, paragraph spacing in Aa |
 | Open | Edge brightness / warm filter |
-| Open | Open &lt;1.5 s gate on imported EPUB in release smoke |
+| Done | Warm EPUB reopen budget in `release-smoke.spec.ts` (8s headless; device target 1.5s) |
 
 ## Marks & resume
 
@@ -29,7 +29,7 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 |--------|-----|
 | Done | Selection bar: copy, note shortcut |
 | Done | Selection bar: read-aloud from selection |
-| Open | Bookmark ticks on scrubber |
+| Done | Bookmark ticks on scrubber (accent ticks; stores `fraction` on new bookmarks) |
 | Done | Release smoke: assert saved read position after reload (live upgrade spec) |
 | Open | MiniSearch background index (blueprint §7) |
 
@@ -49,4 +49,4 @@ Tracking doc for owner ReadEra polish pass. **Done** items link to merge SHAs wh
 | Done | WebKit foliate engine fix (`109a37b` bootstrap + sandbox strip; `#35`) |
 | Done | Pages `_headers` CSP/COOP scoped to HTML only (`b7ec1fc`, `#36`) |
 | Done | WebKit upgrade after SW reload (`67f4221` precache + import retry; no console allowlist) |
-| Done | Full green `smoke:live` on Pages after `76bb353` deploy (360px screenshots + ReadEra shots) |
+| Done | Full green `smoke:live` on Pages after `76bb353` deploy (412×915 / 390×844 smoke + ReadEra shots) |

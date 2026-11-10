@@ -83,6 +83,8 @@ export interface BookmarkRecord {
   locator: Locator;
   label: string;
   createdAt: number;
+  /** Whole-book position (0–1) for scrubber tick marks when the bookmark was saved. */
+  fraction?: number;
 }
 
 /** `highlights`: a marked passage, optionally with a note. Stored as a range so it survives re-pagination. */
